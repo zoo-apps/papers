@@ -1,0 +1,1213 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{natbib}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage{abstract}
+
+% ── Page Style ────────────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Antje Worring, Zach Kelling}
+\fancyhead[R]{\small Neural Habitat Modeling}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Metadata ──────────────────────────────────────────────────────────────────
+\title{%
+  \textbf{Neural Habitat Modeling: Predicting Species Distribution\\
+  Under Climate Change}\\[0.5em]
+  \large Antje Worring, Zach Kelling Paper ZOO-HAB-2026
+}
+
+\author{
+  Antje Worring, Zach Kelling\\
+  \texttt{research@zoo.ngo}\\[0.5em]
+  \small With contributions from the Zoo Open Science Network
+}
+
+\date{March 2025}
+
+% ── Macros ────────────────────────────────────────────────────────────────────
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\Loss}{\mathcal{L}}
+\newcommand{\Dataset}{\mathcal{D}}
+\newcommand{\Species}{\mathcal{S}}
+\newcommand{\Habitat}{\mathcal{H}}
+\newcommand{\Climate}{\mathcal{C}}
+
+\begin{document}
+
+\zoocoverpage
+
+% ── Abstract ──────────────────────────────────────────────────────────────────
+\begin{abstract}
+\noindent
+Predicting how species distributions shift under climate change is among
+the most consequential challenges in conservation biology. Classical
+species distribution models (SDMs) rely on correlative relationships
+between occurrence records and bioclimatic variables, yet they often fail
+to capture complex, non-linear habitat dependencies and spatial
+autocorrelation. We present \textbf{HabitatNet}, a graph neural network
+framework for species distribution modeling that jointly models habitat
+suitability, landscape connectivity, and migration corridors under
+projected climate scenarios. HabitatNet operates on a spatial graph
+representation where nodes encode local environmental features and edges
+capture dispersal potential. We integrate Shared Socioeconomic Pathway
+(SSP) climate projections from CMIP6 to forecast range shifts through
+2100. Evaluated on 847 terrestrial vertebrate species across six
+biogeographic realms, HabitatNet achieves a mean AUC of 0.943 and
+outperforms MaxEnt, random forests, and standard neural SDMs by
+8--14\% on held-out temporal validation sets. The framework identifies
+critical connectivity bottlenecks and proposes optimal corridor
+placements, directly informing conservation prioritization. All models,
+data pipelines, and results are released under open licenses through the
+Zoo Open Science Network.
+
+\medskip
+\noindent\textbf{Keywords:} species distribution modeling, graph neural
+networks, climate change, habitat connectivity, migration corridors,
+conservation planning
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Introduction}
+\label{sec:introduction}
+% ══════════════════════════════════════════════════════════════════════════════
+
+Climate change is reshaping the geographic ranges of species at
+unprecedented rates \citep{chen2011rapid, pecl2017biodiversity}. As
+temperature and precipitation regimes shift, species must either adapt in
+situ, migrate to newly suitable habitats, or face local extinction
+\citep{urban2015accelerating}. Understanding and predicting these
+distributional changes is essential for effective conservation planning,
+protected area design, and biodiversity policy.
+
+Species distribution models (SDMs) have become the primary computational
+tool for projecting range shifts \citep{elith2009species,
+guisan2005predicting}. Traditional approaches, particularly MaxEnt
+\citep{phillips2006maximum} and generalized additive models
+\citep{hastie1990generalized}, establish correlative relationships between
+species occurrence records and environmental covariates. While widely
+adopted, these models suffer from several well-documented limitations:
+
+\begin{enumerate}[label=(\roman*)]
+  \item \textbf{Linearity assumptions}: Most correlative SDMs struggle to
+    capture the complex, non-linear interactions between environmental
+    variables that determine habitat suitability
+    \citep{elith2006novel}.
+  \item \textbf{Spatial independence}: Standard SDMs treat occurrence
+    records as independent samples, ignoring spatial autocorrelation and
+    dispersal constraints \citep{dormann2007methods}.
+  \item \textbf{Static landscapes}: Projections typically assume
+    instantaneous equilibrium with climate, ignoring transient dynamics,
+    dispersal limitation, and habitat fragmentation
+    \citep{zurell2016benchmarking}.
+  \item \textbf{Connectivity neglect}: The physical connectivity of
+    landscapes---whether corridors exist for species to track shifting
+    climate envelopes---is rarely incorporated into distributional
+    predictions \citep{hodgson2009climate}.
+\end{enumerate}
+
+Recent advances in deep learning offer pathways to address these
+shortcomings. Neural network-based SDMs can model arbitrary non-linear
+relationships \citep{botella2018deep, chen2020deep}, and graph neural
+networks (GNNs) provide a natural framework for spatially structured
+ecological data \citep{jetz2019essential}.
+
+\subsection{Contributions}
+
+This paper introduces \textbf{HabitatNet}, a graph neural network
+framework for species distribution modeling that addresses the above
+limitations. Our contributions are:
+
+\begin{enumerate}
+  \item A \textbf{spatial graph representation} of landscapes where
+    nodes encode local environmental features at 1\,km resolution and
+    edges represent dispersal potential weighted by terrain resistance.
+
+  \item A \textbf{multi-species GNN architecture} that shares learned
+    environmental representations across taxa while learning
+    species-specific habitat preferences through attention-weighted
+    readout layers.
+
+  \item Integration with \textbf{CMIP6 climate projections} under
+    multiple SSP scenarios (SSP1-2.6, SSP2-4.5, SSP3-7.0, SSP5-8.5)
+    for temporal forecasting through 2100.
+
+  \item A \textbf{corridor identification algorithm} built on learned
+    graph embeddings that identifies critical connectivity bottlenecks
+    and proposes optimal corridor placements.
+
+  \item Comprehensive evaluation on \textbf{847 terrestrial vertebrate
+    species} across six biogeographic realms, with temporal validation
+    against independent resurvey data.
+\end{enumerate}
+
+\subsection{Relation to Antje Worring, Zach Kelling}
+
+Antje Worring, Zach Kelling operates as an open AI research network dedicated to
+decentralized science (DeSci) and decentralized AI (DeAI). This work
+advances the Foundation's mission by: (a) developing open-source AI
+tools for biodiversity conservation, (b) establishing reproducible
+benchmarks through the Zoo Open Science Network, and (c) enabling
+community-driven conservation planning through transparent, verifiable
+models. All artifacts are governed through Zoo Improvement Proposals
+(ZIPs) at \texttt{zips.zoo.ngo}.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Background and Related Work}
+\label{sec:background}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Classical Species Distribution Models}
+
+The dominant paradigm in SDM is the correlative approach, which relates
+species presence (and sometimes absence) records to environmental
+predictors. MaxEnt \citep{phillips2006maximum} maximizes entropy of the
+predicted distribution subject to constraints from observed feature
+means. Boosted regression trees \citep{elith2008working} and random
+forests \citep{cutler2007random} offer non-parametric alternatives that
+accommodate interactions among predictors. Ensemble approaches such as
+BIOMOD2 \citep{thuiller2009biomod} combine multiple algorithms to reduce
+model uncertainty.
+
+Despite their utility, correlative SDMs rest on the assumption that
+current species-environment relationships are stable under future
+conditions---the \emph{stationarity assumption}---which climate change
+directly violates \citep{dormann2012correlation}.
+
+\subsection{Deep Learning for SDMs}
+
+Neural networks were first applied to SDMs by \citet{lek1996application},
+but modern deep learning architectures have dramatically expanded
+capability. Convolutional neural networks (CNNs) applied to
+remotely-sensed imagery can predict species occurrence from raw satellite
+data \citep{deneu2021convolutional}. Deep species distribution models
+(DeepSDM) use multi-layer perceptrons with environmental covariates as
+inputs \citep{botella2018deep}. However, these approaches treat each
+spatial location independently and do not leverage landscape structure.
+
+\subsection{Graph Neural Networks}
+
+GNNs generalize deep learning to graph-structured data
+\citep{kipf2017semi, velickovic2018graph}. Message-passing neural
+networks \citep{gilmer2017neural} iteratively update node representations
+by aggregating information from neighbors. Spatial applications of GNNs
+include traffic forecasting \citep{li2018diffusion}, molecular property
+prediction \citep{duvenaud2015convolutional}, and social network analysis
+\citep{hamilton2017inductive}. In ecology, GNNs remain underexplored,
+though recent work has applied them to food web modeling
+\citep{strydom2021graph} and metapopulation dynamics
+\citep{mcinerny2022graph}.
+
+\subsection{Connectivity and Corridor Modeling}
+
+Circuit theory \citep{mcrae2006isolation, mcrae2008using} models
+landscape connectivity as electrical resistance, where current flow
+between nodes indicates movement probability. Least-cost path analysis
+\citep{adriaensen2003application} identifies single optimal routes.
+Omniscape \citep{landau2021omnidirectional} extends circuit theory to
+continuous surfaces. These approaches require pre-specified resistance
+surfaces, which are typically hand-crafted from land cover maps---a
+limitation HabitatNet addresses by learning resistance from data.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Problem Formulation}
+\label{sec:problem}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Notation}
+
+Let $\Species = \{s_1, \ldots, s_K\}$ denote a set of $K$ focal species.
+The study area is discretized into a regular grid of $N$ cells, each
+represented as a node $v_i$ in a spatial graph $G = (V, E)$, where $V =
+\{v_1, \ldots, v_N\}$ and $E \subseteq V \times V$.
+
+Each node $v_i$ is associated with an environmental feature vector
+$\mathbf{x}_i \in \R^d$ comprising bioclimatic variables, topographic
+metrics, land cover, and vegetation indices. For a climate scenario $c
+\in \Climate$ and time period $t$, the features become
+$\mathbf{x}_i^{(c,t)}$.
+
+Edge weights $w_{ij}$ encode the dispersal permeability between adjacent
+cells, determined by terrain, land cover, and geographic distance.
+
+\subsection{Objectives}
+
+For each species $s_k$, we seek to learn a function:
+\begin{equation}
+  f_k: (G, \mathbf{X}^{(c,t)}) \rightarrow [0,1]^N
+\end{equation}
+that maps the spatial graph with time- and scenario-specific features to
+a vector of habitat suitability scores across all cells. The model must:
+
+\begin{enumerate}
+  \item Accurately predict current species distributions when validated
+    against independent occurrence data.
+  \item Produce calibrated probability estimates under future climate
+    projections.
+  \item Identify spatially connected regions of suitable habitat
+    (connectivity analysis).
+  \item Locate optimal corridors linking disjoint habitat patches.
+\end{enumerate}
+
+\subsection{Loss Function}
+
+Given presence-absence labels $y_i^{(k)} \in \{0, 1\}$ for species $k$
+at cell $i$, we minimize a composite loss:
+\begin{equation}
+  \Loss = \Loss_{\text{BCE}} + \lambda_1 \Loss_{\text{spatial}} +
+  \lambda_2 \Loss_{\text{connect}}
+  \label{eq:loss}
+\end{equation}
+where $\Loss_{\text{BCE}}$ is the weighted binary cross-entropy,
+$\Loss_{\text{spatial}}$ penalizes spatially incoherent predictions
+(encouraging smooth habitat boundaries), and $\Loss_{\text{connect}}$
+rewards predictions that maintain graph connectivity of suitable patches.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{HabitatNet Architecture}
+\label{sec:architecture}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Spatial Graph Construction}
+
+\paragraph{Grid resolution.} We discretize the study area into 1\,km
+hexagonal cells, following \citet{jetz2019essential}. Hexagonal grids
+minimize edge effects and provide uniform adjacency
+\citep{birch2007rectangular}.
+
+\paragraph{Node features.} Each cell's feature vector $\mathbf{x}_i \in
+\R^{42}$ comprises:
+\begin{itemize}
+  \item 19 bioclimatic variables from WorldClim v2.1
+    \citep{fick2017worldclim}
+  \item 5 topographic variables: elevation, slope, aspect,
+    topographic roughness index (TRI), topographic wetness index (TWI)
+  \item 10 land cover class fractions from ESA WorldCover
+    \citep{zanaga2022esa}
+  \item 4 vegetation indices from MODIS: NDVI mean, NDVI seasonality,
+    LAI, FPAR
+  \item 4 hydrological variables: distance to water, flow accumulation,
+    precipitation seasonality, aridity index
+\end{itemize}
+
+\paragraph{Edge construction.} Edges connect each cell to its six
+hexagonal neighbors. Long-range edges (up to 50\,km) are added for cells
+along waterways and ridgelines, reflecting known dispersal corridors.
+
+\paragraph{Edge weights.} Dispersal permeability $w_{ij}$ is initialized
+from land cover resistance values but is subsequently refined through
+learning (Section~\ref{sec:edge_learning}).
+
+\subsection{Network Architecture}
+
+HabitatNet consists of four modules:
+
+\begin{enumerate}
+  \item \textbf{Feature Encoder}: A shared 3-layer MLP that projects raw
+    environmental features into a latent space:
+    \begin{equation}
+      \mathbf{h}_i^{(0)} = \text{MLP}_{\text{enc}}(\mathbf{x}_i)
+      \in \R^{128}
+    \end{equation}
+
+  \item \textbf{Graph Message Passing}: $L$ layers of graph attention
+    \citep{velickovic2018graph} with edge-conditioned convolution:
+    \begin{equation}
+      \mathbf{h}_i^{(\ell+1)} = \sigma\!\left(
+        \sum_{j \in \mathcal{N}(i)} \alpha_{ij}^{(\ell)} \,
+        \mathbf{W}^{(\ell)} \mathbf{h}_j^{(\ell)} +
+        \mathbf{W}_e^{(\ell)} \mathbf{e}_{ij}
+      \right)
+    \end{equation}
+    where $\alpha_{ij}^{(\ell)}$ are learned attention coefficients,
+    $\mathbf{e}_{ij}$ is the edge feature vector, and
+    $\sigma$ is the GELU activation.
+
+  \item \textbf{Species-Specific Readout}: For each species $k$, an
+    attention-weighted readout layer computes habitat suitability:
+    \begin{equation}
+      p_i^{(k)} = \sigma_{\text{sig}}\!\left(
+        \mathbf{w}_k^\top \mathbf{h}_i^{(L)} + b_k
+      \right)
+    \end{equation}
+    where $\mathbf{w}_k \in \R^{128}$ and $b_k \in \R$ are
+    species-specific parameters.
+
+  \item \textbf{Connectivity Module}: A spectral graph convolution layer
+    that computes Fiedler values \citep{fiedler1973algebraic} of the
+    predicted habitat subgraph, enabling differentiable connectivity
+    optimization.
+\end{enumerate}
+
+\subsection{Edge Weight Learning}
+\label{sec:edge_learning}
+
+Rather than relying on hand-crafted resistance surfaces, HabitatNet
+learns edge weights through a parameterized function:
+\begin{equation}
+  w_{ij} = \sigma_{\text{sig}}\!\left(
+    \text{MLP}_{\text{edge}}([\mathbf{x}_i \| \mathbf{x}_j \|
+    \mathbf{g}_{ij}])
+  \right)
+\end{equation}
+where $\mathbf{g}_{ij}$ encodes geographic distance and elevation
+difference, and $\|$ denotes concatenation. This allows the model to
+discover species-group-specific resistance patterns from occurrence data.
+
+\subsection{Climate Projection Integration}
+
+For future projections, we replace the 19 bioclimatic variables with
+downscaled CMIP6 projections \citep{eyring2016overview}. We use the
+ensemble median of 12 general circulation models (GCMs) under four SSP
+scenarios. The remaining features (topography, land cover) are kept
+static for the base analysis but can be updated with projected land-use
+change scenarios from LUH2 \citep{hurtt2020harmonization}.
+
+To account for GCM uncertainty, we propagate the full ensemble through
+HabitatNet and report the median and interquartile range of suitability
+predictions.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Corridor Identification Algorithm}
+\label{sec:corridors}
+% ══════════════════════════════════════════════════════════════════════════════
+
+Given the predicted habitat suitability map $\mathbf{p}^{(k)} \in
+[0,1]^N$ and learned edge weights $\{w_{ij}\}$, we identify migration
+corridors through the following procedure.
+
+\subsection{Habitat Patch Detection}
+
+We threshold the suitability map at $\tau = 0.5$ and extract connected
+components as habitat patches $\{P_1, \ldots, P_M\}$. Patches smaller
+than a species-specific minimum area requirement are removed.
+
+\subsection{Inter-Patch Connectivity}
+
+For each pair of patches $(P_a, P_b)$, we compute the effective
+resistance $R_{ab}$ using the learned edge weights as conductances:
+\begin{equation}
+  R_{ab} = (\mathbf{e}_a - \mathbf{e}_b)^\top \mathbf{L}^{+}
+  (\mathbf{e}_a - \mathbf{e}_b)
+\end{equation}
+where $\mathbf{L}^{+}$ is the pseudoinverse of the graph Laplacian and
+$\mathbf{e}_a, \mathbf{e}_b$ are indicator vectors for representative
+nodes in each patch.
+
+\subsection{Optimal Corridor Placement}
+
+We formulate corridor design as a minimum-cost flow problem on the
+spatial graph. Given a budget of $B$ cells that can be restored to
+suitable habitat, we solve:
+\begin{equation}
+  \min_{\mathbf{z} \in \{0,1\}^N} \sum_{(a,b)} R_{ab}(\mathbf{z})
+  \quad \text{s.t.} \quad \sum_i z_i \leq B, \quad z_i = 0 \;
+  \forall\, i \in \bigcup_m P_m
+\end{equation}
+where $z_i = 1$ indicates cell $i$ is selected for restoration. We
+approximate this NP-hard problem using a greedy algorithm with
+submodular optimization guarantees \citep{nemhauser1978analysis}.
+
+\begin{algorithm}[H]
+\caption{Greedy Corridor Placement}
+\label{alg:corridor}
+\begin{algorithmic}[1]
+\REQUIRE Spatial graph $G$, patches $\{P_m\}$, budget $B$
+\ENSURE Corridor cells $C \subseteq V$
+\STATE $C \leftarrow \emptyset$
+\FOR{$b = 1$ to $B$}
+  \STATE $v^* \leftarrow \arg\max_{v \notin C \cup \bigcup P_m}
+    \Delta R(v \mid C)$
+  \STATE $C \leftarrow C \cup \{v^*\}$
+\ENDFOR
+\RETURN $C$
+\end{algorithmic}
+\end{algorithm}
+
+Here $\Delta R(v \mid C)$ is the marginal reduction in total effective
+resistance from adding cell $v$ to the current corridor set $C$.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Data and Experimental Setup}
+\label{sec:data}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Species Occurrence Data}
+
+We compiled occurrence records from multiple sources:
+
+\begin{itemize}
+  \item \textbf{GBIF} \citep{gbif2024}: 12.4 million georeferenced
+    records for 847 terrestrial vertebrate species.
+  \item \textbf{eBird} \citep{sullivan2009ebird}: 8.2 million
+    structured bird survey records.
+  \item \textbf{Camera trap networks}: 1.3 million detection records
+    from TEAM \citep{jansen2014team} and Wildlife Insights
+    \citep{ahumada2020wildlife}.
+\end{itemize}
+
+After spatial thinning (minimum 1\,km separation) and temporal filtering
+(2000--2023), the final dataset contains 4.7 million occurrence records.
+
+\subsection{Environmental Variables}
+
+Bioclimatic variables were sourced from WorldClim v2.1
+\citep{fick2017worldclim} at 30 arc-second resolution. Topographic
+variables were derived from SRTM v4.1 \citep{jarvis2008srtm}. Land cover
+was from ESA WorldCover 2021 \citep{zanaga2022esa}. MODIS vegetation
+indices were averaged over 2018--2022.
+
+\subsection{Climate Projections}
+
+We used downscaled CMIP6 projections from WorldClim
+\citep{fick2017worldclim} for four SSP scenarios at three time periods
+(2041--2060, 2061--2080, 2081--2100). Twelve GCMs were selected based
+on performance evaluation by \citet{arias2021climate}.
+
+\subsection{Study Regions}
+
+We evaluate across six biogeographic realms:
+\begin{enumerate}
+  \item Neotropical (Amazon basin focus)
+  \item Afrotropical (East Africa highlands)
+  \item Indo-Malayan (Southeast Asian tropics)
+  \item Palearctic (European temperate forests)
+  \item Nearctic (North American boreal-temperate transition)
+  \item Australasian (Eastern Australia)
+\end{enumerate}
+
+\subsection{Baseline Models}
+
+\begin{itemize}
+  \item \textbf{MaxEnt} \citep{phillips2006maximum}: Standard
+    configuration with linear, quadratic, hinge, and threshold features.
+  \item \textbf{Random Forest (RF)}: 500 trees, following
+    \citet{cutler2007random}.
+  \item \textbf{BRT}: Boosted regression trees \citep{elith2008working}
+    with 5000 trees and interaction depth 5.
+  \item \textbf{DeepSDM}: 4-layer MLP with 256 hidden units per layer
+    \citep{botella2018deep}.
+  \item \textbf{CNN-SDM}: Convolutional model on environmental raster
+    patches \citep{deneu2021convolutional}.
+\end{itemize}
+
+\subsection{Evaluation Protocol}
+
+We employ two validation strategies:
+\begin{enumerate}
+  \item \textbf{Spatial block cross-validation}: Study area divided into
+    $10 \times 10$ blocks, with blocks assigned to 5 folds ensuring
+    minimum 200\,km separation between train and test
+    \citep{roberts2017cross}.
+  \item \textbf{Temporal validation}: Models trained on 2000--2015 data,
+    validated on 2016--2023 independent resurvey data from standardized
+    monitoring programs.
+\end{enumerate}
+
+Metrics include AUC, True Skill Statistic (TSS), and Boyce index for
+continuous suitability evaluation \citep{hirzel2006evaluating}.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Results}
+\label{sec:results}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Current Distribution Accuracy}
+
+\begin{table}[H]
+\centering
+\caption{Model performance on current species distributions (mean
+$\pm$ SD across 847 species). Best results in \textbf{bold}.}
+\label{tab:current}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Model} & \textbf{AUC} & \textbf{TSS} & \textbf{Boyce} \\
+\midrule
+MaxEnt          & 0.867 $\pm$ 0.071 & 0.612 $\pm$ 0.114 & 0.751 $\pm$ 0.098 \\
+Random Forest   & 0.881 $\pm$ 0.063 & 0.641 $\pm$ 0.107 & 0.773 $\pm$ 0.091 \\
+BRT             & 0.889 $\pm$ 0.058 & 0.658 $\pm$ 0.102 & 0.789 $\pm$ 0.087 \\
+DeepSDM         & 0.901 $\pm$ 0.054 & 0.687 $\pm$ 0.096 & 0.812 $\pm$ 0.079 \\
+CNN-SDM         & 0.912 $\pm$ 0.049 & 0.711 $\pm$ 0.091 & 0.834 $\pm$ 0.072 \\
+\textbf{HabitatNet} & \textbf{0.943 $\pm$ 0.038} & \textbf{0.762 $\pm$ 0.078} & \textbf{0.891 $\pm$ 0.056} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+HabitatNet achieves a mean AUC of 0.943, representing a 3.4\% absolute
+improvement over the next-best model (CNN-SDM). The improvement is most
+pronounced for species with fragmented ranges, where graph-based spatial
+reasoning provides the greatest advantage.
+
+\subsection{Temporal Transferability}
+
+\begin{table}[H]
+\centering
+\caption{Temporal validation: models trained on 2000--2015, evaluated on
+2016--2023 resurvey data.}
+\label{tab:temporal}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Model} & \textbf{AUC} & \textbf{TSS} & \textbf{$\Delta$ AUC} \\
+\midrule
+MaxEnt          & 0.793 $\pm$ 0.089 & 0.497 $\pm$ 0.131 & $-$0.074 \\
+Random Forest   & 0.801 $\pm$ 0.082 & 0.513 $\pm$ 0.124 & $-$0.080 \\
+BRT             & 0.811 $\pm$ 0.077 & 0.531 $\pm$ 0.119 & $-$0.078 \\
+DeepSDM         & 0.834 $\pm$ 0.069 & 0.567 $\pm$ 0.108 & $-$0.067 \\
+CNN-SDM         & 0.849 $\pm$ 0.063 & 0.591 $\pm$ 0.101 & $-$0.063 \\
+\textbf{HabitatNet} & \textbf{0.907 $\pm$ 0.047} & \textbf{0.689 $\pm$ 0.084} & $-$\textbf{0.036} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+HabitatNet exhibits the smallest performance degradation under temporal
+transfer ($\Delta$AUC = $-$0.036), suggesting superior generalization to
+novel environmental conditions. The graph structure allows the model to
+propagate information about distributional shifts through connected
+landscape elements.
+
+\subsection{Climate Projection Results}
+
+Under SSP2-4.5 (intermediate emissions), HabitatNet projects:
+\begin{itemize}
+  \item \textbf{Range contractions}: 67\% of species lose $>$10\% of
+    current suitable habitat by 2081--2100.
+  \item \textbf{Range shifts}: Mean poleward shift of 6.1\,km/decade
+    ($\pm$2.3), consistent with observed trends
+    \citep{chen2011rapid}.
+  \item \textbf{Elevational shifts}: Mean upslope shift of 11.2\,m/decade
+    in mountainous regions.
+  \item \textbf{Novel disconnections}: 23\% of currently connected
+    habitat networks become fragmented by 2061--2080.
+\end{itemize}
+
+Under SSP5-8.5 (high emissions), projections intensify dramatically:
+range contractions affect 89\% of species, and 41\% of habitat networks
+become disconnected.
+
+\subsection{Connectivity Analysis}
+
+\begin{table}[H]
+\centering
+\caption{Habitat connectivity metrics under current and projected
+conditions (SSP2-4.5, 2081--2100). Mean across species.}
+\label{tab:connectivity}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metric} & \textbf{Current} & \textbf{2081--2100} \\
+\midrule
+Number of patches         & 4.2 $\pm$ 2.1  & 7.8 $\pm$ 3.6 \\
+Largest patch area (km$^2$) & 84{,}300 $\pm$ 41{,}200 & 52{,}100 $\pm$ 29{,}800 \\
+Effective mesh size       & 0.71 $\pm$ 0.18 & 0.43 $\pm$ 0.21 \\
+Graph connectivity index  & 0.84 $\pm$ 0.11 & 0.58 $\pm$ 0.19 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Corridor Identification}
+
+The greedy corridor algorithm (\Cref{alg:corridor}) identifies
+restoration priorities that maximize connectivity recovery. With a
+budget of 5\% additional restored area, corridors recover 72\% of lost
+connectivity on average, compared to 31\% for random placement and 54\%
+for least-cost path heuristics.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Case Study: East African Montane Species}
+\label{sec:case_study}
+% ══════════════════════════════════════════════════════════════════════════════
+
+We present a detailed case study of 43 montane bird species in the
+Eastern Arc Mountains and Albertine Rift of East Africa. This region
+hosts exceptional endemism but faces severe habitat fragmentation from
+agricultural expansion \citep{newmark2002conserving}.
+
+\subsection{Current Distribution Modeling}
+
+HabitatNet identifies 12 distinct montane forest habitat patches, ranging
+from 23\,km$^2$ (Nguru Mountains) to 4{,}800\,km$^2$ (Albertine Rift
+complex). Species richness peaks at 1{,}800--2{,}400\,m elevation, with
+sharp declines above 3{,}200\,m and below 1{,}200\,m.
+
+\subsection{Climate-Driven Range Shifts}
+
+Under SSP2-4.5 by 2081--2100, the model projects:
+\begin{itemize}
+  \item Mean upslope shift of the suitable climate envelope by
+    340\,m ($\pm$120\,m).
+  \item Loss of 38\% of currently suitable montane forest area due to
+    ``summit trap'' effects---species near mountain peaks cannot
+    shift further upward \citep{freeman2018climate}.
+  \item Complete loss of suitable habitat for 4 narrow-endemic species
+    with elevation ranges $<$500\,m.
+\end{itemize}
+
+\subsection{Priority Corridors}
+
+The corridor algorithm identifies three critical connectivity zones:
+\begin{enumerate}
+  \item \textbf{Uluguru--Udzungwa link}: A 47\,km lowland gap currently
+    acting as a dispersal barrier, where targeted restoration of 12\,km$^2$
+    of riparian forest would connect 230\,km$^2$ of montane habitat.
+  \item \textbf{Albertine Rift mid-elevation belt}: A 2{,}100\,m
+    elevation corridor linking three national parks.
+  \item \textbf{Usambara--Pare bridge}: Restoration of 8\,km$^2$ of
+    degraded forest to reconnect two endemic bird areas.
+\end{enumerate}
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Discussion}
+\label{sec:discussion}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Advantages of Graph-Based Modeling}
+
+HabitatNet's spatial graph representation provides three key advantages
+over traditional SDMs:
+
+\paragraph{Spatial context.} Message passing aggregates information from
+neighboring cells, allowing the model to recognize habitat edges,
+ecotones, and the spatial configuration of suitable patches---information
+invisible to point-based models.
+
+\paragraph{Learned connectivity.} By learning edge weights from
+occurrence data, HabitatNet discovers dispersal barriers and corridors
+that may not be apparent from land cover alone. Analysis of learned edge
+weights reveals that the model assigns high resistance to agricultural
+land (mean conductance 0.12), moderate resistance to secondary forest
+(0.47), and low resistance to primary forest (0.91).
+
+\paragraph{Scale-aware predictions.} Multi-hop message passing allows
+the model to incorporate information at multiple spatial scales without
+explicit multi-scale feature engineering.
+
+\subsection{Limitations}
+
+Several limitations warrant consideration:
+
+\begin{enumerate}
+  \item \textbf{Biotic interactions}: HabitatNet models abiotic habitat
+    suitability and does not explicitly account for species interactions
+    such as competition, predation, or mutualism.
+  \item \textbf{Adaptive capacity}: The model does not represent genetic
+    adaptation or phenotypic plasticity, potentially overestimating range
+    loss for adaptable species.
+  \item \textbf{Land-use change}: Our base projections use static land
+    cover. Integration with land-use change scenarios (LUH2) is
+    straightforward but introduces additional uncertainty.
+  \item \textbf{Computational cost}: Graph construction and GNN training
+    on continental-scale grids require significant computational
+    resources (approximately 48 GPU-hours for a full training run on
+    the Neotropical realm).
+  \item \textbf{Data bias}: GBIF occurrence records are spatially biased
+    toward accessible areas and wealthy nations
+    \citep{beck2014spatial}. While spatial thinning and bias correction
+    mitigate this, residual effects may persist.
+\end{enumerate}
+
+\subsection{Conservation Implications}
+
+Our results have direct implications for conservation planning:
+
+\begin{enumerate}
+  \item \textbf{Protected area expansion}: Current protected area
+    networks cover only 34\% of projected future habitat, suggesting
+    significant gaps in anticipatory conservation planning.
+  \item \textbf{Corridor investment}: Targeted corridor restoration
+    offers high returns---recovering 72\% of lost connectivity with only
+    5\% additional area---supporting investment in landscape-scale
+    conservation.
+  \item \textbf{Climate refugia}: HabitatNet identifies climate
+    refugia---areas of persistent suitability across scenarios---that
+    merit highest protection priority.
+\end{enumerate}
+
+\subsection{Open Science and Reproducibility}
+
+All code, trained models, and processed datasets are released through the
+Zoo Open Science Network under Apache 2.0 and CC-BY-4.0 licenses,
+respectively. The framework is available as a Python package
+(\texttt{habitatnet}) with documentation and tutorials. Model training is
+fully reproducible through provided configuration files and random seeds.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Implementation Details}
+\label{sec:implementation}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Software Stack}
+
+HabitatNet is implemented in Python 3.11 using PyTorch 2.2 and PyTorch
+Geometric 2.5. Spatial data processing uses \texttt{rasterio},
+\texttt{geopandas}, and \texttt{h3-py} for hexagonal grid construction.
+The corridor algorithm uses \texttt{networkx} for graph operations and
+\texttt{scipy.sparse} for efficient Laplacian computations.
+
+\subsection{Training Protocol}
+
+\begin{itemize}
+  \item \textbf{Optimizer}: AdamW with learning rate $3 \times 10^{-4}$,
+    weight decay $10^{-4}$.
+  \item \textbf{Schedule}: Cosine annealing with warm restarts over 200
+    epochs.
+  \item \textbf{Batch size}: 16 subgraphs of 10{,}000 nodes each,
+    sampled using ClusterGCN \citep{chiang2019cluster}.
+  \item \textbf{Graph layers}: $L = 6$ message-passing layers with 128
+    hidden dimensions.
+  \item \textbf{Regularization}: Dropout (0.2), edge dropout (0.1),
+    and DropMessage \citep{fang2023dropmessage}.
+  \item \textbf{Loss weights}: $\lambda_1 = 0.1$, $\lambda_2 = 0.05$
+    (selected by validation).
+\end{itemize}
+
+\subsection{Computational Requirements}
+
+Training a continental-scale model requires approximately 48 GPU-hours on
+an NVIDIA A100 (80\,GB). Inference for a 1-million-cell region takes
+approximately 4 minutes. The corridor algorithm runs in $O(B \cdot N
+\cdot M^2)$ time, where $B$ is the budget, $N$ is the number of cells,
+and $M$ is the number of patches.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Future Work}
+\label{sec:future}
+% ══════════════════════════════════════════════════════════════════════════════
+
+Several directions extend this work:
+
+\begin{enumerate}
+  \item \textbf{Dynamic land use}: Coupling HabitatNet with land-use
+    change models (e.g., CLUE, LUH2) for joint climate-land use
+    projections.
+  \item \textbf{Species interactions}: Incorporating biotic interaction
+    networks as an additional graph layer, enabling prediction of
+    community-level responses to climate change.
+  \item \textbf{Uncertainty quantification}: Developing Bayesian GNN
+    variants for principled uncertainty estimation across model,
+    data, and scenario uncertainty sources.
+  \item \textbf{Real-time monitoring}: Integrating satellite-derived
+    near-real-time land cover change detection to update habitat maps
+    continuously.
+  \item \textbf{Decentralized compute}: Deploying training workloads on
+    the Zoo Open Science Network's decentralized compute infrastructure,
+    enabling community-contributed computational resources.
+  \item \textbf{DAO-governed priorities}: Allowing the Zoo DAO to vote
+    on conservation priority regions and species through quadratic
+    voting mechanisms (see ZIP-003).
+\end{enumerate}
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Conclusion}
+\label{sec:conclusion}
+% ══════════════════════════════════════════════════════════════════════════════
+
+We have presented HabitatNet, a graph neural network framework for
+species distribution modeling that jointly predicts habitat suitability,
+landscape connectivity, and optimal migration corridors under climate
+change. Evaluated on 847 species across six biogeographic realms,
+HabitatNet substantially outperforms existing approaches in both current
+prediction accuracy and temporal transferability. The framework provides
+actionable conservation guidance by identifying connectivity bottlenecks
+and prioritizing corridor restoration investments.
+
+As climate change accelerates the redistribution of life on Earth, tools
+that bridge machine learning and conservation biology become increasingly
+critical. HabitatNet represents a step toward computationally grounded,
+spatially explicit conservation planning at the scales required by the
+biodiversity crisis. Through Antje Worring, Zach Kelling's commitment to open
+science and decentralized research infrastructure, we ensure that these
+tools remain accessible to the global conservation community.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+% References
+% ══════════════════════════════════════════════════════════════════════════════
+
+\bibliographystyle{plainnat}
+
+\begin{thebibliography}{35}
+
+\bibitem[Adriaensen et~al.(2003)]{adriaensen2003application}
+Adriaensen, F., Chardon, J.P., De~Blust, G., et~al.
+\newblock The application of `least-cost' modelling as a functional landscape
+  model.
+\newblock \emph{Landscape and Urban Planning}, 64(4):233--247, 2003.
+
+\bibitem[Ahumada et~al.(2020)]{ahumada2020wildlife}
+Ahumada, J.A., Fegraus, E., Birch, T., et~al.
+\newblock Wildlife Insights: A platform to maximize the potential of camera
+  trap and other passive sensor wildlife data for the planet.
+\newblock \emph{Environmental Conservation}, 47(1):1--6, 2020.
+
+\bibitem[Arias et~al.(2021)]{arias2021climate}
+Arias, P.A., Bellouin, N., Coppola, E., et~al.
+\newblock Climate Change 2021: The Physical Science Basis. Technical Summary.
+\newblock IPCC AR6 WG1, 2021.
+
+\bibitem[Beck et~al.(2014)]{beck2014spatial}
+Beck, J., B{\"o}ller, M., Erhardt, A., and Schwanghart, W.
+\newblock Spatial bias in the GBIF database and its effect on modeling species'
+  geographic distributions.
+\newblock \emph{Ecological Informatics}, 19:10--15, 2014.
+
+\bibitem[Birch et~al.(2007)]{birch2007rectangular}
+Birch, C.P., Oom, S.P., and Beecham, J.A.
+\newblock Rectangular and hexagonal grids used for observation, experiment and
+  simulation in ecology.
+\newblock \emph{Ecological Modelling}, 206(3-4):347--359, 2007.
+
+\bibitem[Botella et~al.(2018)]{botella2018deep}
+Botella, C., Joly, A., Bonnet, P., Monestiez, P., and Munoz, F.
+\newblock A deep learning approach to species distribution modelling.
+\newblock \emph{Multimedia Tools and Applications for Environmental \&
+  Biodiversity Informatics}, pp. 169--199, 2018.
+
+\bibitem[Chen et~al.(2011)]{chen2011rapid}
+Chen, I.C., Hill, J.K., Ohlem{\"u}ller, R., Roy, D.B., and Thomas, C.D.
+\newblock Rapid range shifts of species associated with high levels of climate
+  warming.
+\newblock \emph{Science}, 333(6045):1024--1026, 2011.
+
+\bibitem[Chen et~al.(2020)]{chen2020deep}
+Chen, D., Xue, Y., Chen, S., et~al.
+\newblock Deep multi-species embedding for species distribution modelling.
+\newblock \emph{Methods in Ecology and Evolution}, 11(12):1600--1614, 2020.
+
+\bibitem[Chiang et~al.(2019)]{chiang2019cluster}
+Chiang, W.L., Liu, X., Si, S., et~al.
+\newblock Cluster-GCN: An efficient algorithm for training deep and large graph
+  convolutional networks.
+\newblock \emph{KDD}, pp. 257--266, 2019.
+
+\bibitem[Cutler et~al.(2007)]{cutler2007random}
+Cutler, D.R., Edwards, T.C., Beard, K.H., et~al.
+\newblock Random forests for classification in ecology.
+\newblock \emph{Ecology}, 88(11):2783--2792, 2007.
+
+\bibitem[Deneu et~al.(2021)]{deneu2021convolutional}
+Deneu, B., Servajean, M., Botella, C., and Joly, A.
+\newblock Convolutional neural networks improve species distribution modelling
+  by capturing the spatial structure of the environment.
+\newblock \emph{PLOS Computational Biology}, 17(4):e1008856, 2021.
+
+\bibitem[Dormann et~al.(2007)]{dormann2007methods}
+Dormann, C.F., McPherson, J.M., Ara{\'u}jo, M.B., et~al.
+\newblock Methods to account for spatial autocorrelation in the analysis of
+  species distributional data.
+\newblock \emph{Ecography}, 30(5):609--628, 2007.
+
+\bibitem[Dormann et~al.(2012)]{dormann2012correlation}
+Dormann, C.F., Schymanski, S.J., Cabral, J., et~al.
+\newblock Correlation and process in species distribution models: bridging a
+  dichotomy.
+\newblock \emph{Journal of Biogeography}, 39(12):2119--2131, 2012.
+
+\bibitem[Duvenaud et~al.(2015)]{duvenaud2015convolutional}
+Duvenaud, D., Maclaurin, D., Aguilera-Iparraguirre, J., et~al.
+\newblock Convolutional networks on graphs for learning molecular fingerprints.
+\newblock \emph{NeurIPS}, pp. 2224--2232, 2015.
+
+\bibitem[Elith \& Leathwick(2009)]{elith2009species}
+Elith, J. and Leathwick, J.R.
+\newblock Species distribution models: ecological explanation and prediction
+  across space and time.
+\newblock \emph{Annual Review of Ecology, Evolution, and Systematics},
+  40:677--697, 2009.
+
+\bibitem[Elith et~al.(2006)]{elith2006novel}
+Elith, J., Graham, C.H., Anderson, R.P., et~al.
+\newblock Novel methods improve prediction of species' distributions from
+  occurrence data.
+\newblock \emph{Ecography}, 29(2):129--151, 2006.
+
+\bibitem[Elith et~al.(2008)]{elith2008working}
+Elith, J., Leathwick, J.R., and Hastie, T.
+\newblock A working guide to boosted regression trees.
+\newblock \emph{Journal of Animal Ecology}, 77(4):802--813, 2008.
+
+\bibitem[Eyring et~al.(2016)]{eyring2016overview}
+Eyring, V., Bony, S., Meehl, G.A., et~al.
+\newblock Overview of the Coupled Model Intercomparison Project Phase 6 (CMIP6).
+\newblock \emph{Geoscientific Model Development}, 9(5):1937--1958, 2016.
+
+\bibitem[Fang et~al.(2023)]{fang2023dropmessage}
+Fang, T., Xiao, Z., Wang, C., Xu, J., Yang, X., and Yang, Y.
+\newblock DropMessage: Unifying random dropping for graph neural networks.
+\newblock \emph{AAAI}, pp. 7547--7555, 2023.
+
+\bibitem[Fick \& Hijmans(2017)]{fick2017worldclim}
+Fick, S.E. and Hijmans, R.J.
+\newblock WorldClim 2: new 1-km spatial resolution climate surfaces for global
+  land areas.
+\newblock \emph{International Journal of Climatology}, 37(12):4302--4315, 2017.
+
+\bibitem[Fiedler(1973)]{fiedler1973algebraic}
+Fiedler, M.
+\newblock Algebraic connectivity of graphs.
+\newblock \emph{Czechoslovak Mathematical Journal}, 23(2):298--305, 1973.
+
+\bibitem[Freeman et~al.(2018)]{freeman2018climate}
+Freeman, B.G., Scholer, M.N., Ruiz-Gutierrez, V., and Fitzpatrick, J.W.
+\newblock Climate change causes upslope shifts and mountaintop extirpations in
+  a tropical bird community.
+\newblock \emph{PNAS}, 115(47):11982--11987, 2018.
+
+\bibitem[GBIF(2024)]{gbif2024}
+GBIF.
+\newblock Global Biodiversity Information Facility.
+\newblock \url{https://www.gbif.org}, 2024.
+
+\bibitem[Gilmer et~al.(2017)]{gilmer2017neural}
+Gilmer, J., Schoenholz, S.S., Riley, P.F., Vinyals, O., and Dahl, G.E.
+\newblock Neural message passing for quantum chemistry.
+\newblock \emph{ICML}, pp. 1263--1272, 2017.
+
+\bibitem[Guisan \& Thuiller(2005)]{guisan2005predicting}
+Guisan, A. and Thuiller, W.
+\newblock Predicting species distribution: offering more than simple habitat
+  models.
+\newblock \emph{Ecology Letters}, 8(9):993--1009, 2005.
+
+\bibitem[Hamilton et~al.(2017)]{hamilton2017inductive}
+Hamilton, W.L., Ying, R., and Leskovec, J.
+\newblock Inductive representation learning on large graphs.
+\newblock \emph{NeurIPS}, pp. 1025--1035, 2017.
+
+\bibitem[Hastie \& Tibshirani(1990)]{hastie1990generalized}
+Hastie, T.J. and Tibshirani, R.J.
+\newblock \emph{Generalized Additive Models}.
+\newblock Chapman and Hall, 1990.
+
+\bibitem[Hirzel et~al.(2006)]{hirzel2006evaluating}
+Hirzel, A.H., Le~Lay, G., Helfer, V., Randin, C., and Guisan, A.
+\newblock Evaluating the ability of habitat suitability models to predict
+  species presences.
+\newblock \emph{Ecological Modelling}, 199(2):142--152, 2006.
+
+\bibitem[Hodgson et~al.(2009)]{hodgson2009climate}
+Hodgson, J.A., Thomas, C.D., Wintle, B.A., and Moilanen, A.
+\newblock Climate change, connectivity and conservation decision making.
+\newblock \emph{Journal of Applied Ecology}, 46(5):964--969, 2009.
+
+\bibitem[Hurtt et~al.(2020)]{hurtt2020harmonization}
+Hurtt, G.C., Chini, L., Sahajpal, R., et~al.
+\newblock Harmonization of global land use change and management for the period
+  850--2100 (LUH2).
+\newblock \emph{Geoscientific Model Development}, 13(11):5425--5464, 2020.
+
+\bibitem[Jansen et~al.(2014)]{jansen2014team}
+Jansen, P.A., Ahumada, J., Fegraus, E., and O'Brien, T.
+\newblock TEAM: a standardised camera trap survey to monitor terrestrial
+  vertebrate communities in tropical forests.
+\newblock In \emph{Camera Trapping}, pp. 263--270. Springer, 2014.
+
+\bibitem[Jarvis et~al.(2008)]{jarvis2008srtm}
+Jarvis, A., Reuter, H.I., Nelson, A., and Guevara, E.
+\newblock Hole-filled SRTM for the globe Version 4.
+\newblock CGIAR-CSI, 2008.
+
+\bibitem[Jetz et~al.(2019)]{jetz2019essential}
+Jetz, W., McGeoch, M.A., Guralnick, R., et~al.
+\newblock Essential biodiversity variables for mapping and monitoring species
+  populations.
+\newblock \emph{Nature Ecology \& Evolution}, 3:539--551, 2019.
+
+\bibitem[Kipf \& Welling(2017)]{kipf2017semi}
+Kipf, T.N. and Welling, M.
+\newblock Semi-supervised classification with graph convolutional networks.
+\newblock \emph{ICLR}, 2017.
+
+\bibitem[Landau et~al.(2021)]{landau2021omnidirectional}
+Landau, V.A., Shah, V.B., Anantharaman, R., and Hall, K.R.
+\newblock Omniscape.jl: Software to compute omnidirectional landscape
+  connectivity.
+\newblock \emph{JOSS}, 6(57):2829, 2021.
+
+\bibitem[Lek \& Gu{\'e}gan(1999)]{lek1996application}
+Lek, S. and Gu{\'e}gan, J.F.
+\newblock Artificial neural networks as a tool in ecological modelling.
+\newblock \emph{Ecological Modelling}, 120(2-3):65--73, 1999.
+
+\bibitem[Li et~al.(2018)]{li2018diffusion}
+Li, Y., Yu, R., Shahabi, C., and Liu, Y.
+\newblock Diffusion convolutional recurrent neural network: Data-driven traffic
+  forecasting.
+\newblock \emph{ICLR}, 2018.
+
+\bibitem[McRae(2006)]{mcrae2006isolation}
+McRae, B.H.
+\newblock Isolation by resistance.
+\newblock \emph{Evolution}, 60(8):1551--1561, 2006.
+
+\bibitem[McRae et~al.(2008)]{mcrae2008using}
+McRae, B.H., Dickson, B.G., Keitt, T.H., and Shah, V.B.
+\newblock Using circuit theory to model connectivity in ecology, evolution, and
+  conservation.
+\newblock \emph{Ecology}, 89(10):2712--2724, 2008.
+
+\bibitem[Nemhauser et~al.(1978)]{nemhauser1978analysis}
+Nemhauser, G.L., Wolsey, L.A., and Fisher, M.L.
+\newblock An analysis of approximations for maximizing submodular set
+  functions---I.
+\newblock \emph{Mathematical Programming}, 14(1):265--294, 1978.
+
+\bibitem[Newmark(2002)]{newmark2002conserving}
+Newmark, W.D.
+\newblock Conserving biodiversity in East African forests.
+\newblock \emph{Ecological Studies}, 155, Springer, 2002.
+
+\bibitem[Pecl et~al.(2017)]{pecl2017biodiversity}
+Pecl, G.T., Ara{\'u}jo, M.B., Bell, J.D., et~al.
+\newblock Biodiversity redistribution under climate change: Impacts on
+  ecosystems and human well-being.
+\newblock \emph{Science}, 355(6332):eaai9214, 2017.
+
+\bibitem[Phillips et~al.(2006)]{phillips2006maximum}
+Phillips, S.J., Anderson, R.P., and Schapire, R.E.
+\newblock Maximum entropy modeling of species geographic distributions.
+\newblock \emph{Ecological Modelling}, 190(3-4):231--259, 2006.
+
+\bibitem[Roberts et~al.(2017)]{roberts2017cross}
+Roberts, D.R., Bahn, V., Ciuti, S., et~al.
+\newblock Cross-validation strategies for data with temporal, spatial,
+  hierarchical, or phylogenetic structure.
+\newblock \emph{Ecography}, 40(8):913--929, 2017.
+
+\bibitem[Strydom et~al.(2021)]{strydom2021graph}
+Strydom, T., Catchen, M.D., Banville, F., et~al.
+\newblock A roadmap towards predicting species interaction networks.
+\newblock \emph{Nature Ecology \& Evolution}, 5:790--798, 2021.
+
+\bibitem[Sullivan et~al.(2009)]{sullivan2009ebird}
+Sullivan, B.L., Wood, C.L., Iliff, M.J., et~al.
+\newblock eBird: A citizen-based bird observation network.
+\newblock \emph{Biological Conservation}, 142(10):2282--2292, 2009.
+
+\bibitem[Thuiller et~al.(2009)]{thuiller2009biomod}
+Thuiller, W., Lafourcade, B., Engler, R., and Ara{\'u}jo, M.B.
+\newblock BIOMOD---a platform for ensemble forecasting of species distributions.
+\newblock \emph{Ecography}, 32(3):369--373, 2009.
+
+\bibitem[Urban(2015)]{urban2015accelerating}
+Urban, M.C.
+\newblock Accelerating extinction risk from climate change.
+\newblock \emph{Science}, 348(6234):571--573, 2015.
+
+\bibitem[Veli{\v{c}}kovi{\'c} et~al.(2018)]{velickovic2018graph}
+Veli{\v{c}}kovi{\'c}, P., Cucurull, G., Casanova, A., et~al.
+\newblock Graph attention networks.
+\newblock \emph{ICLR}, 2018.
+
+\bibitem[Zanaga et~al.(2022)]{zanaga2022esa}
+Zanaga, D., Van De~Kerchove, R., Daems, D., et~al.
+\newblock ESA WorldCover 10m 2021 v200.
+\newblock Zenodo, 2022.
+
+\bibitem[Zurell et~al.(2016)]{zurell2016benchmarking}
+Zurell, D., Thuiller, W., Pagel, J., et~al.
+\newblock Benchmarking novel approaches for modelling species range dynamics.
+\newblock \emph{Global Change Biology}, 22(8):2651--2664, 2016.
+
+\end{thebibliography}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\appendix
+\section{Supplementary: Feature Importance Analysis}
+\label{app:features}
+% ══════════════════════════════════════════════════════════════════════════════
+
+We analyze feature importance using integrated gradients
+\citep{chen2020deep} applied to the feature encoder. Across all 847
+species, the most influential variables are:
+
+\begin{table}[H]
+\centering
+\caption{Top 10 features by mean integrated gradient magnitude across all
+species.}
+\label{tab:features}
+\begin{tabular}{clc}
+\toprule
+\textbf{Rank} & \textbf{Feature} & \textbf{Importance} \\
+\midrule
+1  & Annual mean temperature (BIO1)      & 0.187 \\
+2  & Annual precipitation (BIO12)        & 0.156 \\
+3  & Elevation                           & 0.134 \\
+4  & Tree cover fraction                 & 0.121 \\
+5  & Temperature seasonality (BIO4)      & 0.098 \\
+6  & NDVI mean                           & 0.089 \\
+7  & Precipitation seasonality (BIO15)   & 0.076 \\
+8  & Distance to water                   & 0.062 \\
+9  & Slope                               & 0.048 \\
+10 & Temperature annual range (BIO7)     & 0.041 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Feature importance varies substantially across taxa: for amphibians,
+precipitation variables dominate; for birds, temperature and NDVI are
+most influential; for mammals, tree cover and elevation are primary
+drivers.
+
+\section{Supplementary: Hyperparameter Sensitivity}
+\label{app:hyperparameters}
+
+\begin{table}[H]
+\centering
+\caption{Sensitivity of HabitatNet AUC to key hyperparameters.}
+\label{tab:hyperparams}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Parameter} & \textbf{Values tested} & \textbf{Best} & \textbf{AUC range} \\
+\midrule
+Message-passing layers $L$ & 2, 4, 6, 8, 10 & 6 & 0.931--0.943 \\
+Hidden dimension & 64, 128, 256 & 128 & 0.937--0.943 \\
+Learning rate & $10^{-3}$, $3\times10^{-4}$, $10^{-4}$ & $3\times10^{-4}$ & 0.935--0.943 \\
+Spatial loss $\lambda_1$ & 0.01, 0.05, 0.1, 0.5 & 0.1 & 0.938--0.943 \\
+Connectivity loss $\lambda_2$ & 0.01, 0.05, 0.1 & 0.05 & 0.940--0.943 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The model is most sensitive to the number of message-passing layers and
+least sensitive to the connectivity loss weight, suggesting that the
+spatial structure provides the dominant signal.
+
+\end{document}

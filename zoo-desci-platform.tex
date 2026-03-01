@@ -1,0 +1,631 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc,fit}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{xcolor}
+\usepackage{listings}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\AChain}{\textsc{A-Chain}}
+\newcommand{\IChain}{\textsc{I-Chain}}
+\newcommand{\KChain}{\textsc{K-Chain}}
+\newcommand{\TChain}{\textsc{T-Chain}}
+\newcommand{\GChain}{\textsc{G-Chain}}
+\newcommand{\KEEPER}{\textsc{Keeper}}
+\newcommand{\DID}{\textsc{DID}}
+\newcommand{\DAO}{\textsc{DAO}}
+\newcommand{\ZIP}{\textsc{ZIP}}
+\newcommand{\CKKS}{\textsc{CKKS}}
+\newcommand{\FHE}{\textsc{FHE}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=black
+}
+
+% Title information
+\title{\textbf{Decentralized Science on Zoo Network:\\Open Research Coordination with Verifiable Provenance}\\
+\large Infrastructure for Reproducible, Incentivized, and Community-Governed Science\\
+\vspace{5pt}
+
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{November 2023}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+Science is broken in ways that scientists have documented for decades: irreproducible results (\textgreater 70\% failure to replicate across fields), funding concentrated in a handful of institutions, data locked behind paywalls and proprietary silos, and credit attribution that rewards journal prestige over actual contribution. We present \Zoo{} Network as infrastructure for \textbf{Decentralized Science (DeSci)}---a platform where research provenance is on-chain and immutable, computation is verifiable, data is open by default, funding flows through community governance, and mathematical claims carry machine-checked proofs. The system introduces \textbf{Research Capsules}: encrypted lab notebooks with threshold-gated data sharing and reproducible compute environments, anchored on \IChain{} for tamper-evident provenance. \textbf{ZIPs (Zoo Improvement Proposals)} serve as the governance mechanism for research funding, replacing opaque grant committees with transparent community peer review and milestone-based disbursement from the \DAO{} treasury via \GChain{}. A \textbf{Data Commons} built on \IChain{} \DID{}-authenticated contributions tracks usage receipts and citation graphs, ensuring contributors receive credit and compensation. \AChain{} provides AI-assisted research capabilities: automated literature review, hypothesis generation, and statistical analysis. For mathematical results, we integrate Lean~4 proof verification, creating a chain of formally verified claims that extends from theorem statement to on-chain publication. We demonstrate the platform through conservation science applications---satellite ecology, species classification, and habitat modeling---where \Zoo{}'s existing research infrastructure provides immediate, concrete value.
+
+\textbf{Keywords}: decentralized science, DeSci, research provenance, reproducibility, verifiable computation, data commons, formal verification
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%----------------------------------------------------------------------
+\section{Introduction}
+\label{sec:intro}
+%----------------------------------------------------------------------
+
+\subsection{The Reproducibility Crisis}
+
+In 2016, a Nature survey of 1,576 researchers found that more than 70\% had failed to reproduce another scientist's experiments, and more than half had failed to reproduce their own \cite{baker2016reproducibility}. This is not a fringe concern---it is a structural failure of the scientific enterprise.
+
+The causes are well-understood:
+
+\begin{enumerate}
+    \item \textbf{Publication Bias.} Journals publish positive results; negative results and replications languish unpublished. The literature is a biased sample of all experiments conducted.
+    \item \textbf{Methodological Opacity.} Papers describe methods in prose; the actual code, data, and parameters are often unavailable.
+    \item \textbf{Perverse Incentives.} Tenure, grants, and prestige are awarded for novel findings, not for careful replication.
+    \item \textbf{Data Unavailability.} Datasets are proprietary, deleted after publication, or stored in formats that cannot be re-processed.
+\end{enumerate}
+
+\subsection{The Funding Bottleneck}
+
+Scientific funding is concentrated, slow, and conservative:
+
+\begin{itemize}
+    \item The NIH funds $\sim$20\% of grant applications. The median PI age at first R01 grant is 43.
+    \item Funding cycles are 12--18 months. By the time a grant is awarded, the research landscape has shifted.
+    \item Geographic concentration: 80\% of global R\&D spending occurs in 10 countries.
+    \item Interdisciplinary and high-risk research is systematically underfunded because review panels favor incremental advances in established fields.
+\end{itemize}
+
+\subsection{Zoo as Research Infrastructure}
+
+\Zoo{} Network addresses these failures not through exhortation but through infrastructure. The thesis is simple: \textbf{if the tools enforce reproducibility, transparency, and fair attribution, scientists will use them because they make science easier, not harder.}
+
+\Zoo{} provides:
+
+\begin{enumerate}
+    \item \textbf{On-Chain Provenance.} Every dataset, experiment, and publication has an immutable timestamp and authorship record on \IChain{}.
+    \item \textbf{Verifiable Computation.} Experiments run in containerized environments; execution traces are hashed and anchored on-chain.
+    \item \textbf{Open Data Commons.} \DID{}-authenticated data contributions with usage receipts and citation tracking.
+    \item \textbf{Community Funding.} \ZIP{}s and \DAO{} governance replace opaque grant committees with transparent, milestone-based funding.
+    \item \textbf{AI-Assisted Research.} \AChain{} inference for literature review, hypothesis generation, and automated analysis.
+    \item \textbf{Formal Verification.} Lean~4 proof chains for mathematical results.
+\end{enumerate}
+
+\subsection{Paper Organization}
+
+Section~\ref{sec:capsules} introduces Research Capsules. Section~\ref{sec:zips} describes ZIPs as research proposals. Section~\ref{sec:commons} presents the Data Commons. Section~\ref{sec:ai} covers AI-assisted research. Section~\ref{sec:conservation} demonstrates conservation science applications. Section~\ref{sec:verification} details formal verification. Section~\ref{sec:economics} analyzes platform economics. Section~\ref{sec:related} surveys related work. Section~\ref{sec:conclusion} concludes.
+
+%----------------------------------------------------------------------
+\section{Research Capsules}
+\label{sec:capsules}
+%----------------------------------------------------------------------
+
+\subsection{Encrypted Lab Notebooks}
+
+A Research Capsule is an encrypted, versioned, on-chain-anchored container for a complete research project. It extends the Memory Capsule architecture \cite{zoo-ai-memory} with research-specific semantics:
+
+\begin{definition}[Research Capsule]
+A Research Capsule $\mathcal{R} = (\textit{did}, \textit{notebook}, \textit{data}, \textit{code}, \textit{env}, \textit{provenance})$ where:
+\begin{itemize}
+    \item $\textit{did}$: researcher's decentralized identifier on \IChain{}.
+    \item $\textit{notebook}$: encrypted append-only log of observations, hypotheses, and analysis notes.
+    \item $\textit{data}$: encrypted datasets with content-addressed hashes.
+    \item $\textit{code}$: versioned source code (git-compatible).
+    \item $\textit{env}$: reproducible compute environment specification (container image hash).
+    \item $\textit{provenance}$: on-chain record of creation time, modifications, and access history.
+\end{itemize}
+\end{definition}
+
+\subsection{Provenance Anchoring}
+
+Every mutation to a Research Capsule produces an on-chain anchor on \IChain{}:
+
+\begin{verbatim}
+struct ProvenanceRecord {
+    capsule_id:  bytes32,   // BLAKE3(capsule)
+    author_did:  bytes32,   // researcher DID
+    action:      uint8,     // 0=create, 1=update_data,
+                            // 2=update_code, 3=run_experiment,
+                            // 4=publish_result
+    content_hash: bytes32,  // BLAKE3(changed_content)
+    prev_hash:   bytes32,   // previous provenance record
+    timestamp:   uint64     // block timestamp
+}
+\end{verbatim}
+
+This creates an immutable, publicly auditable timeline of the research process. Pre-registration of hypotheses (action 0 followed by action 3) is verifiable: the hypothesis was recorded before the experiment was run.
+
+\subsection{Threshold-Gated Data Sharing}
+
+Research data often has sensitivity constraints: patient data, endangered species locations, proprietary measurements. Research Capsules support threshold-gated sharing via \TChain{}:
+
+\begin{enumerate}
+    \item The researcher encrypts sensitive data under a threshold scheme ($t$-of-$n$ via \TChain{}).
+    \item Access requests require: (a) a valid \DID{} with researcher credentials, (b) IRB approval credential (for human subjects data), and (c) $t$ validator approvals.
+    \item Approved access produces a time-limited, scope-limited decryption key.
+    \item All access is logged on \IChain{} for audit.
+\end{enumerate}
+
+\subsection{Reproducible Compute Environments}
+
+Each Research Capsule specifies its compute environment as an OCI container image:
+
+\begin{itemize}
+    \item The image hash is recorded in the capsule's $\textit{env}$ field.
+    \item Experiments are run inside the container, ensuring identical environments across reproductions.
+    \item The execution trace (stdin/stdout/stderr + exit code + resource usage) is hashed and anchored on \IChain{}.
+    \item A reproduction attempt is valid if and only if: same container image, same input data hash, and matching output hash.
+\end{itemize}
+
+\begin{definition}[Reproducible Experiment]
+An experiment $E = (\textit{env}, \textit{data}, \textit{code}, \textit{params})$ is \emph{reproduced} by execution $E'$ if and only if:
+\begin{equation}
+\text{BLAKE3}(\textit{output}(E')) = \text{BLAKE3}(\textit{output}(E))
+\end{equation}
+given $\textit{env}(E') = \textit{env}(E)$, $\textit{data}(E') = \textit{data}(E)$, $\textit{code}(E') = \textit{code}(E)$, and $\textit{params}(E') = \textit{params}(E)$.
+\end{definition}
+
+For stochastic experiments, the definition relaxes to statistical equivalence: output distributions match within a specified tolerance.
+
+%----------------------------------------------------------------------
+\section{ZIPs as Research Proposals}
+\label{sec:zips}
+%----------------------------------------------------------------------
+
+\subsection{From Improvement Proposals to Research Proposals}
+
+Zoo Improvement Proposals (\ZIP{}s) \cite{zoo-dao-governance} are the governance mechanism for the \Zoo{} Network. We extend \ZIP{}s to serve as research funding proposals, replacing traditional grant applications:
+
+\begin{definition}[Research ZIP]
+A Research \ZIP{} $Z = (\textit{title}, \textit{abstract}, \textit{team}, \textit{budget}, \textit{milestones}, \textit{timeline}, \textit{capsule\_id})$ is a proposal for community-funded research, submitted to \GChain{} for \DAO{} vote.
+\end{definition}
+
+\subsection{Proposal Lifecycle}
+
+\begin{enumerate}
+    \item \textbf{Submission.} Researcher submits a Research \ZIP{} to \GChain{} with a deposit of 10M $\KEEPER$ tokens (refundable upon completion).
+    \item \textbf{Community Review.} A 14-day review period where any $\KEEPER$ holder can comment, ask questions, and signal support or opposition.
+    \item \textbf{Peer Review.} Three reviewers are selected from the reviewer pool (staked researchers with verified credentials on \IChain{}). Reviewers stake 1M $\KEEPER$ on their review quality.
+    \item \textbf{Vote.} A 7-day voting period on \GChain{}. Standard proposals require 51\% majority with 5\% quorum; large grants ($>$100M $\KEEPER$) require 66\% supermajority with 10\% quorum.
+    \item \textbf{Funding.} Approved proposals receive milestone-based funding from the \DAO{} treasury.
+    \item \textbf{Milestones.} Each milestone requires a deliverable (data, code, paper) committed to the Research Capsule. Milestone completion is verified by the original reviewers.
+    \item \textbf{Completion.} Final milestone triggers deposit refund and completion badge on the researcher's \IChain{} \DID{}.
+\end{enumerate}
+
+\subsection{Incentivized Peer Review}
+
+Peer review on \Zoo{} is not volunteer labor---it is staked, compensated, and reputation-building:
+
+\begin{itemize}
+    \item \textbf{Reviewer Stake.} Reviewers stake 1M $\KEEPER$ when accepting a review assignment. The stake is slashed if the review is flagged as low-quality by the community (>10\% of voters object).
+    \item \textbf{Compensation.} Reviewers earn 500K $\KEEPER$ per completed review, paid from the proposal's budget.
+    \item \textbf{Reputation.} Completed reviews accrue reputation tokens on the reviewer's \DID{}. High-reputation reviewers are prioritized for future assignments.
+    \item \textbf{Conflict Checks.} \IChain{} \DID{} credentials are used to verify that reviewers have no institutional or co-authorship conflicts with the proposer.
+\end{itemize}
+
+\subsection{Advantages Over Traditional Grants}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Property} & \textbf{Traditional Grants} & \textbf{Research ZIPs} \\
+\midrule
+Decision timeline & 12--18 months & 21 days \\
+Reviewer compensation & \$0 & 500K $\KEEPER$ \\
+Review transparency & Opaque & Public \\
+Funding source & Government/foundation & Community \DAO{} \\
+Geographic restriction & Yes (citizenship, residency) & No \\
+Progress tracking & Annual reports & On-chain milestones \\
+Reproducibility requirement & Rare & Mandatory \\
+\bottomrule
+\end{tabular}
+\caption{Research ZIPs vs.\ traditional grant funding}
+\label{tab:grants_comparison}
+\end{table}
+
+%----------------------------------------------------------------------
+\section{Data Commons}
+\label{sec:commons}
+%----------------------------------------------------------------------
+
+\subsection{DID-Authenticated Data Contributions}
+
+The \Zoo{} Data Commons \cite{zoo-data-commons} is a decentralized repository where researchers contribute datasets with cryptographic provenance:
+
+\begin{enumerate}
+    \item The contributor authenticates via their \IChain{} \DID{}.
+    \item The dataset is hashed (BLAKE3) and the hash is anchored on \IChain{} with the contributor's \DID{} as author.
+    \item The dataset is stored on decentralized storage (IPFS/Filecoin) with the on-chain hash as the content address.
+    \item Metadata (schema, license, domain, quality metrics) is stored on-chain.
+\end{enumerate}
+
+\subsection{Usage Receipts}
+
+Every use of a dataset in a Research Capsule generates a \emph{usage receipt}---an on-chain record linking the consuming capsule to the contributing dataset:
+
+\begin{verbatim}
+struct UsageReceipt {
+    dataset_hash:  bytes32,
+    consumer_did:  bytes32,
+    capsule_id:    bytes32,
+    usage_type:    uint8,    // 0=training, 1=validation,
+                             // 2=analysis, 3=reference
+    timestamp:     uint64
+}
+\end{verbatim}
+
+Usage receipts serve two purposes:
+\begin{enumerate}
+    \item \textbf{Attribution.} Data contributors receive verifiable credit for each use of their data.
+    \item \textbf{Compensation.} Contributors earn $\KEEPER$ tokens proportional to usage. The default rate is 100 $\KEEPER$ per receipt, paid from the consuming capsule's budget.
+\end{enumerate}
+
+\subsection{Citation Graphs on G-Chain}
+
+Research Capsules cite each other, creating a directed acyclic graph of scientific knowledge. This citation graph is stored on \GChain{} and provides:
+
+\begin{itemize}
+    \item \textbf{Impact Metrics.} Citation count, h-index, and PageRank-style importance scores computed on-chain.
+    \item \textbf{Retroactive Funding.} High-impact work (measured by citations) can receive retroactive \DAO{} funding, rewarding quality after the fact rather than guessing impact before.
+    \item \textbf{Dependency Tracking.} If a foundational dataset or method is retracted, all dependent capsules are flagged automatically.
+\end{itemize}
+
+\subsection{FAIR Compliance}
+
+The Data Commons natively satisfies the FAIR principles \cite{wilkinson2016fair}:
+
+\begin{itemize}
+    \item \textbf{Findable.} Content-addressed with persistent identifiers on \IChain{}.
+    \item \textbf{Accessible.} Open by default. Sensitive data is threshold-gated but discoverable (metadata is public).
+    \item \textbf{Interoperable.} Schema metadata enforces standard formats. Cross-references use DIDs.
+    \item \textbf{Reusable.} License and provenance are on-chain. Usage terms are machine-readable.
+\end{itemize}
+
+%----------------------------------------------------------------------
+\section{AI-Assisted Research}
+\label{sec:ai}
+%----------------------------------------------------------------------
+
+\subsection{A-Chain Inference for Research}
+
+\Zoo{} \AChain{} provides AI inference as a network service. For DeSci, this enables:
+
+\subsubsection{Automated Literature Review}
+
+A researcher submits a topic query to \AChain{}. The inference engine:
+
+\begin{enumerate}
+    \item Searches the Data Commons for relevant capsules (using embeddings stored on-chain).
+    \item Retrieves and summarizes relevant findings from public Research Capsules.
+    \item Generates a structured literature review with proper citations (linked to on-chain capsule IDs).
+    \item Identifies gaps: topics with high query volume but few capsules.
+\end{enumerate}
+
+Cost: 500 $\KEEPER$ per literature review (inference credits).
+
+\subsubsection{Hypothesis Generation}
+
+Given a dataset and a research question, \AChain{} inference can:
+
+\begin{enumerate}
+    \item Analyze the dataset's statistical properties.
+    \item Cross-reference with existing findings in the Data Commons.
+    \item Propose testable hypotheses ranked by novelty and feasibility.
+    \item Pre-register proposed hypotheses on \IChain{} (timestamped before experimentation).
+\end{enumerate}
+
+\subsubsection{Automated Statistical Analysis}
+
+\AChain{} provides standardized statistical analysis pipelines:
+
+\begin{itemize}
+    \item Power analysis for sample size determination.
+    \item Appropriate test selection based on data distribution and research design.
+    \item Multiple comparison correction (Bonferroni, FDR).
+    \item Effect size estimation with confidence intervals.
+    \item Automated reporting in standardized format.
+\end{itemize}
+
+\subsection{Privacy-Preserving AI Analysis}
+
+For sensitive data (medical records, endangered species locations), AI analysis runs on encrypted data via \CKKS{} on \AChain{} \cite{zoo-fhe}:
+
+\begin{enumerate}
+    \item The researcher encrypts the dataset under the collective \FHE{} key.
+    \item \AChain{} runs the analysis model on encrypted inputs.
+    \item Results are returned encrypted; only the researcher can decrypt.
+    \item The analysis trace (encrypted) is anchored on \IChain{} for reproducibility.
+\end{enumerate}
+
+This enables AI-assisted analysis of sensitive data without the AI model (or its operators) ever observing the plaintext.
+
+%----------------------------------------------------------------------
+\section{Conservation Science Applications}
+\label{sec:conservation}
+%----------------------------------------------------------------------
+
+\Zoo{} Labs Foundation's mission centers on conservation. The DeSci platform provides immediate value through three existing research programs.
+
+\subsection{Satellite Ecology}
+
+The \Zoo{} satellite ecology program \cite{zoo-satellite-ecology} uses remote sensing data for habitat monitoring:
+
+\begin{itemize}
+    \item \textbf{Data.} Sentinel-2 and Landsat imagery contributed to the Data Commons by governmental and institutional partners.
+    \item \textbf{Analysis.} \AChain{} runs land-use classification models on satellite imagery, detecting deforestation, habitat fragmentation, and urban encroachment.
+    \item \textbf{Provenance.} Analysis results are anchored in Research Capsules with full reproducibility (container image + input data hash + model weights hash).
+    \item \textbf{Funding.} Satellite ecology research is funded through Research ZIPs, with milestone deliverables including classified imagery and habitat change reports.
+\end{itemize}
+
+\subsection{Species Classification}
+
+The species classification pipeline \cite{zoo-species-classification} uses AI for biodiversity assessment:
+
+\begin{itemize}
+    \item \textbf{Data.} Camera trap images, acoustic recordings, and citizen-science observations contributed to the Data Commons.
+    \item \textbf{Models.} Classification models trained on \AChain{} with federated learning across institutions \cite{zoo-federated-wildlife}. Each institution contributes training data without sharing raw images (privacy preserved via federated aggregation).
+    \item \textbf{Validation.} Expert validation of model predictions is incentivized: domain experts earn $\KEEPER$ for confirming or correcting classifications.
+    \item \textbf{Output.} Species distribution maps, population estimates, and trend analyses published as Research Capsules.
+\end{itemize}
+
+\subsection{Habitat Modeling}
+
+Predictive habitat modeling integrates satellite, species, and climate data:
+
+\begin{itemize}
+    \item \textbf{Multi-Source Fusion.} \AChain{} inference combines satellite-derived land cover, species occurrence records, and climate projections.
+    \item \textbf{Scenario Analysis.} Models evaluate habitat viability under different climate scenarios (RCP 2.6, 4.5, 8.5).
+    \item \textbf{Conservation Planning.} Output feeds directly into conservation action plans, identifying priority areas for protection.
+    \item \textbf{Impact Bonds.} Conservation outcomes (measured via satellite monitoring) can trigger \Zoo{} impact bond payouts \cite{zoo-impact-bonds}, creating a financial feedback loop between science and action.
+\end{itemize}
+
+%----------------------------------------------------------------------
+\section{Formal Verification of Research Claims}
+\label{sec:verification}
+%----------------------------------------------------------------------
+
+\subsection{The Trust Problem in Mathematical Results}
+
+Published mathematical results are trusted because peer reviewers checked them. But peer review is fallible: errors in published proofs are discovered regularly, sometimes decades later. For results that underpin critical infrastructure (cryptographic protocols, safety-critical systems), informal trust is insufficient.
+
+\subsection{Lean 4 Proof Chain}
+
+\Zoo{} integrates Lean~4 \cite{demoura2021lean4} formal verification into the research publication pipeline:
+
+\begin{enumerate}
+    \item The researcher states a theorem in Lean~4.
+    \item The proof is developed interactively, with each step machine-checked.
+    \item The completed proof is compiled to a proof certificate.
+    \item The certificate hash is anchored on \IChain{} alongside the Research Capsule.
+    \item Any verifier can download the proof and re-check it independently.
+\end{enumerate}
+
+\subsection{Proof-Linked Publications}
+
+A Research Capsule containing a formal proof links the following chain:
+
+\begin{equation}
+\textit{theorem} \xrightarrow{\text{Lean 4}} \textit{proof} \xrightarrow{\text{BLAKE3}} \textit{hash} \xrightarrow{\text{IChain}} \textit{anchor}
+\end{equation}
+
+This creates an immutable, machine-verified record that the theorem was proved (not merely claimed) at the time of publication.
+
+\subsection{Verified Cryptographic Claims}
+
+For \Zoo{}'s own cryptographic infrastructure, formal verification provides a trust foundation:
+
+\begin{itemize}
+    \item \CKKS{} rescaling correctness (\texttt{Crypto/FHE/CKKS.lean}) \cite{zoo-fhe}
+    \item \textsc{TFHE} noise budget tracking (\texttt{Crypto/FHE/TFHE.lean})
+    \item Threshold signature security (\texttt{Crypto/Threshold/FROST.lean})
+    \item GPU scaling bounds (\texttt{GPU/FHEScaling.lean})
+\end{itemize}
+
+These proofs are anchored on \IChain{} and linked from the corresponding technical papers, allowing anyone to verify that the security claims are not merely argued but proved.
+
+\subsection{Incentivizing Formalization}
+
+Formalizing existing results is valuable but tedious. \Zoo{} incentivizes it:
+
+\begin{itemize}
+    \item \textbf{Formalization Bounties.} \DAO{} treasury funds bounties for formalizing high-impact results.
+    \item \textbf{Reputation Rewards.} Formalization efforts accrue reputation on the researcher's \DID{}.
+    \item \textbf{Citation Credit.} A formalized proof cites the original result, generating a usage receipt and compensation for the original authors.
+\end{itemize}
+
+%----------------------------------------------------------------------
+\section{Platform Economics}
+\label{sec:economics}
+%----------------------------------------------------------------------
+
+\subsection{Revenue Flows}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Activity} & \textbf{Revenue} & \textbf{Recipient} \\
+\midrule
+Data contribution (per usage receipt) & 100 $\KEEPER$ & Data contributor \\
+Peer review (per review) & 500K $\KEEPER$ & Reviewer \\
+AI inference (per query) & 500 $\KEEPER$ & Validator network \\
+Capsule storage (per GB/month) & 10K $\KEEPER$ & Validator network \\
+Formal verification bounty & Variable & Formalizer \\
+\bottomrule
+\end{tabular}
+\caption{DeSci platform revenue flows}
+\label{tab:revenue}
+\end{table}
+
+\subsection{Sustainability Model}
+
+The DeSci platform is funded by the \DAO{} treasury (1T $\KEEPER$ allocated at genesis \cite{zoo-tokenomics}). Sustainability depends on:
+
+\begin{enumerate}
+    \item \textbf{Network Effects.} More data in the Commons attracts more researchers, who contribute more data.
+    \item \textbf{Usage Fees.} AI inference and storage fees generate ongoing revenue for validators.
+    \item \textbf{External Funding.} Institutional partners (universities, governments, NGOs) contribute $\KEEPER$ to fund research in their domains.
+    \item \textbf{Impact Bonds.} Conservation outcomes trigger bond payouts, recycling capital back into the research pipeline.
+\end{enumerate}
+
+\subsection{Cost Comparison}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Activity} & \textbf{Traditional Cost} & \textbf{Zoo Cost} \\
+\midrule
+Grant application & 200+ person-hours & 10 person-hours \\
+Peer review cycle & 6--12 months & 21 days \\
+Data hosting (per TB/year) & \$500--2,000 & 120M $\KEEPER$ ($\sim$\$240) \\
+Reproducibility verification & Weeks (manual) & Minutes (automated) \\
+Cross-institution collaboration & Legal agreements & \DID{} capability tokens \\
+\bottomrule
+\end{tabular}
+\caption{Cost comparison: traditional vs.\ \Zoo{} DeSci infrastructure}
+\label{tab:cost_comparison}
+\end{table}
+
+%----------------------------------------------------------------------
+\section{Related Work}
+\label{sec:related}
+%----------------------------------------------------------------------
+
+\subsection{DeSci Projects}
+
+\textbf{VitaDAO} funds longevity research through token-governed grants. Unlike \Zoo{}, VitaDAO is domain-specific (longevity) and does not provide research infrastructure (computation, data hosting, reproducibility). \textbf{ResearchHub} incentivizes open-access publishing with a token reward for peer review. It focuses on the publication layer, not the research process. \textbf{DeSci Labs} builds tools for research data management but without on-chain provenance or verifiable computation.
+
+\Zoo{} differs from all existing DeSci projects in providing a \emph{complete} research infrastructure stack: from data contribution through computation, review, funding, publication, and formal verification.
+
+\subsection{Reproducibility Platforms}
+
+\textbf{Code Ocean} provides containerized compute capsules for reproducible research. \textbf{Binder} offers free ephemeral environments for Jupyter notebooks. \textbf{Whole Tale} integrates data, code, and compute for reproducibility.
+
+These platforms provide reproducibility but lack: on-chain provenance, decentralized governance, economic incentives for contribution, and formal verification integration.
+
+\subsection{Open Data Initiatives}
+
+\textbf{Zenodo} (CERN) provides open-access data hosting with DOIs. \textbf{Dataverse} offers institutional data repositories. \textbf{GBIF} aggregates biodiversity occurrence records.
+
+These initiatives provide data hosting but not: usage-based compensation, decentralized governance, or AI-assisted analysis.
+
+%----------------------------------------------------------------------
+\section{Conclusion}
+\label{sec:conclusion}
+%----------------------------------------------------------------------
+
+The problems of science---irreproducibility, funding concentration, data silos, attribution failures---are infrastructure problems. They persist not because scientists are negligent but because the infrastructure makes negligence the path of least resistance.
+
+\Zoo{} Network does not appeal to better behavior. It changes the infrastructure. Research Capsules make reproducibility the default. \ZIP{}-based funding eliminates geographic and institutional barriers. Usage receipts ensure contributors are compensated. Formal verification makes trust in mathematical claims unnecessary---the machine checks.
+
+The conservation science applications demonstrate that this is not speculative. Satellite ecology, species classification, and habitat modeling are active research programs on \Zoo{} Network, producing data and results today. The DeSci platform extends this foundation to all fields of science.
+
+Two open questions remain:
+
+\begin{enumerate}
+    \item \textbf{Adoption Incentives.} How to bootstrap the Data Commons past the critical mass where network effects take hold. Initial conservation datasets provide a nucleus; scaling to other domains requires domain-specific outreach.
+    \item \textbf{Regulatory Integration.} How on-chain research provenance integrates with existing regulatory frameworks (FDA, EMA) for research that informs policy or clinical practice.
+\end{enumerate}
+
+Science deserves infrastructure as rigorous as the claims it produces. \Zoo{} provides it.
+
+\begin{thebibliography}{20}
+
+\bibitem{baker2016reproducibility}
+M.~Baker,
+``1,500 Scientists Lift the Lid on Reproducibility,''
+\textit{Nature}, vol.~533, no.~7604, pp.~452--454, 2016.
+
+\bibitem{wilkinson2016fair}
+M.~D.~Wilkinson \textit{et al.},
+``The FAIR Guiding Principles for Scientific Data Management and Stewardship,''
+\textit{Scientific Data}, vol.~3, 160018, 2016.
+
+\bibitem{demoura2021lean4}
+L.~de~Moura and S.~Ullrich,
+``The Lean~4 Theorem Prover and Programming Language,''
+\textit{Proc.\ CADE}, Springer, 2021.
+
+\bibitem{zoo-ai-memory}
+Z.~Kelling,
+``Sovereign AI Memory: Persistent, Private, and Portable Agent State on Zoo Network,''
+Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-dao-governance}
+Z.~Kelling,
+``Zoo DAO: Decentralized Governance for Open Science Research,''
+Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-data-commons}
+Zoo Labs Foundation Research,
+``Zoo Data Commons: A Decentralized Repository for Open Biodiversity Datasets,''
+Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-tokenomics}
+Z.~Kelling,
+``Zoo Network Tokenomics: Fair Distribution Through Complete Airdrop,''
+Zoo Labs Foundation, 2025.
+
+\bibitem{zoo-satellite-ecology}
+Zoo Labs Foundation Research,
+``Satellite Ecology on Zoo Network,''
+Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-species-classification}
+Zoo Labs Foundation Research,
+``Species Classification on Zoo Network,''
+Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-federated-wildlife}
+Zoo Labs Foundation Research,
+``Federated Wildlife Monitoring on Zoo Network,''
+Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-impact-bonds}
+Zoo Labs Foundation Research,
+``Impact Bonds on Zoo Network,''
+Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-fhe}
+Z.~Kelling,
+``Threshold Fully Homomorphic Encryption on Zoo Network: GPU-Accelerated Confidential Computation,''
+Zoo Labs Foundation, 2026.
+
+\end{thebibliography}
+
+\end{document}
