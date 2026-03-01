@@ -1,0 +1,69 @@
+% zoocover.sty — Monochrome cover page for Zoo Labs Foundation papers
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{zoocover}[2026/02/01 Zoo Research Cover Page]
+
+\RequirePackage{tikz}
+\RequirePackage{xcolor}
+\RequirePackage{graphicx}
+\RequirePackage[margin=1in]{geometry}
+
+\newcommand{\zoocoverpage}{%
+  \newgeometry{margin=0pt}
+  \thispagestyle{empty}
+  \begin{tikzpicture}[remember picture,overlay]
+    \fill[black] (current page.south west) rectangle (current page.north east);
+
+    \node[anchor=north west] at ([xshift=1.4cm,yshift=-1.2cm]current page.north west) {%
+      \begin{tikzpicture}[scale=0.45]
+        \begin{scope}
+          \clip (0,0) circle (1.0);
+          \draw[white, line width=1.4pt] (0.018,-0.498) circle (0.827);
+          \draw[white, line width=1.4pt] (-0.505,0.300) circle (0.827);
+          \draw[white, line width=1.4pt] (0.477,0.300) circle (0.827);
+          \draw[white, line width=1.5pt] (0,0) circle (0.936);
+        \end{scope}
+      \end{tikzpicture}%
+    };
+
+    \node[white, font=\fontsize{20}{26}\selectfont\bfseries,
+          text width=11cm, align=center]
+      at ([yshift=1cm]current page.center)
+      {\hyphenpenalty=10000\exhyphenpenalty=10000\@title};
+
+    \draw[white!25, line width=0.3pt]
+      ([yshift=-0.8cm,xshift=-3.5cm]current page.center) --
+      ([yshift=-0.8cm,xshift=3.5cm]current page.center);
+
+    \node[white!45, font=\fontsize{8.5}{11}\selectfont]
+      at ([yshift=-1.6cm]current page.center)
+      {Antje Worring \quad \& \quad Zach Kelling};
+
+    \node[white!30, font=\fontsize{7.5}{10}\selectfont\itshape]
+      at ([yshift=-2.3cm]current page.center)
+      {Zoo Labs Foundation};
+
+    \node[white!25, font=\fontsize{7.5}{10}\selectfont]
+      at ([yshift=-3cm]current page.center)
+      {\@date};
+
+    \node[white!15, font=\fontsize{6}{8}\selectfont, anchor=south west]
+      at ([xshift=1.4cm,yshift=1cm]current page.south west)
+      {Zoo Labs Foundation};
+
+    \node[white!15, font=\fontsize{6}{8}\selectfont, anchor=south east]
+      at ([xshift=-1.4cm,yshift=1cm]current page.south east)
+      {RESEARCH};
+  \end{tikzpicture}
+  \restoregeometry
+  \newpage
+}
+
+\let\zoocover\zoocoverpage
+\let\luxcoverpage\zoocoverpage
+
+% Monochrome hyperlinks
+\AtBeginDocument{%
+  \@ifpackageloaded{hyperref}{%
+    \hypersetup{colorlinks=true,linkcolor=black,citecolor=black,urlcolor=black,filecolor=black}%
+  }{}%
+}

@@ -1,0 +1,366 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{tabularx}
+
+% Status markers
+\newcommand{\pending}{\texttt{[ ]}}
+\newcommand{\done}{\texttt{[x]}}
+\newcommand{\blocked}{\texttt{[!]}}
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+
+\title{\textbf{Zoo Network Mainnet Launch:\\Technical Checklist and Rehearsal Plan}\\
+\vspace{5pt}
+
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{ops@zoo.ngo}
+}
+
+\date{January 2026}
+
+\begin{document}
+
+\zoocoverpage
+
+\tableofcontents
+\newpage
+
+%% ---------------------------------------------------------------------------
+\section{Overview}
+
+This document is the authoritative checklist for \Zoo{} Network mainnet launch.
+It covers pre-launch validation, rehearsal on staging, launch-day sequence,
+post-launch operations, and rollback procedures.
+
+\Zoo{} Network is a Layer~2 on \Lux{} mainnet comprising 14 virtual machines
+(chains) and one Layer~3 subnet (Beluga). All chains share \Lux{} consensus
+and settle to \Lux{} P-Chain.
+
+\medskip
+\noindent\textbf{Clusters:}
+\begin{itemize}[nosep]
+  \item \texttt{lux-k8s} --- \Lux{} mainnet validators (DOKS, SFO3)
+  \item \texttt{lux-test-k8s} --- Testnet / staging (DOKS, SFO3)
+  \item \texttt{hanzo-k8s} --- Shared platform services (IAM, KMS, gateway)
+\end{itemize}
+
+\noindent\textbf{Status legend:}
+\pending\ = pending,
+\done\ = complete,
+\blocked\ = blocked.
+
+%% ---------------------------------------------------------------------------
+\section{Pre-Launch: Testnet Validation}
+
+All items must be \done\ before rehearsal begins.
+
+\subsection{VM Verification}
+
+\begin{tabularx}{\textwidth}{@{}l l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Chain} & \textbf{Criteria} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1  & EVM (C-Chain)  & Standard EVM conformance tests pass              & Core   & \pending \\
+2  & DEX (D-Chain)  & Order matching, AMM, limit orders verified        & Core   & \pending \\
+3  & FHE (F-Chain)  & Encrypted compute round-trip, TFHE gates correct  & Crypto & \pending \\
+4  & I-Chain        & DID issuance, revocation, resolution              & Auth   & \pending \\
+5  & K-Chain        & Key management, TLS cert provisioning, rotation   & Auth   & \pending \\
+6  & T-Chain        & MPC wallet creation via FROST DKG                 & Crypto & \pending \\
+7  & B-Chain        & Bridge lock/mint/burn/release full cycle           & Bridge & \pending \\
+8  & Z-Chain        & ZK proof generation and on-chain verification      & Crypto & \pending \\
+9  & Q-Chain        & Quantum-resistant signature schemes operational    & Crypto & \pending \\
+10 & A-Chain        & Agent execution, tool calls, state persistence     & AI     & \pending \\
+11 & G-Chain        & Governance proposals, voting, execution            & Gov    & \pending \\
+12 & O-Chain        & Oracle data feeds, attestation, freshness checks   & Data   & \pending \\
+13 & R-Chain        & Research coordination, dataset registry            & Sci    & \pending \\
+14 & Beluga (L3)    & L3 subnet boots, settles to Zoo L2                & Core   & \pending \\
+\bottomrule
+\end{tabularx}
+
+\subsection{GPU Acceleration Benchmarks}
+
+\begin{tabularx}{\textwidth}{@{}l X l l l@{}}
+\toprule
+\textbf{\#} & \textbf{Workload} & \textbf{Target} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1 & CEVM kernel execution (A100)       & $\geq$50K tx/s          & Core   & \pending \\
+2 & TFHE gate evaluation (bootstrapping)& $\leq$12ms per gate     & Crypto & \pending \\
+3 & BLS aggregate signature verify      & $\leq$2ms / 128 sigs   & Crypto & \pending \\
+4 & NTT for ZK proof generation          & $\leq$100ms / 2\textsuperscript{24} & Crypto & \pending \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Testing and Audit}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Item} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1 & E2E Playwright suite: all chains green           & QA     & \pending \\
+2 & Red team round 1 complete, findings remediated    & SecOps & \pending \\
+3 & Red team round 2 complete, findings remediated    & SecOps & \pending \\
+4 & Red team round 3 complete, 0 open findings        & SecOps & \pending \\
+5 & External audit report received and accepted        & SecOps & \pending \\
+6 & Formal proofs: 86 Lean~4 theorems compiled, 0 \texttt{sorry} & Formal & \pending \\
+7 & Bridge tested: \Lux{} mainnet $\leftrightarrow$ \Zoo{} testnet & Bridge & \pending \\
+8 & Fuzz testing: 72h continuous, 0 crashes            & QA     & \pending \\
+\bottomrule
+\end{tabularx}
+
+%% ---------------------------------------------------------------------------
+\section{Rehearsal: Testnet to Staging}
+
+Rehearsal runs on \texttt{lux-test-k8s}. The full launch-day sequence is
+executed end-to-end. Any failure resets the rehearsal from step~1.
+
+\subsection{Genesis and Bootstrap}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Step} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1  & Generate genesis blocks for all 14 chains                    & Core   & \pending \\
+2  & Validator key ceremony: generate staking TLS certs via K-Chain & Auth   & \pending \\
+3  & P-Chain L1 creation transaction submitted and confirmed       & Core   & \pending \\
+4  & Chain creation transactions for all 14 VMs confirmed          & Core   & \pending \\
+5  & Validator registration (5 founding nodes) on P-Chain          & Core   & \pending \\
+6  & MPC wallet creation via T-Chain (FROST DKG for bridge keys)   & Crypto & \pending \\
+7  & DID issuance for all 5 validators via I-Chain                 & Auth   & \pending \\
+8  & Verify all 14 chain RPC endpoints responding                  & Core   & \pending \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Load and Chaos Testing}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Test} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1 & Sustained throughput: 100K+ blocks produced across all chains    & Perf & \pending \\
+2 & EVM sustained load: 10K tx/s for 1 hour, no degradation         & Perf & \pending \\
+3 & Bridge stress: 1000 concurrent lock/mint operations              & Bridge & \pending \\
+4 & Kill 1 of 5 validators, verify chain progress continues          & Chaos & \pending \\
+5 & Kill 2 of 5 validators, verify chain halts (BFT threshold)      & Chaos & \pending \\
+6 & Restore killed validators, verify chain resumes within 30s       & Chaos & \pending \\
+7 & Network partition: split 3/2, verify majority partition progresses & Chaos & \pending \\
+8 & Disk full simulation: verify graceful degradation, no corruption  & Chaos & \pending \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Rehearsal Sign-off}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Gate} & \textbf{Approver} & \textbf{Status} \\
+\midrule
+1 & All genesis/bootstrap steps completed without manual intervention & CTO    & \pending \\
+2 & Load test targets met                                             & CTO    & \pending \\
+3 & Chaos test recovery verified                                      & CTO    & \pending \\
+4 & Rehearsal log archived to IPFS                                    & DevOps & \pending \\
+\bottomrule
+\end{tabularx}
+
+%% ---------------------------------------------------------------------------
+\section{Launch Day}
+
+Launch proceeds only after rehearsal sign-off. All times are UTC.
+A launch coordinator runs the sequence; no ad-hoc changes permitted.
+
+\subsection{Genesis and Validators}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Action} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1 & Genesis block signed by founding validators (multisig)       & Core   & \pending \\
+2 & Bootstrap 5 GPU validator nodes on \texttt{lux-k8s}          & DevOps & \pending \\
+3 & P-Chain L1 creation confirmed on \Lux{} mainnet              & Core   & \pending \\
+4 & All 14 chain creation transactions confirmed                 & Core   & \pending \\
+5 & Validator registration confirmed for 5 founding nodes        & Core   & \pending \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Service Activation}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Action} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1  & Verify all 14 chain RPCs responding via gateway                & Core   & \pending \\
+2  & Bridge activation: \Lux{} mainnet $\leftrightarrow$ \Zoo{} mainnet & Bridge & \pending \\
+3  & Bridge: first transfer confirmed both directions               & Bridge & \pending \\
+4  & Blockscout explorer live at \texttt{explore.zoo.ngo}           & DevOps & \pending \\
+5  & Explorer indexing all 14 chains                                & DevOps & \pending \\
+6  & DNS cutover: \texttt{api.zoo.ngo} points to mainnet gateway    & DevOps & \pending \\
+7  & DNS cutover: \texttt{explore.zoo.ngo} points to Blockscout     & DevOps & \pending \\
+8  & TLS certificates valid and proxied via Cloudflare              & DevOps & \pending \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Monitoring}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Action} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1 & Prometheus scraping all validator and chain metrics         & DevOps & \pending \\
+2 & Grafana dashboards live: consensus, throughput, latency     & DevOps & \pending \\
+3 & Alerting rules active: missed blocks, high latency, disk    & DevOps & \pending \\
+4 & PagerDuty escalation configured for critical alerts         & DevOps & \pending \\
+5 & Structured logging flowing to observability stack            & DevOps & \pending \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Launch Sign-off}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Gate} & \textbf{Approver} & \textbf{Status} \\
+\midrule
+1 & All 14 chains producing blocks          & CTO    & \pending \\
+2 & Bridge operational both directions       & CTO    & \pending \\
+3 & Explorer indexing confirmed              & CTO    & \pending \\
+4 & Monitoring and alerting verified         & CTO    & \pending \\
+5 & Public announcement authorized           & CEO    & \pending \\
+\bottomrule
+\end{tabularx}
+
+%% ---------------------------------------------------------------------------
+\section{Post-Launch}
+
+\subsection{24-Hour Monitoring Window}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Item} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1 & On-call rotation staffed for 24h (2 engineers minimum)     & DevOps & \pending \\
+2 & Block production continuous, no gaps $>$5s                   & Core   & \pending \\
+3 & Bridge transfers monitored, no stuck transactions           & Bridge & \pending \\
+4 & Memory and CPU within resource limits on all nodes          & DevOps & \pending \\
+5 & No consensus failures or forks detected                     & Core   & \pending \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Validator Onboarding}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Item} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1 & Community validator documentation published                   & Docs   & \pending \\
+2 & Validator onboarding guide tested by external party           & QA     & \pending \\
+3 & First community validator registered (target: launch +48h)   & Core   & \pending \\
+4 & Gradual ramp: 10 validators by week 1, 25 by week 4          & Core   & \pending \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Governance and Staking}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Item} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1 & Staking portal activated on \texttt{app.zoo.ngo}            & Frontend & \pending \\
+2 & Staking contract verified on explorer                        & Core     & \pending \\
+3 & First governance vote: ZIP-001 submitted via G-Chain         & Gov      & \pending \\
+4 & ZIP-001 voting period completes, result executed on-chain    & Gov      & \pending \\
+\bottomrule
+\end{tabularx}
+
+%% ---------------------------------------------------------------------------
+\section{Rollback Plan}
+
+If mainnet exhibits critical failures (consensus divergence, bridge exploit,
+data corruption), the following rollback procedure activates.
+
+\subsection{Chain Halt Conditions}
+
+A chain halt is triggered if \textbf{any} of the following occur:
+
+\begin{enumerate}[nosep]
+  \item Consensus divergence: two or more validators on different forks for $>$60s.
+  \item Bridge exploit: unauthorized mint or release detected.
+  \item Data corruption: state root mismatch across $>$1 validator.
+  \item Critical vulnerability: zero-day with active exploitation.
+\end{enumerate}
+
+\subsection{Halt Procedure}
+
+\begin{tabularx}{\textwidth}{@{}l X l@{}}
+\toprule
+\textbf{\#} & \textbf{Action} & \textbf{Owner} \\
+\midrule
+1 & CTO authorizes chain halt                                          & CTO    \\
+2 & Disable bridge (freeze lock/mint contracts on both sides)          & Bridge \\
+3 & Coordinate validator shutdown via authenticated channel             & DevOps \\
+4 & All 5 founding validators stop block production                    & DevOps \\
+5 & Public status page updated: \texttt{status.zoo.ngo}                & Comms  \\
+6 & Post-mortem investigation begins (target: root cause within 4h)    & Core   \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Genesis Reset (Last Resort)}
+
+If the chain state is unrecoverable:
+
+\begin{enumerate}[nosep]
+  \item Export last-known-good state snapshot from all validators.
+  \item Generate new genesis from snapshot (preserving balances and contract state).
+  \item Validators re-key via K-Chain key ceremony.
+  \item Re-execute bootstrap sequence (Section~3.1).
+  \item Bridge re-activation with fresh MPC keys via T-Chain.
+  \item Independent audit of new genesis state before restart.
+\end{enumerate}
+
+\noindent This procedure destroys transaction history after the snapshot.
+It is used only when all other recovery options are exhausted.
+
+\subsection{Communication Plan}
+
+\begin{tabularx}{\textwidth}{@{}l X l@{}}
+\toprule
+\textbf{\#} & \textbf{Action} & \textbf{Owner} \\
+\midrule
+1 & Status page updated within 5 minutes of halt decision         & Comms  \\
+2 & Community notification via Discord, Twitter, blog              & Comms  \\
+3 & Hourly updates until resolution                                & Comms  \\
+4 & Post-mortem published within 72 hours                          & Core   \\
+\bottomrule
+\end{tabularx}
+
+%% ---------------------------------------------------------------------------
+\section{Appendix: Chain Reference}
+
+\begin{tabularx}{\textwidth}{@{}l l X@{}}
+\toprule
+\textbf{Chain} & \textbf{VM ID} & \textbf{Purpose} \\
+\midrule
+EVM (C-Chain)  & \texttt{cevm}    & General-purpose smart contracts (GPU-accelerated) \\
+DEX (D-Chain)  & \texttt{dex}     & Native decentralized exchange with order book \\
+FHE (F-Chain)  & \texttt{fhe}     & Fully homomorphic encryption compute \\
+I-Chain        & \texttt{identity}& Decentralized identity (W3C DID) \\
+K-Chain        & \texttt{keychain}& Key management and certificate authority \\
+T-Chain        & \texttt{thresh}  & Threshold signatures and MPC wallets \\
+B-Chain        & \texttt{bridge}  & Cross-chain bridge operations \\
+Z-Chain        & \texttt{zkvm}    & Zero-knowledge proof execution \\
+Q-Chain        & \texttt{pqc}     & Post-quantum cryptographic operations \\
+A-Chain        & \texttt{agent}   & AI agent execution and orchestration \\
+G-Chain        & \texttt{gov}     & Governance proposals and voting \\
+O-Chain        & \texttt{oracle}  & Decentralized oracle network \\
+R-Chain        & \texttt{research}& Research coordination and datasets \\
+Beluga (L3)    & \texttt{beluga}  & High-throughput L3 subnet \\
+\bottomrule
+\end{tabularx}
+
+\end{document}

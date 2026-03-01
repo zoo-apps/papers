@@ -1,0 +1,485 @@
+\documentclass[twocolumn,11pt]{article}
+\usepackage{shared/zoocover}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage[numbers]{natbib}
+\usepackage{abstract}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{listings}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+}
+
+\title{\textbf{ZIP-0803: Encrypted SQLite Replication for Zoo Services}}
+
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{January 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We specify a sidecar-based replication protocol for Zoo Network services
+that use Hanzo Base (per-org encrypted SQLite).  The system streams
+Write-Ahead Log (WAL) frames through \texttt{hanzoai/replicate} to
+S3-compatible object storage, encrypts at-rest with \texttt{hanzoai/age}
+(X25519 + ChaCha20-Poly1305), and achieves $\leq 1$\,s Recovery Point
+Objective (RPO) with seconds-scale Recovery Time Objective (RTO).
+Each pod replicates to a distinct S3 prefix keyed by pod identity,
+enabling StatefulSet-aware restore.  The design reuses the same
+\texttt{ghcr.io/hanzoai/replicate:latest} image deployed across
+Lux and Zoo ecosystems, requiring zero Zoo-specific code.
+\end{abstract}
+
+\section{Motivation}
+
+Zoo Network services are migrating from PostgreSQL to Hanzo Base
+(per-org encrypted SQLite) following the Web5 local-first architecture
+described in the Zoo research program~\cite{web5}.  SQLite provides
+sub-microsecond read latency, per-tenant data isolation via
+deterministic key derivation, and offline-first operation.
+
+However, SQLite's single-writer model means each service instance
+owns its database file.  Without replication:
+
+\begin{enumerate}
+\item A pod restart loses all data accumulated since the last
+  PersistentVolumeClaim (PVC) snapshot.
+\item Disaster recovery requires manual PVC restoration from
+  cloud provider snapshots (minutes to hours).
+\item Cross-region failover is impossible without an external
+  replication mechanism.
+\end{enumerate}
+
+This proposal introduces continuous WAL streaming to S3 as the
+replication primitive, providing:
+
+\begin{itemize}
+\item $\leq 1$\,s RPO via 1-second sync intervals
+\item Seconds-scale RTO via init-container restore
+\item At-rest encryption via \texttt{hanzoai/age}
+\item Zero application code changes (sidecar pattern)
+\end{itemize}
+
+\section{Architecture}
+
+\subsection{Components}
+
+\begin{description}
+\item[\texttt{hanzoai/replicate}] Litestream-based WAL streaming
+  daemon.  Watches SQLite WAL, ships frames to S3.  Runs as a
+  sidecar container sharing the data volume with the primary
+  service container.
+
+\item[\texttt{hanzoai/age}] X25519 + ChaCha20-Poly1305 file
+  encryption.  Used for encrypting WAL snapshots and segments
+  at rest in S3.  Compatible with \texttt{luxfi/age} (same
+  wire format).
+
+\item[\texttt{hanzoai/s3}] S3-compatible object storage.  Deployed
+  as a ClusterIP service within the Zoo K8s cluster
+  (\texttt{s3.zoo.svc.cluster.local:9000}).  Backed by
+  DigitalOcean Spaces or MinIO depending on environment.
+
+\item[ConfigMap] Shared \texttt{replicate-config} ConfigMap
+  containing the Litestream YAML configuration.  All services
+  reference the same ConfigMap; pod identity (\texttt{POD\_NAME})
+  provides per-replica S3 path namespacing.
+\end{description}
+
+\subsection{Data Flow}
+
+\begin{verbatim}
+Service writes to SQLite
+  -> WAL frames written to shared PVC
+  -> Replicate sidecar reads WAL
+  -> Frames uploaded to S3 (1s interval)
+  -> Optional: age encryption before upload
+
+Pod restart:
+  -> Init container runs replicate restore
+  -> Fetches latest snapshot + WAL segments
+  -> Reconstructs SQLite database
+  -> Primary container starts with warm data
+\end{verbatim}
+
+\subsection{K8s Sidecar Pattern}
+
+Each service pod contains three components:
+
+\begin{enumerate}
+\item \textbf{Init container} (\texttt{replicate-restore}): Runs
+  \texttt{replicate restore -if-db-not-exists -if-replica-exists}
+  to restore from S3 on cold start.  No-op if database already
+  exists on the PVC.
+
+\item \textbf{Primary container}: The service binary (e.g.,
+  \texttt{zoo-bridge}, future Base-powered services).  Reads and
+  writes \texttt{/app/data/data.db}.
+
+\item \textbf{Sidecar container} (\texttt{replicate}): Runs
+  \texttt{replicate replicate} to continuously stream WAL changes
+  to S3.  Shares the \texttt{/app/data} volume with the primary.
+\end{enumerate}
+
+\subsection{S3 Path Layout}
+
+\begin{verbatim}
+s3://zoo-data/
+  {pod-name}/
+    generations/
+      {generation-id}/
+        snapshots/
+          {index}.snapshot.lz4
+        wal/
+          {index}.wal.lz4
+\end{verbatim}
+
+Each pod (e.g., \texttt{zoo-bridge-0}, \texttt{zoo-bridge-1})
+replicates to a distinct prefix.  The \texttt{POD\_NAME}
+environment variable is injected via the Kubernetes downward API
+(\texttt{metadata.name} fieldRef).
+
+\section{Specification}
+
+\subsection{Replicate Configuration}
+
+\begin{lstlisting}[language=yaml,caption={replicate-config ConfigMap}]
+dbs:
+  - path: /app/data/data.db
+    replicas:
+      - type: s3
+        bucket: zoo-data
+        path: ${POD_NAME}
+        endpoint: ${LITESTREAM_S3_ENDPOINT}
+        region: sfo3
+        force-path-style: true
+        sync-interval: 1s
+        snapshot-interval: 1h
+\end{lstlisting}
+
+\begin{itemize}
+\item \texttt{sync-interval: 1s} --- WAL frames shipped every
+  second, achieving $\leq 1$\,s RPO.
+\item \texttt{snapshot-interval: 1h} --- Full snapshot every hour
+  bounds restore time (restore replays at most 1 hour of WAL).
+\item \texttt{force-path-style: true} --- Required for
+  DigitalOcean Spaces and MinIO.
+\end{itemize}
+
+\subsection{Encryption}
+
+WAL segments and snapshots are encrypted at rest using
+\texttt{hanzoai/age} with per-environment X25519 key pairs:
+
+\begin{lstlisting}[language=yaml,caption={Encryption configuration}]
+dbs:
+  - path: /app/data/data.db
+    replicas:
+      - type: s3
+        bucket: zoo-data
+        path: ${POD_NAME}
+        encryption:
+          type: age
+          key: ${AGE_SECRET_KEY}
+\end{lstlisting}
+
+Key management:
+\begin{itemize}
+\item Encryption keys stored in Zoo KMS (K-Chain) or
+  Kubernetes secrets (bootstrapping).
+\item One key pair per environment (devnet, testnet, mainnet).
+\item Key rotation: generate new pair, re-snapshot with new key,
+  update secret.  Old WAL segments remain readable with old key
+  until next snapshot.
+\end{itemize}
+
+\subsection{Service Applicability}
+
+\begin{table}[h]
+\centering
+\caption{Zoo services and replication targets}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Service & Kind & Data & Replicate \\
+\midrule
+zoo-bridge & Deployment & SQLite (future) & Yes \\
+zoo-gateway & CRD (ZooGateway) & Stateless & No \\
+zoo-explorer & Deployment & PostgreSQL & No \\
+zoo-chain & StatefulSet & Node data (PVC) & No\footnotemark \\
+zoo-operator & Deployment & Stateless & No \\
+sql & StatefulSet & PostgreSQL & No \\
+kv & StatefulSet & Valkey & No \\
+ingress & Deployment & Stateless & No \\
+\bottomrule
+\end{tabular}
+\end{table}
+\footnotetext{Chain node data replication uses PVC snapshots and
+  chain sync, not WAL streaming.  Replicate is for SQLite only.}
+
+As services migrate from PostgreSQL to Base/SQLite, they gain
+replicate sidecars with zero code changes --- only a K8s patch.
+
+\subsection{Recovery Guarantees}
+
+\begin{description}
+\item[RPO $\leq 1$\,s] WAL frames synced every second.
+  In the worst case, the last second of writes is lost.
+
+\item[RTO $\approx$ seconds] Init container restores latest
+  snapshot ($\leq 1$ hour old) plus WAL replay.  Typical
+  restore: 2--5 seconds for databases under 1\,GB.
+
+\item[Durability] S3 provides 11 nines of durability.
+  Snapshots are LZ4-compressed and optionally age-encrypted.
+
+\item[Consistency] SQLite WAL mode guarantees atomic commits.
+  Replicate ships complete WAL frames, preserving transaction
+  boundaries.
+\end{description}
+
+\section{Implementation}
+
+\subsection{K8s Patches}
+
+Patches are applied as standalone YAML files in
+\texttt{k8s/patches/} rather than inline kustomize overlays.
+This allows selective application per-service and per-environment.
+
+Required patches:
+\begin{enumerate}
+\item \texttt{replicate-config.yaml} --- Shared ConfigMap
+\item \texttt{replicate-bridge.yaml} --- Bridge deployment patch
+  (when migrated to SQLite)
+\end{enumerate}
+
+\subsection{S3 Service}
+
+Deploy \texttt{hanzoai/s3} as a StatefulSet with block storage:
+
+\begin{lstlisting}[language=yaml,caption={S3 service (MinIO)}]
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: s3
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: s3
+          image: ghcr.io/hanzoai/s3:latest
+          ports:
+            - containerPort: 9000
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: ACCESS_KEY
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: SECRET_KEY
+\end{lstlisting}
+
+\subsection{Apply Script}
+
+A shell script (\texttt{scripts/apply-replicate.sh}) orchestrates
+the full deployment:
+
+\begin{enumerate}
+\item Verifies \texttt{s3-credentials} secret exists
+\item Applies the shared ConfigMap
+\item Patches each target service
+\item Restarts patched workloads
+\item Waits for rollout completion
+\end{enumerate}
+
+\section{Comparison with Alternatives}
+
+\begin{table}[h]
+\centering
+\caption{Replication approaches}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Approach & RPO & RTO & Complexity & Cost \\
+\midrule
+PVC snapshots & hours & minutes & low & low \\
+PostgreSQL streaming & 0 & seconds & high & high \\
+\textbf{WAL to S3} & \textbf{1\,s} & \textbf{seconds} & \textbf{low} & \textbf{low} \\
+CockroachDB & 0 & 0 & very high & very high \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+WAL-to-S3 replication provides the best tradeoff for Zoo's
+requirements: near-zero RPO, fast recovery, minimal operational
+complexity, and compatibility with the Base/SQLite-per-org
+architecture.
+
+\section{Cross-Ecosystem Compatibility}
+
+The \texttt{ghcr.io/hanzoai/replicate:latest} image is shared
+across all ecosystems:
+
+\begin{itemize}
+\item \textbf{Lux}: IAM, KMS, Gateway, Commerce (4 services)
+\item \textbf{Lux}: Future Base-powered services
+\item \textbf{Zoo}: Bridge and future Base-powered services
+\end{itemize}
+
+The only per-ecosystem differences are:
+\begin{itemize}
+\item S3 bucket name (\texttt{zoo-data} vs \texttt{zoo-data})
+\item S3 endpoint (GCS vs DigitalOcean Spaces)
+\item Region (\texttt{us-central1} vs \texttt{sfo3})
+\item Age encryption key pairs
+\end{itemize}
+
+All configuration is injected via ConfigMap and secrets.
+Zero code divergence between ecosystems.
+
+\section{Security Considerations}
+
+\begin{enumerate}
+\item \textbf{S3 credentials}: Stored in Kubernetes secrets,
+  never in ConfigMaps or container images.  Accessed via
+  \texttt{LITESTREAM\_ACCESS\_KEY\_ID} and
+  \texttt{LITESTREAM\_SECRET\_ACCESS\_KEY} environment variables.
+
+\item \textbf{At-rest encryption}: WAL segments encrypted with
+  \texttt{hanzoai/age} (X25519 + ChaCha20-Poly1305).  Even if
+  the S3 bucket is compromised, data is unreadable without the
+  age secret key.
+
+\item \textbf{Per-org isolation}: Base already encrypts each
+  org's SQLite shard with a unique DEK derived via HKDF.
+  Replicate streams the encrypted bytes --- it never sees
+  plaintext org data.
+
+\item \textbf{Network policy}: The replicate sidecar only needs
+  egress to the S3 service (\texttt{s3.zoo.svc.cluster.local:9000}).
+  A NetworkPolicy can restrict this.
+
+\item \textbf{Key rotation}: Age key rotation requires a
+  re-snapshot.  The apply script can trigger this via
+  \texttt{replicate snapshots create}.
+\end{enumerate}
+
+\section{Post-Quantum Security}
+
+The Zoo ecosystem has achieved comprehensive post-quantum (PQ) coverage
+across all cryptographic layers, consistent with LP-102 (Lux) and
+HIP-0302 (Hanzo).  All previously planned mitigations are now deployed.
+
+\subsection{PQ Scorecard}
+
+\begin{table}[h]
+\centering
+\caption{Complete post-quantum scorecard.  All layers PQ-safe except EVM chain signing.}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Layer} & \textbf{Algorithm} & \textbf{PQ Status} & \textbf{Status} \\
+\midrule
+Disk encryption     & AES-256 (sqlcipher)          & Safe (128-bit PQ)    & Deployed \\
+HKDF derivation     & HKDF-SHA-256                 & Safe (128-bit PQ)    & Deployed \\
+Field encryption    & AES-256-GCM                  & Safe (128-bit PQ)    & Deployed \\
+S3 backup           & age ML-KEM-768+X25519 (\texttt{age1pq}) & Safe (FIPS 203) & Deployed \\
+TLS                 & X25519MLKEM768 (first curve) & Safe (hybrid PQ)     & Deployed \\
+JWT signing         & ML-DSA-65 (FIPS 204)         & Safe (Module-LWE+SIS)& Deployed \\
+JWKS validation     & ML-DSA-65                    & Safe                 & Deployed \\
+MPC transport       & Hybrid KEM (X25519+ML-KEM-768) & Safe              & Deployed \\
+MPC key shares      & PQ KEM encryption            & Safe                 & Deployed \\
+Master keys         & Cloud HSM (FIPS 140-2 L3)    & Hardware isolation   & Deployed \\
+Chain signing       & secp256k1 ECDSA              & \textbf{Not PQ-safe} & EVM constraint \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Deployed PQ Components}
+
+\begin{description}
+\item[S3 backup:] All age encryption uses ML-KEM-768 + X25519 hybrid
+  recipients (\texttt{age1pq} prefix).  Label enforcement prevents
+  downgrade to classical-only recipients.
+\item[TLS:] X25519MLKEM768 as first curve in TLS 1.3 supported groups.
+\item[JWT signing:] ML-DSA-65 (FIPS~204) for IAM token issuance.
+  JWKS validation uses ML-DSA-65 public keys.
+\item[MPC:] Hybrid KEM for transport; PQ KEM encryption for key shares.
+\item[HSM:] Cloud HSM (FIPS 140-2 L3) for master keys.  Key material
+  never leaves HSM boundary.  Three keyrings per ecosystem.
+\end{description}
+
+\subsection{Harvest-Now-Decrypt-Later: Closed}
+
+The combination of ML-KEM-768 hybrid encryption (S3), X25519MLKEM768
+TLS (transit), ML-DSA-65 JWT signing (auth), PQ KEM for MPC, and
+Cloud HSM for master keys closes the harvest-now-decrypt-later attack
+vector completely.  An adversary who captures data today cannot decrypt
+it with a future quantum computer.
+
+\section{References}
+
+\begin{thebibliography}{9}
+
+\bibitem{web5}
+Z.~Kelling, ``Web5: Local-First Applications with Chain-Anchored
+Trust,'' Zoo Labs Foundation, April 2025.
+
+\bibitem{litestream}
+B.~Johnson, ``Litestream: Streaming Replication for SQLite,''
+\url{https://litestream.io}, 2021.
+
+\bibitem{age}
+F.~Valsorda, ``age: A simple, modern and secure file encryption
+tool,'' \url{https://age-encryption.org}, 2019.
+
+\bibitem{zip014}
+Zoo Labs Foundation, ``ZIP-014: Zoo KMS Integration via Lux KMS,''
+2025.
+
+\bibitem{zip015}
+Zoo Labs Foundation, ``ZIP-015: Zoo L2 Chain Architecture,''
+2025.
+
+\bibitem{xwing}
+M.~Connolly, ``X-Wing: The Hybrid KEM You've Been Looking For,''
+Internet-Draft, IETF CFRG,
+\url{https://www.ietf.org/archive/id/draft-connolly-cfrg-xwing-kem-05.html},
+2024.
+
+\bibitem{fips203}
+NIST, ``Module-Lattice-Based Key-Encapsulation Mechanism Standard
+(ML-KEM),'' FIPS~203, August 2024.
+
+\end{thebibliography}
+
+\vspace{1em}
+\noindent\textbf{Status:} Draft\\
+\noindent\textbf{Type:} Infrastructure\\
+\noindent\textbf{Category:} Core\\
+\noindent\textbf{Requires:} ZIP-014, ZIP-015\\
+\noindent\textbf{References:} LP-102, HIP-0302
+
+\vspace{0.5em}
+\noindent Copyright \copyright{} 2026 Zoo Labs Foundation.
+All rights reserved.
+
+\end{document}

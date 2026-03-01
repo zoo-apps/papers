@@ -1,0 +1,62 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[letterpaper,margin=0pt]{geometry}
+\usepackage{tikz}
+\usepackage{xcolor}
+
+\pagestyle{empty}
+\parindent=0pt
+
+\begin{document}
+\noindent
+\begin{tikzpicture}[remember picture,overlay]
+  % Full bleed black
+  \fill[black] ([xshift=-1cm,yshift=-1cm]current page.south west) rectangle ([xshift=1cm,yshift=1cm]current page.north east);
+
+  % Venn logo — top left
+  \node[anchor=north west] at ([xshift=1.4cm,yshift=-1.2cm]current page.north west) {%
+    \begin{tikzpicture}[scale=0.45]
+      \begin{scope}
+        \clip (0,0) circle (1.0);
+        \draw[white, line width=1.4pt] (0.018,-0.498) circle (0.827);
+        \draw[white, line width=1.4pt] (-0.505,0.300) circle (0.827);
+        \draw[white, line width=1.4pt] (0.477,0.300) circle (0.827);
+        \draw[white, line width=1.5pt] (0,0) circle (0.936);
+      \end{scope}
+    \end{tikzpicture}%
+  };
+
+  % Title — centered
+  \node[text=white,font=\fontsize{32}{40}\selectfont\bfseries\scshape,align=center]
+    at ([yshift=5cm]current page.center) {Zoo Labs Foundation};
+
+  % Subtitle
+  \node[text=white!55,font=\fontsize{13}{17}\selectfont,align=center]
+    at ([yshift=3.2cm]current page.center) {Open AI Research for Safety \& Education};
+
+  % Divider
+  \draw[white!25,line width=0.4pt] ([yshift=2.2cm,xshift=-4cm]current page.center) -- ([yshift=2.2cm,xshift=4cm]current page.center);
+
+  % Authors
+  \node[text=white!45,font=\fontsize{11}{14}\selectfont,align=center]
+    at ([yshift=1.2cm]current page.center) {Antje Worring \quad \& \quad Zach Kelling};
+
+  % Org line
+  \node[text=white!30,font=\fontsize{9}{11}\selectfont,align=center]
+    at ([yshift=0.2cm]current page.center) {501(c)(3) Non-Profit \enspace $\cdot$ \enspace EIN: 88-3538992};
+
+  % Date
+  \node[text=white!18,font=\fontsize{9}{11}\selectfont,align=center]
+    at ([yshift=-1.2cm]current page.center) {February 2026};
+
+  % Bottom pillars
+  \node[anchor=south,text=white!22,font=\fontsize{7.5}{10}\selectfont,align=center]
+    at ([yshift=2.2cm]current page.south) {AI Safety \enspace $\cdot$ \enspace Zen Models \enspace $\cdot$ \enspace Formal Verification \enspace $\cdot$ \enspace Education \enspace $\cdot$ \enspace ZIPs};
+
+  % URL bottom right
+  \node[anchor=south east,text=white!14,font=\fontsize{7}{9}\selectfont]
+    at ([xshift=-1.2cm,yshift=1cm]current page.south east) {zoo.ngo};
+\end{tikzpicture}
+\vspace*{\fill}
+\end{document}
