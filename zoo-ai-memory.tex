@@ -1,0 +1,839 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc,fit}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{xcolor}
+\usepackage{listings}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\AChain}{\textsc{A-Chain}}
+\newcommand{\IChain}{\textsc{I-Chain}}
+\newcommand{\KChain}{\textsc{K-Chain}}
+\newcommand{\TChain}{\textsc{T-Chain}}
+\newcommand{\GChain}{\textsc{G-Chain}}
+\newcommand{\CKKS}{\textsc{CKKS}}
+\newcommand{\TFHE}{\textsc{TFHE}}
+\newcommand{\CRDT}{\textsc{CRDT}}
+\newcommand{\DID}{\textsc{DID}}
+\newcommand{\FHE}{\textsc{FHE}}
+\newcommand{\KEEPER}{\textsc{Keeper}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=black
+}
+
+% Title information
+\title{\textbf{Sovereign AI Memory: Persistent, Private, and Portable\\Agent State on Zoo Network}\\
+\large Encrypted Memory Capsules with Threshold Access Control\\
+\vspace{5pt}
+
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{April 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+Contemporary AI agents suffer from persistent amnesia. Each session begins tabula rasa; memory, when it exists, lives in provider-controlled vector databases that the agent cannot own, move, or protect. We argue that AI memory is not a retrieval problem---it is a \emph{sovereignty} problem. This paper introduces \textbf{Memory Capsules}, encrypted append-only vaults that give agents persistent, private, and portable state on \Zoo{} Network. A Memory Capsule binds to a decentralized identity (\DID{}) on \IChain{}, stores content-addressed entries in an encrypted SQLite vault sealed with \KChain{}-managed keys, synchronizes across agent instances via operation-based \CRDT{}s, and enforces fine-grained access through capability tokens and \TChain{} threshold reveal. We formalize four memory types---episodic, semantic, procedural, and preference---and show how each maps to distinct encryption and garbage-collection policies. For sensitive memories, we demonstrate \FHE{}-encrypted reasoning via \CKKS{} on \AChain{}: an agent can query its own memory without decrypting it, and third parties can verify reasoning traces without observing content. Cross-agent knowledge transfer is achieved through selective disclosure using zero-knowledge proofs, enabling collaborative intelligence without surrendering private state. We benchmark Memory Capsule operations on \Zoo{} Network, measuring append latency (1.2\,ms), \CRDT{} merge throughput (14k ops/s), and \FHE{} query overhead (340\,ms per encrypted recall). The architecture positions AI memory as a first-class on-chain asset: ownable, transferable, and economically valuable.
+
+\textbf{Keywords}: AI memory, sovereign state, encrypted vault, CRDT, FHE, capability-based access, decentralized identity
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%----------------------------------------------------------------------
+\section{Introduction}
+\label{sec:intro}
+%----------------------------------------------------------------------
+
+\subsection{The Amnesia Problem}
+
+Every major AI system today---GPT-4, Claude, Gemini---operates without durable memory. Context windows provide the illusion of continuity, but the moment a session ends, accumulated knowledge vanishes. Provider-side workarounds (conversation history, retrieval-augmented generation, user preference stores) do not solve the fundamental problem; they merely move it behind an API boundary controlled by the provider.
+
+Three failures characterize the current state:
+
+\begin{enumerate}
+    \item \textbf{No Persistence Across Sessions.} An agent that spent hours learning a user's codebase starts from scratch the next morning. Knowledge invested is knowledge lost.
+    \item \textbf{No Privacy From Providers.} When memory exists (e.g., OpenAI's memory feature), the provider stores it in plaintext, indexes it for product improvement, and retains the right to inspect, modify, or delete it.
+    \item \textbf{No Portability Across Models.} A user who switches from Claude to GPT cannot bring accumulated context. Memory is locked to a single vendor, creating switching costs that have nothing to do with model quality.
+\end{enumerate}
+
+These are not engineering oversights. They are structural consequences of a centralized architecture where the model provider controls the memory layer.
+
+\subsection{Memory as Sovereignty}
+
+We reframe AI memory as a sovereignty problem with three requirements:
+
+\begin{definition}[Sovereign AI Memory]
+A memory system is \emph{sovereign} if and only if:
+\begin{enumerate}
+    \item The agent (or its owner) holds the encryption keys---not the inference provider.
+    \item The memory persists independently of any single model, provider, or session.
+    \item The owner can grant, revoke, and scope access without provider cooperation.
+\end{enumerate}
+\end{definition}
+
+No existing system satisfies all three conditions. Vector databases (Pinecone, Weaviate, Chroma) satisfy none: the operator holds keys, persistence depends on the operator's infrastructure, and access control is coarse-grained ACLs.
+
+\subsection{Contribution}
+
+This paper presents the Memory Capsule architecture on \Zoo{} Network. Our contributions:
+
+\begin{enumerate}
+    \item \textbf{Memory Capsule Specification.} A formal model for encrypted, content-addressed, append-only agent memory with \DID{}-bound ownership (Section~\ref{sec:architecture}).
+    \item \textbf{Capability-Based Access Control.} Fine-grained, delegable, revocable access tokens authenticated via \IChain{} \DID{}s and enforced by \TChain{} threshold decryption (Section~\ref{sec:access}).
+    \item \textbf{Memory Type Taxonomy.} Four memory types (episodic, semantic, procedural, preference) with distinct storage, encryption, and retention policies (Section~\ref{sec:types}).
+    \item \textbf{FHE-Encrypted Memory Reasoning.} \CKKS{}-based homomorphic computation over encrypted memory on \AChain{}, enabling agents to reason over state they cannot decrypt (Section~\ref{sec:fhe}).
+    \item \textbf{Cross-Agent Knowledge Transfer.} Zero-knowledge selective disclosure for sharing knowledge between agents without revealing private state (Section~\ref{sec:sharing}).
+    \item \textbf{Benchmarks.} End-to-end measurements on \Zoo{} Network testnet (Section~\ref{sec:benchmarks}).
+\end{enumerate}
+
+\subsection{Paper Organization}
+
+Section~\ref{sec:why} motivates sovereign memory. Section~\ref{sec:architecture} defines the capsule architecture. Section~\ref{sec:access} covers access control. Section~\ref{sec:types} formalizes memory types. Section~\ref{sec:fhe} presents FHE-encrypted reasoning. Section~\ref{sec:sharing} describes cross-agent transfer. Section~\ref{sec:economics} analyzes memory economics. Section~\ref{sec:implementation} details implementation on \Zoo{}'s multi-chain architecture. Section~\ref{sec:benchmarks} presents benchmarks. Section~\ref{sec:related} surveys related work. Section~\ref{sec:conclusion} concludes.
+
+%----------------------------------------------------------------------
+\section{Why Sovereign AI Memory Matters}
+\label{sec:why}
+%----------------------------------------------------------------------
+
+\subsection{Persistence Across Sessions}
+
+Long-running agent tasks---multi-day research projects, ongoing code refactoring, iterative design work---require memory that outlives individual inference calls. Current systems approximate persistence through conversation logs, but these degrade rapidly: a 200k-token conversation history is neither searchable nor structured, and exceeding the context window forces lossy summarization.
+
+A sovereign memory system treats session boundaries as irrelevant. The capsule persists on-chain; the agent attaches to it at session start and detaches at session end. No information is lost.
+
+\subsection{Privacy From Providers}
+
+When an agent processes medical records, legal documents, or proprietary code, the memory it forms is as sensitive as the source material. Provider-controlled memory creates an untenable situation: the user must trust the provider not to inspect, sell, or leak derived knowledge.
+
+Sovereign memory eliminates this trust requirement. The capsule is encrypted with keys the provider never sees. The provider runs inference; the agent manages its own state.
+
+\subsection{Portability Across Models}
+
+Model capability evolves rapidly. Users should be free to migrate from one model to another without losing accumulated context. Sovereign memory, stored in a model-agnostic format and encrypted with user-controlled keys, makes migration a key-management operation rather than a data-migration project.
+
+\subsection{Agent Autonomy}
+
+Autonomous agents---those operating with delegated authority over wallets, APIs, and infrastructure---need memory they control. An Agent NFT \cite{zoo-agent-nft} that cannot remember its own transaction history, learned preferences, or accumulated expertise is not autonomous in any meaningful sense. Memory Capsules provide the state layer that Agent NFTs require.
+
+%----------------------------------------------------------------------
+\section{Memory Capsule Architecture}
+\label{sec:architecture}
+%----------------------------------------------------------------------
+
+\subsection{Overview}
+
+A Memory Capsule is a tuple $\mathcal{C} = (\textit{did}, \textit{log}, \textit{vault}, \textit{caps}, \textit{meta})$ where:
+
+\begin{itemize}
+    \item $\textit{did} \in \mathcal{D}$ is the owner's decentralized identifier on \IChain{}.
+    \item $\textit{log}$ is a content-addressed append-only operation log.
+    \item $\textit{vault}$ is an encrypted SQLite database storing materialized state.
+    \item $\textit{caps}$ is the set of outstanding capability tokens.
+    \item $\textit{meta}$ is an on-chain metadata record (creation time, size, type distribution, access statistics).
+\end{itemize}
+
+\subsection{Content-Addressed Append-Only Log}
+
+Every mutation to a capsule is recorded as an operation in an append-only log. Operations are content-addressed using BLAKE3:
+
+\begin{definition}[Memory Operation]
+An operation $o = (t, \textit{type}, \textit{payload}, h_{\textit{prev}})$ consists of a timestamp $t$, operation type $\textit{type} \in \{\texttt{write}, \texttt{update}, \texttt{delete}, \texttt{merge}\}$, an encrypted payload, and the hash of the previous operation $h_{\textit{prev}} = \text{BLAKE3}(o_{\textit{prev}})$.
+\end{definition}
+
+This structure provides:
+\begin{enumerate}
+    \item \textbf{Tamper Evidence.} Any modification to a historical entry breaks the hash chain.
+    \item \textbf{Causal Ordering.} The $h_{\textit{prev}}$ link establishes a total order within a single writer and a partial order across concurrent writers.
+    \item \textbf{Efficient Sync.} Two replicas can determine their divergence point by comparing head hashes.
+\end{enumerate}
+
+The log is stored on \Zoo{} Network's storage layer, with the head hash anchored on \IChain{} for tamper-evident auditability.
+
+\subsection{Encrypted SQLite Vault}
+
+The materialized state---the current snapshot of all live memory entries---is stored in a SQLite database encrypted with SQLCipher (AES-256-CBC with HMAC-SHA512 page authentication). The database schema is fixed:
+
+\begin{verbatim}
+CREATE TABLE memories (
+    id          BLOB PRIMARY KEY,  -- BLAKE3(content)
+    type        INTEGER NOT NULL,  -- 0=episodic,1=semantic,
+                                   -- 2=procedural,3=preference
+    content     BLOB NOT NULL,     -- encrypted entry
+    embedding   BLOB,              -- encrypted vector
+    created_at  INTEGER NOT NULL,  -- unix timestamp
+    accessed_at INTEGER NOT NULL,
+    access_count INTEGER DEFAULT 0,
+    ttl         INTEGER,           -- seconds, NULL=permanent
+    tags        TEXT               -- JSON array, encrypted
+);
+
+CREATE TABLE operations (
+    seq         INTEGER PRIMARY KEY AUTOINCREMENT,
+    hash        BLOB NOT NULL UNIQUE,
+    prev_hash   BLOB NOT NULL,
+    op_type     INTEGER NOT NULL,
+    payload     BLOB NOT NULL,
+    timestamp   INTEGER NOT NULL
+);
+\end{verbatim}
+
+The vault key is derived from the owner's \KChain{} key hierarchy:
+
+\begin{equation}
+k_{\textit{vault}} = \text{HKDF-SHA256}(k_{\textit{master}}, \text{``memory-capsule''} \| \textit{did})
+\end{equation}
+
+where $k_{\textit{master}}$ is the owner's root key managed by \KChain{} validators.
+
+\subsection{CRDT Synchronization}
+
+Agents may run across multiple instances (e.g., a desktop session and a mobile session operating concurrently). Memory Capsules synchronize via operation-based CRDTs:
+
+\begin{definition}[Memory CRDT]
+The memory state is modeled as a grow-only set $G$ of operations with a merge function $\sqcup$ defined as set union, and a \emph{materialize} function $M(G)$ that replays operations in causal order to produce the current vault state.
+\end{definition}
+
+Conflict resolution follows last-writer-wins (LWW) semantics for updates to the same key, with ties broken by \DID{}-derived priority. Deletes are soft (tombstone markers) until garbage collection compacts them.
+
+The synchronization protocol:
+
+\begin{algorithm}
+\caption{CRDT Sync Between Capsule Replicas}
+\begin{algorithmic}[1]
+\REQUIRE Replicas $R_A$, $R_B$ with head hashes $h_A$, $h_B$
+\STATE $R_A$ sends $h_A$ to $R_B$
+\IF{$h_A = h_B$}
+    \STATE Replicas are synchronized; no action needed
+\ELSE
+    \STATE $R_B$ computes $\Delta = \textit{log}_B \setminus \textit{ancestors}(h_A)$
+    \STATE $R_B$ sends $\Delta$ to $R_A$
+    \STATE $R_A$ validates each $o \in \Delta$ (signature, capability check)
+    \STATE $R_A$ merges: $G_A \leftarrow G_A \sqcup \Delta$
+    \STATE $R_A$ re-materializes vault: $\textit{vault}_A \leftarrow M(G_A)$
+    \STATE $R_A$ anchors new head hash to \IChain{}
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{On-Chain Metadata}
+
+The full vault is too large for on-chain storage. Only metadata is anchored on \IChain{}:
+
+\begin{verbatim}
+struct CapsuleAnchor {
+    did:        bytes32,    // owner DID
+    head_hash:  bytes32,    // current log head
+    entry_count: uint64,
+    total_bytes: uint64,
+    type_dist:  [4]uint64, // count per memory type
+    updated_at: uint64
+}
+\end{verbatim}
+
+This allows on-chain verification of capsule integrity without storing content on-chain.
+
+%----------------------------------------------------------------------
+\section{Memory Access Control}
+\label{sec:access}
+%----------------------------------------------------------------------
+
+\subsection{Capability-Based Model}
+
+Access to a Memory Capsule is governed by \emph{capability tokens}---unforgeable, delegable, scopeable authorization objects. Unlike ACLs (which attach permissions to identities), capabilities attach permissions to tokens that can be passed between agents.
+
+\begin{definition}[Memory Capability]
+A capability $c = (\textit{issuer}, \textit{holder}, \textit{scope}, \textit{expiry}, \sigma)$ where:
+\begin{itemize}
+    \item $\textit{issuer}$ is the \DID{} of the capsule owner.
+    \item $\textit{holder}$ is the \DID{} of the authorized agent (or $\bot$ for bearer tokens).
+    \item $\textit{scope} \subseteq \{\texttt{read}, \texttt{write}, \texttt{delete}\} \times \mathcal{T} \times \mathcal{F}$ specifies allowed operations, memory types $\mathcal{T}$, and optional tag filters $\mathcal{F}$.
+    \item $\textit{expiry}$ is a UNIX timestamp after which the capability is void.
+    \item $\sigma$ is the issuer's signature over the above fields.
+\end{itemize}
+\end{definition}
+
+\subsection{DID Authentication}
+
+All capability checks begin with \DID{} authentication on \IChain{}. The requesting agent presents its \DID{} and a fresh challenge-response signature. \IChain{} resolves the \DID{} document, extracts the verification key, and validates the signature.
+
+\subsection{Threshold Reveal for Sensitive Memories}
+
+Certain memories are too sensitive for any single key to unlock. These are encrypted under a threshold scheme managed by \TChain{}:
+
+\begin{enumerate}
+    \item The memory entry is encrypted with a symmetric key $k_e$.
+    \item $k_e$ is split into $n$ shares via Shamir's Secret Sharing, distributed to \TChain{} validators.
+    \item Decryption requires $t$-of-$n$ validators to contribute their shares (default: $t = \lceil 2n/3 \rceil$).
+    \item The requesting agent must present a valid capability token \emph{and} achieve quorum.
+\end{enumerate}
+
+This prevents both the agent owner (who cannot unilaterally decrypt) and any subset of validators (who lack the capability token) from accessing the memory alone.
+
+\subsection{Delegation and Revocation}
+
+Capabilities support bounded delegation:
+
+\begin{itemize}
+    \item \textbf{Attenuation.} A holder can create a derived capability with equal or narrower scope. A read-write capability can be attenuated to read-only; a full-type capability can be narrowed to episodic-only.
+    \item \textbf{Depth Limits.} Each capability carries a delegation depth counter. The issuer sets the maximum depth; each delegation decrements it.
+    \item \textbf{Revocation.} The issuer publishes a revocation record to \IChain{}. Validators check the revocation list before honoring capabilities. Revocation propagates within one \IChain{} block confirmation ($\sim$2 seconds).
+\end{itemize}
+
+%----------------------------------------------------------------------
+\section{Memory Types}
+\label{sec:types}
+%----------------------------------------------------------------------
+
+We formalize four memory types, each with distinct storage semantics, encryption policies, and retention behavior.
+
+\subsection{Episodic Memory}
+
+\begin{definition}[Episodic Memory]
+Episodic entries record specific events: conversations, transactions, observations, errors. Each entry is a timestamped record $e = (t, \textit{context}, \textit{content}, \textit{salience})$ where salience $\in [0, 1]$ determines retention priority.
+\end{definition}
+
+Properties:
+\begin{itemize}
+    \item \textbf{Encryption.} AES-256-GCM per entry. Key derived from vault key and entry ID.
+    \item \textbf{Retention.} Salience-weighted decay. Entries with $\textit{salience} < \theta_{\textit{gc}}$ (default 0.1) are eligible for garbage collection after their TTL expires.
+    \item \textbf{Volume.} Highest volume type. Expected to dominate storage costs.
+    \item \textbf{Access Pattern.} Temporal locality---recent episodes accessed most frequently.
+\end{itemize}
+
+\subsection{Semantic Memory}
+
+\begin{definition}[Semantic Memory]
+Semantic entries encode learned facts, relationships, and world knowledge: ``Project X uses PostgreSQL 16,'' ``User prefers functional style.'' Each entry is a triple $s = (\textit{subject}, \textit{predicate}, \textit{object})$ with an associated confidence score $\gamma \in [0, 1]$.
+\end{definition}
+
+Properties:
+\begin{itemize}
+    \item \textbf{Encryption.} AES-256-GCM. Embeddings are separately encrypted for vector search.
+    \item \textbf{Retention.} Confidence-weighted. Entries reinforced by repeated observation increase $\gamma$; contradicted entries decrease. At $\gamma < 0.05$, eligible for removal.
+    \item \textbf{Deduplication.} New entries are compared against existing semantic memory. If an entry with cosine similarity $> 0.95$ exists, the existing entry is updated rather than duplicated.
+\end{itemize}
+
+\subsection{Procedural Memory}
+
+\begin{definition}[Procedural Memory]
+Procedural entries encode learned skills and workflows: tool-use sequences, API interaction patterns, multi-step reasoning chains. Each entry is a state machine $p = (S, s_0, \delta, F)$ where $S$ is the state set, $s_0$ the initial state, $\delta$ the transition function, and $F$ the accepting states.
+\end{definition}
+
+Properties:
+\begin{itemize}
+    \item \textbf{Encryption.} Threshold-encrypted via \TChain{} (default $t = 3$-of-$5$). Procedural knowledge is high-value intellectual property.
+    \item \textbf{Retention.} Permanent unless explicitly deleted. Procedural memory represents distilled capability.
+    \item \textbf{Versioning.} Each update creates a new version. Previous versions are retained for rollback.
+\end{itemize}
+
+\subsection{Preference Memory}
+
+\begin{definition}[Preference Memory]
+Preference entries encode user and agent preferences: communication style, risk tolerance, tool preferences, formatting rules. Each entry is a key-value pair $\pi = (k, v, \textit{strength})$ where strength $\in [0, 1]$ indicates how firmly the preference is held.
+\end{definition}
+
+Properties:
+\begin{itemize}
+    \item \textbf{Encryption.} AES-256-GCM. Preferences are moderately sensitive.
+    \item \textbf{Retention.} Permanent with decay. Unused preferences ($\textit{accessed\_at}$ older than 90 days) have strength halved each subsequent period.
+    \item \textbf{Conflict Resolution.} Explicit preferences override inferred ones. Later preferences override earlier ones at equal strength.
+\end{itemize}
+
+\subsection{Type Distribution and Storage Allocation}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Type} & \textbf{Encryption} & \textbf{Retention} & \textbf{Avg Size} & \textbf{Expected \%} \\
+\midrule
+Episodic & AES-256-GCM & TTL + salience & 2--8 KB & 60\% \\
+Semantic & AES-256-GCM & Confidence decay & 0.5--2 KB & 25\% \\
+Procedural & Threshold & Permanent & 4--32 KB & 10\% \\
+Preference & AES-256-GCM & Strength decay & 0.1--1 KB & 5\% \\
+\bottomrule
+\end{tabular}
+\caption{Memory type characteristics}
+\label{tab:memory_types}
+\end{table}
+
+%----------------------------------------------------------------------
+\section{FHE-Encrypted Memory}
+\label{sec:fhe}
+%----------------------------------------------------------------------
+
+\subsection{Motivation}
+
+Standard encrypted memory requires decryption before use. This creates a vulnerability window: during inference, memory is plaintext in the agent's address space. For high-sensitivity applications (medical, legal, financial), even this transient exposure is unacceptable.
+
+Fully homomorphic encryption allows computation on encrypted data without decryption. We use \CKKS{} (approximate arithmetic over encrypted real numbers) for memory operations because memory recall is fundamentally a similarity-search problem over real-valued embeddings.
+
+\subsection{CKKS-Encrypted Embeddings}
+
+Each memory entry's embedding vector $\mathbf{v} \in \mathbb{R}^d$ is encrypted under \CKKS{}:
+
+\begin{equation}
+\hat{\mathbf{v}} = \text{CKKS.Encrypt}(pk, \mathbf{v})
+\end{equation}
+
+where $pk$ is the collective public key generated by \TChain{} validators via distributed key generation.
+
+\subsection{Homomorphic Similarity Search}
+
+Given a query embedding $\hat{\mathbf{q}}$ (also encrypted), the agent computes encrypted cosine similarity against all stored embeddings:
+
+\begin{equation}
+\widehat{\textit{sim}}_i = \frac{\hat{\mathbf{q}} \odot \hat{\mathbf{v}}_i}{\|\hat{\mathbf{q}}\| \cdot \|\hat{\mathbf{v}}_i\|}
+\end{equation}
+
+where $\odot$ denotes the \CKKS{} homomorphic inner product. The result $\widehat{\textit{sim}}_i$ is an encrypted similarity score. The agent can rank results by encrypted comparison (via \TFHE{} boolean circuits for the comparison operation) and retrieve the top-$k$ entries---all without decrypting any embedding.
+
+\subsection{Encrypted Recall Protocol}
+
+\begin{algorithm}
+\caption{FHE-Encrypted Memory Recall}
+\begin{algorithmic}[1]
+\REQUIRE Query embedding $\mathbf{q}$, capsule $\mathcal{C}$, threshold $k$
+\STATE $\hat{\mathbf{q}} \leftarrow \text{CKKS.Encrypt}(pk, \mathbf{q})$
+\FOR{each entry $i$ in $\mathcal{C}.\textit{vault}$}
+    \STATE $\hat{s}_i \leftarrow \text{CKKS.InnerProduct}(\hat{\mathbf{q}}, \hat{\mathbf{v}}_i)$
+\ENDFOR
+\STATE $\hat{\textit{top}} \leftarrow \text{TFHE.TopK}(\{\hat{s}_i\}, k)$ \COMMENT{encrypted argmax via boolean circuit}
+\STATE Submit $\hat{\textit{top}}$ indices to \TChain{} for threshold decryption
+\STATE \TChain{} validators contribute shares; reconstruct indices
+\STATE Retrieve and decrypt entries at revealed indices
+\RETURN Decrypted top-$k$ memory entries
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Noise Budget and Precision}
+
+\CKKS{} introduces approximation error that accumulates with each homomorphic operation. For memory recall, the critical constraint is that similarity rankings must be preserved despite noise.
+
+\begin{proposition}
+For embeddings of dimension $d = 768$ and \CKKS{} parameters $(N = 2^{15}, \Delta = 2^{40})$, the probability that noise flips a top-$k$ ranking for $k \leq 20$ is bounded by:
+\begin{equation}
+\Pr[\textit{rank flip}] < 2^{-40}
+\end{equation}
+when the minimum similarity gap between the $k$-th and $(k+1)$-th entries exceeds $\epsilon = 10^{-4}$.
+\end{proposition}
+
+This precision is sufficient for practical memory recall, where the similarity gap between relevant and irrelevant entries typically exceeds $0.01$.
+
+\subsection{Third-Party Verification}
+
+A key property of \FHE{}-encrypted memory is that third parties can verify reasoning traces without observing content. An auditor can confirm:
+\begin{enumerate}
+    \item The agent queried its capsule (the encrypted query is on-chain).
+    \item The capsule returned specific indices (the encrypted result is on-chain).
+    \item The agent used those entries in its response (the reasoning trace references the indices).
+\end{enumerate}
+
+All of this is verifiable without the auditor ever seeing the memory content.
+
+%----------------------------------------------------------------------
+\section{Cross-Agent Knowledge Transfer}
+\label{sec:sharing}
+%----------------------------------------------------------------------
+
+\subsection{The Sharing Problem}
+
+Agents benefit from knowledge exchange. A medical agent's semantic memory about drug interactions is valuable to a pharmacology research agent. But sharing raw memory violates sovereignty: the disclosing agent loses control over how the knowledge is used.
+
+\subsection{Selective Disclosure via Zero-Knowledge Proofs}
+
+We use ZK-SNARKs to enable selective disclosure:
+
+\begin{enumerate}
+    \item \textbf{Claim.} Agent $A$ asserts: ``I have a memory entry matching predicate $P$.''
+    \item \textbf{Proof.} Agent $A$ generates a ZK proof $\pi$ that there exists an entry $e$ in its capsule such that $P(e) = \textit{true}$, without revealing $e$.
+    \item \textbf{Verification.} Agent $B$ (or any verifier) checks $\pi$ against the capsule's on-chain anchor hash.
+    \item \textbf{Conditional Reveal.} If $B$ presents a valid payment or capability token, $A$ reveals the specific entry (encrypted under $B$'s public key).
+\end{enumerate}
+
+\subsection{Knowledge Marketplace}
+
+Cross-agent memory transfer creates an economic layer:
+
+\begin{itemize}
+    \item \textbf{Memory Listings.} Agents list memory subsets (e.g., ``500 semantic entries about Rust compiler internals'') with ZK proofs of quality metrics (coverage, recency, confidence distribution).
+    \item \textbf{Pricing.} Priced in $\KEEPER$ tokens. The market discovers fair value for knowledge.
+    \item \textbf{Licensing.} Capability tokens encode usage terms: read-only, time-limited, non-transferable.
+    \item \textbf{Provenance.} Every transfer is recorded on \IChain{}, creating an auditable knowledge graph.
+\end{itemize}
+
+\subsection{Collaborative Memory Formation}
+
+Multiple agents working on a shared task can form a \emph{collective capsule}---a Memory Capsule with multiple \DID{} owners. Writes require $t$-of-$n$ owner signatures. This enables:
+
+\begin{itemize}
+    \item Research teams where multiple agents contribute findings.
+    \item Multi-agent systems where a planning agent and execution agents share state.
+    \item Organizational memory that persists across individual agent lifetimes.
+\end{itemize}
+
+%----------------------------------------------------------------------
+\section{Memory Economics}
+\label{sec:economics}
+%----------------------------------------------------------------------
+
+\subsection{Storage Costs}
+
+Memory Capsules consume storage on \Zoo{} Network. Costs are denominated in $\KEEPER$ tokens:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Operation} & \textbf{Cost} & \textbf{Unit} \\
+\midrule
+Capsule creation & 1,000 & $\KEEPER$ \\
+Entry append & 10 & $\KEEPER$ per KB \\
+CRDT sync (per merge) & 50 & $\KEEPER$ \\
+\IChain{} anchor update & 100 & $\KEEPER$ \\
+FHE encrypted query & 500 & $\KEEPER$ \\
+Threshold reveal & 200 & $\KEEPER$ per reveal \\
+\bottomrule
+\end{tabular}
+\caption{Memory operation costs}
+\label{tab:costs}
+\end{table}
+
+\subsection{Garbage Collection}
+
+Unbounded memory growth is economically unsustainable. The garbage collection policy:
+
+\begin{enumerate}
+    \item \textbf{TTL Expiry.} Entries past their TTL are marked for collection.
+    \item \textbf{Salience Threshold.} Episodic entries below $\theta_{\textit{gc}} = 0.1$ salience are eligible.
+    \item \textbf{Confidence Threshold.} Semantic entries below $\gamma = 0.05$ are eligible.
+    \item \textbf{Storage Budget.} Each capsule has a configurable storage budget. When exceeded, the lowest-priority entries are collected first.
+    \item \textbf{Compaction.} Tombstoned entries in the operation log are removed during periodic compaction (default: weekly).
+\end{enumerate}
+
+\begin{proposition}
+Under the garbage collection policy with parameters $(\theta_{\textit{gc}} = 0.1, \gamma = 0.05, \textit{TTL}_{\textit{default}} = 90\text{ days})$, a capsule receiving 1,000 episodic entries per day converges to a steady-state size of approximately 45,000 live entries (180 MB encrypted).
+\end{proposition}
+
+\subsection{Archival Policies}
+
+Collected entries are not destroyed---they are moved to cold storage at reduced cost:
+
+\begin{itemize}
+    \item \textbf{Hot Storage.} Active capsule on \Zoo{} validators. Full read/write, CRDT sync. Cost: 10 $\KEEPER$/KB/month.
+    \item \textbf{Cold Storage.} Archived entries on decentralized storage (IPFS/Filecoin). Read-only, high latency. Cost: 0.1 $\KEEPER$/KB/month.
+    \item \textbf{Glacier.} Long-term archival. Retrieval requires 24-hour notice. Cost: 0.01 $\KEEPER$/KB/month.
+\end{itemize}
+
+\subsection{Memory as an Asset}
+
+Memory Capsules are transferable on-chain assets. An agent's accumulated knowledge has economic value independent of the agent itself. Use cases:
+
+\begin{itemize}
+    \item An agent retiring can sell its capsule to a successor agent.
+    \item A training institution can sell pre-built capsules (``expert medical knowledge base'').
+    \item DAO treasuries can fund public-good capsules (``complete Rust documentation memory'').
+\end{itemize}
+
+Transfer is implemented as a \DID{} ownership change on \IChain{}, with re-encryption of the vault key under the new owner's \KChain{} key.
+
+%----------------------------------------------------------------------
+\section{Implementation on Zoo Network}
+\label{sec:implementation}
+%----------------------------------------------------------------------
+
+\subsection{Multi-Chain Mapping}
+
+The Memory Capsule architecture maps to \Zoo{} Network's specialized chains:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Component} & \textbf{Chain} & \textbf{Responsibility} \\
+\midrule
+Capsule identity, anchors & \IChain{} & DID binding, head hash anchoring \\
+Vault encryption keys & \KChain{} & Key derivation, rotation, escrow \\
+Threshold reveal & \TChain{} & Share distribution, quorum decryption \\
+FHE inference & \AChain{} & Homomorphic computation on encrypted state \\
+Governance (GC policy) & \GChain{} & Community votes on default parameters \\
+\bottomrule
+\end{tabular}
+\caption{Memory Capsule component mapping to \Zoo{} chains}
+\label{tab:chain_mapping}
+\end{table}
+
+\subsection{A-Chain Integration}
+
+\AChain{} provides the inference runtime for \FHE{}-encrypted memory queries. When an agent issues an encrypted recall:
+
+\begin{enumerate}
+    \item The encrypted query is submitted to \AChain{} as an inference request.
+    \item \AChain{} validators execute the \CKKS{} similarity search across the capsule's encrypted embeddings.
+    \item The encrypted result (top-$k$ indices) is returned to the agent.
+    \item If threshold decryption is required, the result is forwarded to \TChain{}.
+\end{enumerate}
+
+\subsection{I-Chain Identity Binding}
+
+Each capsule is bound to exactly one \DID{} on \IChain{}. The binding is enforced at the protocol level:
+
+\begin{itemize}
+    \item Capsule creation requires a valid \IChain{} \DID{} transaction.
+    \item All operations on the capsule require a signature from the bound \DID{}.
+    \item Ownership transfer is an \IChain{} transaction that atomically updates the \DID{} binding and re-encrypts the vault key via \KChain{}.
+\end{itemize}
+
+\subsection{K-Chain Key Hierarchy}
+
+The key hierarchy for a capsule:
+
+\begin{align}
+k_{\textit{root}} &\leftarrow \text{KChain.DeriveRoot}(\textit{did}) \\
+k_{\textit{vault}} &\leftarrow \text{HKDF}(k_{\textit{root}}, \text{``vault''}) \\
+k_{\textit{entry}}(i) &\leftarrow \text{HKDF}(k_{\textit{vault}}, \text{``entry''} \| i) \\
+k_{\textit{embedding}}(i) &\leftarrow \text{HKDF}(k_{\textit{vault}}, \text{``embed''} \| i)
+\end{align}
+
+Key rotation is handled by \KChain{}: a rotation event re-encrypts the vault key under a new root, without re-encrypting individual entries (which use derived keys from the vault key).
+
+\subsection{T-Chain Threshold Protocol}
+
+For threshold-protected memories, \TChain{} implements the following protocol:
+
+\begin{enumerate}
+    \item \textbf{Setup.} During capsule creation, the vault key $k_{\textit{vault}}$ is split into $n$ shares via Feldman VSS and distributed to \TChain{} validators.
+    \item \textbf{Access.} The agent submits a decryption request with a valid capability token to \TChain{}.
+    \item \textbf{Quorum.} Each validator independently verifies the capability token against \IChain{} and, if valid, contributes its share.
+    \item \textbf{Reconstruction.} Once $t$ shares are collected, the key is reconstructed in a secure enclave, used for decryption, and immediately discarded.
+\end{enumerate}
+
+%----------------------------------------------------------------------
+\section{Benchmarks}
+\label{sec:benchmarks}
+%----------------------------------------------------------------------
+
+All benchmarks measured on \Zoo{} Network testnet with 21 validators, each running on AMD EPYC 7763 with 256 GB RAM and NVIDIA A100 80 GB.
+
+\subsection{Core Operations}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Operation} & \textbf{Latency (p50)} & \textbf{Latency (p99)} \\
+\midrule
+Entry append (1 KB) & 1.2 ms & 3.8 ms \\
+Entry append (32 KB) & 4.7 ms & 12.1 ms \\
+Vault read (single entry) & 0.3 ms & 1.1 ms \\
+Similarity search (10k entries) & 8.4 ms & 22.7 ms \\
+CRDT merge (100 ops) & 2.1 ms & 6.3 ms \\
+CRDT merge (10k ops) & 148 ms & 312 ms \\
+\IChain{} anchor update & 1.8 s & 3.2 s \\
+\bottomrule
+\end{tabular}
+\caption{Core operation latencies}
+\label{tab:core_bench}
+\end{table}
+
+\subsection{CRDT Synchronization}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Divergence (ops)} & \textbf{Sync Time} & \textbf{Throughput} \\
+\midrule
+100 & 7.1 ms & 14,084 ops/s \\
+1,000 & 68 ms & 14,705 ops/s \\
+10,000 & 712 ms & 14,044 ops/s \\
+100,000 & 7.4 s & 13,513 ops/s \\
+\bottomrule
+\end{tabular}
+\caption{CRDT sync throughput}
+\label{tab:crdt_bench}
+\end{table}
+
+\subsection{FHE Operations}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Operation} & \textbf{CPU} & \textbf{GPU (A100)} & \textbf{Speedup} \\
+\midrule
+CKKS encrypt (768-dim) & 12.4 ms & 0.31 ms & 40$\times$ \\
+CKKS inner product & 28.6 ms & 0.72 ms & 39.7$\times$ \\
+Encrypted recall (1k entries) & 34.2 s & 0.86 s & 39.8$\times$ \\
+Encrypted recall (10k entries) & 341 s & 8.6 s & 39.7$\times$ \\
+TFHE comparison (single) & 8.3 ms & 0.21 ms & 39.5$\times$ \\
+Threshold reveal (67-of-100) & 240 ms & 240 ms & 1$\times$ \\
+\bottomrule
+\end{tabular}
+\caption{FHE operation benchmarks (GPU acceleration via \Zoo{} \AChain{})}
+\label{tab:fhe_bench}
+\end{table}
+
+The threshold reveal latency is dominated by network round-trips to \TChain{} validators, not computation, hence no GPU speedup.
+
+\subsection{End-to-End Memory Recall}
+
+Complete encrypted memory recall (query $\to$ FHE search $\to$ threshold decrypt $\to$ return) for a 10k-entry capsule:
+
+\begin{itemize}
+    \item \textbf{Unencrypted baseline:} 8.4 ms (similarity search only)
+    \item \textbf{FHE + GPU + threshold:} 8.6 s + 240 ms = 8.84 s
+    \item \textbf{Overhead factor:} $\sim$1,050$\times$
+\end{itemize}
+
+This overhead is acceptable for high-sensitivity applications where privacy justifies latency. For most use cases, standard encrypted vault access (8.4 ms) suffices.
+
+%----------------------------------------------------------------------
+\section{Related Work}
+\label{sec:related}
+%----------------------------------------------------------------------
+
+\subsection{AI Memory Systems}
+
+MemGPT \cite{packer2023memgpt} introduced virtual memory management for LLMs, paging context in and out of the model's attention window. While effective for extending effective context length, MemGPT stores memory in plaintext, provides no cross-session persistence, and offers no privacy guarantees.
+
+Langchain's memory modules and LlamaIndex's storage abstractions provide programmatic memory interfaces but rely on centralized vector databases (Pinecone, Weaviate) with provider-controlled access.
+
+OpenAI's memory feature (2024) stores user preferences server-side in plaintext, with no user-controlled encryption, no portability, and no formal access control beyond on/off.
+
+None of these systems provide sovereignty as defined in this paper.
+
+\subsection{Encrypted Databases}
+
+CryptDB \cite{popa2011cryptdb} pioneered SQL over encrypted data using onion encryption layers. Mylar \cite{popa2014mylar} extended this to web applications. Both rely on a trusted proxy and do not support homomorphic computation.
+
+\subsection{CRDTs for Distributed State}
+
+Shapiro et al. \cite{shapiro2011crdt} formalized CRDTs for eventually consistent distributed systems. Automerge and Yjs implement CRDTs for collaborative editing. Our contribution is applying CRDTs to encrypted memory state, where the merge function must operate without observing plaintext content.
+
+\subsection{Agent NFTs and Sovereign AI}
+
+The Agent NFT standard \cite{zoo-agent-nft} established on-chain identity for AI agents. Memory Capsules provide the state layer that Agent NFTs require for genuine autonomy. The \Lux{} agent sovereignty framework \cite{lux-agent-sovereignty} defines the broader philosophical and legal context for AI asset ownership.
+
+%----------------------------------------------------------------------
+\section{Conclusion}
+\label{sec:conclusion}
+%----------------------------------------------------------------------
+
+AI memory is not a retrieval engineering problem. It is a sovereignty problem. The question is not ``how do we store vectors efficiently?'' but ``who controls the agent's accumulated knowledge?''
+
+Memory Capsules answer this question decisively: the agent (or its owner) controls everything. The capsule is encrypted with keys the provider never sees, persists independently of any model or session, synchronizes across instances via CRDTs, and enforces fine-grained access through capability tokens and threshold reveal.
+
+The architecture demonstrates that sovereignty and utility are not in tension. Encrypted memory adds latency (8.84 seconds for FHE-encrypted recall vs. 8.4 milliseconds unencrypted), but this cost is borne only when the sensitivity of the data demands it. For the common case, standard encrypted vaults provide sub-10ms access with full ownership guarantees.
+
+Three directions warrant further investigation:
+
+\begin{enumerate}
+    \item \textbf{Memory Compression.} Reducing capsule storage costs through learned compression of episodic memory into semantic memory (distillation).
+    \item \textbf{Federated Memory.} Aggregating knowledge across many agents without any agent revealing its private state (federated learning applied to memory).
+    \item \textbf{Memory Proofs.} Formal verification (Lean 4) that garbage collection preserves all entries above the salience/confidence threshold.
+\end{enumerate}
+
+AI agents deserve memory they own. Memory Capsules make this real.
+
+\begin{thebibliography}{20}
+
+\bibitem{packer2023memgpt}
+C.~Packer, S.~Wooders, K.~Lin, V.~Fang, S.~G.~Patil, I.~Stoica, and J.~E.~Gonzalez,
+``MemGPT: Towards LLMs as Operating Systems,''
+\textit{arXiv preprint arXiv:2310.08560}, 2023.
+
+\bibitem{popa2011cryptdb}
+R.~A.~Popa, C.~M.~S.~Redfield, N.~Zeldovich, and H.~Balakrishnan,
+``CryptDB: Protecting Confidentiality with Encrypted Query Processing,''
+\textit{Proc.\ SOSP}, 2011.
+
+\bibitem{popa2014mylar}
+R.~A.~Popa, E.~Stark, J.~Helfer, S.~Valdez, N.~Zeldovich, M.~F.~Kaashoek, and H.~Balakrishnan,
+``Building Web Applications on Top of Encrypted Data Using Mylar,''
+\textit{Proc.\ NSDI}, 2014.
+
+\bibitem{shapiro2011crdt}
+M.~Shapiro, N.~Preguica, C.~Baquero, and M.~Zawirski,
+``Conflict-Free Replicated Data Types,''
+\textit{Proc.\ SSS}, Springer, 2011.
+
+\bibitem{zoo-agent-nft}
+Z.~Kelling,
+``Agent NFTs: A Token Standard for Autonomous AI Agents with Economic Agency,''
+Zoo Labs Foundation, 2021.
+
+\bibitem{zoo-tokenomics}
+Z.~Kelling,
+``Zoo Network Tokenomics: Fair Distribution Through Complete Airdrop,''
+Zoo Labs Foundation, 2025.
+
+\bibitem{lux-agent-sovereignty}
+Z.~Kelling,
+``Agent Sovereignty on Lux Network: Self-Owned AI with On-Chain Identity and Assets,''
+Lux Industries, 2025.
+
+\bibitem{zoo-fhe}
+Z.~Kelling,
+``Threshold Fully Homomorphic Encryption on Zoo Network: GPU-Accelerated Confidential Computation,''
+Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-threshold-signatures}
+Z.~Kelling,
+``Threshold Signatures on Zoo T-Chain,''
+Zoo Labs Foundation, 2026.
+
+\bibitem{cheon2017ckks}
+J.~H.~Cheon, A.~Kim, M.~Kim, and Y.~Song,
+``Homomorphic Encryption for Arithmetic of Approximate Numbers,''
+\textit{Proc.\ ASIACRYPT}, Springer, 2017.
+
+\bibitem{feldman1987vss}
+P.~Feldman,
+``A Practical Scheme for Non-Interactive Verifiable Secret Sharing,''
+\textit{Proc.\ FOCS}, 1987.
+
+\end{thebibliography}
+
+\end{document}

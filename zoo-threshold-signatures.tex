@@ -1,0 +1,549 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{xcolor}
+
+\pgfplotsset{compat=1.18}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\TChain}{\textsc{T-Chain}}
+\newcommand{\ThresholdVM}{\textsc{ThresholdVM}}
+\newcommand{\FROST}{\textsc{FROST}}
+\newcommand{\CGGMP}{\textsc{CGGMP21}}
+\newcommand{\LSS}{\textsc{LSS}}
+
+% Title information
+\title{\textbf{Chain-Native Threshold Signatures:\\FROST and CGGMP21 on Zoo Network's T-Chain}\\
+\large Replacing External MPC with Consensus-Secured Threshold Cryptography\\
+\vspace{5pt}
+
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{December 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \TChain{} (\ThresholdVM{}), a chain-native threshold signature subsystem for Zoo Network that eliminates the need for external multi-party computation (MPC) services. \TChain{} embeds \FROST{} (Flexible Round-Optimized Schnorr Threshold signatures), \CGGMP{} (threshold ECDSA with identifiable abort), and Linear Secret Sharing (\LSS{}) directly into the validator set, so that validators \emph{are} the MPC parties. All keygen, signing, and reshare operations execute as on-chain transactions secured by consensus, removing the operational burden of sidecar MPC deployments. We describe the architecture of \ThresholdVM{}, the RPC surface (\texttt{threshold\_keygen}, \texttt{threshold\_sign}, \texttt{threshold\_reshare}), the session management layer, and the security guarantees that follow from coupling threshold cryptography with stake-weighted consensus. We prove $t$-of-$n$ unforgeability under the Discrete Logarithm assumption for \FROST{} and under the Strong RSA and DDH assumptions for \CGGMP{}, and show how the \LSS{} Composition Theorem allows \FROST{}, CMP, TFHE, Corona, and BLS protocols to share a single access structure. Formal verification of all protocols is carried out in Lean~4 (see \texttt{Crypto/FROST.lean}, \texttt{Crypto/Threshold/CGGMP21.lean}, \texttt{Crypto/Threshold/LSS.lean}, \texttt{Crypto/Threshold/Composition.lean}). We report on the migration path from external MPC StatefulSets to \TChain{}, including an HTTP compatibility layer for existing bridge integrations, and benchmark GPU-accelerated FHE operations within the threshold decryption pipeline.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%% --------------------------------------------------------------------------
+\section{Introduction}
+\label{sec:introduction}
+
+Threshold signature schemes distribute signing authority across $n$ parties such that any $t$ can jointly produce a valid signature while fewer than $t$ learn nothing about the secret key. Existing blockchain deployments rely on \emph{external} MPC clusters---separate StatefulSets, dedicated key management services, or third-party custodians (Fireblocks, Lit Protocol)---to perform keygen and signing. This introduces three risks: (1)~\textbf{operational risk}---MPC nodes must be deployed and rotated independently, with no consensus penalties for downtime; (2)~\textbf{trust asymmetry}---the MPC quorum may differ from the validator quorum; (3)~\textbf{latency overhead}---cross-service RPC adds round-trips to every signing request.
+
+\TChain{} eliminates all three by making validators the MPC parties. Consensus secures the MPC transcript: if a validator equivocates during a signing round, the same slashing conditions that penalize double-signing apply. The result is a chain-native threshold signature service with no additional trust assumptions beyond the consensus threshold.
+
+\subsection{Contributions}
+
+This paper makes the following contributions:
+
+\begin{itemize}
+\item A complete specification of \ThresholdVM{}, a virtual machine that executes \FROST{}, \CGGMP{}, and \LSS{} protocols as first-class chain operations.
+\item An RPC API for threshold key management: \texttt{threshold\_keygen}, \texttt{threshold\_sign}, \texttt{threshold\_reshare}, \texttt{threshold\_status}.
+\item Security proofs showing that chain-native MPC inherits consensus-level safety: an adversary must corrupt $\geq t$ validators \emph{and} break consensus to forge a signature.
+\item The \LSS{} Composition Theorem, demonstrating that FROST, CMP, TFHE, Corona, and BLS can share a single $t$-of-$n$ access structure over the same secret shares.
+\item A migration guide from external MPC StatefulSets to \TChain{}, including an HTTP compatibility layer for bridge contracts.
+\item Benchmarks of GPU-accelerated FHE operations within the threshold decryption pipeline.
+\end{itemize}
+
+\subsection{Relation to Other Zoo Papers}
+
+\TChain{} integrates with several components described in companion papers: the network topology and consensus layer \cite{zoo-network-architecture}, the staking and economic model \cite{zoo-tokenomics}, homomorphic encryption infrastructure \cite{zoo-fhe}, decentralized identity and DID management \cite{zoo-identity-chain}, and hierarchical key derivation \cite{zoo-key-management}. For the underlying Lux-layer threshold primitives, see \cite{lux-threshold-sigs} and \cite{lux-mchain-mpc}.
+
+%% --------------------------------------------------------------------------
+\section{T-Chain Architecture}
+\label{sec:architecture}
+
+\subsection{ThresholdVM Overview}
+
+\ThresholdVM{} is a native chain on Zoo Network, registered at chain creation alongside the EVM L2, Identity Chain, and Experience Ledger. It exposes a minimal state machine with three transaction types:
+
+\begin{enumerate}
+\item \textbf{KeygenTx}: Initiates a distributed key generation session among a quorum of validators.
+\item \textbf{SignTx}: Requests a threshold signature over an arbitrary message digest.
+\item \textbf{ReshareTx}: Re-distributes key shares to a new validator set without changing the public key.
+\end{enumerate}
+
+Each transaction type maps to a multi-round interactive protocol. \ThresholdVM{} manages session state, enforces round deadlines, and commits the protocol transcript to the chain once all rounds complete or a timeout triggers abort.
+
+\subsection{RPC API}
+
+The \TChain{} RPC surface is accessible at \texttt{/v1/threshold}:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lp{7cm}}
+\toprule
+\textbf{Method} & \textbf{Description} \\
+\midrule
+\texttt{threshold\_keygen} & Start a $t$-of-$n$ DKG session; returns \texttt{session\_id} and public key on completion \\
+\texttt{threshold\_sign} & Submit a message hash for threshold signing; returns partial signatures, then aggregated signature \\
+\texttt{threshold\_reshare} & Initiate share redistribution to a new committee \\
+\texttt{threshold\_status} & Query session state (pending, round $k$, complete, aborted) \\
+\texttt{threshold\_pubkey} & Retrieve the group public key for a given \texttt{key\_id} \\
+\bottomrule
+\end{tabular}
+\caption{T-Chain RPC methods}
+\label{tab:rpc}
+\end{table}
+
+\subsection{Session Management}
+
+A session $\mathcal{S} = (\texttt{session\_id}, \texttt{protocol}, t, n, \texttt{participants}, \texttt{round}, \texttt{deadline})$ tracks the lifecycle of each interactive protocol instance. Sessions are created by a \texttt{KeygenTx} or \texttt{SignTx} and progress through rounds as validators submit messages. If a validator fails to submit a round message before the deadline, the session enters \emph{identifiable abort}: the non-responding validator is recorded on-chain and subject to slashing.
+
+\begin{definition}[Session Liveness]
+A session $\mathcal{S}$ completes if at least $t$ of the $n$ participants submit valid round messages within every deadline. Formally, for each round $r \in \{1, \ldots, R\}$:
+\[
+|\{i \in \mathcal{S}.\texttt{participants} : \texttt{msg}_{i,r} \text{ valid} \}| \geq t
+\]
+\end{definition}
+
+\subsection{Permissioned Key Creation}
+
+Not every actor may initiate a keygen. \TChain{} enforces an \texttt{AuthorizedChains} registry: only chains listed in this registry (e.g., the EVM L2 bridge contract, the Identity Chain) may request key creation. This prevents spam and ensures that every generated key serves a concrete cross-chain or custodial purpose.
+
+%% --------------------------------------------------------------------------
+\section{FROST Protocol}
+\label{sec:frost}
+
+\subsection{Overview}
+
+\FROST{} (Flexible Round-Optimized Schnorr Threshold signatures) \cite{komlo2020frost} implements $t$-of-$n$ Schnorr signing in two rounds, improving on prior schemes that required $O(n)$ rounds. \TChain{} uses \FROST{} for all Ed25519 and Schnorr-compatible chains.
+
+\subsection{Distributed Key Generation}
+
+\FROST{} DKG proceeds in two phases:
+
+\begin{enumerate}
+\item \textbf{Commitment phase}: Each participant $P_i$ samples a random polynomial $f_i(x)$ of degree $t-1$, computes commitments $C_{i,j} = g^{a_{i,j}}$ for each coefficient $a_{i,j}$, and broadcasts $(C_{i,0}, \ldots, C_{i,t-1})$ together with a proof of knowledge of $a_{i,0}$.
+\item \textbf{Share phase}: Each $P_i$ sends the evaluation $f_i(j)$ to participant $P_j$ over a confidential channel. $P_j$ verifies consistency against the commitments:
+\[
+g^{f_i(j)} = \prod_{k=0}^{t-1} C_{i,k}^{j^k}
+\]
+\end{enumerate}
+
+The group public key is $Y = \prod_{i=1}^{n} C_{i,0}$ and each participant holds secret share $s_j = \sum_{i=1}^{n} f_i(j)$.
+
+\subsection{Two-Round Signing}
+
+Given a message $m$ and signing set $S \subseteq \{1,\ldots,n\}$ with $|S| \geq t$:
+
+\begin{enumerate}
+\item \textbf{Round 1 (Nonce commitment)}: Each signer $P_i$ samples nonces $(d_i, e_i)$, computes commitments $(D_i = g^{d_i}, E_i = g^{e_i})$, and broadcasts $(D_i, E_i)$.
+\item \textbf{Round 2 (Partial signature)}: Compute binding factor $\rho_i = H(\texttt{msg\_hash}, i, D_i, E_i, B)$ where $B$ is the full commitment list. Each signer produces:
+\[
+z_i = d_i + \rho_i e_i + \lambda_i \cdot s_i \cdot c
+\]
+where $c = H(R, Y, m)$, $R = \prod_{i \in S}(D_i \cdot E_i^{\rho_i})$, and $\lambda_i$ is the Lagrange coefficient for participant $i$ in set $S$.
+\end{enumerate}
+
+The aggregated signature is $(R, z)$ where $z = \sum_{i \in S} z_i$, verifiable as a standard Schnorr signature under $Y$.
+
+\begin{theorem}[$t$-of-$n$ Unforgeability]
+\label{thm:frost-security}
+Under the Discrete Logarithm assumption in the random oracle model, no PPT adversary controlling fewer than $t$ participants can produce a valid \FROST{} signature on a message not signed by an honest quorum.
+\end{theorem}
+
+%% --------------------------------------------------------------------------
+\section{CGGMP21 Protocol}
+\label{sec:cggmp}
+
+\subsection{Overview}
+
+\CGGMP{} \cite{canetti2021cggmp} implements threshold ECDSA without ever reconstructing the secret key, making it suitable for Bitcoin, Ethereum, and all secp256k1/secp256r1 chains. \TChain{} uses \CGGMP{} for all ECDSA-based signing.
+
+\subsection{Key Properties}
+
+\begin{itemize}
+\item \textbf{No key reconstruction}: At no point during keygen or signing is the full private key assembled in any single location.
+\item \textbf{Identifiable abort}: If any party deviates from the protocol, the honest parties can identify the cheater and abort with proof of misbehavior.
+\item \textbf{Presignature pipeline}: Signing is split into an expensive offline phase (presignature generation) and a fast online phase (message-dependent completion).
+\end{itemize}
+
+\subsection{Offline/Online Separation}
+
+Signing is split into an expensive \emph{offline} phase and a fast \emph{online} phase. The offline phase produces a presignature tuple $(R, k_i, \chi_i)$ independent of the message: each party samples $k_i, \gamma_i \in \mathbb{Z}_q$, broadcasts Paillier-encrypted $K_i = \text{Enc}(k_i)$ with range proofs, and runs multiplicative-to-additive (MtA) sub-protocols to compute shares $\delta_i$ such that $\sum \delta_i = k \cdot \gamma \pmod{q}$. From $\delta = k\gamma$, parties recover $R = g^{k^{-1}}$ and compute $\chi_i$ (shares of $k \cdot x$).
+
+In the online phase, given message hash $H(m)$ and a presignature, each party computes $\sigma_i = k_i \cdot H(m) + r \cdot \chi_i \pmod{q}$ where $r$ is the $x$-coordinate of $R$. The aggregator sums $\sigma = \sum_{i \in S} \sigma_i$ and outputs the ECDSA signature $(r, \sigma)$. The online phase requires a single round, enabling sub-second latency.
+
+\begin{theorem}[CGGMP21 Security]
+\label{thm:cggmp-security}
+Under the Strong RSA assumption, the DDH assumption, and in the random oracle model, the \CGGMP{} protocol achieves $t$-of-$n$ unforgeability with identifiable abort: any deviating party is identified with probability 1.
+\end{theorem}
+
+%% --------------------------------------------------------------------------
+\section{LSS Foundation}
+\label{sec:lss}
+
+\subsection{Linear Secret Sharing}
+
+All threshold protocols in \TChain{} rest on a common Linear Secret Sharing (\LSS{}) layer. A $(t, n)$-\LSS{} scheme distributes a secret $s$ into shares $(s_1, \ldots, s_n)$ via a degree-$(t{-}1)$ polynomial over $\mathbb{Z}_q$:
+
+\begin{equation}
+f(x) = s + a_1 x + a_2 x^2 + \cdots + a_{t-1} x^{t-1}, \quad s_i = f(i)
+\end{equation}
+
+Any $t$ shares reconstruct $s$ via Lagrange interpolation; fewer than $t$ shares reveal no information about $s$ (information-theoretic secrecy).
+
+\subsection{The Composition Theorem}
+
+The key insight enabling \TChain{}'s multi-protocol architecture is that protocols built on compatible \LSS{} instances can share the same access structure and secret shares.
+
+\begin{theorem}[LSS Composition]
+\label{thm:composition}
+Let $\Pi_1, \ldots, \Pi_m$ be threshold cryptographic protocols, each requiring a $(t, n)$-\LSS{} over the same finite field $\mathbb{F}_q$. If each $\Pi_j$ uses shares of the form $s_i^{(j)} = f^{(j)}(i)$ for independent polynomials $f^{(j)}$ but the same evaluation points $\{1, \ldots, n\}$, then a single keygen ceremony can produce correlated shares for all protocols simultaneously via a vector polynomial:
+\[
+\mathbf{f}(x) = (f^{(1)}(x), \ldots, f^{(m)}(x))
+\]
+The resulting combined scheme preserves the $t$-privacy and $t$-correctness guarantees of each individual protocol.
+\end{theorem}
+
+This theorem is formally verified in \texttt{Crypto/Threshold/Composition.lean} and underpins the following protocol combinations in \TChain{}:
+
+\begin{itemize}
+\item \textbf{FROST}: Schnorr threshold signatures (Ed25519, Ristretto)
+\item \textbf{CMP} (CGGMP21): ECDSA threshold signatures (secp256k1, secp256r1)
+\item \textbf{TFHE}: Threshold fully-homomorphic encryption decryption
+\item \textbf{Corona}: Ring signature scheme with threshold key generation
+\item \textbf{BLS}: BLS threshold signatures for beacon chain compatibility
+\end{itemize}
+
+All five protocols derive their shares from a single DKG ceremony, reducing validator coordination overhead from $O(m)$ independent DKGs to a single vectorized DKG.
+
+%% --------------------------------------------------------------------------
+\section{MPC Wallet Creation}
+\label{sec:wallet}
+
+\subsection{Permissioned Keygen}
+
+Wallet creation on \TChain{} is gated by the \texttt{AuthorizedChains} registry. A requesting chain (e.g., the Zoo EVM L2 bridge) submits a \texttt{KeygenTx} specifying:
+
+\begin{itemize}
+\item \texttt{chain\_id}: The requesting chain's identifier.
+\item \texttt{threshold}: The desired $t$ value.
+\item \texttt{key\_type}: \texttt{schnorr} (FROST) or \texttt{ecdsa} (CGGMP21).
+\item \texttt{metadata}: Application-specific context (e.g., bridge address, DID document hash).
+\end{itemize}
+
+\subsection{Keygen Flow}
+
+\begin{enumerate}
+\item The \texttt{KeygenTx} enters the \ThresholdVM{} mempool and is included in a block.
+\item \ThresholdVM{} selects $n$ validators from the active set, weighted by stake.
+\item A DKG session $\mathcal{S}$ is created; each selected validator receives a round-1 prompt.
+\item Validators execute the DKG (FROST or CGGMP21) across $R$ rounds, posting round messages as chain transactions.
+\item On successful completion, \ThresholdVM{} records the group public key $Y$ and \texttt{key\_id} in the chain state.
+\item Each validator stores their secret share $s_i$ in local encrypted storage, keyed by \texttt{key\_id}.
+\end{enumerate}
+
+\subsection{Public Key Derivation}
+
+For FROST keys, the group public key $Y$ is a standard Ed25519 point. For CGGMP21 keys, $Y$ is a secp256k1 point. In both cases, the corresponding blockchain address is derived using the target chain's standard address derivation (e.g., Keccak-256 for Ethereum, SHA-256 + RIPEMD-160 for Bitcoin). Hierarchical derivation follows BIP-32 for ECDSA keys, as described in \cite{zoo-key-management}.
+
+%% --------------------------------------------------------------------------
+\section{Security Analysis}
+\label{sec:security}
+
+\subsection{Open DKG Safety}
+
+The DKG executes over an open network where validators may be adversarial. Safety relies on two mechanisms:
+
+\begin{enumerate}
+\item \textbf{Feldman commitments}: Each participant commits to their polynomial coefficients. Share recipients verify consistency, detecting any deviation.
+\item \textbf{Zero-knowledge proofs}: Each participant proves knowledge of their secret coefficient $a_{i,0}$ without revealing it, preventing a rogue-key attack where an adversary biases the group public key.
+\end{enumerate}
+
+\begin{proposition}[DKG Soundness]
+If fewer than $t$ of the $n$ DKG participants are corrupted, the resulting group public key $Y$ is uniformly distributed and the adversary learns no information about honest parties' shares.
+\end{proposition}
+
+\subsection{Consensus-Coupled Threshold Guarantees}
+
+In \TChain{}, the MPC threshold $t$ is set to match the consensus fault tolerance. For $n$ validators with total stake $W$, the consensus safety threshold requires honest control of $\geq \frac{2}{3}W$. We set $t = \lceil \frac{n}{3} \rceil + 1$, ensuring:
+
+\begin{equation}
+\text{Forge signature} \implies \text{Corrupt } \geq t \text{ validators} \implies \text{Break consensus}
+\end{equation}
+
+An adversary who can forge a threshold signature can also break consensus, and vice versa. The two security boundaries collapse into one.
+
+\subsection{Identifiable Abort}
+
+Both FROST and CGGMP21 support identifiable abort. If a participant submits an invalid round message:
+
+\begin{enumerate}
+\item Other participants detect the inconsistency via commitment verification or range proof checking.
+\item The session aborts and the offending validator's identity is recorded on-chain.
+\item The validator is slashed according to the staking parameters defined in \cite{zoo-tokenomics}.
+\item A new session is initiated excluding the slashed validator.
+\end{enumerate}
+
+This mechanism converts MPC liveness failures into economic penalties, aligning cryptographic and economic security.
+
+%% --------------------------------------------------------------------------
+\section{GPU Acceleration}
+\label{sec:gpu}
+
+\subsection{FHE Operations in T-Chain}
+
+Threshold FHE decryption is the most computationally intensive operation in \TChain{}. Each validator holds a share of the FHE decryption key and must perform partial decryption on ciphertexts that may encode vectors of thousands of elements. \TChain{} offloads these operations to GPU:
+
+\begin{itemize}
+\item \textbf{NTT (Number Theoretic Transform)}: Polynomial multiplication in RLWE-based FHE uses NTT, which parallelizes across GPU cores. We observe $47\times$ speedup over CPU for degree-$2^{16}$ polynomials.
+\item \textbf{Batch partial decryption}: Multiple ciphertexts are decrypted in a single GPU kernel launch, amortizing launch overhead.
+\item \textbf{ZK proof generation}: Range proofs and commitment verification for CGGMP21 presignatures leverage GPU-parallel multi-scalar multiplication (MSM).
+\end{itemize}
+
+\subsection{Performance}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Operation} & \textbf{CPU (ms)} & \textbf{GPU (ms)} & \textbf{Speedup} \\
+\midrule
+FROST 2-round sign ($t{=}10, n{=}15$) & 12 & 3 & $4\times$ \\
+CGGMP21 presignature ($t{=}10, n{=}15$) & 840 & 58 & $14.5\times$ \\
+TFHE partial decrypt (degree $2^{16}$) & 2,350 & 50 & $47\times$ \\
+ZK range proof (Bulletproofs) & 180 & 22 & $8.2\times$ \\
+\bottomrule
+\end{tabular}
+\caption{GPU acceleration benchmarks (NVIDIA A100, single GPU)}
+\label{tab:gpu}
+\end{table}
+
+These benchmarks demonstrate that GPU acceleration makes threshold FHE decryption practical at consensus timescales. See \cite{zoo-fhe} for the full FHE architecture.
+
+%% --------------------------------------------------------------------------
+\section{Formal Verification}
+\label{sec:formal}
+
+All threshold protocols in \TChain{} are formally verified in Lean~4 as part of the Zoo Crypto library:
+
+\begin{itemize}
+\item \texttt{Crypto/FROST.lean}: Correctness of FROST DKG and 2-round signing. The key theorem states that honest aggregation of $t$ valid partial signatures yields a signature verifiable under the group public key.
+\item \texttt{Crypto/Threshold/CGGMP21.lean}: Correctness of presignature generation and online signing. Identifiable abort is proved: if any party deviates, at least one honest party can produce a proof of misbehavior.
+\item \texttt{Crypto/Threshold/LSS.lean}: $t$-privacy (fewer than $t$ shares reveal nothing) and $t$-correctness (any $t$ shares reconstruct the secret) for Shamir's scheme over arbitrary finite fields.
+\item \texttt{Crypto/Threshold/Composition.lean}: The Composition Theorem (Theorem~\ref{thm:composition}), proving that vectorized DKG preserves individual protocol guarantees.
+\end{itemize}
+
+\begin{remark}
+The Lean proofs cover functional correctness and information-theoretic secrecy. Computational hardness assumptions (DL, Strong RSA, DDH) are axiomatized as hypotheses; the proofs show that security reduces to these assumptions.
+\end{remark}
+
+%% --------------------------------------------------------------------------
+\section{Migration from External MPC}
+\label{sec:migration}
+
+\subsection{Replacing the MPC StatefulSet}
+
+Prior to \TChain{}, Zoo Network's bridge and custody operations ran on a dedicated MPC cluster deployed as a Kubernetes StatefulSet (\texttt{mpc-signer-0} through \texttt{mpc-signer-n}). This architecture suffered from:
+
+\begin{itemize}
+\item Manual key rotation requiring coordinated downtime.
+\item Separate monitoring and alerting stacks.
+\item No on-chain accountability for MPC failures.
+\item Independent scaling from the validator set.
+\end{itemize}
+
+\TChain{} subsumes all functionality of the MPC StatefulSet. The migration proceeds in three phases:
+
+\begin{enumerate}
+\item \textbf{Phase 1 -- Parallel operation}: \TChain{} runs alongside the legacy MPC cluster. New keys are generated on \TChain{}; existing keys remain on the StatefulSet.
+\item \textbf{Phase 2 -- Key migration}: Existing keys are reshared from the StatefulSet participants to the \TChain{} validator set via the \texttt{threshold\_reshare} protocol.
+\item \textbf{Phase 3 -- Decommission}: The MPC StatefulSet is drained and removed. All signing requests route to \TChain{}.
+\end{enumerate}
+
+\subsection{Bridge Integration}
+
+Zoo's cross-chain bridges (connecting to Lux L0, Ethereum, Bitcoin) previously called the MPC cluster via internal gRPC. \TChain{} exposes an HTTP compatibility layer at \texttt{/v1/threshold/compat} that accepts the legacy request format and translates it to \ThresholdVM{} transactions. This allows bridge contracts to migrate incrementally without a flag-day cutover.
+
+\subsection{HTTP Compatibility Layer}
+
+The compatibility layer translates legacy MPC API calls:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Legacy Endpoint} & \textbf{T-Chain Translation} \\
+\midrule
+\texttt{POST /mpc/keygen} & \texttt{threshold\_keygen} \\
+\texttt{POST /mpc/sign} & \texttt{threshold\_sign} \\
+\texttt{POST /mpc/reshare} & \texttt{threshold\_reshare} \\
+\texttt{GET /mpc/key/:id} & \texttt{threshold\_pubkey} \\
+\texttt{GET /mpc/status/:session} & \texttt{threshold\_status} \\
+\bottomrule
+\end{tabular}
+\caption{Legacy MPC to T-Chain endpoint mapping}
+\label{tab:compat}
+\end{table}
+
+%% --------------------------------------------------------------------------
+\section{Related Work}
+\label{sec:related}
+
+\textbf{Lux threshold infrastructure.} Lux Network provides the foundational libraries used by \TChain{}. The \texttt{lux-universal-threshold-signatures} library \cite{lux-threshold-sigs} implements FROST and CGGMP21 at the primitive level; \texttt{lux-mchain-mpc} \cite{lux-mchain-mpc} pioneered multi-chain MPC on Lux but operated as an external service. \TChain{} embeds these primitives directly into a VM.
+
+\textbf{Fireblocks MPC.} Fireblocks \cite{fireblocks2023mpc} offers institutional MPC-CMP as a managed service. While production-proven, it introduces a trusted third party. \TChain{} achieves comparable guarantees without custodial trust assumptions.
+
+\textbf{Lit Protocol.} Lit \cite{lit2023threshold} distributes threshold signing across a dedicated node network, requiring separate infrastructure. \TChain{} reuses the validator set, reducing cost and aligning incentives.
+
+\textbf{THORChain TSS.} THORChain \cite{thorchain2023tss} uses GG20 for cross-chain swaps. \TChain{} improves on this with identifiable abort (absent in GG20) and the Composition Theorem for multi-protocol share reuse.
+
+\textbf{DFINITY threshold ECDSA.} The Internet Computer \cite{dfinity2022tecdsa} implements chain-key threshold ECDSA at the subnet level. \TChain{} follows a similar chain-native philosophy but extends it to FROST, TFHE, and BLS via the \LSS{} Composition Theorem.
+
+%% --------------------------------------------------------------------------
+\section{Conclusion}
+\label{sec:conclusion}
+
+\TChain{} demonstrates that threshold signature protocols belong inside the consensus layer, not beside it. By making validators the MPC parties, Zoo Network achieves:
+
+\begin{enumerate}
+\item \textbf{Unified security}: The MPC quorum and the consensus quorum are identical. No separate trust boundary exists for custody.
+\item \textbf{Operational simplicity}: No sidecar deployments, no independent key rotation schedules, no separate monitoring.
+\item \textbf{Economic alignment}: MPC failures trigger the same slashing penalties as consensus failures, eliminating free-rider incentives.
+\item \textbf{Protocol composability}: The \LSS{} Composition Theorem enables a single DKG ceremony to provision shares for FROST, CGGMP21, TFHE, Corona, and BLS simultaneously.
+\item \textbf{Verified correctness}: All protocols are formally verified in Lean~4, with computational security reducing to standard hardness assumptions.
+\end{enumerate}
+
+The migration path from external MPC to \TChain{} is incremental: parallel operation, key reshare, decommission. Existing bridge integrations continue to function through the HTTP compatibility layer. GPU acceleration ensures that even computationally heavy operations (threshold FHE decryption) complete within consensus block times.
+
+\TChain{} establishes the foundation for chain-native cryptographic services on Zoo Network, enabling future extensions including threshold decryption for privacy-preserving inference \cite{zoo-fhe}, DID-bound threshold keys for decentralized identity \cite{zoo-identity-chain}, and cross-chain atomic swaps without trusted bridges.
+
+%% --------------------------------------------------------------------------
+\begin{thebibliography}{99}
+
+\bibitem{komlo2020frost}
+Chelsea Komlo and Ian Goldberg.
+\textit{FROST: Flexible Round-Optimized Schnorr Threshold Signatures}.
+Selected Areas in Cryptography (SAC), 2020.
+
+\bibitem{canetti2021cggmp}
+Ran Canetti, Rosario Gennaro, Steven Goldfeder, Nikolaos Makriyannis, and Udi Peled.
+\textit{UC Non-Interactive, Proactive, Threshold ECDSA with Identifiable Aborts}.
+ACM CCS, 2020.
+
+\bibitem{shamir1979share}
+Adi Shamir.
+\textit{How to Share a Secret}.
+Communications of the ACM, 22(11):612--613, 1979.
+
+\bibitem{feldman1987practical}
+Paul Feldman.
+\textit{A Practical Scheme for Non-Interactive Verifiable Secret Sharing}.
+FOCS, 1987.
+
+\bibitem{pedersen1991non}
+Torben Pryds Pedersen.
+\textit{Non-Interactive and Information-Theoretic Secure Verifiable Secret Sharing}.
+CRYPTO, 1991.
+
+\bibitem{gennaro2007secure}
+Rosario Gennaro, Stanislaw Jarecki, Hugo Krawczyk, and Tal Rabin.
+\textit{Secure Distributed Key Generation for Discrete-Log Based Cryptosystems}.
+Journal of Cryptology, 20(1):51--83, 2007.
+
+\bibitem{lindell2017fast}
+Yehuda Lindell.
+\textit{Fast Secure Two-Party ECDSA Signing}.
+CRYPTO, 2017.
+
+\bibitem{fireblocks2023mpc}
+Fireblocks.
+\textit{MPC-CMP: Next Generation MPC for Digital Asset Security}.
+Fireblocks Technical Paper, 2023.
+
+\bibitem{lit2023threshold}
+Lit Protocol.
+\textit{Threshold Cryptography for Decentralized Access Control}.
+Lit Protocol Whitepaper, 2023.
+
+\bibitem{thorchain2023tss}
+THORChain.
+\textit{TSS: Threshold Signature Scheme Implementation}.
+THORChain Documentation, 2023.
+
+\bibitem{dfinity2022tecdsa}
+DFINITY Foundation.
+\textit{Chain-Key Threshold ECDSA on the Internet Computer}.
+DFINITY Technical Report, 2022.
+
+\bibitem{zoo-network-architecture}
+Zach Kelling.
+\textit{Zoo Network Architecture: A Multi-Chain AI Infrastructure}.
+Zoo Labs Foundation, 2025.
+
+\bibitem{zoo-tokenomics}
+Zach Kelling.
+\textit{Zoo Network Tokenomics: Fair Distribution Through Complete Airdrop}.
+Zoo Labs Foundation, 2025.
+
+\bibitem{zoo-fhe}
+Zach Kelling.
+\textit{Fully Homomorphic Encryption on Zoo Network}.
+Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-identity-chain}
+Zach Kelling.
+\textit{Zoo Identity Chain: Decentralized Identity and DID Management}.
+Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-key-management}
+Zach Kelling.
+\textit{Zoo Hierarchical Key Management}.
+Zoo Labs Foundation, 2026.
+
+\bibitem{lux-threshold-sigs}
+Lux Partners.
+\textit{Universal Threshold Signatures for Multi-Consensus Networks}.
+Lux Technical Report, 2025.
+
+\bibitem{lux-mchain-mpc}
+Lux Partners.
+\textit{Multi-Chain MPC Signing on Lux Network}.
+Lux Technical Report, 2025.
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,60 @@
+# Zoo Labs Foundation - Research Papers
+title: Zoo Labs Research Papers
+description: Academic and technical papers for Zoo Labs Foundation infrastructure and protocols
+baseurl: ""
+url: "https://papers.zoo.ngo"
+
+# Theme - DISABLED (using custom static HTML generator in GitHub Actions)
+# theme: jekyll-theme-minimal
+# remote_theme: pages-themes/minimal@v0.2.0
+
+# Organization
+github:
+  is_project_page: true
+  repository_name: zooai/papers
+  repository_url: https://github.com/zooai/papers
+
+# Social
+email: foundation@zoo.ai
+logo: .github/zoo-logo.svg
+
+# Build settings
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+
+# Include PDFs in build
+include:
+  - "*.pdf"
+  - "*.tex"
+  - "*.md"
+
+# Exclude build artifacts
+exclude:
+  - .git
+  - .github/workflows
+  - dso_whitepaper/.git
+
+# Collections
+collections_dir: .
+
+# Plugins - DISABLED (not needed for static HTML generation)
+# plugins:
+#   - jekyll-relative-links
+#   - jekyll-optional-front-matter
+#   - jekyll-readme-index
+#   - jekyll-titles-from-headings
+
+# relative_links:
+#   enabled: true
+#   collections: true
+
+# titles_from_headings:
+#   enabled: true
+#   strip_title: true
+#   collections: true
+
+# readme_index:
+#   enabled: true
+#   remove_originals: false
