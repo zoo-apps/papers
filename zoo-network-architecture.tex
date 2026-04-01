@@ -1,0 +1,1196 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{cite}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{authblk}
+
+\title{\textbf{Zoo Network: Decentralized AI Training and Inference Layer with Semantic Optimization}}
+
+\author[1]{Zach Kelling\thanks{zach@lux.network}}
+\affil[1]{\textit{Hanzo Industries \quad Lux Industries \quad Zoo Labs Foundation}, \texttt{research@lux.network}}
+
+\date{Version v2025.09 -- September 2025}
+
+\begin{document}
+\luxcoverpage
+
+\maketitle
+
+\begin{abstract}
+We present \textbf{Zoo Network}, a specialized Layer 2 blockchain infrastructure for decentralized artificial intelligence training, inference, and governance. Built atop the Hanzo compute layer, Zoo extends base blockchain capabilities with AI/ML-specific primitives including the Hamiltonian Large Language Model (HLLM) framework, Training-Free Group Relative Policy Optimization (GRPO), and the Experience Ledger—a content-addressable, cryptographically verifiable repository of semantic optimization knowledge. Unlike centralized AI platforms, Zoo enables community-driven model evolution through DAO governance, privacy-preserving federated learning, and a novel economic model where data contributors earn inference credits and governance rights. By operating in the context space rather than parameter space, Zoo achieves 99.8\% cost reduction compared to traditional fine-tuning while maintaining transparency and auditability. We demonstrate Zoo's architecture across storage (IPFS/Arweave), computation (Hanzo GPU nodes), and consensus (Lux multi-consensus base), providing a complete stack for decentralized AI infrastructure. This work represents a fundamental shift from corporate-controlled AI toward community-owned, verifiable, and composable intelligence systems.
+\end{abstract}
+
+\section{Introduction}
+
+The contemporary artificial intelligence landscape is characterized by extreme centralization. A handful of corporations control foundation models, training infrastructure, and inference APIs, creating critical dependencies and single points of failure \cite{bender2021dangers}. Users contribute data but receive no ownership, researchers cannot audit model behavior, and improvements remain locked behind proprietary walls.
+
+\subsection{Motivation}
+
+Three fundamental problems plague centralized AI:
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Opacity}: Model weights, training data, and fine-tuning methodologies are proprietary black boxes. Even when APIs are available, the underlying system state is unknowable.
+\item \textbf{Lock-in}: Users who contribute feedback improve models owned by corporations. There is no portability, interoperability, or long-term access guarantee.
+\item \textbf{Cost Barriers}: Fine-tuning a 32B parameter model costs \$10,000+ and requires specialized infrastructure \cite{tencent2025grpo}. This excludes academic researchers, non-profits, and developing nations.
+\end{enumerate}
+
+\subsection{Our Contribution}
+
+Zoo Network addresses these challenges through:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Layered Architecture}: Building on Lux (L0 consensus) and Hanzo (L1 compute), Zoo provides an AI-specialized L2 with smart contract coordination and decentralized storage.
+\item \textbf{Training-Free Optimization}: Via HLLM and Training-Free GRPO, models improve by curating semantic experiences in context space—not updating billions of parameters. Cost drops from \$10K to \$18 per task \cite{tencent2025grpo}.
+\item \textbf{Experience Ledger}: A Merkle-tree-verified, content-addressable repository of human-readable optimization insights. All changes are auditable, governable, and composable.
+\item \textbf{Economic Incentives}: Contributors earn inference credits, governance votes, and revenue shares proportional to their data/experience contributions.
+\item \textbf{Privacy Preservation}: Federated learning and optional zero-knowledge proofs enable private model training without exposing sensitive data.
+\end{itemize}
+
+This paper is organized as follows: Section 2 surveys related work. Section 3 details Zoo's layered architecture. Section 4 explains HLLM and Training-Free GRPO. Section 5 describes the Experience Ledger. Sections 6-8 cover training, inference, and economics. Section 9 addresses security. Section 10 compares Zoo to centralized platforms. Section 11 concludes with future work.
+
+\section{Related Work}
+
+\subsection{Decentralized Machine Learning}
+
+Prior efforts toward decentralized ML include:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Federated Learning (FL)} \cite{mcmahan2017federated}: Trains models across devices without centralizing data. However, coordination typically remains centralized (e.g., Google's FL infrastructure).
+\item \textbf{Blockchain-based FL} \cite{kim2019blockchained}: Uses blockchain for coordination but lacks AI-specific primitives (experience management, context optimization).
+\item \textbf{Ocean Protocol / SingularityNet} \cite{ocean2021whitepaper,singularitynet2021whitepaper}: Focus on data marketplaces and AI service trading but do not address training optimization or semantic knowledge curation.
+\item \textbf{Bittensor} \cite{bittensor2021whitepaper}: Incentivizes model training via proof-of-intelligence. Zoo complements this by adding semantic experiences and frozen-weight optimization.
+\end{itemize}
+
+\subsection{Efficient Fine-Tuning}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{LoRA/QLoRA} \cite{hu2021lora,dettmers2023qlora}: Reduce fine-tuning costs via low-rank adaptation. Still requires gradient updates and GPU clusters.
+\item \textbf{RLHF} \cite{ouyang2022training}: Reinforcement learning from human feedback. PPO-based approaches are sample-inefficient and computationally expensive.
+\item \textbf{DPO/IPO} \cite{rafailov2023dpo}: Direct preference optimization bypasses reward models but still updates parameters.
+\item \textbf{Training-Free GRPO} \cite{tencent2025grpo}: Our work builds directly on this, extending it with decentralized governance and cryptographic verification.
+\end{itemize}
+
+\subsection{Blockchain AI Infrastructure}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Akash/Render Network} \cite{akash2021whitepaper}: Decentralized compute marketplaces but lack AI-specific orchestration.
+\item \textbf{Hanzo Network} \cite{hanzo2025paper}: Provides the L1 compute layer on which Zoo is built. Hanzo handles consensus, GPU allocation, and base infrastructure.
+\item \textbf{Lux Blockchain} \cite{lux2025whitepaper}: L0 multi-consensus layer with post-quantum cryptography. Zoo inherits security from Lux.
+\end{itemize}
+
+Zoo uniquely combines semantic optimization, cryptographic auditability, and economic incentives into a cohesive L2 stack.
+
+\section{Layered Architecture}
+
+Zoo Network operates as a specialized Layer 2 atop Hanzo's base compute infrastructure. This section details the multi-layer design.
+
+\subsection{Layer 0: Lux Consensus}
+
+\textbf{Lux} \cite{lux2025whitepaper} provides the foundational consensus layer with:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Wave Consensus}: DAG-based finality via repeated sub-sampled voting \cite{rocket2020snowman}. Achieves sub-second confirmation with Byzantine fault tolerance.
+\item \textbf{Post-Quantum Cryptography}: CRYSTALS-Dilithium signatures resist quantum attacks.
+\item \textbf{Multi-Chain Architecture}: Supports heterogeneous virtual machines (EVM, WASM, custom).
+\end{itemize}
+
+Zoo inherits security and finality guarantees from Lux's validator set.
+
+\subsection{Layer 1: Hanzo Compute Infrastructure}
+
+\textbf{Hanzo} \cite{hanzo2025paper} extends Lux with compute-specific capabilities:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{GPU Compute Nodes}: Distributed GPU clusters run containerized LLM inference. Nodes stake collateral and earn rewards proportional to compute provided.
+\item \textbf{Proof of Compute}: Validators verify inference correctness via sampling or zero-knowledge proofs.
+\item \textbf{Storage Primitives}: Integration with IPFS for content-addressable data and Arweave for permanent archival.
+\item \textbf{Rust Crates}: Hanzo provides reusable libraries (consensus, mining, HTTP APIs, libp2p networking) that Zoo extends.
+\end{itemize}
+
+Hanzo is blockchain-agnostic compute infrastructure; Zoo specializes it for AI/ML workloads.
+
+\subsection{Layer 2: Zoo AI/ML Specialization}
+
+Zoo adds AI-specific components:
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Smart Contracts}:
+   \begin{itemize}
+   \item \textit{Inference Router}: Routes queries to available GPU nodes, specifies experience library versions, records proofs.
+   \item \textit{Experience Registry}: Stores Merkle roots of experience libraries, handles DAO votes for curation.
+   \item \textit{Governance Contract}: Manages proposals, voting, and treasury allocation.
+   \end{itemize}
+
+\item \textbf{Off-Chain Components}:
+   \begin{itemize}
+   \item \textit{Semantic Context Manager}: Maintains experience embeddings, performs similarity search for retrieval.
+   \item \textit{Experience Storage}: IPFS (current library), Arweave (immutable history).
+   \item \textit{GPU Compute Nodes}: Load frozen base models, inject experiences into context windows, execute inference.
+   \end{itemize}
+
+\item \textbf{Rust Libraries} (extend Hanzo):
+   \begin{itemize}
+   \item \texttt{zoo\_mcp}: Model Context Protocol for experience management.
+   \item \texttt{zoo\_embedding}: Vector embedding generation.
+   \item \texttt{zoo\_job\_queue\_manager}: Training job scheduling.
+   \item \texttt{zoo\_tools\_primitives}: AI-specific utilities.
+   \end{itemize}
+\end{enumerate}
+
+\subsection{Data Flow}
+
+\begin{enumerate}
+\item User submits query via Inference Router contract.
+\item Router selects GPU node and experience library version.
+\item GPU node fetches base model (frozen weights) and experience library (IPFS).
+\item Experiences are injected into context window.
+\item Model generates response.
+\item Response returned to user; proof recorded on-chain.
+\end{enumerate}
+
+This architecture separates concerns: Lux handles consensus, Hanzo handles compute, Zoo handles AI-specific logic.
+
+\section{Hamiltonian Large Language Models (HLLM)}
+
+\subsection{Core Concept}
+
+Traditional fine-tuning modifies model parameters $\theta$ via gradient descent:
+\[
+\theta \leftarrow \theta - \alpha \nabla_\theta \mathcal{L}(\theta, \mathcal{D})
+\]
+This is expensive (requires backpropagation through billions of parameters) and opaque (weight changes are inscrutable).
+
+\textbf{HLLM} \cite{zoo2025hllm} proposes an alternative: keep $\theta$ frozen and optimize the \textit{context} $\Psi$ instead. The system obeys a \textbf{Hamiltonian invariant}:
+\[
+\Psi \cdot \Theta = \kappa
+\]
+where:
+\begin{itemize}
+\item $\Psi$ = Policy mass (semantic context / experiences)
+\item $\Theta$ = Inference cost (model entropy / uncertainty)
+\item $\kappa$ = Conserved constant (system equilibrium)
+\end{itemize}
+
+As context expands ($\Psi \uparrow$), model uncertainty decreases ($\Theta \downarrow$) while preserving total system cost $\kappa$.
+
+\subsection{Training-Free GRPO}
+
+\textbf{Group Relative Policy Optimization (GRPO)} \cite{shao2024deepseekmath} computes advantages relative to group means instead of baselines:
+\[
+A_i = \frac{R_i - \mu_G}{\sigma_G}
+\]
+where $R_i$ is the reward for output $i$, $\mu_G$ is the group mean, and $\sigma_G$ is group standard deviation.
+
+\textbf{Training-Free GRPO} \cite{tencent2025grpo} replaces numerical advantages with \textit{semantic advantages}—natural language insights extracted via LLM introspection. The algorithm proceeds in three stages:
+
+\subsubsection{Stage 1: Trajectory Summarization}
+
+For each generated output $o_i$, an LLM summarizes:
+\begin{itemize}
+\item What actions were taken
+\item Which experiences were used
+\item Where errors or detours occurred
+\end{itemize}
+
+\begin{algorithm}[H]
+\caption{Trajectory Summarization}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} Trajectory $\tau_i$, correctness label $c_i$, ground truth $y^*$
+\STATE \textbf{Output:} Natural language summary $s_i$
+\STATE $s_i \leftarrow \text{LLM.summarize}(\tau_i, c_i, y^*)$
+\RETURN $s_i$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Stage 2: Group Advantage Extraction}
+
+Given $G$ trajectory summaries for a query, the LLM identifies patterns distinguishing successes from failures. It outputs up to 3 operations per group: \texttt{add}, \texttt{modify}, or \texttt{delete} experiences.
+
+\begin{algorithm}[H]
+\caption{Group Advantage Extraction}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} Summaries $\{s_1, \ldots, s_G\}$, current experiences $E$, ground truth $y^*$
+\STATE \textbf{Output:} Experience operations $\mathcal{O}_G$
+\STATE $\mathcal{O}_G \leftarrow \text{LLM.extract\_advantages}(\{s_i\}, E, y^*)$
+\STATE Filter to max 3 operations: $|\mathcal{O}_G| \leq 3$
+\RETURN $\mathcal{O}_G$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Stage 3: Batch Consolidation}
+
+All group operations from a batch are consolidated to avoid duplication and ensure experiences are $\leq 32$ words.
+
+\begin{algorithm}[H]
+\caption{Batch Consolidation}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} All group operations $\{\mathcal{O}_1, \ldots, \mathcal{O}_B\}$, current experiences $E$
+\STATE \textbf{Output:} Final consolidated operations $\mathcal{O}_{\text{final}}$
+\STATE $\mathcal{O}_{\text{final}} \leftarrow \text{LLM.consolidate}(\{\mathcal{O}_j\}, E)$
+\STATE Apply operations: $E \leftarrow E \oplus \mathcal{O}_{\text{final}}$
+\RETURN Updated experience library $E$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Performance}
+
+On the AIME mathematical reasoning benchmark \cite{hendrycks2021math}, Training-Free GRPO achieves:
+\begin{itemize}
+\item \textbf{AIME24}: 82.7\% (vs. 80.0\% vanilla GRPO, +2.7\%)
+\item \textbf{AIME25}: 73.3\% (vs. 67.9\% vanilla GRPO, +5.4\%)
+\item \textbf{Training Cost}: \$18 (vs. \$10,000+ for fine-tuning)
+\item \textbf{Training Samples}: 100 (vs. 10,000+ for fine-tuning)
+\end{itemize}
+
+Crucially, base model weights remain \textit{frozen}—all improvement comes from context optimization.
+
+\section{Experience Ledger}
+
+The Experience Ledger is Zoo's core innovation: a cryptographically verifiable, content-addressable repository of semantic optimization knowledge.
+
+\subsection{Data Structure}
+
+Each experience is a JSON object:
+\begin{verbatim}
+{
+  "id": "exp_abc123",
+  "domain": "math.algebra",
+  "text": "When solving quadratics, check discriminant
+           (b²-4ac) first. If negative, return 'no real
+           solutions' to avoid wasted computation.",
+  "confidence": 0.87,
+  "examples": [
+    {"input": "x² + 2x + 5 = 0",
+     "output": "No real solutions"},
+    {"input": "x² + 2x - 3 = 0",
+     "output": "x = 1 or x = -3"}
+  ],
+  "metadata": {
+    "created_at": "2025-10-17T12:00:00Z",
+    "created_by": "0x742d35Cc...",
+    "votes": {"upvotes": 24, "downvotes": 2},
+    "usage_count": 156
+  },
+  "embedding": [0.123, -0.456, ...],
+  "merkle_proof": "0xabc...def"
+}
+\end{verbatim}
+
+Key properties:
+\begin{itemize}
+\item \textbf{Concise}: $\leq 32$ words per experience \cite{tencent2025grpo}.
+\item \textbf{Strategic}: "When [context], [action]" pattern.
+\item \textbf{Generalizable}: Applicable to problem classes, not specific instances.
+\item \textbf{Verifiable}: Merkle proof ties experience to on-chain root hash.
+\end{itemize}
+
+\subsection{Storage Architecture}
+
+\subsubsection{IPFS: Mutable State}
+
+The current experience library is stored on IPFS \cite{benet2014ipfs}. Each update generates a new Content Identifier (CID). The Inference Router contract points to the latest CID.
+
+\begin{itemize}
+\item \textbf{Advantages}: Content-addressable, P2P replication, efficient updates.
+\item \textbf{Disadvantages}: CIDs change on every update; historical versions require explicit pinning.
+\end{itemize}
+
+\subsubsection{Arweave: Immutable History}
+
+All historical library versions are archived on Arweave \cite{arweave2018whitepaper}, a permanent storage blockchain. Each archive includes:
+\begin{itemize}
+\item Full experience library snapshot
+\item Merkle tree with root hash
+\item Timestamp and version number
+\end{itemize}
+
+This ensures \textit{complete auditability}: anyone can reconstruct model behavior at any point in time.
+
+\subsection{Merkle Tree Verification}
+
+Experiences are organized into a Merkle tree. The root hash is stored on-chain in the Experience Registry contract:
+
+\begin{algorithm}[H]
+\caption{Merkle Tree Construction}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} Experience set $E = \{e_1, \ldots, e_n\}$
+\STATE \textbf{Output:} Merkle root $r$
+\STATE Compute leaf hashes: $h_i \leftarrow \text{SHA256}(\text{JSON}(e_i))$
+\STATE Build tree: $r \leftarrow \text{MerkleTree}(\{h_i\})$
+\RETURN $r$
+\end{algorithmic}
+\end{algorithm}
+
+To verify an experience $e_j$, a user:
+\begin{enumerate}
+\item Computes $h_j = \text{SHA256}(\text{JSON}(e_j))$
+\item Obtains Merkle proof $\pi_j$ (path from $h_j$ to root $r$)
+\item Verifies $\text{VerifyProof}(r, h_j, \pi_j) = \text{True}$
+\end{enumerate}
+
+If verification succeeds, $e_j$ is guaranteed to be part of the canonical library.
+
+\subsection{DAO Governance}
+
+Experience updates undergo decentralized review:
+
+\begin{enumerate}
+\item \textbf{Proposal}: A contributor submits a new experience or modification. They stake KEEPER tokens (Zoo's governance token).
+\item \textbf{Voting}: Token holders vote (1 token = 1 vote). Threshold: 66\% approval required.
+\item \textbf{Execution}: If approved, the Experience Registry contract updates the Merkle root. The contributor receives a reward proportional to votes received.
+\item \textbf{Rejection}: If rejected, the contributor loses their stake (burned or redistributed to voters).
+\end{enumerate}
+
+This mechanism ensures experiences are high-quality, non-malicious, and aligned with community goals.
+
+\subsection{Experience Retrieval}
+
+Given a query $q$, the Semantic Context Manager retrieves the top-$k$ most relevant experiences:
+
+\begin{algorithm}[H]
+\caption{Experience Retrieval}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} Query $q$, experience library $E$, number $k$
+\STATE \textbf{Output:} Top-$k$ experiences $E_k$
+\STATE Compute query embedding: $\mathbf{v}_q \leftarrow \text{Embed}(q)$
+\STATE Compute similarities: $s_i \leftarrow \cos(\mathbf{v}_q, \mathbf{v}_{e_i})$ for all $e_i \in E$
+\STATE Sort by similarity: $E_{\text{sorted}} \leftarrow \text{sort}(E, s)$
+\STATE Select top-$k$: $E_k \leftarrow E_{\text{sorted}}[1:k]$
+\RETURN $E_k$
+\end{algorithmic}
+\end{algorithm}
+
+Embeddings are precomputed and stored alongside experiences. Common choices: \texttt{text-embedding-ada-002} (OpenAI), \texttt{bge-large-en-v1.5} (open-source).
+
+\section{Decentralized Model Training}
+
+\subsection{Federated Learning}
+
+Zoo supports federated learning \cite{mcmahan2017federated} where data remains on contributor devices:
+
+\begin{enumerate}
+\item \textbf{Initialization}: Coordinator publishes initial model $\theta_0$ and experience library $E_0$ on IPFS.
+\item \textbf{Local Training}: Participants download $\theta_0$ and $E_0$, perform Training-Free GRPO locally with their data, produce experience updates $\Delta E_i$.
+\item \textbf{Aggregation}: Coordinator collects $\{\Delta E_i\}$, runs batch consolidation (Section 4.2.3), produces $E_1$.
+\item \textbf{Distribution}: Updated library $E_1$ published on IPFS; participants download for next round.
+\end{enumerate}
+
+Unlike traditional federated learning (which aggregates gradients), Zoo aggregates \textit{semantic experiences}. This is more efficient (natural language is compact) and interpretable (humans can audit experiences).
+
+\subsection{Privacy-Preserving Techniques}
+
+\subsubsection{Differential Privacy}
+
+Experiences can be sanitized via differential privacy \cite{dwork2014algorithmic}:
+\[
+\Pr[A(E) \in S] \leq e^\epsilon \Pr[A(E') \in S] + \delta
+\]
+Noise is added to experience embeddings or metadata to prevent inference attacks.
+
+\subsubsection{Zero-Knowledge Proofs}
+
+For sensitive experiences, contributors can submit zero-knowledge proofs of correctness without revealing content. For example, a zkSNARK \cite{bitansky2013snarks} proving "this experience improves validation accuracy by $\geq 5\%$" without disclosing the experience text.
+
+\subsubsection{Secure Multi-Party Computation}
+
+Multiple parties jointly compute experience consolidation without revealing individual contributions. This is particularly useful for medical/financial domains where data is regulated.
+
+\subsection{Incentive Alignment}
+
+Contributors are rewarded via:
+\begin{itemize}
+\item \textbf{Inference Credits}: 1 hour of contribution $\approx$ 1000 free inference queries.
+\item \textbf{KEEPER Tokens}: Proportional to upvotes received on submitted experiences.
+\item \textbf{Revenue Share}: 10\% of API usage fees distributed to top contributors.
+\end{itemize}
+
+This creates a virtuous cycle: high-quality contributions improve models, attract more users, generate more revenue, reward contributors.
+
+\section{Semantic Context Manager}
+
+The Semantic Context Manager maintains experience embeddings and performs retrieval.
+
+\subsection{Embedding Generation}
+
+Each experience $e$ is converted to a dense vector $\mathbf{v}_e \in \mathbb{R}^d$ (typically $d = 768$ or $d = 1536$) via a pretrained encoder:
+\[
+\mathbf{v}_e = \text{Encoder}(e.\text{text})
+\]
+
+Common encoders:
+\begin{itemize}
+\item \textbf{OpenAI \texttt{text-embedding-ada-002}}: 1536-dim, high quality, proprietary.
+\item \textbf{BGE-large-en-v1.5} \cite{xiao2023bge}: 1024-dim, open-source, competitive.
+\item \textbf{Sentence-BERT} \cite{reimers2019sentencebert}: 768-dim, efficient.
+\end{itemize}
+
+Embeddings are stored alongside experiences in the IPFS library.
+
+\subsection{Similarity Search}
+
+Given query embedding $\mathbf{v}_q$, compute cosine similarity with all experience embeddings:
+\[
+\text{sim}(\mathbf{v}_q, \mathbf{v}_e) = \frac{\mathbf{v}_q \cdot \mathbf{v}_e}{\|\mathbf{v}_q\| \|\mathbf{v}_e\|}
+\]
+
+For large libraries ($|E| > 10^6$), use approximate nearest neighbor (ANN) search:
+\begin{itemize}
+\item \textbf{FAISS} \cite{johnson2019faiss}: Facebook's library for billion-scale vector search.
+\item \textbf{HNSW} \cite{malkov2018hnsw}: Hierarchical Navigable Small World graphs.
+\item \textbf{ScaNN} \cite{guo2020scann}: Google's optimized ANN.
+\end{itemize}
+
+\subsection{Caching and Optimization}
+
+\begin{itemize}
+\item \textbf{Precomputed Embeddings}: All experiences have embeddings computed offline; no real-time encoding during inference.
+\item \textbf{Experience Deduplication}: Before adding new experiences, check for $\text{sim}(\mathbf{v}_{\text{new}}, \mathbf{v}_e) > 0.9$. If found, merge instead of adding duplicate.
+\item \textbf{LRU Cache}: Frequently retrieved experiences cached in GPU memory for zero-latency access.
+\end{itemize}
+
+\subsection{Quality Scoring}
+
+Each experience has a quality score:
+\[
+Q(e) = \alpha \cdot \frac{\text{upvotes}}{\text{upvotes} + \text{downvotes}} + \beta \cdot \frac{\text{usage\_count}}{\max(\text{usage\_counts})} + \gamma \cdot e.\text{confidence}
+\]
+where $\alpha, \beta, \gamma$ are tunable weights. Low-quality experiences are pruned when the library exceeds maximum size.
+
+\section{Inference Router}
+
+The Inference Router is a Solidity smart contract coordinating query execution.
+
+\subsection{Contract Interface}
+
+\begin{verbatim}
+contract InferenceRouter {
+    struct Request {
+        bytes32 queryHash;
+        address user;
+        uint256 timestamp;
+        string ipfsCID;  // Experience library version
+    }
+
+    mapping(bytes32 => Request) public requests;
+    mapping(address => uint256) public nodeStakes;
+
+    function submitQuery(
+        string memory query,
+        string memory ipfsCID
+    ) public payable returns (bytes32 requestId);
+
+    function fulfillQuery(
+        bytes32 requestId,
+        string memory response,
+        bytes memory proof
+    ) public;
+
+    function slashNode(address node) public;
+}
+\end{verbatim}
+
+\subsection{Query Lifecycle}
+
+\begin{enumerate}
+\item \textbf{Submission}: User calls \texttt{submitQuery(query, ipfsCID)}, pays fee in native token (ZOO).
+\item \textbf{Node Selection}: Router selects GPU node via:
+   \begin{itemize}
+   \item \textit{Round-robin}: Fair distribution.
+   \item \textit{Stake-weighted}: Nodes with higher stakes prioritized.
+   \item \textit{Performance-based}: Nodes with lower latency prioritized.
+   \end{itemize}
+\item \textbf{Execution}: Selected node:
+   \begin{enumerate}
+   \item Fetches base model (frozen weights) from IPFS.
+   \item Fetches experience library at \texttt{ipfsCID}.
+   \item Retrieves top-$k$ relevant experiences.
+   \item Constructs prompt: \texttt{experiences + query}.
+   \item Runs inference.
+   \item Optionally generates proof (zkSNARK or optimistic).
+   \end{enumerate}
+\item \textbf{Fulfillment}: Node calls \texttt{fulfillQuery(requestId, response, proof)}. Contract verifies proof (if provided) and releases payment.
+\item \textbf{Dispute}: If proof fails or response is incorrect, user can challenge. Validators re-execute query; if node is malicious, stake is slashed.
+\end{enumerate}
+
+\subsection{Proof Systems}
+
+\subsubsection{Optimistic Proofs}
+
+Default mode: no cryptographic proof. Users can challenge within dispute window (e.g., 1 hour). Validators re-run inference; if outputs differ, slash node.
+
+\begin{itemize}
+\item \textbf{Pros}: Zero overhead, fast finality.
+\item \textbf{Cons}: Requires dispute mechanism, delayed finality.
+\end{itemize}
+
+\subsubsection{zkSNARK Proofs}
+
+Node generates a succinct proof that inference was executed correctly:
+\[
+\pi \leftarrow \text{Prove}(\text{circuit}, \text{model}, \text{input}, \text{output})
+\]
+Contract verifies:
+\[
+\text{Verify}(\pi, \text{output}) = \text{True}
+\]
+
+\begin{itemize}
+\item \textbf{Pros}: Instant finality, no disputes.
+\item \textbf{Cons}: Proving overhead ($\sim$10x inference time), circuit complexity.
+\end{itemize}
+
+Current implementations: \texttt{zkML} \cite{zkml2023}, \texttt{Modulus Labs EZKL} \cite{ezkl2023}.
+
+\section{GPU Compute Nodes}
+
+\subsection{Node Architecture}
+
+Each GPU node runs:
+\begin{itemize}
+\item \textbf{Base Model Loader}: Downloads frozen model weights from IPFS/HuggingFace.
+\item \textbf{Experience Injector}: Fetches experience library, retrieves relevant experiences, constructs prompt.
+\item \textbf{Inference Engine}: HuggingFace Transformers, vLLM \cite{kwon2023vllm}, TGI \cite{huggingface2023tgi}.
+\item \textbf{Proof Generator}: Optional zkSNARK prover.
+\item \textbf{RPC Interface}: Listens for queries from Inference Router.
+\end{itemize}
+
+\subsection{Supported Models}
+
+\begin{itemize}
+\item \textbf{Qwen Series}: Qwen3-4B/7B/14B/32B/72B \cite{qwen2024qwen3}
+\item \textbf{LLaMA Series}: LLaMA 2/3/3.1/3.2/3.3 (all sizes) \cite{touvron2023llama}
+\item \textbf{DeepSeek}: V2, V2.5, V3 \cite{bi2024deepseek}
+\item \textbf{Mistral/Mixtral}: Including MoE variants \cite{jiang2023mistral}
+\item \textbf{Multimodal}: Qwen3-Omni (vision + audio) \cite{chu2024qwen2audio}
+\end{itemize}
+
+\subsection{Resource Requirements}
+
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Model} & \textbf{Parameters} & \textbf{VRAM (FP16)} & \textbf{VRAM (4-bit)} \\
+\midrule
+Qwen3-4B & 4B & 8 GB & 3 GB \\
+Qwen3-7B & 7B & 14 GB & 5 GB \\
+Qwen3-14B & 14B & 28 GB & 9 GB \\
+Qwen3-32B & 32B & 64 GB & 18 GB \\
+Qwen3-72B & 72B & 144 GB & 38 GB \\
+DeepSeek-V3 & 671B & 1342 GB & 350 GB \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Multi-GPU Inference}
+
+For large models ($>$ 70B parameters), Zoo supports:
+\begin{itemize}
+\item \textbf{Tensor Parallelism}: Split individual layers across GPUs (via Megatron-LM \cite{shoeybi2019megatron}).
+\item \textbf{Pipeline Parallelism}: Split model depth across GPUs (via DeepSpeed \cite{rasley2020deepspeed}).
+\item \textbf{Sequence Parallelism}: Split sequence length (for very long contexts).
+\end{itemize}
+
+\section{Economic Model}
+
+\subsection{Token Utility: KEEPER}
+
+Zoo's native token, \textbf{KEEPER}, serves three functions:
+
+\begin{enumerate}
+\item \textbf{Governance}: 1 KEEPER = 1 vote on experience proposals, treasury allocations, protocol upgrades.
+\item \textbf{Staking}: GPU nodes must stake KEEPER as collateral. Malicious behavior results in slashing.
+\item \textbf{Fee Payment}: Users pay for inference queries in KEEPER (or wrapped native tokens).
+\end{enumerate}
+
+\subsection{Contribution-Based Rewards}
+
+Contributors earn KEEPER via:
+
+\subsubsection{Data Contribution}
+
+Users who submit datasets for Training-Free GRPO receive:
+\[
+\text{KEEPER}_{\text{data}} = \alpha \cdot |D| \cdot Q(D)
+\]
+where $|D|$ is dataset size and $Q(D)$ is quality score (based on validation accuracy improvement).
+
+\subsubsection{Experience Submission}
+
+Users who submit experiences (post-DAO approval) receive:
+\[
+\text{KEEPER}_{\text{exp}} = \beta \cdot \left(\frac{\text{upvotes}}{\text{upvotes} + \text{downvotes}}\right)^2 \cdot \log(1 + \text{usage\_count})
+\]
+This rewards both initial quality (voting) and long-term utility (usage).
+
+\subsubsection{Inference Provision}
+
+GPU nodes earn:
+\[
+\text{KEEPER}_{\text{inference}} = \gamma \cdot \text{num\_queries} \cdot \left(1 + \frac{\text{stake}}{\text{total\_stake}}\right)
+\]
+Higher stake = priority in query routing = more earnings.
+
+\subsection{Fee Structure}
+
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Model Size} & \textbf{Fee (KEEPER)} & \textbf{USD Equiv.} \\
+\midrule
+Qwen3-4B & 0.01 & \$0.005 \\
+Qwen3-7B & 0.02 & \$0.010 \\
+Qwen3-32B & 0.05 & \$0.025 \\
+Qwen3-72B & 0.10 & \$0.050 \\
+DeepSeek-V3 & 0.50 & \$0.250 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+10\% of fees burned (deflationary), 40\% to GPU nodes, 40\% to experience contributors, 10\% to treasury.
+
+\subsection{Anti-Sybil Mechanisms}
+
+To prevent fake contributions:
+\begin{itemize}
+\item \textbf{Proof of Personhood}: Integration with WorldCoin \cite{worldcoin2023whitepaper} or BrightID \cite{brightid2021whitepaper}.
+\item \textbf{Stake Requirements}: Minimum 100 KEEPER stake to submit experiences.
+\item \textbf{Reputation System}: Contributors build reputation over time; low-reputation users face higher scrutiny.
+\end{itemize}
+
+\section{Security and Byzantine Robustness}
+
+\subsection{Threat Model}
+
+\subsubsection{Malicious GPU Nodes}
+
+Nodes may:
+\begin{itemize}
+\item Return incorrect outputs (to save computation).
+\item Inject backdoor experiences (to manipulate model behavior).
+\item Collude to control query routing.
+\end{itemize}
+
+\subsubsection{Malicious Contributors}
+
+Contributors may:
+\begin{itemize}
+\item Submit toxic/biased experiences.
+\item Sybil attack to upvote low-quality experiences.
+\item Poison training data.
+\end{itemize}
+
+\subsubsection{Network-Level Attacks}
+
+\begin{itemize}
+\item \textbf{DDoS}: Flood Inference Router with junk queries.
+\item \textbf{Eclipse}: Isolate honest nodes from network.
+\item \textbf{Censorship}: Prevent specific experiences from propagating.
+\end{itemize}
+
+\subsection{Defenses}
+
+\subsubsection{Proof Systems}
+
+\begin{itemize}
+\item \textbf{Optimistic}: Fast but requires dispute mechanism.
+\item \textbf{zkSNARK}: Slow but provides instant finality.
+\item \textbf{Hybrid}: Optimistic by default, zkSNARK for high-value queries.
+\end{itemize}
+
+\subsubsection{DAO Governance}
+
+All experience updates require 66\% DAO approval. This prevents single-actor manipulation.
+
+\subsubsection{Slashing}
+
+Nodes caught returning incorrect outputs lose staked KEEPER. Slashing conditions:
+\begin{enumerate}
+\item Proof verification fails.
+\item Output deviates from majority (if $\geq 3$ nodes execute same query).
+\item Node is offline during assigned query.
+\end{enumerate}
+
+\subsubsection{Rate Limiting}
+
+Inference Router enforces per-user rate limits (e.g., 100 queries/hour for free tier). This mitigates DDoS.
+
+\subsubsection{Redundancy}
+
+Critical queries can be executed by $k \geq 3$ nodes. Outputs are compared via majority voting. If nodes disagree, all are slashed except the majority.
+
+\subsection{Cryptographic Primitives}
+
+\begin{itemize}
+\item \textbf{Merkle Trees}: Verify experience inclusion without revealing full library.
+\item \textbf{Digital Signatures}: All on-chain transactions signed with ECDSA/EdDSA.
+\item \textbf{Post-Quantum}: Lux layer provides CRYSTALS-Dilithium resistance.
+\end{itemize}
+
+\section{Comparison with Centralized Platforms}
+
+\begin{center}
+\small
+\begin{tabular}{lp{3cm}p{3cm}}
+\toprule
+\textbf{Aspect} & \textbf{Centralized (OpenAI/Anthropic)} & \textbf{Zoo Network} \\
+\midrule
+\textbf{Ownership} & Corporate & Community (DAO) \\
+\textbf{Transparency} & Proprietary black box & Fully auditable via Arweave \\
+\textbf{Governance} & Internal decisions & Token-based voting \\
+\textbf{Fine-tuning Cost} & \$10,000+ per task & \$18 per task (Training-Free GRPO) \\
+\textbf{Data Privacy} & Centralized logs & Federated + ZK proofs \\
+\textbf{Vendor Lock-in} & High (API dependencies) & None (self-hostable) \\
+\textbf{Censorship Resistance} & Single point of failure & Decentralized nodes \\
+\textbf{Interpretability} & None (weight updates) & Human-readable experiences \\
+\textbf{Composability} & Limited (API only) & Full (open experiences) \\
+\textbf{Economic Model} & Subscription & Contribution-based rewards \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Performance Comparison}
+
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Method} & \textbf{AIME24 (\%)} & \textbf{AIME25 (\%)} & \textbf{Cost (USD)} \\
+\midrule
+GPT-4 Turbo (OpenAI) & 74.3 & 68.1 & \$10 per 1M tokens \\
+Claude 3.5 Sonnet & 78.9 & 71.2 & \$15 per 1M tokens \\
+Fine-tuned Qwen3-32B & 80.0 & 67.9 & \$10,000 setup \\
+\textbf{Zoo (Training-Free GRPO)} & \textbf{82.7} & \textbf{73.3} & \textbf{\$18 setup + \$0.02/query} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Zoo achieves state-of-the-art performance at 99.8\% cost reduction.
+
+\subsection{Decentralization Metrics}
+
+\begin{itemize}
+\item \textbf{Node Count}: Target $\geq 100$ GPU nodes across 20+ geographic regions.
+\item \textbf{Token Distribution}: No single entity holds $> 5\%$ of KEEPER.
+\item \textbf{Governance Participation}: Target $\geq 30\%$ turnout on major proposals.
+\item \textbf{Nakamoto Coefficient}: Minimum number of nodes to control 51\% of compute. Target $\geq 20$.
+\end{itemize}
+
+\section{Future Work}
+
+\subsection{Technical Enhancements}
+
+\begin{enumerate}
+\item \textbf{zk-SNARK Integration}: Deploy efficient zkML circuits for instant proof verification.
+\item \textbf{Multi-Agent Coordination}: Enable agents to share experiences and collaborate on complex tasks.
+\item \textbf{Automated Hyperparameter Tuning}: Optimize group size, rollout temperature, and retrieval parameters via meta-learning.
+\item \textbf{Cross-Chain Bridges}: Enable Zoo experiences to be used on other chains (Ethereum, Solana, Cosmos).
+\end{enumerate}
+
+\subsection{Research Directions}
+
+\begin{enumerate}
+\item \textbf{Meta-Learning Experiences}: Can experiences guide the generation of new experiences? (Self-improving curation)
+\item \textbf{Private Experiences}: Use homomorphic encryption to enable private inference with encrypted experiences.
+\item \textbf{Experience Markets}: Trade high-value domain-specific experiences (e.g., medical, legal) with royalties.
+\item \textbf{Adversarial Robustness}: Study how malicious experiences can manipulate model behavior and design defenses.
+\end{enumerate}
+
+\subsection{Ecosystem Development}
+
+\begin{enumerate}
+\item \textbf{Developer Tools}: SDKs for Python, TypeScript, Rust to interact with Zoo API.
+\item \textbf{Model Zoo}: Curated collection of fine-tuned models with public experience libraries.
+\item \textbf{Bounties}: Incentivize contributions to underrepresented domains (low-resource languages, specialized sciences).
+\item \textbf{Partnerships}: Integrate with existing AI platforms (HuggingFace, LangChain, LlamaIndex).
+\end{enumerate}
+
+\section{Conclusion}
+
+Zoo Network represents a paradigm shift in artificial intelligence infrastructure. By combining decentralized blockchain coordination, semantic optimization via Training-Free GRPO, and community governance, we address the fundamental limitations of centralized AI platforms: opacity, lock-in, and cost barriers.
+
+Our key contributions are:
+\begin{itemize}
+\item \textbf{Layered Architecture}: Clear separation of concerns across Lux (consensus), Hanzo (compute), and Zoo (AI specialization).
+\item \textbf{Experience Ledger}: Cryptographically verifiable, human-readable repository of optimization knowledge—replacing opaque weight updates.
+\item \textbf{Training-Free GRPO}: 99.8\% cost reduction while achieving state-of-the-art performance on mathematical reasoning tasks.
+\item \textbf{Economic Incentives}: Contributors earn inference credits, governance rights, and revenue shares—aligning incentives for long-term ecosystem growth.
+\item \textbf{Privacy Preservation}: Federated learning and optional zero-knowledge proofs enable sensitive use cases without data centralization.
+\end{itemize}
+
+As foundation models become more powerful, the question is not whether AI will be decentralized, but \textit{how} and \textit{when}. Zoo Network provides a concrete, deployable answer: a fully-functional L2 stack combining state-of-the-art machine learning with blockchain's transparency, composability, and censorship resistance.
+
+We invite researchers, developers, and communities to join us in building the future of decentralized AI. The code is open-source, the data is community-owned, and the governance is democratic. Together, we can ensure AI serves humanity—not corporate interests.
+
+\section*{Acknowledgments}
+
+Zoo Network is developed by Zoo Labs Foundation Inc, a 501(c)(3) non-profit organization. We thank the Hanzo Network team for providing the base compute infrastructure, the Lux Blockchain team for consensus primitives, and the open-source community for tools and libraries. Special thanks to Tencent for releasing the Training-Free GRPO paper and reference implementation.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{99}
+
+\bibitem{akash2021whitepaper}
+Akash Network.
+\newblock Akash: Decentralized Cloud Compute Marketplace.
+\newblock Technical report, 2021.
+
+\bibitem{arweave2018whitepaper}
+Sam Williams and Viktor Tron.
+\newblock Arweave: A Protocol for Economically Sustainable Information Permanence.
+\newblock Technical report, 2018.
+
+\bibitem{bender2021dangers}
+Emily M. Bender, Timnit Gebru, Angelina McMillan-Major, and Shmargaret Shmitchell.
+\newblock On the Dangers of Stochastic Parrots: Can Language Models Be Too Big?
+\newblock In \textit{FAccT}, 2021.
+
+\bibitem{benet2014ipfs}
+Juan Benet.
+\newblock IPFS - Content Addressed, Versioned, P2P File System.
+\newblock \textit{arXiv:1407.3561}, 2014.
+
+\bibitem{bi2024deepseek}
+DeepSeek-AI.
+\newblock DeepSeek-V3: Technical Report.
+\newblock Technical report, 2024.
+
+\bibitem{bitansky2013snarks}
+Nir Bitansky, Alessandro Chiesa, Yuval Ishai, Rafail Ostrovsky, and Omer Paneth.
+\newblock Succinct Non-Interactive Arguments via Linear Interactive Proofs.
+\newblock In \textit{TCC}, 2013.
+
+\bibitem{bittensor2021whitepaper}
+Bittensor Foundation.
+\newblock Bittensor: A Peer-to-Peer Intelligence Market.
+\newblock Technical report, 2021.
+
+\bibitem{brightid2021whitepaper}
+BrightID.
+\newblock BrightID: A Proof of Uniqueness Protocol.
+\newblock Technical report, 2021.
+
+\bibitem{chu2024qwen2audio}
+Yunfei Chu et al.
+\newblock Qwen2-Audio: Technical Report.
+\newblock \textit{arXiv:2407.10759}, 2024.
+
+\bibitem{dettmers2023qlora}
+Tim Dettmers, Artidoro Pagnoni, Ari Holtzman, and Luke Zettlemoyer.
+\newblock QLoRA: Efficient Finetuning of Quantized LLMs.
+\newblock In \textit{NeurIPS}, 2023.
+
+\bibitem{dwork2014algorithmic}
+Cynthia Dwork and Aaron Roth.
+\newblock The Algorithmic Foundations of Differential Privacy.
+\newblock \textit{Foundations and Trends in Theoretical Computer Science}, 9(3-4):211-407, 2014.
+
+\bibitem{ezkl2023}
+Modulus Labs.
+\newblock EZKL: Easy Zero-Knowledge Machine Learning.
+\newblock \url{https://github.com/zkonduit/ezkl}, 2023.
+
+\bibitem{guo2020scann}
+Ruiqi Guo et al.
+\newblock Accelerating Large-Scale Inference with Anisotropic Vector Quantization.
+\newblock In \textit{ICML}, 2020.
+
+\bibitem{hanzo2025paper}
+Hanzo Network.
+\newblock Hanzo: Decentralized Compute Infrastructure for AI.
+\newblock Technical report, 2025.
+
+\bibitem{hendrycks2021math}
+Dan Hendrycks et al.
+\newblock Measuring Mathematical Problem Solving With the MATH Dataset.
+\newblock In \textit{NeurIPS}, 2021.
+
+\bibitem{hu2021lora}
+Edward J. Hu et al.
+\newblock LoRA: Low-Rank Adaptation of Large Language Models.
+\newblock In \textit{ICLR}, 2022.
+
+\bibitem{huggingface2023tgi}
+HuggingFace.
+\newblock Text Generation Inference.
+\newblock \url{https://github.com/huggingface/text-generation-inference}, 2023.
+
+\bibitem{jiang2023mistral}
+Albert Q. Jiang et al.
+\newblock Mistral 7B.
+\newblock \textit{arXiv:2310.06825}, 2023.
+
+\bibitem{johnson2019faiss}
+Jeff Johnson, Matthijs Douze, and Hervé Jégou.
+\newblock Billion-scale similarity search with GPUs.
+\newblock \textit{IEEE Transactions on Big Data}, 7(3):535-547, 2019.
+
+\bibitem{kim2019blockchained}
+Hyesung Kim, Jihong Park, Mehdi Bennis, and Seong-Lyun Kim.
+\newblock Blockchained On-Device Federated Learning.
+\newblock \textit{IEEE Communications Letters}, 24(6):1279-1283, 2019.
+
+\bibitem{kwon2023vllm}
+Woosuk Kwon et al.
+\newblock Efficient Memory Management for Large Language Model Serving with PagedAttention.
+\newblock In \textit{SOSP}, 2023.
+
+\bibitem{lux2025whitepaper}
+Lux Network.
+\newblock Lux: Multi-Consensus Blockchain with Post-Quantum Cryptography.
+\newblock Technical report, 2025.
+
+\bibitem{malkov2018hnsw}
+Yury A. Malkov and Dmitry A. Yashunin.
+\newblock Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs.
+\newblock \textit{IEEE Transactions on Pattern Analysis and Machine Intelligence}, 42(4):824-836, 2018.
+
+\bibitem{mcmahan2017federated}
+H. Brendan McMahan et al.
+\newblock Communication-Efficient Learning of Deep Networks from Decentralized Data.
+\newblock In \textit{AISTATS}, 2017.
+
+\bibitem{ocean2021whitepaper}
+Ocean Protocol Foundation.
+\newblock Ocean Protocol: A Decentralized Data Exchange Protocol.
+\newblock Technical report, 2021.
+
+\bibitem{ouyang2022training}
+Long Ouyang et al.
+\newblock Training language models to follow instructions with human feedback.
+\newblock In \textit{NeurIPS}, 2022.
+
+\bibitem{qwen2024qwen3}
+Qwen Team.
+\newblock Qwen3 Technical Report.
+\newblock Technical report, 2024.
+
+\bibitem{rafailov2023dpo}
+Rafael Rafailov et al.
+\newblock Direct Preference Optimization: Your Language Model is Secretly a Reward Model.
+\newblock In \textit{NeurIPS}, 2023.
+
+\bibitem{rasley2020deepspeed}
+Jeff Rasley et al.
+\newblock DeepSpeed: System Optimizations Enable Training Deep Learning Models with Over 100 Billion Parameters.
+\newblock In \textit{KDD}, 2020.
+
+\bibitem{reimers2019sentencebert}
+Nils Reimers and Iryna Gurevych.
+\newblock Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks.
+\newblock In \textit{EMNLP-IJCNLP}, 2019.
+
+\bibitem{rocket2020snowman}
+Team Rocket et al.
+\newblock Scalable and Probabilistic Leaderless BFT Consensus through Metastability.
+\newblock \textit{arXiv:1906.08936}, 2020.
+
+\bibitem{shao2024deepseekmath}
+Zhihong Shao et al.
+\newblock DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models.
+\newblock \textit{arXiv:2402.03300}, 2024.
+
+\bibitem{shoeybi2019megatron}
+Mohammad Shoeybi et al.
+\newblock Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism.
+\newblock \textit{arXiv:1909.08053}, 2019.
+
+\bibitem{singularitynet2021whitepaper}
+SingularityNET Foundation.
+\newblock SingularityNET: A Decentralized, Open Market and Network for AIs.
+\newblock Technical report, 2021.
+
+\bibitem{tencent2025grpo}
+Tencent youtu-agent Team.
+\newblock Training-Free Group Relative Policy Optimization.
+\newblock \textit{arXiv:2510.08191}, 2025.
+
+\bibitem{touvron2023llama}
+Hugo Touvron et al.
+\newblock LLaMA: Open and Efficient Foundation Language Models.
+\newblock \textit{arXiv:2302.13971}, 2023.
+
+\bibitem{worldcoin2023whitepaper}
+Worldcoin Foundation.
+\newblock Worldcoin: A Privacy-Preserving Proof-of-Personhood Protocol.
+\newblock Technical report, 2023.
+
+\bibitem{xiao2023bge}
+Shitao Xiao et al.
+\newblock C-Pack: Packaged Resources To Advance General Chinese Embedding.
+\newblock \textit{arXiv:2309.07597}, 2023.
+
+\bibitem{zkml2023}
+zkML Community.
+\newblock Zero-Knowledge Machine Learning.
+\newblock \url{https://github.com/zkml-community}, 2023.
+
+\bibitem{zoo2025hllm}
+Zoo Labs Foundation.
+\newblock Hamiltonian Large Language Models: Training-Free Semantic Optimization.
+\newblock Technical report, 2025.
+
+\end{thebibliography}
+
+\appendix
+
+\section{Experience Library Examples}
+
+\subsection{Mathematical Reasoning}
+
+\begin{verbatim}
+[G0]. When solving geometry problems with intersections,
+      validate solutions lie within bounded regions, not
+      extensions, to avoid extraneous answers.
+
+[G1]. For expected extreme statistics in combinatorial
+      problems, use direct enumeration for small sizes.
+
+[G10]. When using mathematical invariants to prove
+       impossibility, always validate against known
+       achievable states or small cases.
+
+[G21]. For complex polynomials with real parameters,
+       separate real/imaginary parts to find when
+       real roots exist.
+\end{verbatim}
+
+\subsection{Code Generation}
+
+\begin{verbatim}
+[C0]. Before implementing complex algorithms, write
+      unit tests for edge cases (empty input, single
+      element, maximum size).
+
+[C5]. When optimizing nested loops, consider whether
+      inner loop can be vectorized or replaced with
+      hash map lookup.
+
+[C12]. For recursive functions, always define base
+       case first and verify termination condition.
+\end{verbatim}
+
+\subsection{Creative Writing}
+
+\begin{verbatim}
+[W0]. When developing character arcs, establish clear
+      motivation in first act to justify later
+      decisions.
+
+[W3]. In descriptive passages, prefer specific sensory
+      details over generic adjectives.
+
+[W7]. For dialogue, ensure each character has distinct
+      speech patterns reflecting background/personality.
+\end{verbatim}
+
+\section{Deployment Guide}
+
+\subsection{Running a GPU Node}
+
+\subsubsection{Prerequisites}
+\begin{itemize}
+\item NVIDIA GPU with $\geq 16$ GB VRAM
+\item CUDA 12.1+
+\item Docker 24.0+
+\item Staked KEEPER tokens ($\geq 1000$)
+\end{itemize}
+
+\subsubsection{Setup}
+\begin{verbatim}
+# Clone Zoo node repository
+git clone https://github.com/zoo-labs/zoo-node
+cd zoo-node
+
+# Configure environment
+cp .env.example .env
+# Edit .env: set RPC_URL, STAKING_KEY, IPFS_GATEWAY
+
+# Build Docker image
+docker build -t zoo-node:latest .
+
+# Run node
+docker run -d \
+  --gpus all \
+  -p 8080:8080 \
+  -v /data:/data \
+  --env-file .env \
+  zoo-node:latest
+\end{verbatim}
+
+\subsubsection{Monitoring}
+\begin{verbatim}
+# Check node status
+curl http://localhost:8080/status
+
+# View logs
+docker logs -f <container_id>
+
+# Check earnings
+curl http://localhost:8080/earnings
+\end{verbatim}
+
+\subsection{Submitting Experiences}
+
+\subsubsection{Via Python SDK}
+\begin{verbatim}
+from zoo_sdk import ZooClient, Experience
+
+client = ZooClient(rpc_url="https://rpc.zoo.ngo")
+
+# Create experience
+exp = Experience(
+    domain="math.algebra",
+    text="When solving quadratics, check discriminant
+          first. If negative, no real solutions.",
+    examples=[
+        {"input": "x² + 2x + 5 = 0",
+         "output": "No real solutions"}
+    ]
+)
+
+# Submit for DAO review
+tx_hash = client.submit_experience(
+    experience=exp,
+    stake_amount=100  # KEEPER tokens
+)
+
+print(f"Submitted: {tx_hash}")
+\end{verbatim}
+
+\subsubsection{Via Web UI}
+\begin{enumerate}
+\item Navigate to \url{https://app.zoo.ngo}
+\item Connect wallet (MetaMask/WalletConnect)
+\item Go to "Contribute" $\rightarrow$ "Submit Experience"
+\item Fill form: domain, text, examples
+\item Approve stake (100 KEEPER)
+\item Submit for review
+\end{enumerate}
+
+\section{Governance Parameters}
+
+\begin{center}
+\begin{tabular}{lrl}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Description} \\
+\midrule
+Voting Period & 7 days & Duration for proposal voting \\
+Quorum & 10\% & Min. participation required \\
+Approval Threshold & 66\% & Required yes votes \\
+Min. Stake (Proposal) & 1000 KEEPER & To create proposal \\
+Min. Stake (Experience) & 100 KEEPER & To submit experience \\
+Slashing Penalty & 50\% & Stake lost if malicious \\
+Experience Max Size & 32 words & Per experience \\
+Library Max Size & 1000 experiences & Total capacity \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

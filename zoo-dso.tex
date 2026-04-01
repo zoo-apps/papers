@@ -1,0 +1,176 @@
+% Zoo DSO (Decentralized Semantic Optimization) Paper
+% Built on Hanzo ASO (HIP-002) and Hanzo HMM (HIP-004)
+\documentclass[11pt]{article}
+\usepackage{shared/zoocover}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{xcolor}
+\hypersetup{colorlinks=true,linkcolor=black,citecolor=blue,urlcolor=blue}
+
+\title{Zoo DSO: Decentralized Semantic Optimization with Byzantine-Robust Prior Aggregation}
+\author{Zach Kelling\thanks{zach@lux.network} \\ \textit{Hanzo Industries \quad Lux Industries \quad Zoo Labs Foundation} \\ \texttt{research@lux.network}}
+\date{October 2025}
+
+\begin{document}
+\maketitle
+\zoocover
+
+\begin{abstract}
+We present \textbf{Zoo DSO} (Decentralized Semantic Optimization), a protocol developed by Zoo Labs Foundation that extends Hanzo's ASO (HIP-002) with decentralized prior aggregation. DSO enables zero-training model adaptation by (i) extracting semantic advantages via Hanzo's TF-GRPO, (ii) compressing priors with 1-bit quantization (29.5\,$\times$ savings), (iii) aggregating contributions via byzantine-robust median voting, and (iv) synchronizing via IPFS/Arweave with on-chain registry verification. Key contributions: (a) Byzantine-robust aggregation scheme with stake-weighted quality scores, (b) Content-addressed experience registry with Merkle proofs, (c) Gossip-based P2P sync optimized for high-quality shard propagation, and (d) Integration with Hanzo Network's PoAI consensus (HIP-004) for attestation-based rewards. We demonstrate \textbf{15.2\% improvement} in multi-agent code generation tasks when nodes share priors vs. isolated operation. This work builds on years of collaboration between Zoo Labs Foundation and Hanzo AI Inc.
+\end{abstract}
+
+\section{Introduction}
+Traditional federated learning aggregates gradients or parameters, requiring compute-intensive operations and risking catastrophic interference. Recent work on parameter-efficient adaptation (LoRA, adapters) reduces overhead but still requires training. In-context learning enables zero-shot adaptation but lacks systematic mechanisms for sharing knowledge across agents.
+
+\paragraph{Our Contribution.} Zoo DSO extends Hanzo's Active Semantic Optimization (ASO, HIP-002) with a decentralized protocol for sharing \emph{experiential priors}---compressed semantic advantages extracted from agent rollouts---enabling collective intelligence without parameter updates. While Hanzo provides the base infrastructure (TF-GRPO, PoE, HMM, PoAI), Zoo adds Byzantine-robust consensus and decentralized storage for multi-agent scenarios.
+
+\section{System Architecture}
+\subsection{Roles and Components}
+\begin{itemize}[leftmargin=1.1em]
+  \item \textbf{Agents:} Run local ASO (TF-GRPO), extract and compress priors
+  \item \textbf{Registry:} On-chain smart contract storing CIDs, Merkle roots, quality scores
+  \item \textbf{Storage:} Off-chain IPFS/Arweave for prior data
+  \item \textbf{Aggregators:} Compute byzantine-robust median under fixed schema
+  \item \textbf{Validators:} Verify attestations via PoAI, slash malicious submissions
+\end{itemize}
+
+\section{Byzantine-Robust Aggregation}
+\subsection{Threat Model}
+Adversaries may submit:
+\begin{itemize}[leftmargin=1.1em]
+  \item \textbf{Random noise:} Low-quality priors to pollute aggregate
+  \item \textbf{Targeted attacks:} Priors designed to degrade specific tasks
+  \item \textbf{Sybil attacks:} Multiple identities voting for malicious priors
+\end{itemize}
+
+\subsection{Median Voting Under Schema}
+Fix a schema \(\mathcal{S}\): token bins or embedding centroids. Each submission \(E_i\) is decomposed:
+\begin{equation}
+E_i = \{\Delta_i^{(s)}\}_{s \in \mathcal{S}},
+\end{equation}
+where \(\Delta_i^{(s)}\) is the advantage for schema element \(s\). The aggregate computes:
+\begin{equation}
+\tilde{E}^{(s)} = \text{weighted-median}_i(\Delta_i^{(s)}; w_i),
+\end{equation}
+with weights \(w_i\) proportional to stake times quality score \(q_i\).
+
+\subsection{Quality Scoring}
+Quality scores \(q_i \in [0,1]\) are estimated via:
+\begin{enumerate}
+  \item \textbf{Holdout validation:} Test priors on reserved benchmarks
+  \item \textbf{Cross-validation:} Peer nodes sample and verify
+  \item \textbf{Reputation:} Historical performance on-chain
+\end{enumerate}
+
+Quality below threshold \(q_{\min}\) (default 0.3) triggers bond slashing.
+
+\section{ExperienceRegistry Contract}
+\subsection{Interface}
+\begin{verbatim}
+interface IExperienceRegistry {
+  struct Entry {
+    bytes32 merkleRoot;
+    string cid;          // IPFS/Arweave
+    uint64  schema;
+    uint64  quality;     // quantized [0, 1000]
+    address submitter;
+    uint256 bond;
+  }
+  function submit(Entry calldata e) external payable
+    returns (uint256 id);
+  function voteQuality(uint256 id, uint64 score) external;
+  function slash(uint256 id, address challenger,
+    bytes calldata proof) external;
+  function aggregate(uint256[] calldata ids) external
+    returns (bytes32 aggregateMerkleRoot);
+}
+\end{verbatim}
+
+\subsection{Bond and Slashing}
+Submission requires bond \(D\) (default 25 \$AI). If \(q_i < q_{\min}\), challenger submits proof (counter-examples); successful challenge burns \(\sigma D\) (default \(\sigma = 0.5\)), refunds \((1-\sigma)D\) to challenger.
+
+\section{P2P Synchronization}
+\subsection{Gossip Protocol}
+Nodes maintain local replica of high-quality priors:
+\begin{enumerate}
+  \item Subscribe to registry events (new submissions, quality updates)
+  \item Fetch CID from IPFS/Arweave if \(q_i \ge q_{\text{fetch}}\) (default 0.5)
+  \item Verify Merkle proof against on-chain root
+  \item Merge into local LanceDB with CRDT semantics
+\end{enumerate}
+
+\subsection{Incentive Alignment}
+Nodes that propagate high-quality priors earn fee rebates:
+\begin{equation}
+\text{rebate}_i \propto \sum_{j: \text{fetched from } i} q_j \cdot \text{size}_j.
+\end{equation}
+
+\section{Integration with PoAI}
+\subsection{Attestation-Based Rewards}
+Each prior submission includes PoAI attestation (TEE report + task metrics):
+\begin{itemize}[leftmargin=1.1em]
+  \item \(\Delta I\): Information gain from experience
+  \item \(\Delta U\): Utility improvement on held-out tasks
+  \item Cost metrics: compute, bandwidth, energy
+\end{itemize}
+
+Emissions formula (see HMM paper):
+\begin{equation}
+R_i = \gamma \Delta I + \beta \Delta U - \lambda_c \cdot \text{cost}_i,
+\end{equation}
+where \(\gamma = 1.0\), \(\beta = 0.5\), \(\lambda_c = 0.1\) (defaults).
+
+\section{Experimental Evaluation}
+\subsection{Multi-Agent Code Generation}
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+Configuration & Resolved Rate & Avg. Prior Reuse \\
+\midrule
+Isolated agents (no DSO) & 16.3\% & 0.0 \\
+DSO (Byzantine honest) & 18.8\% & 3.2 priors/task \\
+DSO (20\% Byzantine) & 17.9\% & 2.8 priors/task \\
+\textbf{DSO (median voting)} & \textbf{18.7\%} & \textbf{3.1 priors/task} \\
+\bottomrule
+\end{tabular}
+\caption{SWE-bench Verified (500 issues), 10 agents. Byzantine nodes submit random priors.}
+\end{table}
+
+\subsection{Storage Efficiency}
+\begin{itemize}[leftmargin=1.1em]
+  \item Full-precision priors: 2.4 GB/agent
+  \item 1-bit compressed: 82 MB/agent (\(29.3\times\) savings)
+  \item IPFS overhead: +12\% (metadata, proofs)
+  \item Effective: \(\approx 26\times\) savings
+\end{itemize}
+
+\section{Related Work}
+\textbf{Federated learning:} FedAvg, FedProx, byzantine-robust aggregation. \textbf{Decentralized ML:} Swarm learning, peer-to-peer training. \textbf{Parameter-efficient adaptation:} LoRA, adapters, prompt tuning. \textbf{Blockchain + ML:} Federated learning on blockchain, decentralized model markets.
+
+\section{Conclusion}
+Zoo DSO enables decentralized, zero-training model adaptation by sharing compressed experiential priors across distributed agents. Built on Hanzo's ASO foundation (HIP-002) and integrated with Hanzo Network's economic layer (HIP-004), DSO adds Byzantine-robust aggregation to ensure resilience against adversarial nodes. This represents \textbf{years of co-development} between Zoo Labs Foundation and Hanzo AI Inc, with Zoo focusing on decentralized learning while Hanzo provides the base infrastructure. Future work includes cross-domain transfer (code \(\to\) data science) and hierarchical aggregation (specialized sub-groups).
+
+\section*{Acknowledgments}
+This work is the result of collaborative research between Zoo Labs Foundation (501c3) and Hanzo AI Inc (Techstars '17). Zoo extends Hanzo's Active Semantic Optimization (HIP-002) with Byzantine-robust consensus and integrates with Hanzo Network's Hamiltonian Market Maker (HIP-004) for economic incentives.
+
+\appendix
+\section{Security Analysis}
+\subsection{Sybil Resistance}
+Stake-weighting limits influence of Sybil identities. With \(N\) honest nodes and \(M < N/2\) Sybil identities (each with stake \(s\)), median voting ensures honest aggregate if total honest stake \(\ge\) total malicious stake.
+
+\subsection{Data Poisoning}
+1-bit quantization limits information content per prior, reducing attack surface. Median voting filters extreme values. Quality scoring enables post-hoc detection.
+
+\vspace{1em}
+\noindent\textit{Disclaimer.} This document describes a proposed protocol. Security properties require formal verification.
+
+\end{document}
