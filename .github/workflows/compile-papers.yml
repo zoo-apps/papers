@@ -48,6 +48,17 @@ jobs:
           path: pdfs/*.pdf
           retention-days: 90
 
+      - name: Create release with PDFs
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: "Zoo Papers Build #${{ github.run_number }}"
+          files: pdfs/*.pdf
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Commit PDFs back to repository
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         run: |
