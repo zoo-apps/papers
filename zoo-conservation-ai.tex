@@ -58,8 +58,8 @@ Zoo Labs Foundation Research\\
 
 \begin{document}
 
+\zoocoverpage
 \maketitle
-\zoocover
 
 \begin{abstract}
 Camera trap networks produce millions of images annually across global conservation sites, yet the vast majority remain unprocessed due to the labor-intensive nature of manual species identification. We present \ConservAI{}, an integrated deep learning pipeline for automated wildlife population monitoring and habitat quality assessment built on the \Zoo{} decentralized science infrastructure. Our system combines a hierarchical species recognition model achieving 96.3\% top-1 accuracy across 847 species, a density-aware population estimation module with 8.2\% mean absolute error on standardized transects, and a multi-spectral habitat quality index derived from satellite imagery fused with ground-truth camera trap observations. The architecture employs a novel \emph{Temporal Context Attention} mechanism that leverages sequential camera trap activations to disambiguate visually similar species and reject false triggers with 99.1\% precision. We evaluate on the Snapshot Serengeti, Wildlife Insights, and LILA BC benchmark datasets, demonstrating state-of-the-art performance while requiring 3.7$\times$ less compute than comparable systems. All models, training code, and evaluation protocols are released as open-source components of the \Zoo{} Data Commons.

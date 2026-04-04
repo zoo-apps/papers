@@ -36,8 +36,8 @@ Zach Kelling\thanks{zach@lux.network}\\
 
 \begin{document}
 
+\zoocoverpage
 \maketitle
-\zoocover
 
 \begin{abstract}
 Decentralized Semantic Optimization (DSO) enables large language models to collaboratively improve via shared semantic experiences without centralized gradient aggregation. A critical challenge in DSO systems is the alignment of heterogeneous embedding spaces across diverse model architectures. Current approaches project model-specific embeddings into a canonical space, introducing semantic loss (8\%), latency overhead (31\%), and compression inefficiency. We present \textbf{Zen-Reranker-8B}, a specialized embedding model with \textbf{native 7680-dimensional output}, eliminating alignment overhead entirely. Our model achieves 98\% semantic preservation (vs.\ 92\% with alignment), 31\% lower latency (21.5ms vs.\ 31.2ms), and optimal BitDelta compression (31.87$\times$ vs.\ 29.9$\times$). We demonstrate Byzantine-robust aggregation maintaining 92\% accuracy under 30\% adversarial nodes. Zen-Reranker scores 68.4 on MTEB benchmarks (+0.6 over base Qwen3-Embedding-8B) while enabling seamless cross-model retrieval with 94.7\% Recall@5. Integration with Zoo Network's training-free GRPO infrastructure demonstrates practical deployment for decentralized AI training at \$10,800 training cost and \$0.0001 per embedding inference. Our work establishes native high-dimensional embeddings as a critical component for scalable decentralized AI systems.
