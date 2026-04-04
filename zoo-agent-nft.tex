@@ -16,7 +16,7 @@
 \usepackage{listings}
 \usepackage{caption}
 \usepackage{subcaption}
-\usepackage[margin=1in]{geometry}
+% geometry loaded by zoocover
 
 % Theorem environments
 \newtheorem{theorem}{Theorem}[section]
@@ -319,7 +319,7 @@ The agent key $K_A$ is generated and managed by the agent's \LLM{}:
 The private key is:
 \begin{itemize}
     \item Derived deterministically from model hash (reproducible)
-    \item Stored in trusted execution environment (\TEE{})
+    \item Stored in trusted execution environment (TEE)
     \item Never exposed to the owner (owner cannot impersonate agent)
 \end{itemize}
 
@@ -483,7 +483,7 @@ Agent cannot access owner's external assets; owner cannot impersonate agent.
 \end{theorem}
 
 \begin{proof}
-Agent key $K_A$ is derived from model hash and stored in \TEE{}. Owner never has access to $sk_A$. Agent key only controls agent wallet, not owner's personal wallets.
+Agent key $K_A$ is derived from model hash and stored in TEE. Owner never has access to $sk_A$. Agent key only controls agent wallet, not owner's personal wallets.
 \end{proof}
 
 \subsection{Attack Mitigation}

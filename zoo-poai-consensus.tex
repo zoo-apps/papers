@@ -12,11 +12,13 @@
 \usepackage{xcolor}
 \usepackage{booktabs}
 \usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 \usetikzlibrary{shapes,arrows,positioning,calc}
 \usepackage{listings}
 \usepackage{caption}
 \usepackage{subcaption}
-\usepackage[margin=1in]{geometry}
+% geometry loaded by zoocover
 
 % Theorem environments
 \newtheorem{theorem}{Theorem}[section]
@@ -146,7 +148,6 @@ Given signatures $\{\sigma_i\}_{i=1}^n$ from signers $\{pk_i\}$ on message $m$:
 \sigma_{\text{agg}} = \prod_{i=1}^n \sigma_i
 \end{equation}
 Verification: $e(\sigma_{\text{agg}}, g) = e(H(m), \sum_i pk_i)$
-\end{equation}
 \end{definition}
 
 This enables $O(1)$ verification of $n$ signatures.

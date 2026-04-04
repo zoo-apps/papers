@@ -10,8 +10,7 @@
 \usepackage{algorithmic}
 \usepackage{booktabs}
 \usepackage{multirow}
-\usepackage{geometry}
-\geometry{margin=1in}
+% geometry loaded by zoocover
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{lemma}{Lemma}
@@ -949,7 +948,7 @@ QwQ-32B-Preview & 32B & 52.1\% & 55.3\% (+3.2\%) \\
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{figures/pareto_frontier.pdf}
+\fbox{\parbox{0.8\textwidth}{\centering\vspace{2cm}\textit{[Figure: pareto\_frontier.pdf]}\vspace{2cm}}}
 \caption{Cost-performance trade-off for various training methods on AIME24. Training-Free GRPO dominates the Pareto frontier, achieving highest accuracy (82.7\%) at lowest cost (\$18).}
 \label{fig:pareto}
 \end{figure}
@@ -968,7 +967,7 @@ TF-GRPO breaks this trade-off by exploiting context space rather than parameter 
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.7\textwidth]{figures/library_growth.pdf}
+\fbox{\parbox{0.7\textwidth}{\centering\vspace{2cm}\textit{[Figure: library\_growth.pdf]}\vspace{2cm}}}
 \caption{Experience library size and test accuracy over training epochs. Library grows rapidly in early epochs (42 → 68 experiences) then saturates, while accuracy continues improving as experiences are refined.}
 \label{fig:library_growth}
 \end{figure}

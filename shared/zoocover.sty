@@ -6,13 +6,55 @@
 \RequirePackage{tikz}
 \RequirePackage{xcolor}
 \RequirePackage{graphicx}
-\@ifpackageloaded{geometry}{}{\RequirePackage{geometry}}
+\RequirePackage{listings}
+\@ifpackageloaded{geometry}{}{\RequirePackage[margin=1in]{geometry}}
 
 % Lux brand colors
 \definecolor{luxblack}{RGB}{0,0,0}
 \definecolor{luxwhite}{RGB}{255,255,255}
 \definecolor{luxgold}{RGB}{207,181,59}
 \definecolor{luxgray}{RGB}{128,128,128}
+
+% Custom language definitions for listings
+\lstdefinelanguage{json}{
+  basicstyle=\ttfamily\small,
+  string=[s]{"}{"},
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  literate=
+    *{:}{{{\color{black}{:}}}}{1}
+    {,}{{{\color{black}{,}}}}{1}
+    {\{}{{{\color{black}{\{}}}}{1}
+    {\}}{{{\color{black}{\}}}}}{1}
+    {[}{{{\color{black}{[}}}}{1}
+    {]}{{{\color{black}{]}}}}{1}
+}
+\lstdefinelanguage{Solidity}{
+  morekeywords={contract,function,returns,return,if,else,for,while,do,
+    mapping,address,uint256,uint,int,bool,string,bytes,bytes32,
+    public,private,internal,external,view,pure,payable,memory,storage,
+    calldata,event,emit,modifier,require,struct,enum,interface,
+    abstract,override,virtual,is,new,delete,import,pragma,solidity,
+    library,using,constructor,msg,sender,block,timestamp,this,super},
+  sensitive=true,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  string=[b]",
+  basicstyle=\ttfamily\small,
+}
+\lstdefinelanguage{Rust}{
+  morekeywords={fn,let,mut,pub,struct,impl,enum,match,if,else,for,while,
+    loop,return,use,mod,crate,self,super,trait,where,type,const,static,
+    async,await,move,ref,as,in,unsafe,extern},
+  morekeywords=[2]{Vec,String,Option,Result,Some,None,Ok,Err,Box,Rc,Arc,
+    HashMap,HashSet,BTreeMap,u8,u16,u32,u64,u128,i8,i16,i32,i64,i128,
+    f32,f64,bool,char,str,usize,isize},
+  sensitive=true,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  string=[b]",
+  basicstyle=\ttfamily\small,
+}
 
 \newcommand{\zoocoverpage}{%
   \newgeometry{margin=0pt}
