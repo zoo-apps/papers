@@ -15,12 +15,15 @@ pdfs:
 	@mkdir -p pdfs
 
 # Pattern rule: compile .tex -> pdfs/.pdf (three passes for refs)
+# Build in-place so shared/ sty resolves correctly for cover pages
 pdfs/%.pdf: %.tex | pdfs
 	@echo "Compiling $<..."
-	@pdflatex -interaction=nonstopmode -output-directory=pdfs $< > /dev/null 2>&1 || true
-	@cd pdfs && bibtex $(*F) > /dev/null 2>&1 || true
-	@pdflatex -interaction=nonstopmode -output-directory=pdfs $< > /dev/null 2>&1 || true
-	@pdflatex -interaction=nonstopmode -output-directory=pdfs $< > /dev/null 2>&1 || true
+	@pdflatex -interaction=nonstopmode $< > /dev/null 2>&1 || true
+	@bibtex $(*F) > /dev/null 2>&1 || true
+	@pdflatex -interaction=nonstopmode $< > /dev/null 2>&1 || true
+	@pdflatex -interaction=nonstopmode $< > /dev/null 2>&1 || true
+	@[ -f "$(*F).pdf" ] && mv "$(*F).pdf" pdfs/ || true
+	@rm -f $(*F).aux $(*F).log $(*F).bbl $(*F).blg $(*F).out $(*F).toc 2>/dev/null || true
 	@test -f pdfs/$(*F).pdf && echo "  OK $(*F).pdf" || echo "  FAIL $(*F).pdf"
 
 # Per-paper shorthand targets (auto-generated from .tex files)
