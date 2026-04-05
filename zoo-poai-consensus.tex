@@ -57,7 +57,6 @@ Zach Kelling\thanks{zach@zoo.ngo}\\
 \begin{document}
 
 \zoocoverpage
-\maketitle
 
 \begin{abstract}
 We introduce \textbf{Proof of AI} (\PoAI{}), a novel consensus mechanism designed for networks where participants contribute AI compute rather than hash power or stake. Unlike Proof of Work which wastes energy on cryptographic puzzles, or Proof of Stake which concentrates power among token holders, \PoAI{} rewards nodes for performing \emph{useful} AI computation: inference, training, and experience extraction. Our protocol combines three components: (1) \textbf{Compute Verification} using Trusted Execution Environments (\TEE{}s) to attest that claimed work was performed, (2) \textbf{Quality Scoring} via multi-party evaluation to assess the value of contributed compute, and (3) \textbf{Attestation Aggregation} using BLS signatures for efficient on-chain verification. We prove that \PoAI{} achieves Byzantine fault tolerance under standard assumptions while incentivizing economically rational behavior. Experimental evaluation on a 100-node testnet demonstrates 847 TPS throughput with 2.3-second finality, while rewarding nodes proportional to their AI contribution quality.

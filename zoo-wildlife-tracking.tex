@@ -56,7 +56,6 @@ Zoo Labs Foundation Research\\
 \begin{document}
 
 \zoocoverpage
-\maketitle
 
 \begin{abstract}
 Wildlife tracking generates sensitive geospatial data that, if exposed, can be exploited by poachers targeting endangered species. Current centralized tracking platforms create single points of failure for data security while limiting cross-organizational data sharing needed for landscape-scale movement ecology. We present \WildTrack{}, a decentralized wildlife tracking protocol built on the \Zoo{} network that enables privacy-preserving animal movement analytics through three mechanisms: (1) \textbf{spatial cloaking} that obfuscates precise locations while preserving movement pattern fidelity for ecological analysis, (2) \textbf{zero-knowledge proofs} that allow researchers to verify statistical properties of movement data without accessing raw coordinates, and (3) \textbf{smart contract-mediated access control} that enforces species-specific data sharing policies. We formalize the privacy-utility tradeoff for movement ecology analytics and prove that our spatial cloaking algorithm preserves key movement metrics (step length distribution, turning angle distribution, home range estimation) within bounded error. Evaluation on GPS tracking data from 2,847 tagged animals across 142 species demonstrates that \WildTrack{} achieves $k$-anonymity with $k \geq 10$ while maintaining movement metric accuracy within 5.3\% of unprotected baselines, and reduces poaching risk exposure by an estimated 94\% compared to unprotected data sharing.

@@ -59,7 +59,6 @@ Zach Kelling\thanks{Corresponding author: zach@hanzo.ai}\\
 \begin{document}
 
 \zoocoverpage
-\maketitle
 
 \begin{abstract}
 We present a systematic analysis of embedding dimensionality for semantic search in decentralized AI systems, culminating in the \textbf{Zen Reranker}---a specialized embedding model with native 7680-dimensional output. Current embedding models produce heterogeneous dimensionalities (768 to 8192), requiring costly alignment layers when combining embeddings from different models. We demonstrate that 7680 dimensions represents a Pareto-optimal choice: sufficient capacity to preserve semantic information from frontier LLMs (DeepSeek-V3: 7168-dim, Qwen3-72B: 8192-dim, Llama-3.3-70B: 8192-dim) while enabling efficient BitDelta compression (31.87$\times$). The Zen Reranker achieves 68.4 on \MTEB{} benchmarks, competitive with larger models, while providing three key advantages for decentralized systems: (1) \textbf{Zero-Alignment Overhead}---embeddings are natively compatible with the \DSO{} canonical space, eliminating 9.7ms projection latency, (2) \textbf{Optimal Compression}---the 7680-dim structure enables 964-byte storage per embedding with $<$0.5\% RMSE via BitDelta quantization, and (3) \textbf{Cross-Model Retrieval}---94.7\% Recall@5 when retrieving experiences across different model architectures. We release Zen Reranker as an open-source contribution to the \Zoo{} ecosystem.

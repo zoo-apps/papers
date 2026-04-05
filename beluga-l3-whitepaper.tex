@@ -95,7 +95,6 @@ Zach Kelling\thanks{zach@zoo.ngo}\\
 \begin{document}
 
 \zoocoverpage
-\maketitle
 
 \begin{abstract}
 We present \Beluga{}, a Layer 3 application-specific blockchain for AI model economics, built on \Zoo{} Network (L2) which itself runs on \Lux{} Network (L0). \Beluga{} introduces a dedicated execution environment where every operation---model registration, inference requests, training bounties, data contribution---is a native transaction priced in the \BLG{} gas token. The chain implements custom EVM precompiles for inference pricing (address \texttt{0x0300}), a model marketplace, and training bounty escrow, enabling sub-millisecond settlement of AI compute transactions without leaving the chain. With a fixed supply of 100M \BLG{} allocated across a \DAO{} treasury (60M), inference pool (20M), training bounties (10M), and DEX liquidity (10M), \Beluga{} creates a self-sustaining economy where participants earn by training models, curating datasets, hosting inference, evaluating outputs, and governing the network. The chain runs on existing \Zoo{} validators via the \texttt{zood} node binary, requiring no new infrastructure. We describe the architecture, token economics, earning mechanisms, smart contract design, precompile specification, Proof of AI consensus adaptation, security model, and a concrete migration path from smart contracts on \Zoo{} to a sovereign L3. Experimental results from testnet deployment demonstrate 2,400 inference transactions per second with 1.1-second finality.

@@ -1,56 +1,40 @@
-% zoocover.sty — Black cover page for Zoo Labs Foundation research papers
-% Logo: Three overlapping circles (Venn diagram) inside outer circle (from zooai/logo)
+% zoocover.sty — Monochrome cover page for Zoo Labs Foundation papers
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{zoocover}[2024/01/15 Zoo Research Cover Page]
+\ProvidesPackage{zoocover}[2026/04/05 Zoo Research Cover Page]
 
 \RequirePackage{tikz}
 \RequirePackage{xcolor}
 \RequirePackage{graphicx}
 \RequirePackage[margin=1in]{geometry}
 
-\definecolor{zooblack}{RGB}{0,0,0}
-\definecolor{zoowhite}{RGB}{255,255,255}
-\definecolor{zoogold}{RGB}{207,181,59}
-\definecolor{zoogray}{RGB}{128,128,128}
-
 \newcommand{\zoocoverpage}{%
   \newgeometry{margin=0pt}
   \thispagestyle{empty}
   \begin{tikzpicture}[remember picture,overlay]
-    \fill[zooblack] (current page.south west) rectangle (current page.north east);
-
-    % Zoo logo — three overlapping circles inside outer circle
-    \node at ([yshift=3cm]current page.center) {%
-      \begin{tikzpicture}[scale=1.6]
-        \begin{scope}
-          \clip (0,0) circle (1.5);
-          \draw[zoowhite, line width=1.2pt] (0,0.55) circle (1.1);
-          \draw[zoowhite, line width=1.2pt] (-0.7,-0.35) circle (1.1);
-          \draw[zoowhite, line width=1.2pt] (0.7,-0.35) circle (1.1);
-        \end{scope}
-        \draw[zoowhite, line width=1.6pt] (0,0) circle (1.5);
+    \fill[black] (current page.south west) rectangle (current page.north east);
+    % Diamond logo
+    \node at ([yshift=4.5cm]current page.center) {%
+      \begin{tikzpicture}[scale=1.0]
+        \fill[white] (0,0.8) -- (0.6,0) -- (0,-0.8) -- (-0.6,0) -- cycle;
+        \fill[black] (0,0.45) -- (0.33,0) -- (0,-0.45) -- (-0.33,0) -- cycle;
+        \fill[white] (0,0.18) -- (0.13,0) -- (0,-0.18) -- (-0.13,0) -- cycle;
       \end{tikzpicture}%
     };
-
-    \node[zoowhite, font=\fontsize{28}{34}\selectfont\bfseries\sffamily,
-          text width=14cm, align=center]
-      at ([yshift=-0.5cm]current page.center) {\@title};
-
-    \node[zoogray, font=\fontsize{11}{14}\selectfont\sffamily,
-          text width=14cm, align=center]
-      at ([yshift=-2.5cm]current page.center) {\@author};
-
-    \node[zoogold, font=\fontsize{10}{12}\selectfont\sffamily]
-      at ([yshift=-3.8cm]current page.center) {\@date};
-
-    \fill[zoogold] ([yshift=0.8cm]current page.south west)
-      rectangle ([yshift=0.85cm]current page.south east);
-
-    \node[zoowhite, font=\fontsize{8}{10}\selectfont\sffamily, anchor=south]
-      at ([yshift=0.2cm]current page.south) {Zoo Labs Foundation};
-
-    \node[zoogray, font=\fontsize{7}{9}\selectfont\sffamily, anchor=south east]
-      at ([xshift=-1cm,yshift=1.2cm]current page.south east) {RESEARCH};
+    \node[white, font=\fontsize{18}{22}\selectfont\bfseries,
+          text width=12cm, align=center]
+      at ([yshift=1.5cm]current page.center)
+      {\hyphenpenalty=10000\exhyphenpenalty=10000\@title};
+    \draw[white!30, line width=0.4pt]
+      ([yshift=0.2cm,xshift=-4cm]current page.center) --
+      ([yshift=0.2cm,xshift=4cm]current page.center);
+    \node[white!50, font=\fontsize{9}{11}\selectfont]
+      at ([yshift=-0.6cm]current page.center) {\@author};
+    \node[white!30, font=\fontsize{8}{10}\selectfont]
+      at ([yshift=-1.4cm]current page.center) {\@date};
+    \node[white!20, font=\fontsize{7}{9}\selectfont, anchor=south]
+      at ([yshift=0.6cm]current page.south) {Zoo Labs Foundation};
+    \node[white!20, font=\fontsize{6}{8}\selectfont, anchor=south east]
+      at ([xshift=-0.8cm,yshift=0.6cm]current page.south east) {RESEARCH};
   \end{tikzpicture}
   \restoregeometry
   \newpage
