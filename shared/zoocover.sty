@@ -11,28 +11,46 @@
   \newgeometry{margin=0pt}
   \thispagestyle{empty}
   \begin{tikzpicture}[remember picture,overlay]
+    % Black background
     \fill[black] (current page.south west) rectangle (current page.north east);
-    % Diamond logo
+
+    % Zoo logo — three overlapping circles (Venn) inside outer circle
     \node at ([yshift=4.5cm]current page.center) {%
-      \begin{tikzpicture}[scale=1.0]
-        \fill[white] (0,0.8) -- (0.6,0) -- (0,-0.8) -- (-0.6,0) -- cycle;
-        \fill[black] (0,0.45) -- (0.33,0) -- (0,-0.45) -- (-0.33,0) -- cycle;
-        \fill[white] (0,0.18) -- (0.13,0) -- (0,-0.18) -- (-0.13,0) -- cycle;
+      \begin{tikzpicture}[scale=0.9]
+        \begin{scope}
+          \clip (0,0) circle (1.5);
+          \draw[white, line width=0.8pt] (0,0.55) circle (1.1);
+          \draw[white, line width=0.8pt] (-0.7,-0.35) circle (1.1);
+          \draw[white, line width=0.8pt] (0.7,-0.35) circle (1.1);
+        \end{scope}
+        \draw[white, line width=1.0pt] (0,0) circle (1.5);
       \end{tikzpicture}%
     };
+
+    % Title
     \node[white, font=\fontsize{18}{22}\selectfont\bfseries,
           text width=12cm, align=center]
       at ([yshift=1.5cm]current page.center)
       {\hyphenpenalty=10000\exhyphenpenalty=10000\@title};
+
+    % Thin rule
     \draw[white!30, line width=0.4pt]
       ([yshift=0.2cm,xshift=-4cm]current page.center) --
       ([yshift=0.2cm,xshift=4cm]current page.center);
+
+    % Author
     \node[white!50, font=\fontsize{9}{11}\selectfont]
       at ([yshift=-0.6cm]current page.center) {\@author};
+
+    % Date
     \node[white!30, font=\fontsize{8}{10}\selectfont]
       at ([yshift=-1.4cm]current page.center) {\@date};
+
+    % Footer
     \node[white!20, font=\fontsize{7}{9}\selectfont, anchor=south]
       at ([yshift=0.6cm]current page.south) {Zoo Labs Foundation};
+
+    % Classification
     \node[white!20, font=\fontsize{6}{8}\selectfont, anchor=south east]
       at ([xshift=-0.8cm,yshift=0.6cm]current page.south east) {RESEARCH};
   \end{tikzpicture}
