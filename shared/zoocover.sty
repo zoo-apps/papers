@@ -1,106 +1,55 @@
-% zoocover.sty — Black cover page for all Lux research papers
-% Usage: \usepackage{zoocover} then \zoocoverpage before \begin{document} content
+% zoocover.sty — Black cover page for Zoo Labs Foundation research papers
+% Logo: Three overlapping circles (Venn diagram) inside outer circle (from zooai/logo)
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{zoocover}[2024/01/15 Zoo Research Cover Page]
 
 \RequirePackage{tikz}
 \RequirePackage{xcolor}
 \RequirePackage{graphicx}
-\RequirePackage{listings}
-\@ifpackageloaded{geometry}{}{\RequirePackage[margin=1in]{geometry}}
+\RequirePackage[margin=1in]{geometry}
 
-% Lux brand colors
-\definecolor{luxblack}{RGB}{0,0,0}
-\definecolor{luxwhite}{RGB}{255,255,255}
-\definecolor{luxgold}{RGB}{207,181,59}
-\definecolor{luxgray}{RGB}{128,128,128}
-
-% Custom language definitions for listings
-\lstdefinelanguage{json}{
-  basicstyle=\ttfamily\small,
-  string=[s]{"}{"},
-  comment=[l]{//},
-  morecomment=[s]{/*}{*/},
-  literate=
-    *{:}{{{\color{black}{:}}}}{1}
-    {,}{{{\color{black}{,}}}}{1}
-    {\{}{{{\color{black}{\{}}}}{1}
-    {\}}{{{\color{black}{\}}}}}{1}
-    {[}{{{\color{black}{[}}}}{1}
-    {]}{{{\color{black}{]}}}}{1}
-}
-\lstdefinelanguage{Solidity}{
-  morekeywords={contract,function,returns,return,if,else,for,while,do,
-    mapping,address,uint256,uint,int,bool,string,bytes,bytes32,
-    public,private,internal,external,view,pure,payable,memory,storage,
-    calldata,event,emit,modifier,require,struct,enum,interface,
-    abstract,override,virtual,is,new,delete,import,pragma,solidity,
-    library,using,constructor,msg,sender,block,timestamp,this,super},
-  sensitive=true,
-  comment=[l]{//},
-  morecomment=[s]{/*}{*/},
-  string=[b]",
-  basicstyle=\ttfamily\small,
-}
-\lstdefinelanguage{Rust}{
-  morekeywords={fn,let,mut,pub,struct,impl,enum,match,if,else,for,while,
-    loop,return,use,mod,crate,self,super,trait,where,type,const,static,
-    async,await,move,ref,as,in,unsafe,extern},
-  morekeywords=[2]{Vec,String,Option,Result,Some,None,Ok,Err,Box,Rc,Arc,
-    HashMap,HashSet,BTreeMap,u8,u16,u32,u64,u128,i8,i16,i32,i64,i128,
-    f32,f64,bool,char,str,usize,isize},
-  sensitive=true,
-  comment=[l]{//},
-  morecomment=[s]{/*}{*/},
-  string=[b]",
-  basicstyle=\ttfamily\small,
-}
+\definecolor{zooblack}{RGB}{0,0,0}
+\definecolor{zoowhite}{RGB}{255,255,255}
+\definecolor{zoogold}{RGB}{207,181,59}
+\definecolor{zoogray}{RGB}{128,128,128}
 
 \newcommand{\zoocoverpage}{%
   \newgeometry{margin=0pt}
   \thispagestyle{empty}
   \begin{tikzpicture}[remember picture,overlay]
-    % Full black background
-    \fill[luxblack] (current page.south west) rectangle (current page.north east);
+    \fill[zooblack] (current page.south west) rectangle (current page.north east);
 
-    % Diamond logo (centered, upper third)
-    \node[luxwhite] at ([yshift=3cm]current page.center) {%
-      \begin{tikzpicture}[scale=1.8]
-        \draw[luxwhite, line width=1.5pt]
-          (0,1.2) -- (1,0) -- (0,-1.2) -- (-1,0) -- cycle;
-        \draw[luxwhite, line width=0.8pt]
-          (0,0.8) -- (0.65,0) -- (0,-0.8) -- (-0.65,0) -- cycle;
-        \draw[luxwhite, line width=0.4pt]
-          (0,0.4) -- (0.3,0) -- (0,-0.4) -- (-0.3,0) -- cycle;
+    % Zoo logo — three overlapping circles inside outer circle
+    \node at ([yshift=3cm]current page.center) {%
+      \begin{tikzpicture}[scale=1.6]
+        \begin{scope}
+          \clip (0,0) circle (1.5);
+          \draw[zoowhite, line width=1.2pt] (0,0.55) circle (1.1);
+          \draw[zoowhite, line width=1.2pt] (-0.7,-0.35) circle (1.1);
+          \draw[zoowhite, line width=1.2pt] (0.7,-0.35) circle (1.1);
+        \end{scope}
+        \draw[zoowhite, line width=1.6pt] (0,0) circle (1.5);
       \end{tikzpicture}%
     };
 
-    % Title
-    \node[luxwhite, font=\fontsize{28}{34}\selectfont\bfseries\sffamily,
+    \node[zoowhite, font=\fontsize{28}{34}\selectfont\bfseries\sffamily,
           text width=14cm, align=center]
       at ([yshift=-0.5cm]current page.center) {\@title};
 
-    % Author
-    \node[luxgray, font=\fontsize{11}{14}\selectfont\sffamily,
+    \node[zoogray, font=\fontsize{11}{14}\selectfont\sffamily,
           text width=14cm, align=center]
       at ([yshift=-2.5cm]current page.center) {\@author};
 
-    % Date
-    \node[luxgold, font=\fontsize{10}{12}\selectfont\sffamily]
+    \node[zoogold, font=\fontsize{10}{12}\selectfont\sffamily]
       at ([yshift=-3.8cm]current page.center) {\@date};
 
-    % Bottom bar
-    \fill[luxgold] ([yshift=0.8cm]current page.south west)
+    \fill[zoogold] ([yshift=0.8cm]current page.south west)
       rectangle ([yshift=0.85cm]current page.south east);
 
-    % Footer text
-    \node[luxwhite, font=\fontsize{8}{10}\selectfont\sffamily, anchor=south]
-      at ([yshift=0.2cm]current page.south) {%
-        Zoo Labs Foundation \quad $\cdot$ \quad Hanzo AI \quad $\cdot$ \quad Zoo Labs Foundation%
-      };
+    \node[zoowhite, font=\fontsize{8}{10}\selectfont\sffamily, anchor=south]
+      at ([yshift=0.2cm]current page.south) {Zoo Labs Foundation};
 
-    % Classification
-    \node[luxgray, font=\fontsize{7}{9}\selectfont\sffamily, anchor=south east]
+    \node[zoogray, font=\fontsize{7}{9}\selectfont\sffamily, anchor=south east]
       at ([xshift=-1cm,yshift=1.2cm]current page.south east) {RESEARCH};
   \end{tikzpicture}
   \restoregeometry
