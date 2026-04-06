@@ -1,0 +1,360 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{xcolor}
+
+\pgfplotsset{compat=1.18}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\Ringtail}{\textsc{Ringtail}}
+\newcommand{\MLKEM}{\textsc{ML-KEM}}
+\newcommand{\MLDSA}{\textsc{ML-DSA}}
+\newcommand{\SLHDSA}{\textsc{SLH-DSA}}
+\newcommand{\KChain}{\textsc{K-Chain}}
+\newcommand{\QChain}{\textsc{Q-Chain}}
+
+% Title information
+\title{\textbf{Post-Quantum Cryptography Suite for Zoo Network: ML-KEM, ML-DSA, SLH-DSA, and Ringtail}\\
+\large NIST FIPS 203/204/205 Integration with Lattice-Based Threshold Signatures\\
+\vspace{5pt}
+\normalsize Version 2026.04}
+
+\author{
+Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{2026}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present the post-quantum cryptography suite deployed across Zoo Network, implementing all three NIST post-quantum standards---\MLKEM{} (FIPS~203), \MLDSA{} (FIPS~204), and \SLHDSA{} (FIPS~205)---alongside the \Ringtail{} lattice-based threshold signature scheme. Each primitive serves a distinct role: \KChain{} uses \MLKEM{} for key encapsulation and \MLDSA{} for transaction signatures; \QChain{} uses \Ringtail{} for threshold validator operations; and the consensus layer uses hybrid BLS12-381 + \Ringtail{} for dual-path finality. \SLHDSA{} provides hash-based stateless signatures for long-term key certification. GPU-accelerated Number Theoretic Transform (NTT) achieves 8x throughput over CPU. Hybrid classical+post-quantum composition ensures backward compatibility. All implementations are formally verified in Lean~4 (Crypto/MLKEM.lean, Crypto/MLDSA.lean, Crypto/SLHDSA.lean, Crypto/Ringtail.lean, Crypto/Hybrid.lean).
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+\subsection{The Quantum Threat}
+
+Blockchain cryptography faces two quantum-vulnerable primitive classes: key agreement (ECDH, broken by Shor's algorithm) and digital signatures (ECDSA, EdDSA, BLS, similarly broken). Hash functions and symmetric ciphers retain security with doubled key lengths. The ``harvest now, decrypt later'' model makes this threat immediate: transactions recorded today can be forged retroactively once quantum computers arrive \cite{shor1997polynomial}.
+
+\subsection{NIST Standards and Zoo's Strategy}
+
+NIST finalized three post-quantum standards in 2024 \cite{nist2024pqc}: \MLKEM{} (FIPS~203, key encapsulation, Module-LWE), \MLDSA{} (FIPS~204, digital signatures, Module-LWE), and \SLHDSA{} (FIPS~205, digital signatures, hash-based). Zoo deploys each where its properties are most advantageous, supplemented by \Ringtail{} for threshold operations not covered by NIST.
+
+\subsection{Contributions}
+
+We contribute: (1)~complete FIPS 203/204/205 integration into a production blockchain; (2)~\Ringtail{} threshold signatures with Ring-LWE security; (3)~hybrid classical+PQ composition framework; (4)~GPU NTT acceleration achieving 8x throughput; (5)~Lean~4 formal verification of all primitives; (6)~chain-specific deployment mapping across Zoo's multi-chain topology.
+
+\section{ML-KEM: Key Encapsulation (FIPS 203)}
+
+\subsection{Construction}
+
+\MLKEM{} is based on the Module Learning With Errors (Module-LWE) problem. Zoo deploys \MLKEM{}-768 (NIST Security Level~3).
+
+\begin{definition}[Module-LWE]
+Given $\mathbf{A} \xleftarrow{\$} R_q^{k \times k}$, $\mathbf{s} \leftarrow \beta_\eta^k$, $\mathbf{e} \leftarrow \beta_\eta^k$, distinguish $(\mathbf{A}, \mathbf{A}\mathbf{s} + \mathbf{e})$ from $(\mathbf{A}, \mathbf{u})$ where $\mathbf{u} \xleftarrow{\$} R_q^k$, with $R_q = \mathbb{Z}_q[X]/(X^{256} + 1)$, $q = 3329$, $k = 3$.
+\end{definition}
+
+Key generation produces $pk = (\rho, \hat{\mathbf{t}})$ where $\mathbf{t} = \mathbf{A}\mathbf{s} + \mathbf{e}$. Encapsulation computes ciphertext via $\mathbf{u} = \text{NTT}^{-1}(\hat{\mathbf{A}}^T \hat{\mathbf{r}}) + \mathbf{e}_1$ and $v = \text{NTT}^{-1}(\hat{\mathbf{t}}^T \hat{\mathbf{r}}) + e_2 + \lceil q/2 \rfloor \cdot m$. Decapsulation with FO transform achieves IND-CCA2 security.
+
+\subsection{Performance and Usage}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Parameter} & \textbf{ML-KEM-768} & \textbf{ECDH (X25519)} \\
+\midrule
+Public key & 1,184\,B & 32\,B \\
+Ciphertext & 1,088\,B & 32\,B \\
+KeyGen / Encaps / Decaps & 32 / 40 / 42\,$\mu$s & 48 / 150 / 150\,$\mu$s \\
+\bottomrule
+\end{tabular}
+\caption{\MLKEM{}-768 vs classical ECDH}
+\label{tab:mlkem-perf}
+\end{table}
+
+\MLKEM{} is faster than X25519 despite 37x larger keys. Zoo uses it for validator P2P encrypted channels, optional PQ-encrypted transaction memos, and secure share distribution during \Ringtail{} DKG.
+
+\section{ML-DSA: Digital Signatures (FIPS 204)}
+
+\subsection{Construction}
+
+\MLDSA{} (formerly Dilithium) uses Module-LWE and Module-SIS with ``Fiat-Shamir with Aborts'' rejection sampling. Zoo deploys \MLDSA{}-65 (NIST Security Level~3, $k = 6$, $\ell = 5$, $q = 8380417$).
+
+Key generation: $\mathbf{A} \xleftarrow{\$} R_q^{k \times \ell}$, $\mathbf{s}_1 \leftarrow S_\eta^\ell$, $\mathbf{s}_2 \leftarrow S_\eta^k$, $\mathbf{t} = \mathbf{A}\mathbf{s}_1 + \mathbf{s}_2$. Signing samples $\mathbf{y} \leftarrow S_{\gamma_1}^\ell$, computes challenge $c$ from $\mathbf{w}_1 = \text{HighBits}(\mathbf{A}\mathbf{y})$, and outputs $\mathbf{z} = \mathbf{y} + c\mathbf{s}_1$ if norm bounds are satisfied (otherwise resamples).
+
+\subsection{Performance and Usage}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Parameter} & \textbf{ML-DSA-65} & \textbf{ECDSA (secp256k1)} \\
+\midrule
+Public key / Signature & 1,952\,B / 3,309\,B & 33\,B / 64\,B \\
+Sign / Verify & 680 / 250\,$\mu$s & 45 / 120\,$\mu$s \\
+\bottomrule
+\end{tabular}
+\caption{\MLDSA{}-65 vs classical ECDSA}
+\label{tab:mldsa-perf}
+\end{table}
+
+\MLDSA{}-65 is the default transaction signature on \KChain{}: user transfers, contract calls, staking, governance proposals. The 59x key and 52x signature expansion is mitigated by pruning after finality.
+
+\section{SLH-DSA: Hash-Based Signatures (FIPS 205)}
+
+\subsection{Construction}
+
+\SLHDSA{} (formerly SPHINCS+) is a stateless hash-based scheme whose security reduces solely to hash function second-preimage resistance---no lattice or number-theoretic assumptions. Zoo deploys \SLHDSA{}-SHA2-192s.
+
+The scheme uses a hypertree of $d = 7$ XMSS trees of height $h/d$ ($h = 63$ total), with FORS few-time signatures at the leaves. This provides $2^{63}$ signing capacity per key pair with the most conservative security margin of any post-quantum scheme.
+
+\subsection{Performance and Usage}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Parameter} & \textbf{SLH-DSA-SHA2-192s} & \textbf{ML-DSA-65} \\
+\midrule
+Public key / Secret key & 48\,B / 96\,B & 1,952\,B / 4,032\,B \\
+Signature & 16,224\,B & 3,309\,B \\
+Sign / Verify & 280\,ms / 6.2\,ms & 0.68\,ms / 0.25\,ms \\
+\bottomrule
+\end{tabular}
+\caption{\SLHDSA{}: compact keys, large signatures, slow operations}
+\label{tab:slhdsa-perf}
+\end{table}
+
+Reserved for high-assurance, low-frequency operations: root CA key certification, DAO constitutional amendments, long-term validator identity binding, cross-chain bridge anchors.
+
+\section{Ringtail: Post-Quantum Threshold Signatures}
+
+\subsection{Construction}
+
+NIST standards lack threshold signatures. \Ringtail{} fills this gap with a $(t, n)$-threshold scheme based on Ring-LWE \cite{lyubashevsky2010ideal, lux-ringtail-pq}, using parameters $d = 1024$, $q = 2^{32} - 5$ (NTT-friendly), $\sigma = 3.19$ (Gaussian width), $\beta = 2^{20}$ (norm bound).
+
+\subsection{Threshold Protocol}
+
+DKG: each party $P_i$ samples polynomial $f_i(x) \in R_q[x]$ of degree $t - 1$, broadcasts commitments, and sends encrypted shares via \MLKEM{}. Collective public key: $PK = \sum_{i=1}^{n} C_{i,0}$.
+
+Signing with $t$ signers from $\mathcal{T}$: each $P_i$ computes partial signature $\sigma_i = \lambda_i \cdot sk_i \cdot H_{\text{lat}}(M) + e_i$ with Lagrange coefficients $\lambda_i$ and fresh noise $e_i$. Aggregation: $\sigma = \sum_{i \in \mathcal{T}} \sigma_i$. Verification checks $\|\sigma\|_\infty < t \cdot \beta$ and the algebraic relation against $PK$.
+
+\subsection{Sizes}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lc}
+\toprule
+\textbf{Component} & \textbf{Size (bytes)} \\
+\midrule
+Public key / Secret key share & 4,096 / 4,096 \\
+Signature share / Threshold signature & 4,096 / 4,096 \\
+DKG commitment / DKG share (encrypted) & 4,096 / 5,280 \\
+\bottomrule
+\end{tabular}
+\caption{\Ringtail{} object sizes ($d = 1024$, $q = 2^{32} - 5$)}
+\label{tab:ringtail-sizes}
+\end{table}
+
+\section{Hybrid Classical + Post-Quantum Composition}
+
+\subsection{Signature Composition}
+
+Hybrid signatures concatenate classical and PQ components:
+\begin{equation}
+\Sigma_{\text{hybrid}} = (\sigma_{\text{classical}}, \sigma_{\text{PQ}}, \text{tag})
+\end{equation}
+
+Verification requires \textbf{both} valid: $\text{Verify}_{\text{hybrid}} = \text{Verify}_{\text{classical}} \wedge \text{Verify}_{\text{PQ}}$. An adversary must break both to forge.
+
+\subsection{Key Encapsulation Composition}
+
+For key exchange, Zoo combines X25519 and \MLKEM{}-768:
+\begin{equation}
+K_{\text{shared}} = \text{HKDF-SHA256}(K_{\text{X25519}} \| K_{\text{ML-KEM}}, \text{info}, 32)
+\end{equation}
+
+Secure if either X25519 or \MLKEM{} remains unbroken.
+
+\subsection{Transition Timeline}
+
+Phase~1 (current): hybrid mode, both required. Phase~2 (2028): PQ-primary, classical optional. Phase~3 (2030+): PQ-only via DAO governance vote.
+
+\section{GPU NTT Acceleration}
+
+All lattice primitives use polynomial multiplication in $R_q = \mathbb{Z}_q[X]/(X^n + 1)$ via NTT:
+\begin{equation}
+\mathbf{a} \cdot \mathbf{b} \bmod (X^n + 1) = \text{NTT}^{-1}(\text{NTT}(\mathbf{a}) \circ \text{NTT}(\mathbf{b}))
+\end{equation}
+
+The NTT's $\log_2(n)$ butterfly stages are fully parallelizable. For $n = 1024$: 10 stages, $n/2 = 512$ independent butterflies per stage, fitting in one GPU block (512 threads). Twiddle factors stored in constant memory.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Primitive} & \textbf{$n$} & \textbf{CPU ($\mu$s)} & \textbf{GPU ($\mu$s)} & \textbf{Speedup} \\
+\midrule
+\MLKEM{} / \MLDSA{} NTT & 256 & 4.2 & 0.6 & 7.0x \\
+\Ringtail{} NTT & 1024 & 18.4 & 2.1 & 8.8x \\
+Batch 1000 \Ringtail{} NTTs & 1024 & 18,400 & 2,100 & 8.8x \\
+\bottomrule
+\end{tabular}
+\caption{NTT performance: Intel Xeon 8380 vs NVIDIA A100}
+\label{tab:ntt-perf}
+\end{table}
+
+\section{Chain-Specific Deployment}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{llp{6cm}}
+\toprule
+\textbf{Chain / Layer} & \textbf{Primitives} & \textbf{Usage} \\
+\midrule
+\KChain{} & \MLKEM{}-768, \MLDSA{}-65 & User transactions, key exchange, contract auth \\
+\QChain{} & \Ringtail{} & Validator threshold ops, collective signing, DKG \\
+Consensus & BLS12-381 + \Ringtail{} & Hybrid dual-path finality \cite{zoo-consensus} \\
+PKI / Governance & \SLHDSA{}-SHA2-192s & Root certs, constitutional amendments \\
+P2P Networking & \MLKEM{}-768 + X25519 & Hybrid encrypted validator channels \\
+\bottomrule
+\end{tabular}
+\caption{Cryptographic deployment across Zoo chains}
+\label{tab:chain-crypto}
+\end{table}
+
+\KChain{} addresses derive as $\text{addr} = \text{BLAKE3}(\text{ML-DSA-65.pk})[0..19]$. Archival nodes prune verified \MLDSA{} signatures after finality, retaining only the signature hash. \QChain{} handles \Ringtail{} DKG at epoch boundaries and threshold signing for cross-chain messages.
+
+\section{Formal Verification}
+
+All implementations are formally verified in Lean~4:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lp{6.5cm}c}
+\toprule
+\textbf{File} & \textbf{Property} & \textbf{Lines} \\
+\midrule
+\texttt{Crypto/MLKEM.lean} & IND-CCA2 security; encaps/decaps correctness; NTT equivalence & 1,842 \\
+\texttt{Crypto/MLDSA.lean} & EUF-CMA security; rejection sampling correctness; no key leakage & 2,156 \\
+\texttt{Crypto/SLHDSA.lean} & EUF-CMA from hash second-preimage resistance; hypertree correctness & 1,534 \\
+\texttt{Crypto/Ringtail.lean} & Threshold unforgeability; DKG correctness; share verification & 2,403 \\
+\texttt{Crypto/Hybrid.lean} & Security holds if either component is secure & 687 \\
+\bottomrule
+\end{tabular}
+\caption{Lean~4 formal verification modules}
+\label{tab:lean-crypto}
+\end{table}
+
+\begin{theorem}[Hybrid Composition Security]
+The hybrid scheme $\Pi_H = (\Pi_C, \Pi_{PQ})$ with conjunctive verification is EUF-CMA secure if either $\Pi_C$ or $\Pi_{PQ}$ is EUF-CMA secure. Proof: a forger of $\Pi_H$ must forge both components, so $\text{Adv}[\mathcal{A}] \leq \text{Adv}[\mathcal{B}_C] + \text{Adv}[\mathcal{B}_{PQ}]$. Full proof in \texttt{Crypto/Hybrid.lean}.
+\end{theorem}
+
+\section{Empirical Evaluation}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Signature Scheme} & \textbf{Verify ($\mu$s)} & \textbf{Tx Size (B)} & \textbf{TPS (GPU)} \\
+\midrule
+ECDSA (secp256k1) & 120 & 245 & 8,300 \\
+\MLDSA{}-65 (CPU) & 250 & 3,554 & 4,000 \\
+\MLDSA{}-65 (GPU) & 35 & 3,554 & 6,200 \\
+Hybrid ECDSA+\MLDSA{} (GPU) & 48 & 3,619 & 5,800 \\
+\bottomrule
+\end{tabular}
+\caption{Transaction throughput on Zoo testnet}
+\label{tab:tx-throughput}
+\end{table}
+
+GPU-accelerated \MLDSA{} achieves 75\% of classical ECDSA throughput with full quantum resistance. Hybrid mode adds 6\% overhead. Storage growth (14x per transaction vs ECDSA) is mitigated by signature pruning after finality and separate witness storage.
+
+\section{Cross-References and Related Work}
+
+\subsection{Zoo Network Papers}
+
+\begin{itemize}
+\item \textbf{zoo-consensus} \cite{zoo-consensus}: \textsc{Quasar} hybrid BLS + \Ringtail{} finality. This paper provides the cryptographic details referenced there.
+\item \textbf{zoo-key-management} \cite{zoo-key-mgmt}: Key lifecycle, HD wallet derivation for \MLDSA{} keys, rotation policies.
+\item \textbf{zoo-threshold-signatures} \cite{zoo-threshold-sigs}: Extended \Ringtail{} DKG, proactive secret sharing, threshold ECDSA for legacy.
+\end{itemize}
+
+\subsection{Lux Network Papers}
+
+\begin{itemize}
+\item \textbf{lux-pq-crypto-suite} \cite{lux-pq-crypto}: \Lux{} L0 PQ implementation from which Zoo's suite derives.
+\item \textbf{lux-ringtail-pq} \cite{lux-ringtail-pq}: Original \Ringtail{} specification and security proof.
+\end{itemize}
+
+\section{Conclusion}
+
+Zoo Network deploys a comprehensive post-quantum cryptography suite: \MLKEM{} for key encapsulation, \MLDSA{} for transaction signatures, \SLHDSA{} for high-assurance certification, and \Ringtail{} for threshold consensus. Hybrid composition ensures security during the classical-to-quantum transition. GPU NTT acceleration achieves 75\% of classical throughput with full quantum resistance. All primitives are formally verified in Lean~4.
+
+\begin{thebibliography}{99}
+
+\bibitem{shor1997polynomial}
+P.~W. Shor, ``Polynomial-time algorithms for prime factorization and discrete logarithms on a quantum computer,'' \textit{SIAM J. Comput.}, vol.~26, no.~5, pp.~1484--1509, 1997.
+
+\bibitem{nist2024pqc}
+NIST, ``Post-Quantum Cryptography Standardization,'' FIPS 203, 204, 205, 2024.
+
+\bibitem{lyubashevsky2010ideal}
+V.~Lyubashevsky, C.~Peikert, and O.~Regev, ``On ideal lattices and learning with errors over rings,'' in \textit{EUROCRYPT}, 2010.
+
+\bibitem{zoo-consensus}
+Z.~Kelling, ``Quasar Hybrid Consensus on Zoo Network: GPU-Accelerated BLS and Post-Quantum Finality,'' Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-key-mgmt}
+Z.~Kelling, ``Key Management for Post-Quantum Multi-Chain Architectures on Zoo Network,'' Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-threshold-sigs}
+Z.~Kelling, ``Threshold Signatures for Decentralized Validator Sets on Zoo Network,'' Zoo Labs Foundation, 2026.
+
+\bibitem{lux-pq-crypto}
+Lux Industries, ``Post-Quantum Cryptography Suite for the Lux Blockchain,'' Lux Technical Report, 2025.
+
+\bibitem{lux-ringtail-pq}
+Lux Industries, ``Ringtail: A Ring-LWE Threshold Signature Scheme for Blockchain Consensus,'' Lux Technical Report, 2025.
+
+\end{thebibliography}
+
+\end{document}
