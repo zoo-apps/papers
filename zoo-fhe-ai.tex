@@ -192,7 +192,7 @@ The key-switching key $\text{ksk}_{\text{ckks} \to \text{tfhe}}$ is generated du
 
 The Zoo FHE precompile at \texttt{0x0700} exposes:
 
-\begin{lstlisting}[language=Solidity,caption=Zoo FHE Precompile Interface]
+\begin{lstlisting}[basicstyle=\ttfamily\small,caption=Zoo FHE Precompile Interface]
 interface IFHE {
     // CKKS operations (packed vectors)
     function ckksAdd(bytes ct1, bytes ct2)
@@ -348,31 +348,11 @@ The conservation DAO can authorize aggregate statistics (``17 snow leopards dete
 
 \subsection{Confidential Veterinary AI}
 
-Veterinary clinics in zoological institutions handle medical records subject to institutional privacy policies. Zoo FHE enables:
-
-\begin{enumerate}
-    \item Encrypted diagnostic imaging (X-rays, MRI) processed by AI classifiers
-    \item Cross-institutional model training without sharing raw patient data
-    \item Treatment recommendation models that operate on encrypted health histories
-\end{enumerate}
-
-A $(2, 3)$-threshold between the treating veterinarian, the institution, and the Zoo DAO governs access to individual diagnostic results.
+Veterinary clinics in zoological institutions handle medical records subject to institutional privacy policies. Zoo FHE enables encrypted diagnostic imaging processed by AI classifiers, cross-institutional model training without sharing raw patient data, and treatment recommendation models operating on encrypted health histories. A $(2, 3)$-threshold between the treating veterinarian, the institution, and the Zoo DAO governs access to individual diagnostic results.
 
 \subsection{Encrypted Genomics}
 
-Species conservation genomics involves sensitive genetic data that could enable biopiracy if leaked. Zoo FHE supports:
-
-\begin{itemize}
-    \item \textbf{Genetic diversity analysis}: Computing heterozygosity and inbreeding coefficients on encrypted genotype matrices
-    \item \textbf{Phylogenetic inference}: Distance matrix computation under \CKKS{} encryption
-    \item \textbf{Population viability analysis}: Stochastic simulation on encrypted demographic parameters
-\end{itemize}
-
-\begin{equation}
-H_{\text{enc}} = 1 - \sum_{i} \text{CKKS.Mul}(p_{i,\text{enc}}, p_{i,\text{enc}})
-\end{equation}
-
-where $p_{i,\text{enc}}$ are encrypted allele frequencies, and $H_{\text{enc}}$ is the encrypted heterozygosity---decryptable only by authorized conservation geneticists.
+Species conservation genomics involves sensitive genetic data that could enable biopiracy if leaked. Zoo FHE supports genetic diversity analysis (computing heterozygosity on encrypted genotype matrices), phylogenetic inference (distance matrix computation under \CKKS{} encryption), and population viability analysis (stochastic simulation on encrypted demographic parameters). Encrypted heterozygosity is computed as $H_{\text{enc}} = 1 - \sum_{i} \text{CKKS.Mul}(p_{i,\text{enc}}, p_{i,\text{enc}})$ where $p_{i,\text{enc}}$ are encrypted allele frequencies.
 
 \section{Performance Evaluation}
 \label{sec:evaluation}
