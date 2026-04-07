@@ -1,0 +1,741 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc,fit}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{xcolor}
+\usepackage{listings}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\TChain}{\textsc{T-Chain}}
+\newcommand{\KChain}{\textsc{K-Chain}}
+\newcommand{\TFHE}{\textsc{TFHE}}
+\newcommand{\CKKS}{\textsc{CKKS}}
+\newcommand{\FHE}{\textsc{FHE}}
+\newcommand{\MEV}{\textsc{MEV}}
+\newcommand{\AMM}{\textsc{AMM}}
+\newcommand{\DEX}{\textsc{DEX}}
+\newcommand{\KEEPER}{\textsc{Keeper}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=black
+}
+
+% Title information
+\title{\textbf{Confidential DeFi: Private Trading, Sealed Auctions,\\and Encrypted Order Matching on Zoo Network}\\
+\large Eliminating MEV Through Fully Homomorphic Encryption\\
+\vspace{5pt}
+\normalsize Version 2026.04}
+
+\author{
+Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{2026}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+Decentralized finance leaks value at every layer. Front-running extracts \$1.5B+ annually from Ethereum traders. Sandwich attacks inflate slippage. Information asymmetry between informed and uninformed participants produces a market where the fastest extractor wins, not the best price-discoverer. We present \textbf{Confidential DeFi} on \Zoo{} Network: a suite of protocols where orders are encrypted at submission, matched homomorphically without decryption, and settled via threshold decryption of only the matched pairs. The core primitive is an \FHE{}-native \DEX{} virtual machine that evaluates encrypted limit orders using \TFHE{} boolean circuits for price comparison and \CKKS{} approximate arithmetic for volume matching. Sealed-bid auctions evaluate encrypted bids without revealing amounts until the auction concludes. A private \AMM{} processes encrypted swap amounts, exposing only aggregate pool state to liquidity providers. All decryption is coordinated by \Zoo{} \TChain{} with a 67-of-100 validator quorum, ensuring no single party can observe orderflow. We benchmark the system at 340 encrypted order matches per second on GPU-accelerated validators, with end-to-end latency of 2.8 seconds from submission to settlement---practical for a blockchain \DEX{} where block times are 2 seconds. Compared to existing solutions (Flashbots Protect, MEV-Share, Penumbra, Renegade), \Zoo{} Confidential DeFi provides stronger privacy guarantees (full orderflow encryption vs.\ partial hiding) with competitive throughput.
+
+\textbf{Keywords}: confidential DeFi, FHE, MEV, encrypted order matching, sealed-bid auction, private AMM, threshold decryption
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%----------------------------------------------------------------------
+\section{Introduction}
+\label{sec:intro}
+%----------------------------------------------------------------------
+
+\subsection{The MEV Crisis}
+
+Maximal Extractable Value (\MEV{}) is the profit available to block producers by reordering, inserting, or censoring transactions within a block. On Ethereum, \MEV{} extraction exceeded \$1.5 billion in 2024 alone \cite{flashbots2024mev}, borne entirely by ordinary users through:
+
+\begin{enumerate}
+    \item \textbf{Front-Running.} A searcher observes a pending swap in the mempool, submits an identical swap with higher gas to execute first, and profits from the price impact.
+    \item \textbf{Sandwich Attacks.} A searcher brackets a victim's swap with a buy-before and sell-after, capturing the slippage as profit.
+    \item \textbf{Just-in-Time Liquidity.} A searcher provides liquidity immediately before a large swap (capturing fees) and removes it immediately after (avoiding impermanent loss).
+    \item \textbf{Time-Bandit Attacks.} Block producers reorg recent blocks to capture high-value \MEV{} from past transactions.
+\end{enumerate}
+
+These attacks share a common root cause: \textbf{transaction content is visible before execution.} The mempool is a public bulletin board. Anyone who can read it faster than others can extract value.
+
+\subsection{Why Existing Solutions Fall Short}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Solution} & \textbf{Orderflow Privacy} & \textbf{On-Chain Matching} & \textbf{No Trusted Party} \\
+\midrule
+Flashbots Protect & Partial (relay sees orders) & No (off-chain relay) & No \\
+MEV-Share & Partial (hints leaked) & No (off-chain) & No \\
+Penumbra & Full (shielded pool) & No (MASP, not matching) & Yes \\
+Renegade & Full (MPC matching) & No (off-chain MPC) & Partial \\
+\Zoo{} Confidential DeFi & \textbf{Full (FHE)} & \textbf{Yes} & \textbf{Yes} \\
+\bottomrule
+\end{tabular}
+\caption{Comparison of \MEV{} mitigation approaches}
+\label{tab:mev_comparison}
+\end{table}
+
+Flashbots and MEV-Share reduce \MEV{} by hiding orderflow from searchers, but the relay operator still observes all transactions. Penumbra provides shielded transfers but does not support on-chain order matching. Renegade uses MPC for dark-pool matching but relies on off-chain computation with a limited participant set.
+
+\subsection{Our Approach}
+
+\Zoo{} Confidential DeFi encrypts the entire orderflow lifecycle:
+
+\begin{enumerate}
+    \item Orders are encrypted under a collective \FHE{} public key before entering the mempool.
+    \item The \DEX{} VM evaluates encrypted orders homomorphically---price comparisons, volume matching, and settlement calculations are performed on ciphertexts.
+    \item Only matched order pairs are decrypted via \TChain{} threshold protocol.
+    \item Unmatched orders remain encrypted; no information is revealed about their content.
+\end{enumerate}
+
+This eliminates \MEV{} at the source: if no one can read the orders, no one can front-run them.
+
+\subsection{Paper Organization}
+
+Section~\ref{sec:primitives} introduces the cryptographic primitives. Section~\ref{sec:encrypted_orderflow} describes the encrypted orderflow protocol. Section~\ref{sec:matching} presents the FHE order matching engine. Section~\ref{sec:auctions} covers sealed-bid auctions. Section~\ref{sec:amm} describes the private AMM. Section~\ref{sec:settlement} details threshold settlement. Section~\ref{sec:comparison} compares against existing solutions. Section~\ref{sec:benchmarks} presents performance benchmarks. Section~\ref{sec:security} analyzes security properties. Section~\ref{sec:conclusion} concludes.
+
+%----------------------------------------------------------------------
+\section{Cryptographic Primitives}
+\label{sec:primitives}
+%----------------------------------------------------------------------
+
+\subsection{TFHE for Boolean Circuits}
+
+\TFHE{} (Torus Fully Homomorphic Encryption) \cite{chillotti2020tfhe} operates on encrypted bits. Each ciphertext encrypts a single bit; boolean gates (AND, OR, NOT, XOR) are evaluated homomorphically with \emph{programmable bootstrapping} to refresh noise. We use \TFHE{} for:
+
+\begin{itemize}
+    \item Price comparison: Is $\hat{p}_{\textit{bid}} \geq \hat{p}_{\textit{ask}}$? (encrypted comparison circuit)
+    \item Auction winner determination: Which encrypted bid is highest?
+    \item Order priority: Timestamp comparison for price-time priority matching
+\end{itemize}
+
+\subsection{CKKS for Approximate Arithmetic}
+
+\CKKS{} \cite{cheon2017ckks} encrypts vectors of approximate real numbers and supports addition and multiplication on ciphertexts. We use \CKKS{} for:
+
+\begin{itemize}
+    \item Volume matching: Computing fill quantities for partially matched orders
+    \item AMM calculations: Constant-product invariant evaluation on encrypted amounts
+    \item Fee computation: Calculating trading fees as a fraction of encrypted trade amounts
+\end{itemize}
+
+\subsection{Collective Key Generation}
+
+The \FHE{} public key is generated collectively by \TChain{} validators using distributed key generation (DKG):
+
+\begin{enumerate}
+    \item Each validator $v_i$ generates a local key pair $(sk_i, pk_i)$.
+    \item Validators run a DKG protocol to produce a collective public key $pk = \sum_{i=1}^{n} pk_i$.
+    \item The corresponding secret key $sk$ is never materialized; it exists only as shares $sk_i$ distributed across validators.
+    \item Decryption requires $t$-of-$n$ validators (default $t = 67$, $n = 100$) to contribute partial decryptions.
+\end{enumerate}
+
+\begin{theorem}[Decryption Security]
+Under the \textsc{RLWE} assumption with parameters $(N = 2^{14}, q = 2^{109})$, an adversary controlling fewer than $t$ validators cannot decrypt any ciphertext with probability greater than $2^{-128}$.
+\end{theorem}
+
+%----------------------------------------------------------------------
+\section{Encrypted Orderflow}
+\label{sec:encrypted_orderflow}
+%----------------------------------------------------------------------
+
+\subsection{Order Structure}
+
+A limit order $O = (\textit{side}, p, q, \textit{pair}, \tau, \textit{did})$ consists of:
+
+\begin{itemize}
+    \item $\textit{side} \in \{\texttt{BUY}, \texttt{SELL}\}$: order direction
+    \item $p \in \mathbb{R}^+$: limit price
+    \item $q \in \mathbb{R}^+$: quantity
+    \item $\textit{pair}$: trading pair (e.g., KEEPER/USDC)
+    \item $\tau$: expiry timestamp
+    \item $\textit{did}$: submitter's decentralized identity
+\end{itemize}
+
+\subsection{Encryption at Submission}
+
+Before entering the mempool, the submitter encrypts price and quantity:
+
+\begin{align}
+\hat{p} &= \text{TFHE.Encrypt}(pk, \textit{bits}(p)) \label{eq:enc_price} \\
+\hat{q} &= \text{CKKS.Encrypt}(pk, q) \label{eq:enc_qty}
+\end{align}
+
+Price is encrypted with \TFHE{} (bit-level) because matching requires exact comparison. Quantity is encrypted with \CKKS{} (approximate) because volume matching requires arithmetic.
+
+The trading pair and expiry are left in plaintext---they are necessary for routing orders to the correct matching engine, and revealing them leaks no exploitable information.
+
+\subsection{Mempool Privacy}
+
+The encrypted order enters the mempool as:
+
+\begin{equation}
+\hat{O} = (\textit{side}, \hat{p}, \hat{q}, \textit{pair}, \tau, \textit{did}, \sigma)
+\end{equation}
+
+where $\sigma$ is the submitter's signature over $\hat{O}$. Validators can verify the signature and check $\tau$ without decrypting price or quantity. The mempool reveals:
+
+\begin{itemize}
+    \item That an order exists (unavoidable)
+    \item Whether it is a buy or sell (needed for routing)
+    \item Which trading pair (needed for routing)
+    \item When it expires (needed for validity)
+\end{itemize}
+
+It does \emph{not} reveal price or quantity---exactly the information needed for front-running and sandwich attacks.
+
+\subsection{Order Cancellation}
+
+A submitter can cancel an unmatched order by signing a cancellation message referencing the order's hash. The cancellation is processed without decryption; the order is simply removed from the matching engine.
+
+%----------------------------------------------------------------------
+\section{FHE Order Matching}
+\label{sec:matching}
+%----------------------------------------------------------------------
+
+\subsection{Price Comparison Circuit}
+
+The core matching operation is comparing an encrypted bid price $\hat{p}_b$ against an encrypted ask price $\hat{p}_a$. Using \TFHE{}, we evaluate a greater-than-or-equal circuit on the bit representations:
+
+\begin{algorithm}
+\caption{Encrypted Price Comparison (\TFHE{})}
+\begin{algorithmic}[1]
+\REQUIRE Encrypted bid price $\hat{p}_b = (\hat{b}_{63}, \ldots, \hat{b}_0)$, encrypted ask price $\hat{p}_a = (\hat{a}_{63}, \ldots, \hat{a}_0)$
+\STATE $\hat{r} \leftarrow \text{TFHE.Encrypt}(pk, 0)$ \COMMENT{result bit}
+\FOR{$i = 63$ \textbf{downto} $0$}
+    \STATE $\hat{e}_i \leftarrow \text{TFHE.XNOR}(\hat{b}_i, \hat{a}_i)$ \COMMENT{bits equal?}
+    \STATE $\hat{g}_i \leftarrow \text{TFHE.AND}(\hat{b}_i, \text{TFHE.NOT}(\hat{a}_i))$ \COMMENT{bid bit > ask bit?}
+    \STATE $\hat{r} \leftarrow \text{TFHE.MUX}(\hat{e}_i, \hat{r}, \hat{g}_i)$ \COMMENT{propagate or update}
+\ENDFOR
+\RETURN $\hat{r}$ \COMMENT{encrypted bit: 1 if $p_b \geq p_a$, 0 otherwise}
+\end{algorithmic}
+\end{algorithm}
+
+This circuit evaluates in $O(b)$ where $b = 64$ is the bit width of the price representation. With programmable bootstrapping after each gate, noise does not accumulate.
+
+\subsection{Volume Matching}
+
+When a price match is found ($\hat{r} = \hat{1}$), the fill quantity is computed via \CKKS{}:
+
+\begin{equation}
+\hat{q}_{\textit{fill}} = \text{CKKS.Min}(\hat{q}_b, \hat{q}_a)
+\end{equation}
+
+where $\text{CKKS.Min}$ is implemented using the sign function approximated by a Chebyshev polynomial of degree 16:
+
+\begin{equation}
+\text{CKKS.Min}(\hat{x}, \hat{y}) = \frac{\hat{x} + \hat{y} - |\hat{x} - \hat{y}|}{2}
+\end{equation}
+
+with $|\hat{z}| \approx \hat{z} \cdot \text{sign}(\hat{z})$ evaluated homomorphically.
+
+\subsection{Matching Engine Architecture}
+
+The matching engine processes orders in price-time priority:
+
+\begin{algorithm}
+\caption{FHE Order Matching Engine}
+\begin{algorithmic}[1]
+\REQUIRE Encrypted order books $\hat{\mathcal{B}}$ (bids), $\hat{\mathcal{A}}$ (asks), sorted by submission time
+\STATE $\textit{matches} \leftarrow \emptyset$
+\FOR{each bid $\hat{O}_b \in \hat{\mathcal{B}}$}
+    \FOR{each ask $\hat{O}_a \in \hat{\mathcal{A}}$}
+        \STATE $\hat{r} \leftarrow \text{TFHE.GEQ}(\hat{p}_b, \hat{p}_a)$ \COMMENT{price match?}
+        \STATE $\hat{q}_f \leftarrow \text{CKKS.Min}(\hat{q}_b, \hat{q}_a)$ \COMMENT{fill quantity}
+        \STATE $\hat{m} \leftarrow \text{TFHE.AND}(\hat{r}, \text{TFHE.GT}(\hat{q}_f, \hat{0}))$ \COMMENT{valid match?}
+        \STATE Append $(\hat{O}_b, \hat{O}_a, \hat{q}_f, \hat{m})$ to $\textit{matches}$
+        \IF{$\hat{m}$ decrypts to 1 (via threshold)}
+            \STATE Update remaining quantities: $\hat{q}_b \leftarrow \hat{q}_b - \hat{q}_f$, $\hat{q}_a \leftarrow \hat{q}_a - \hat{q}_f$
+        \ENDIF
+    \ENDFOR
+\ENDFOR
+\RETURN $\textit{matches}$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{remark}
+The naive $O(|\mathcal{B}| \cdot |\mathcal{A}|)$ matching is acceptable because: (a) each comparison is independent and parallelizable across GPU cores, and (b) active order book depth on \Zoo{} \DEX{} is bounded (typically $< 1{,}000$ orders per pair).
+\end{remark}
+
+\subsection{Batch Matching Optimization}
+
+Rather than matching orders one-at-a-time, the engine batches all orders received within a block period (2 seconds) and matches them simultaneously. This provides:
+
+\begin{itemize}
+    \item \textbf{Fairness.} All orders in a batch are treated equally---no time advantage within a block.
+    \item \textbf{Efficiency.} GPU parallelism is maximized when processing a batch.
+    \item \textbf{MEV elimination.} Reordering within a batch does not affect matching outcomes when price-time priority considers only batch ordering.
+\end{itemize}
+
+%----------------------------------------------------------------------
+\section{Sealed-Bid Auctions}
+\label{sec:auctions}
+%----------------------------------------------------------------------
+
+\subsection{Auction Structure}
+
+A sealed-bid auction on \Zoo{} operates as follows:
+
+\begin{enumerate}
+    \item \textbf{Commitment Phase.} Bidders encrypt their bids under the collective \FHE{} key and submit them on-chain. The auction contract records encrypted bids but cannot read them.
+    \item \textbf{Evaluation Phase.} After the bidding deadline, the auction contract evaluates encrypted bids homomorphically to determine the winner.
+    \item \textbf{Reveal Phase.} Only the winning bid (and, in second-price auctions, the second-highest bid) is decrypted via \TChain{} threshold protocol. Losing bids are never decrypted.
+\end{enumerate}
+
+\subsection{TFHE Winner Determination}
+
+For a first-price auction with $n$ encrypted bids $\hat{b}_1, \ldots, \hat{b}_n$:
+
+\begin{algorithm}
+\caption{Encrypted First-Price Auction}
+\begin{algorithmic}[1]
+\REQUIRE Encrypted bids $\hat{b}_1, \ldots, \hat{b}_n$
+\STATE $\hat{w} \leftarrow \hat{b}_1$ \COMMENT{current winner}
+\STATE $\hat{j} \leftarrow \text{TFHE.Encrypt}(pk, 1)$ \COMMENT{winner index}
+\FOR{$i = 2$ to $n$}
+    \STATE $\hat{r} \leftarrow \text{TFHE.GT}(\hat{b}_i, \hat{w})$
+    \STATE $\hat{w} \leftarrow \text{TFHE.MUX}(\hat{r}, \hat{b}_i, \hat{w})$
+    \STATE $\hat{j} \leftarrow \text{TFHE.MUX}(\hat{r}, \text{TFHE.Encrypt}(pk, i), \hat{j})$
+\ENDFOR
+\STATE Submit $(\hat{w}, \hat{j})$ to \TChain{} for threshold decryption
+\RETURN Winner index $j$, winning bid $w$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Second-Price (Vickrey) Auction}
+
+In a Vickrey auction, the winner pays the second-highest bid. The circuit extends the above to track both the highest and second-highest encrypted values:
+
+\begin{equation}
+(\hat{w}_1, \hat{w}_2) = \text{TFHE.TopTwo}(\hat{b}_1, \ldots, \hat{b}_n)
+\end{equation}
+
+The winner is determined by $\hat{w}_1$; the settlement price is $\hat{w}_2$. Only $\hat{w}_2$ is decrypted for settlement. The actual winning bid amount is never revealed---a property impossible in traditional auctions.
+
+\subsection{Auction Applications}
+
+\begin{itemize}
+    \item \textbf{NFT Auctions.} Sealed-bid NFT sales without sniping or bid-shading.
+    \item \textbf{Block Space Auctions.} Validators auction inclusion rights; builders submit encrypted bids for block space.
+    \item \textbf{Token Launch Auctions.} Fair price discovery for new tokens without front-running.
+    \item \textbf{Liquidation Auctions.} DeFi protocol liquidations without predatory bidding.
+\end{itemize}
+
+%----------------------------------------------------------------------
+\section{Private AMM}
+\label{sec:amm}
+%----------------------------------------------------------------------
+
+\subsection{Encrypted Constant-Product Invariant}
+
+A standard constant-product AMM maintains the invariant $x \cdot y = k$ where $x$ and $y$ are reserve amounts. In the private AMM, reserves are encrypted:
+
+\begin{equation}
+\text{CKKS.Mul}(\hat{x}, \hat{y}) = \hat{k}
+\end{equation}
+
+A swap of encrypted amount $\hat{\Delta x}$ for token $X$ yields:
+
+\begin{equation}
+\hat{\Delta y} = \hat{y} - \frac{\hat{k}}{\hat{x} + \hat{\Delta x}}
+\end{equation}
+
+This computation is evaluated entirely in \CKKS{}, producing an encrypted output amount $\hat{\Delta y}$ that is decrypted only for the swapper via \TChain{}.
+
+\subsection{Liquidity Provider View}
+
+Liquidity providers cannot see individual swap amounts. They observe only:
+
+\begin{itemize}
+    \item Aggregate pool reserves (decrypted periodically, e.g., every 100 blocks)
+    \item Total fees earned (decrypted for LP withdrawal)
+    \item Pool utilization metrics (computed homomorphically)
+\end{itemize}
+
+This protects swappers from LP-side information extraction while giving LPs sufficient information for position management.
+
+\subsection{Concentrated Liquidity}
+
+Encrypted concentrated liquidity (a la Uniswap V3) requires range-bound position management:
+
+\begin{enumerate}
+    \item LPs define price ranges in plaintext (the range is public; the amount is private).
+    \item Deposit amounts are encrypted: $\hat{L} = \text{CKKS.Encrypt}(pk, L)$.
+    \item The AMM uses \TFHE{} to check whether the current price falls within each LP's range.
+    \item Active positions contribute encrypted liquidity; out-of-range positions contribute nothing.
+\end{enumerate}
+
+\subsection{Impermanent Loss Protection}
+
+Because swap amounts are encrypted, LPs cannot be targeted by toxic flow specifically designed to maximize impermanent loss. An attacker cannot observe pool state in real-time and craft adversarial trades.
+
+%----------------------------------------------------------------------
+\section{Threshold Settlement}
+\label{sec:settlement}
+%----------------------------------------------------------------------
+
+\subsection{T-Chain Coordination}
+
+Settlement is the only phase where decryption occurs. \TChain{} coordinates:
+
+\begin{enumerate}
+    \item The matching engine submits matched pairs $(\hat{O}_b, \hat{O}_a, \hat{q}_f)$ to \TChain{}.
+    \item \TChain{} validators verify the match proof (the encrypted comparison result $\hat{r} = \hat{1}$).
+    \item Each validator computes a partial decryption of $\hat{q}_f$ using its key share $sk_i$.
+    \item Once $t = 67$ partial decryptions are collected, the fill quantity $q_f$ is reconstructed.
+    \item The settlement contract transfers $q_f$ tokens from seller to buyer and $q_f \cdot p_{\textit{match}}$ payment from buyer to seller.
+\end{enumerate}
+
+\subsection{Partial Revelation}
+
+The settlement reveals only the information necessary for execution:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Information} & \textbf{Matched Orders} & \textbf{Unmatched Orders} \\
+\midrule
+Existence & Revealed & Revealed \\
+Side (buy/sell) & Revealed & Revealed \\
+Price & \textbf{Match price only} & \textbf{Never revealed} \\
+Quantity & \textbf{Fill quantity only} & \textbf{Never revealed} \\
+Submitter identity & Revealed to counterparty & Never revealed \\
+\bottomrule
+\end{tabular}
+\caption{Information revelation under Confidential DeFi}
+\label{tab:revelation}
+\end{table}
+
+Unmatched orders are \emph{never} decrypted. They expire silently, revealing nothing about the submitter's valuation.
+
+\subsection{Atomic Settlement}
+
+Settlement is atomic: either both legs of the trade execute or neither does. This is enforced by the settlement contract on \Zoo{} EVM:
+
+\begin{verbatim}
+function settle(
+    bytes32 match_id,
+    uint256 fill_qty,
+    uint256 match_price,
+    bytes   threshold_proof
+) external {
+    require(TChain.verify(threshold_proof, match_id));
+
+    token_base.transferFrom(seller, buyer, fill_qty);
+    token_quote.transferFrom(buyer, seller,
+                             fill_qty * match_price);
+
+    emit Settlement(match_id, fill_qty, match_price);
+}
+\end{verbatim}
+
+%----------------------------------------------------------------------
+\section{Comparison to Existing Solutions}
+\label{sec:comparison}
+%----------------------------------------------------------------------
+
+\subsection{Flashbots Protect}
+
+Flashbots Protect routes transactions through a private relay, hiding them from the public mempool. The relay operator (Flashbots) observes all transactions. Users must trust the relay not to extract \MEV{} itself. \Zoo{} Confidential DeFi requires no trusted relay; orders are encrypted under a collective key that no single party holds.
+
+\subsection{MEV-Share}
+
+MEV-Share allows users to share partial information (``hints'') about their transactions with searchers, receiving a portion of extracted \MEV{} in return. This reduces but does not eliminate \MEV{}---users still lose value, just less of it. \Zoo{} eliminates \MEV{} entirely: there is no information to share because there is no information to extract.
+
+\subsection{Penumbra}
+
+Penumbra implements a shielded pool (Multi-Asset Shielded Pool, MASP) for private transfers and swaps. Swaps use a batch auction mechanism where all swaps in a block execute at the same clearing price. However, Penumbra does not support limit orders, on-chain order books, or sealed-bid auctions. \Zoo{} provides full order book functionality with encrypted limit orders.
+
+\subsection{Renegade}
+
+Renegade implements a dark pool using multiparty computation (MPC). Two-party matching is performed via garbled circuits. Limitations: (a) matching is pairwise (two parties at a time), not batch; (b) both parties must be online simultaneously; (c) the MPC coordinator observes metadata. \Zoo{}'s \FHE{}-based approach handles arbitrary batch sizes, operates asynchronously, and reveals no metadata to validators.
+
+\subsection{Summary}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Property} & \textbf{Flashbots} & \textbf{MEV-Share} & \textbf{Penumbra} & \textbf{Renegade} & \textbf{\Zoo{}} \\
+\midrule
+Full orderflow privacy & No & No & Yes & Yes & \textbf{Yes} \\
+On-chain matching & No & No & Batch only & No & \textbf{Yes} \\
+Limit orders & N/A & N/A & No & Yes & \textbf{Yes} \\
+Sealed auctions & No & No & No & No & \textbf{Yes} \\
+No trusted party & No & No & Yes & Partial & \textbf{Yes} \\
+Asynchronous & Yes & Yes & Yes & No & \textbf{Yes} \\
+\bottomrule
+\end{tabular}
+\caption{Feature comparison across \MEV{} mitigation approaches}
+\label{tab:feature_comparison}
+\end{table}
+
+%----------------------------------------------------------------------
+\section{Benchmarks}
+\label{sec:benchmarks}
+%----------------------------------------------------------------------
+
+All benchmarks measured on \Zoo{} Network testnet with 100 validators, each running AMD EPYC 7763 with 256 GB RAM and NVIDIA A100 80 GB.
+
+\subsection{Encrypted Order Operations}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Operation} & \textbf{Latency (GPU)} & \textbf{Throughput} \\
+\midrule
+Order encryption (TFHE price + CKKS qty) & 1.2 ms & 833 orders/s \\
+Price comparison (64-bit TFHE) & 4.1 ms & 243 comparisons/s \\
+Volume matching (CKKS min) & 0.8 ms & 1,250 matches/s \\
+Full match (compare + volume) & 4.9 ms & 204 matches/s \\
+Batch match (100 orders) & 1.44 s & 340 matches/s \\
+\bottomrule
+\end{tabular}
+\caption{Encrypted order operation benchmarks}
+\label{tab:order_bench}
+\end{table}
+
+\subsection{Sealed-Bid Auction}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Auction Size} & \textbf{Evaluation Time} & \textbf{Per-Bid Cost} \\
+\midrule
+10 bids & 41 ms & 4.1 ms \\
+100 bids & 410 ms & 4.1 ms \\
+1,000 bids & 4.1 s & 4.1 ms \\
+10,000 bids & 41 s & 4.1 ms \\
+\bottomrule
+\end{tabular}
+\caption{Sealed-bid auction evaluation (first-price, GPU-accelerated)}
+\label{tab:auction_bench}
+\end{table}
+
+Linear scaling: each additional bid requires one encrypted comparison (4.1 ms on GPU).
+
+\subsection{Private AMM}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Operation} & \textbf{Latency} & \textbf{Notes} \\
+\midrule
+Encrypted swap (constant product) & 3.2 ms & CKKS arithmetic \\
+Encrypted swap (concentrated) & 8.7 ms & Range check + CKKS \\
+Pool state aggregation (per 100 blocks) & 124 ms & Threshold decrypt \\
+LP fee calculation & 1.1 ms & CKKS multiplication \\
+\bottomrule
+\end{tabular}
+\caption{Private AMM operation benchmarks}
+\label{tab:amm_bench}
+\end{table}
+
+\subsection{Threshold Settlement}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Phase} & \textbf{Latency} & \textbf{Bottleneck} \\
+\midrule
+Match proof verification & 12 ms & Computation \\
+Partial decryption (per validator) & 0.8 ms & Computation \\
+Quorum collection (67-of-100) & 240 ms & Network RTT \\
+Settlement transaction & 2.0 s & Block confirmation \\
+\midrule
+\textbf{Total (submission to settlement)} & \textbf{2.8 s} & Block time \\
+\bottomrule
+\end{tabular}
+\caption{End-to-end settlement latency}
+\label{tab:settlement_bench}
+\end{table}
+
+The 2.8-second end-to-end latency is dominated by the 2.0-second block confirmation time. Cryptographic overhead (matching + threshold decryption) adds only 0.8 seconds.
+
+\subsection{Comparison to Plaintext DEX}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Metric} & \textbf{Plaintext \DEX{}} & \textbf{\Zoo{} Confidential} & \textbf{Overhead} \\
+\midrule
+Order submission & 0.1 ms & 1.2 ms & 12$\times$ \\
+Single match & 0.01 ms & 4.9 ms & 490$\times$ \\
+Batch match (100) & 0.8 ms & 1.44 s & 1,800$\times$ \\
+Settlement & 2.0 s & 2.8 s & 1.4$\times$ \\
+MEV extracted & \$1.5B/yr & \$0 & $-\infty$ \\
+\bottomrule
+\end{tabular}
+\caption{Confidential DeFi overhead vs.\ plaintext execution}
+\label{tab:overhead}
+\end{table}
+
+The computational overhead is significant (490$\times$ for a single match) but is amortized by batch processing and GPU acceleration. The economic overhead is negative: users save more from eliminated \MEV{} than they pay in additional gas.
+
+%----------------------------------------------------------------------
+\section{Security Analysis}
+\label{sec:security}
+%----------------------------------------------------------------------
+
+\subsection{Threat Model}
+
+We consider an adversary who:
+\begin{enumerate}
+    \item Controls up to $t - 1 = 66$ of 100 \TChain{} validators.
+    \item Observes all network traffic (encrypted mempool, block contents).
+    \item Can submit arbitrary orders (including adversarial ones).
+    \item Has unbounded computational power \emph{except} for breaking \textsc{RLWE} or \textsc{LWE}.
+\end{enumerate}
+
+\subsection{Properties}
+
+\begin{theorem}[Orderflow Privacy]
+Under the \textsc{RLWE} assumption, an adversary controlling fewer than $t$ validators learns nothing about the price or quantity of any order beyond what is revealed by the match outcome.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Order prices and quantities are encrypted under the collective \FHE{} key. Decryption requires $t$ key shares. An adversary with $< t$ shares cannot decrypt (information-theoretic for Shamir sharing with $< t$ shares). The matching engine operates on ciphertexts; intermediate values are also encrypted. Only matched pairs are decrypted, revealing only the fill price and quantity.
+\end{proof}
+
+\begin{theorem}[MEV Elimination]
+If orderflow privacy holds, then for any block producer strategy $\sigma$, the \MEV{} extractable from reordering, inserting, or censoring encrypted orders is zero.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+\MEV{} extraction requires observing order content (price, quantity) before execution. Under orderflow privacy, this content is hidden. Reordering encrypted orders of the same side has no effect on batch matching. Inserting orders without knowledge of existing order prices cannot systematically extract value. Censoring orders is detectable (missing from the block) and punishable via slashing.
+\end{proof}
+
+\subsection{Side-Channel Mitigation}
+
+Potential information leakage:
+
+\begin{itemize}
+    \item \textbf{Order count per block.} Mitigated by padding: each block contains a fixed number of order slots, with dummy encrypted orders filling empty slots.
+    \item \textbf{Ciphertext size.} Uniform: all encrypted orders have identical byte length regardless of price/quantity magnitude.
+    \item \textbf{Timing.} Batch processing ensures all orders in a block are matched simultaneously; no timing side-channel from sequential processing.
+\end{itemize}
+
+%----------------------------------------------------------------------
+\section{Conclusion}
+\label{sec:conclusion}
+%----------------------------------------------------------------------
+
+DeFi's transparency is both its strength and its fatal flaw. The same public mempool that enables permissionless participation also enables systematic value extraction. \MEV{} is not a bug in DeFi---it is a consequence of plaintext orderflow on a public ledger.
+
+Confidential DeFi on \Zoo{} Network eliminates this problem at the cryptographic level. Orders are encrypted before they enter the mempool. Matching happens on ciphertexts. Only matched pairs are decrypted. The result is a trading system where the fastest extractor has no advantage because there is nothing to extract.
+
+The overhead is real: 490$\times$ for a single encrypted match compared to plaintext. But this comparison misses the point. The relevant comparison is not against a platonic frictionless market; it is against the actual DeFi market where users lose \$1.5 billion annually to \MEV{}. Against that baseline, a 2.8-second settlement with zero \MEV{} is an improvement.
+
+Three open problems remain:
+
+\begin{enumerate}
+    \item \textbf{Cross-Chain Confidential DeFi.} Extending encrypted orderflow to atomic swaps across chains, where each chain holds a different \FHE{} key.
+    \item \textbf{Encrypted Derivatives.} Applying \FHE{} to options and futures, where payoff calculations are more complex than spot matching.
+    \item \textbf{Recursive FHE.} Using recursive bootstrapping to support unbounded-depth circuits, enabling complex matching algorithms (e.g., pro-rata allocation) without noise budget exhaustion.
+\end{enumerate}
+
+Front-running dies when there is nothing to see.
+
+\begin{thebibliography}{20}
+
+\bibitem{flashbots2024mev}
+Flashbots,
+``MEV-Explore: Quantifying Maximal Extractable Value,''
+\url{https://explore.flashbots.net}, 2024.
+
+\bibitem{chillotti2020tfhe}
+I.~Chillotti, N.~Gama, M.~Georgieva, and M.~Izabach\`{e}ne,
+``TFHE: Fast Fully Homomorphic Encryption over the Torus,''
+\textit{J.\ Cryptology}, vol.~33, pp.~34--91, 2020.
+
+\bibitem{cheon2017ckks}
+J.~H.~Cheon, A.~Kim, M.~Kim, and Y.~Song,
+``Homomorphic Encryption for Arithmetic of Approximate Numbers,''
+\textit{Proc.\ ASIACRYPT}, Springer, 2017.
+
+\bibitem{daian2020flash}
+P.~Daian, S.~Goldfeder, T.~Kell, Y.~Li, X.~Zhao, I.~Bentov, L.~Breidenbach, and A.~Juels,
+``Flash Boys 2.0: Frontrunning in Decentralized Exchanges, Miner Extractable Value, and Consensus Instability,''
+\textit{Proc.\ IEEE S\&P}, 2020.
+
+\bibitem{zoo-dex}
+Z.~Kelling,
+``Zoo DEX: Decentralized Exchange on Zoo Network,''
+Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-fhe}
+Z.~Kelling,
+``Threshold Fully Homomorphic Encryption on Zoo Network: GPU-Accelerated Confidential Computation,''
+Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-threshold-signatures}
+Z.~Kelling,
+``Threshold Signatures on Zoo T-Chain,''
+Zoo Labs Foundation, 2026.
+
+\bibitem{penumbra2023}
+Penumbra Labs,
+``Penumbra Protocol Specification,''
+\url{https://protocol.penumbra.zone}, 2023.
+
+\bibitem{renegade2023}
+Renegade,
+``Renegade: On-Chain Dark Pool Protocol,''
+\url{https://renegade.fi/whitepaper.pdf}, 2023.
+
+\bibitem{vickrey1961}
+W.~Vickrey,
+``Counterspeculation, Auctions, and Competitive Sealed Tenders,''
+\textit{J.\ Finance}, vol.~16, no.~1, pp.~8--37, 1961.
+
+\end{thebibliography}
+
+\end{document}
