@@ -383,6 +383,64 @@ Zero code divergence between ecosystems.
   \texttt{replicate snapshots create}.
 \end{enumerate}
 
+\section{Post-Quantum Considerations}
+
+The age encryption layer currently uses X25519 (Curve25519) key
+agreement, which is not post-quantum safe.  A sufficiently powerful
+quantum computer running Shor's algorithm could recover X25519
+private keys from public keys, retroactively decrypting all
+age-encrypted S3 objects.
+
+\subsection{Harvest-Now-Decrypt-Later Threat}
+
+S3 replicas are long-lived.  An adversary who captures encrypted
+objects today could decrypt them once a cryptographically relevant
+quantum computer (CRQC) becomes available.  This
+``harvest-now-decrypt-later'' attack is the primary quantum threat
+to this replication standard.
+
+\subsection{Mitigation: X-Wing Hybrid KEM}
+
+The mitigation is X-Wing~\cite{xwing}: X25519 + ML-KEM-768 (NIST
+FIPS 203~\cite{fips203}).  If quantum computers never materialize,
+X25519 provides security.  If they do, ML-KEM-768 provides
+post-quantum security.  Both must be broken to compromise the
+hybrid.
+
+\texttt{lux/crypto} already implements ML-KEM at
+\texttt{encryption/mlkem.go}.  The \texttt{hanzoai/age} fork will
+add X-Wing as a new recipient type.
+
+\subsection{Migration Phases}
+
+\begin{description}
+\item[Phase 1 (current):] X25519 recipients.  Adequate for
+  operational data with limited shelf life.  AES-256 at the
+  sqlcipher layer already provides 128-bit post-quantum security
+  via Grover's bound.
+\item[Phase 2 (planned):] X-Wing hybrid recipients
+  (\texttt{age1xwing1...}) in \texttt{hanzoai/age}.  Backward
+  compatible---old X25519 recipients continue to work.
+\item[Phase 3 (future):] Pure ML-KEM recipients when X25519 is
+  deprecated.
+\end{description}
+
+\subsection{Three-Layer PQ Status}
+
+\begin{table}[h]
+\centering
+\caption{Post-quantum status of each encryption layer}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Layer & Algorithm & PQ Status & PQ Path \\
+\midrule
+Disk & AES-256 (sqlcipher) & Safe (128-bit PQ) & No change \\
+S3   & age X25519          & Vulnerable         & X-Wing \\
+Wire & TLS 1.3             & Depends on suite   & PQ TLS \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \section{References}
 
 \begin{thebibliography}{9}
@@ -406,6 +464,16 @@ Zoo Labs Foundation, ``ZIP-014: Zoo KMS Integration via Lux KMS,''
 \bibitem{zip015}
 Zoo Labs Foundation, ``ZIP-015: Zoo L2 Chain Architecture,''
 2025.
+
+\bibitem{xwing}
+M.~Connolly, ``X-Wing: The Hybrid KEM You've Been Looking For,''
+Internet-Draft, IETF CFRG,
+\url{https://www.ietf.org/archive/id/draft-connolly-cfrg-xwing-kem-05.html},
+2024.
+
+\bibitem{fips203}
+NIST, ``Module-Lattice-Based Key-Encapsulation Mechanism Standard
+(ML-KEM),'' FIPS~203, August 2024.
 
 \end{thebibliography}
 
