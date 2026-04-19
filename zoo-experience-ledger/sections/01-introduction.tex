@@ -33,3 +33,16 @@ This paper makes the following contributions:
     \item \textbf{Evaluation}: Comprehensive benchmarks demonstrating scalability, efficiency, and reliability (Section~\ref{sec:evaluation})
 \end{enumerate}
 
+\subsection{Historical Context}
+
+The Experience Ledger was first proposed in the Zoo whitepaper (October 2021) as the persistent memory layer for Zoo's GUI-based AI Assistant---a conversational interface where users interact with endangered-species characters backed by large language models. This predates OpenAI's ChatGPT (November~30, 2022) by thirteen months.
+
+Two aspects of the design anticipated developments that the broader AI community would not address until years later:
+
+\begin{enumerate}
+    \item \textbf{Content-addressable semantic memory.} The Experience Ledger uses cryptographic hashes over semantic objects for retrieval and verification. Dedicated vector databases (Pinecone, Weaviate, Milvus) did not achieve mainstream adoption until 2023. The Ledger's Merkle-DAG structure combines the integrity guarantees of content-addressed storage with the retrieval characteristics of embedding-based search.
+    \item \textbf{Persistent conversational memory.} Each AI character's interaction history is stored as on-chain experience tokens, giving the model a verifiable, long-lived memory across sessions and devices. ChatGPT introduced its ``memory'' feature in February 2024---over two years after the Experience Ledger was proposed.
+\end{enumerate}
+
+The semantic architecture was co-designed by Antje Worring (Chief Scientist, Zoo Labs Foundation), who specified the experience format linking natural-language reasoning patterns to content-addressable identifiers.
+

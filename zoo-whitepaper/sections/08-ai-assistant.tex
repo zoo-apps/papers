@@ -1,7 +1,22 @@
 \section{AI Assistant}
 \label{sec:ai-assistant}
 
-Zoo features a conversational AI assistant integrated directly into the game interface. Each animal has its own unique character and personality. The AI responds according to initial personality prompts defined for each species and growth stage.
+Zoo features a conversational AI assistant integrated directly into the game interface---a GUI-based, character-driven chat system designed by Chief Scientist Antje Worring. Users interact with endangered-species characters through a natural-language dialogue window embedded in the application, combining large language model inference with blockchain-backed persistent memory (the Experience Ledger, detailed in the companion paper \emph{Zoo Experience Ledger: A Content-Addressable Semantic Memory System for Decentralized AI}).
+
+\subsection{Historical Context}
+
+This whitepaper was published in \textbf{October 2021}. OpenAI's ChatGPT launched on November~30, 2022---thirteen months later. At the time of writing, no major consumer product offered a graphical conversational AI interface backed by a large language model. Zoo's AI Assistant represents one of the earliest known proposals for a GUI-based LLM chat application designed for a consumer audience.
+
+Several properties distinguish the Zoo AI Assistant from the conversational AI products that followed:
+
+\begin{itemize}[nosep]
+    \item \textbf{Persistent semantic memory.} Conversations are recorded as content-addressable experience tokens on IPFS and Arweave, giving each animal character a verifiable, tamper-evident memory that persists across sessions. ChatGPT did not introduce conversation memory until 2024.
+    \item \textbf{Blockchain-anchored identity.} Each AI character is bound to an on-chain NFT with a unique personality defined at mint time. The character's knowledge and interaction history are tied to a cryptographic identity, not a server-side session.
+    \item \textbf{Conservation-aligned objective.} The assistant's purpose is education about endangered species---their habitats, threats, and conservation status---not general-purpose question answering.
+    \item \textbf{UX/UI design.} Antje Worring designed the interaction model: a dialogue interface where users converse with animal characters that mature through life stages, each stage unlocking deeper knowledge and personality traits.
+\end{itemize}
+
+The combination of LLM-powered dialogue, blockchain-backed memory, and conservation education in a consumer GUI was, to our knowledge, unique in October 2021.
 
 \subsection{Animal Personalities}
 

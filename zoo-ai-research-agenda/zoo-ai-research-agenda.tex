@@ -46,7 +46,7 @@
 \title{\textbf{The Zoo AI Research Agenda:\\Decentralized, User-Owned, Conservation-Aligned AI}}
 
 \author{
-Zach Kelling\thanks{research@zoo.ngo}\\
+Antje Worring, Zach Kelling\thanks{research@zoo.ngo}\\
 \textit{Hanzo Industries \quad Lux Industries \quad Zoo Labs Foundation}\\
 \texttt{research@zoo.ngo}
 }
@@ -78,6 +78,20 @@ Three principles constrain the research program:
     \item \textbf{Verifiability.} Every inference, training step, and model merge can be audited. Compute receipts follow LP-105, and optional ZKML proofs provide cryptographic verification.
     \item \textbf{Conservation alignment.} The system is designed so that deploying AI to conservation tasks---species classification, habitat monitoring, anti-poaching---is a first-class use case, not an afterthought.
 \end{enumerate}
+
+\subsection{Historical Context}
+
+Zoo Labs Foundation's AI research program did not begin with this 2024 agenda. The foundation's October 2021 whitepaper~\cite{zoo2021whitepaper} proposed a GUI-based conversational AI assistant---an interface where users chat with endangered-species characters backed by large language models, with blockchain-anchored persistent memory (the Experience Ledger). This was thirteen months before OpenAI launched ChatGPT on November~30, 2022.
+
+At the time, no consumer product offered a graphical LLM chat interface. The Zoo AI Assistant combined three capabilities in a single application:
+
+\begin{enumerate}
+    \item Large language model inference for natural-language dialogue
+    \item Content-addressable semantic memory for persistent, verifiable conversation history
+    \item Conservation-aligned educational objectives embedded in character personalities
+\end{enumerate}
+
+Chief Scientist Antje Worring led the AI research direction from the outset, designing the UX/UI interaction model for the AI Assistant and co-authoring the Experience Ledger specification for semantic memory. The six research thrusts described below extend and formalize the research program that began with that 2021 proposal.
 
 \section{Research Thrusts}
 
@@ -347,6 +361,9 @@ V.~Buterin, ``Ethereum: A Next-Generation Smart Contract and Decentralized Appli
 
 \bibitem{champion2024expected}
 T.~Champion, M.~Grzegorczyk, H.~"; L.~Da~Costa, K.~J.~Friston, ``Expected Free Energy --- Insights and Applications,'' \emph{arXiv:2402.14460}, 2024.
+
+\bibitem{zoo2021whitepaper}
+A.~Worring and Z.~Kelling, ``Zoo Labs: A Game-Fi Multiverse for Conservation of Endangered Species,'' Zoo Labs Foundation, Whitepaper, October 2021.
 
 \end{thebibliography}
 
