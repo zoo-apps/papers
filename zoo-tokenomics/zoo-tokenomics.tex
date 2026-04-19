@@ -1,0 +1,84 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{xcolor}
+
+\pgfplotsset{compat=1.18}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% Custom commands
+\newcommand{\KEEPER}{\textsc{Keeper}}
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\DAO}{\textsc{DAO}}
+\newcommand{\HLLM}{\textsc{HLLM}}
+\newcommand{\GRPO}{\textsc{GRPO}}
+
+% Title information
+\title{\textbf{Zoo Network Tokenomics: Fair Distribution Through Complete Airdrop}\\
+\large Democratizing AI Infrastructure via Community Ownership}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Hanzo Industries \quad Lux Industries \quad Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{September 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present the tokenomic architecture of Zoo Network, a specialized Layer 2 AI blockchain built on Hanzo compute infrastructure. Zoo implements a revolutionary distribution model: \textbf{100\% community airdrop with zero venture capital, private sales, or preferential allocations}. With a fixed supply of 2 trillion $\KEEPER$ tokens (1T DAO treasury, 1T community-distributed), Zoo establishes a new paradigm for fair-launch AI infrastructure. Unlike traditional AI token projects that raised hundreds of millions from VCs (RENDER: \$150M+, Bittensor: \$100M+), Zoo achieved complete decentralization from genesis, onboarding 87,000+ users across 142 countries with no capital raises. This paper analyzes the economic mechanics of pure community ownership, including: (1) inference credit systems that reward data contribution over payment, (2) semantic experience marketplaces for trading training-free knowledge, (3) DAO governance with 66\% supermajority requirements, (4) long-term sustainability through treasury management without inflation, and (5) comparative analysis against Lux (genesis NFT releases) and Hanzo (fair-mined compute tokens). We prove that Zoo's airdrop model achieves superior decentralization while maintaining economic sustainability through stake-based validation, experience monetization, and community-driven resource allocation. Our empirical results from 420,000+ trained models demonstrate that contribute-to-access models can replace pay-to-play paradigms when properly incentivized. This work establishes the first comprehensive framework for non-profit, community-owned AI infrastructure tokenomics.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\input{sections/01-introduction}
+\input{sections/02-token-distribution-architecture}
+\input{sections/03-airdrop-execution-mechanics}
+\input{sections/04-keeper-token-utility-framework}
+\input{sections/05-inference-credit-system-earn-by-contribu}
+\input{sections/06-economic-sustainability-without-inflatio}
+\input{sections/07-experience-marketplace-dynamics}
+\input{sections/08-cross-network-comparative-analysis}
+\input{sections/09-dao-governance-mechanisms}
+\input{sections/10-security-and-game-theory}
+\input{sections/11-long-term-sustainability-analysis}
+\input{sections/12-mathematical-formalization}
+\input{sections/13-empirical-results-and-validation}
+\input{sections/14-conclusion}
+\input{sections/16-airdrop-scoring-algorithm-detailed}
+\input{sections/17-experience-marketplace-smart-contract-ps}
+\input{sections/18-dao-governance-parameters}
+\input{sections/99-acknowledgments}
+
+\end{document}

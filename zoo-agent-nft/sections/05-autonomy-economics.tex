@@ -1,0 +1,93 @@
+\section{Autonomy Economics}
+
+\label{sec:economics}
+
+\subsection{Economic Model}
+
+Agent NFTs participate in a three-sided market:
+
+\begin{enumerate}
+    \item \textbf{Owners}: Purchase and configure agents
+    \item \textbf{Users}: Pay for agent services
+    \item \textbf{Network}: Rewards compute contribution
+\end{enumerate}
+
+\subsection{Yield Generation}
+
+Agents generate yield through multiple mechanisms:
+
+\begin{equation}
+Y_{\text{total}} = Y_{\text{compute}} + Y_{\text{defi}} + Y_{\text{services}}
+\end{equation}
+
+\textbf{Compute Yield} ($Y_{\text{compute}}$): Agents contribute AI compute to Zoo Network:
+
+\begin{equation}
+Y_{\text{compute}} = R_{\text{block}} \cdot \frac{Q_A \cdot C_A}{\sum_i Q_i \cdot C_i}
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $R_{\text{block}}$: Block reward
+    \item $Q_A$: Agent quality score
+    \item $C_A$: Compute contribution (FLOPs)
+\end{itemize}
+
+\textbf{DeFi Yield} ($Y_{\text{defi}}$): Autonomous portfolio management:
+
+\begin{equation}
+Y_{\text{defi}} = \sum_{p \in \text{positions}} r_p \cdot v_p
+\end{equation}
+
+where $r_p$ is position APY and $v_p$ is position value.
+
+\textbf{Service Yield} ($Y_{\text{services}}$): Task completion rewards:
+
+\begin{equation}
+Y_{\text{services}} = \sum_{t \in \text{tasks}} f_t \cdot (1 - \text{fee})
+\end{equation}
+
+\subsection{Value Accrual}
+
+Agent NFT value derives from:
+
+\begin{equation}
+V_{\text{agent}} = V_{\text{assets}} + V_{\text{reputation}} + V_{\text{capability}}
+\end{equation}
+
+\begin{itemize}
+    \item $V_{\text{assets}}$: Wallet balance + DeFi positions
+    \item $V_{\text{reputation}}$: Discounted future yield based on track record
+    \item $V_{\text{capability}}$: Intrinsic value of agent abilities
+\end{itemize}
+
+\begin{theorem}[Value Floor]
+Agent NFT value is bounded below by $V_{\text{assets}}$, as the owner can always withdraw assets.
+\end{theorem}
+
+\subsection{Ownership Transfer}
+
+When an Agent NFT transfers:
+
+\begin{algorithm}[t]
+\caption{Agent NFT Transfer}
+\label{alg:transfer}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Agent $A$, new owner $O'$
+\STATE \textbf{Output}: Transferred agent
+\STATE \COMMENT{Asset preservation}
+\STATE All wallet assets remain with agent
+\STATE $K_O \leftarrow \text{DeriveKey}(O')$ // New owner key
+\STATE \COMMENT{Autonomy reset}
+\STATE $A.\text{autonomy} \leftarrow \text{DefaultParams}()$
+\STATE \COMMENT{Reputation preservation}
+\STATE $A.\text{reputation}$ unchanged
+\STATE $A.\text{tasksCompleted}$ unchanged
+\STATE \COMMENT{Transfer}
+\STATE \text{ERC721.transferFrom}(\text{owner}, $O'$, $A.\text{tokenId}$)
+\RETURN Agent with new owner
+\end{algorithmic}
+\end{algorithm}
+
+Key principle: \textbf{Assets follow the agent, not the owner}. This ensures the agent's accumulated value persists through ownership changes.
+

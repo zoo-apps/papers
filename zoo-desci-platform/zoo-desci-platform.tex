@@ -1,0 +1,94 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc,fit}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{xcolor}
+\usepackage{listings}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\AChain}{\textsc{A-Chain}}
+\newcommand{\IChain}{\textsc{I-Chain}}
+\newcommand{\KChain}{\textsc{K-Chain}}
+\newcommand{\TChain}{\textsc{T-Chain}}
+\newcommand{\GChain}{\textsc{G-Chain}}
+\newcommand{\KEEPER}{\textsc{Keeper}}
+\newcommand{\DID}{\textsc{DID}}
+\newcommand{\DAO}{\textsc{DAO}}
+\newcommand{\ZIP}{\textsc{ZIP}}
+\newcommand{\CKKS}{\textsc{CKKS}}
+\newcommand{\FHE}{\textsc{FHE}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=black
+}
+
+% Title information
+\title{\textbf{Decentralized Science on Zoo Network:\\Open Research Coordination with Verifiable Provenance}\\
+\large Infrastructure for Reproducible, Incentivized, and Community-Governed Science}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{November 2023}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+Science is broken in ways that scientists have documented for decades: irreproducible results (\textgreater 70\% failure to replicate across fields), funding concentrated in a handful of institutions, data locked behind paywalls and proprietary silos, and credit attribution that rewards journal prestige over actual contribution. We present \Zoo{} Network as infrastructure for \textbf{Decentralized Science (DeSci)}---a platform where research provenance is on-chain and immutable, computation is verifiable, data is open by default, funding flows through community governance, and mathematical claims carry machine-checked proofs. The system introduces \textbf{Research Capsules}: encrypted lab notebooks with threshold-gated data sharing and reproducible compute environments, anchored on \IChain{} for tamper-evident provenance. \textbf{ZIPs (Zoo Improvement Proposals)} serve as the governance mechanism for research funding, replacing opaque grant committees with transparent community peer review and milestone-based disbursement from the \DAO{} treasury via \GChain{}. A \textbf{Data Commons} built on \IChain{} \DID{}-authenticated contributions tracks usage receipts and citation graphs, ensuring contributors receive credit and compensation. \AChain{} provides AI-assisted research capabilities: automated literature review, hypothesis generation, and statistical analysis. For mathematical results, we integrate Lean~4 proof verification, creating a chain of formally verified claims that extends from theorem statement to on-chain publication. We demonstrate the platform through conservation science applications---satellite ecology, species classification, and habitat modeling---where \Zoo{}'s existing research infrastructure provides immediate, concrete value.
+
+\textbf{Keywords}: decentralized science, DeSci, research provenance, reproducibility, verifiable computation, data commons, formal verification
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%----------------------------------------------------------------------
+
+\input{sections/01-introduction}
+\input{sections/02-research-capsules}
+\input{sections/03-zips-as-research-proposals}
+\input{sections/04-data-commons}
+\input{sections/05-ai-assisted-research}
+\input{sections/06-conservation-science-applications}
+\input{sections/07-formal-verification-of-research-claims}
+\input{sections/08-platform-economics}
+\input{sections/09-related-work}
+\input{sections/99-conclusion}
+
+\end{document}

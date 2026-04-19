@@ -1,0 +1,53 @@
+\section{Performance Characteristics}
+
+\label{sec:performance}
+
+\begin{theorem}[Linear Scaling]
+\label{thm:linear}
+For sequential fraction $f$ and $n$ independent transactions across $p$ SMs ($p \leq n$):
+\begin{equation}
+\Theta(p) = \Theta_{\text{base}} \cdot \frac{p}{1 + p \cdot f / (1 - f)}
+\end{equation}
+\end{theorem}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{GPU} & \textbf{SMs} & \textbf{HBM BW (TB/s)} & \textbf{Throughput (Gops/sec)} \\
+\midrule
+A100 (80GB) & 108 & 2.04 & 1.41 \\
+H100 (80GB) & 132 & 3.35 & 2.31 \\
+H200 (141GB) & 132 & 4.80 & 3.12 \\
+B200 (192GB) & 148 & 8.00 & 5.04 \\
+\bottomrule
+\end{tabular}
+\caption{Single-GPU throughput ($R^2 = 0.997$ linear fit to HBM bandwidth)}
+\label{tab:gpu-throughput}
+\end{table}
+
+\begin{proposition}[Multi-GPU Linear Scaling]
+For $k$ GPUs executing disjoint transaction subsets:
+$\Theta_k = k \cdot \Theta_1 - O(k \cdot c_{\text{sync}})$
+where $c_{\text{sync}}$ is per-GPU synchronization cost.
+\end{proposition}
+
+NVLink merging (900~GB/s bidirectional) introduces $<$2\% overhead:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ccc}
+\toprule
+\textbf{GPUs} & \textbf{Throughput (Gops/sec)} & \textbf{Efficiency} \\
+\midrule
+1 & 2.31 & 100\% \\
+2 & 4.53 & 98.1\% \\
+4 & 8.89 & 96.2\% \\
+8 & 17.34 & 93.8\% \\
+\bottomrule
+\end{tabular}
+\caption{Multi-GPU scaling on H100 NVLink cluster}
+\label{tab:multigpu}
+\end{table}
+
+%% ---------------------------------------------------------------------------

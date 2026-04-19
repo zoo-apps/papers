@@ -1,0 +1,29 @@
+\section{Comparison with Liquid EVM}
+
+
+Zoo EVM and Liquid EVM share the Lux L1 base layer and 19 common precompiles but serve distinct purposes:
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Property} & \textbf{Zoo EVM} & \textbf{Liquid EVM} \\
+\midrule
+Purpose & DeSci / DeAI research & Securities settlement \\
+Token & ZOO (1B supply) & LQDTY (10B supply) \\
+Chain IDs & 200200/01/02 & 8675309/10/11 \\
+Precompiles & 20 (incl. AI Mining) & 19 (no AI Mining) \\
+Governance & ZIPs (zoo.ngo) & Corporate (ATS/BD/TA) \\
+Custody & 2-of-3 MPC (treasury) & 2-of-3 MPC (per-user) \\
+Operator CRDs & 4 (chain-focused) & 18 (chain + platform) \\
+Cluster & DOKS (zoo-k8s) & GKE (zoo-chains) \\
+Dollar token & None & USDL \\
+Established & 2021 & 2022 \\
+\bottomrule
+\end{tabular}
+\caption{Zoo EVM vs Liquid EVM architectural comparison.}
+\end{table}
+
+The two chains can interoperate via the Lux C-Chain bridge, enabling DeSci assets to be traded on the Lux exchange and USDL to fund Zoo research bounties.
+

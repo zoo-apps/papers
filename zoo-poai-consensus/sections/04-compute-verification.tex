@@ -1,0 +1,50 @@
+\section{Compute Verification}
+
+\label{sec:verification}
+
+\subsection{TEE-Based Verification}
+
+The core verification relies on \TEE{} attestation:
+
+\begin{theorem}[\TEE{} Attestation Soundness]
+Under the \TEE{} security assumption (hardware not compromised), if attestation $A$ verifies, then the claimed computation was performed within the enclave with inputs/outputs matching the hashes.
+\end{theorem}
+
+\subsection{Efficient Re-Execution}
+
+For tasks where \TEE{}s are unavailable, we use probabilistic re-execution:
+
+\begin{algorithm}[t]
+\caption{Probabilistic Verification}
+\label{alg:prob-verify}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Claimed output $y$, task $T$, sampling rate $p$
+\STATE \textbf{Output}: Verified / Rejected
+\IF{$\text{Random}() < p$}
+    \STATE $y' \leftarrow \text{ReExecute}(T)$
+    \IF{$y' \neq y$}
+        \STATE Slash worker stake
+        \RETURN Rejected
+    \ENDIF
+\ENDIF
+\RETURN Verified
+\end{algorithmic}
+\end{algorithm}
+
+\begin{theorem}[Detection Probability]
+With sampling rate $p$ and $n$ claims, a cheating worker is caught with probability $1 - (1-p)^n$.
+\end{theorem}
+
+For $p = 0.1$ and $n = 100$, detection probability exceeds 99.99\%.
+
+\subsection{Hybrid Verification}
+
+We combine \TEE{} attestation with probabilistic re-execution:
+
+\begin{equation}
+V(A) = \begin{cases}
+\text{TEE.Verify}(A) & \text{if TEE available} \\
+\text{ProbVerify}(A, p) & \text{otherwise}
+\end{cases}
+\end{equation}
+

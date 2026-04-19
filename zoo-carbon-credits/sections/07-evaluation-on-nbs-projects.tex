@@ -1,0 +1,77 @@
+\section{Evaluation on NBS Projects}
+
+\label{sec:evaluation}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Project Portfolio}
+
+We evaluate ZooMRV on 47 nature-based solution projects:
+
+\begin{table}[H]
+\centering
+\caption{Project portfolio by ecosystem type.}
+\label{tab:portfolio}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Ecosystem} & \textbf{Projects} & \textbf{Area (Mha)} &
+  \textbf{Traditional credits} & \textbf{ZooMRV credits} \\
+\midrule
+Tropical forest & 21 & 1.42 & 18.7M & 12.4M \\
+Mangrove & 8 & 0.23 & 2.1M & 1.8M \\
+Peatland & 7 & 0.38 & 4.3M & 2.9M \\
+Grassland/savanna & 6 & 0.18 & 1.4M & 1.1M \\
+Temperate forest & 5 & 0.12 & 0.9M & 0.8M \\
+\midrule
+\textbf{Total} & \textbf{47} & \textbf{2.33} & \textbf{27.4M} &
+  \textbf{19.0M} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Over-Crediting Analysis}
+
+ZooMRV identifies systematic over-crediting in the traditional portfolio:
+
+\begin{itemize}
+  \item \textbf{Inflated baselines}: Dynamic baselines reduce creditable
+    deforestation avoidance by 31\% on average, with the largest
+    corrections in tropical forest REDD+ projects (37\%).
+  \item \textbf{Undetected reversals}: 23\% more reversal events
+    detected by continuous monitoring, reducing net credits by 8\%.
+  \item \textbf{Biomass overestimation}: CarbonNet corrects systematic
+    upward bias in allometric estimates, reducing per-hectare credits by
+    12\% in dense tropical forests.
+\end{itemize}
+
+Overall, ZooMRV issues 30.7\% fewer credits than traditional
+certification for the same project portfolio. This reduction represents
+phantom credits that do not correspond to real climate benefit.
+
+\subsection{Uncertainty Quantification}
+
+CarbonNet provides pixel-level uncertainty estimates. At the project
+level, we report:
+
+\begin{table}[H]
+\centering
+\caption{Credit uncertainty by ecosystem type (95\% CI as \% of mean).}
+\label{tab:uncertainty}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Ecosystem} & \textbf{ZooMRV uncertainty} &
+  \textbf{Traditional uncertainty} \\
+\midrule
+Tropical forest & $\pm$14\% & $\pm$28\% \\
+Mangrove & $\pm$18\% & $\pm$35\% \\
+Peatland & $\pm$22\% & $\pm$42\% \\
+Grassland & $\pm$19\% & $\pm$38\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+ZooMRV reduces credit uncertainty by approximately 50\% across all
+ecosystem types, primarily through the fusion of multiple remote sensing
+data sources and continuous temporal sampling.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

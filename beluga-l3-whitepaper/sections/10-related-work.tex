@@ -1,0 +1,36 @@
+\section{Related Work}
+\label{sec:related}
+%% ============================================================
+
+\subsection{AI Compute Networks}
+
+\textbf{Bittensor} \cite{bittensor2023} operates a decentralized AI network where validators assess miner outputs and distribute TAO rewards. Unlike \Beluga{}, Bittensor is an L1 chain with its own consensus, does not support EVM smart contracts, and uses a single token for both gas and rewards. \Beluga{} inherits EVM compatibility from \Lux{} and separates the gas token from the reward mechanism.
+
+\textbf{Render Network} \cite{render2023} provides decentralized GPU rendering with RNDR token payments. Render focuses on compute-as-a-service without model ownership semantics. \Beluga{} extends this model with ERC-721 model registration, training bounties, and data provenance.
+
+\textbf{Akash Network} \cite{akash2020} offers a decentralized cloud marketplace. While Akash provides general-purpose compute, \Beluga{} specializes in AI-specific operations with native precompiles for inference pricing and training verification.
+
+\subsection{AI on Blockchain}
+
+\textbf{Ocean Protocol} \cite{ocean2019} enables data marketplaces with compute-to-data patterns. \Beluga{}'s DeltaSoup data contribution protocol builds on similar ideas but integrates directly with training pipelines and provides continuous royalties rather than one-time data sales.
+
+\textbf{SingularityNET} \cite{singularitynet2019} hosts an AI marketplace on Ethereum. The marketplace model is similar to \Beluga{}'s, but SingularityNET pays Ethereum gas costs and lacks native primitives for training bounties and compute verification.
+
+\subsection{Application-Specific Chains}
+
+\textbf{dYdX v4} \cite{dydx2023} migrated from Ethereum L2 to a Cosmos app-chain for order book performance. \Beluga{} follows the same pattern---graduating from L2 contracts to a sovereign chain---but for AI economics rather than perpetual trading.
+
+\subsection{Zoo Ecosystem}
+
+\Beluga{} builds directly on several Zoo research contributions:
+
+\begin{itemize}[nosep]
+    \item \textbf{Proof of AI} \cite{zoo-poai}: The consensus mechanism that rewards useful AI compute, adapted for L3 block production.
+    \item \textbf{DSO} \cite{zoo-dso}: Training-free adaptation via Decentralized Semantic Optimization, achieving 15.2\% improvement without gradient updates.
+    \item \textbf{Experience Ledger} \cite{zoo-experience-ledger}: Content-addressable semantic memory for data provenance and contribution tracking.
+    \item \textbf{Gym} \cite{zoo-gym}: The training platform that enables \$18 fine-tuning, directly integrated with \Beluga{}'s bounty system.
+    \item \textbf{Agent NFTs} \cite{zoo-agent-nft}: Autonomous AI agents that can register models, claim bounties, and participate in governance on \Beluga{}.
+    \item \textbf{Zoo Tokenomics} \cite{zoo-tokenomics}: The 100\% community fair-launch model that \Beluga{} extends to the L3 layer.
+\end{itemize}
+
+%% ============================================================

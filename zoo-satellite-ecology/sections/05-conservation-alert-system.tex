@@ -1,0 +1,76 @@
+\section{Conservation Alert System}
+
+\label{sec:alerts}
+
+\subsection{Alert Generation Pipeline}
+
+The CAS processes change detections through a multi-stage pipeline:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.2cm,
+    box/.style={rectangle, draw, rounded corners, minimum width=2.5cm, minimum height=0.7cm, text centered, font=\footnotesize},
+    edge/.style={->, thick}
+]
+    \node[box, fill=blue!10] (detect) {Change Detection};
+    \node[box, fill=green!10, right=1.5cm of detect] (filter) {Noise Filtering};
+    \node[box, fill=orange!10, right=1.5cm of filter] (classify) {Impact Assessment};
+    \node[box, fill=red!10, below=1cm of detect] (priority) {Priority Ranking};
+    \node[box, fill=purple!10, below=1cm of filter] (alert) {Alert Generation};
+    \node[box, fill=yellow!10, below=1cm of classify] (delivery) {Stakeholder Delivery};
+
+    \draw[edge] (detect) -- (filter);
+    \draw[edge] (filter) -- (classify);
+    \draw[edge] (classify) -- (priority);
+    \draw[edge] (priority) -- (alert);
+    \draw[edge] (alert) -- (delivery);
+\end{tikzpicture}
+\caption{Conservation Alert System pipeline.}
+\label{fig:cas_pipeline}
+\end{figure}
+
+\subsection{Priority Ranking Model}
+
+Detected changes are ranked by conservation priority using a composite score:
+
+\begin{equation}
+    P(e) = w_1 \cdot S_{\text{eco}}(e) + w_2 \cdot S_{\text{prot}}(e) + w_3 \cdot S_{\text{bio}}(e) + w_4 \cdot S_{\text{mag}}(e) + w_5 \cdot S_{\text{trend}}(e)
+\end{equation}
+
+\noindent where:
+\begin{itemize}[leftmargin=*]
+    \item $S_{\text{eco}}$: Ecosystem sensitivity score based on biome rarity, intactness, and irreplaceability.
+    \item $S_{\text{prot}}$: Protected area status (WDPA category, buffer zone proximity).
+    \item $S_{\text{bio}}$: Species richness estimate from the Zoo Data Commons and species range maps.
+    \item $S_{\text{mag}}$: Change magnitude (area, intensity, rate of expansion).
+    \item $S_{\text{trend}}$: Trend indicator from HFI trajectory ($\dot{\text{HFI}}$ and $\ddot{\text{HFI}}$).
+\end{itemize}
+
+The weights $\mathbf{w}$ are learned from conservation expert preferences using a pairwise ranking model trained on 2,400 expert-ranked change event pairs.
+
+\subsection{Alert Delivery}
+
+Alerts are delivered through multiple channels depending on priority level:
+
+\begin{table}[H]
+\centering
+\caption{Alert delivery tiers.}
+\label{tab:alert_tiers}
+\begin{tabularx}{\textwidth}{@{}llcX@{}}
+\toprule
+\textbf{Tier} & \textbf{Priority} & \textbf{Latency} & \textbf{Delivery Channel} \\
+\midrule
+Critical & $P > 0.9$ & < 2 hours & SMS, push notification, email, dashboard \\
+High & $0.7 < P \leq 0.9$ & < 24 hours & Email, dashboard, weekly digest \\
+Medium & $0.4 < P \leq 0.7$ & < 1 week & Dashboard, monthly report \\
+Low & $P \leq 0.4$ & Archive & Searchable archive, annual summary \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Each alert includes a map visualization, satellite image comparison (before/after), change classification, HFI impact assessment, and recommended response actions based on the change type and local context.
+
+% ============================================================
+% 6. Evaluation
+% ============================================================

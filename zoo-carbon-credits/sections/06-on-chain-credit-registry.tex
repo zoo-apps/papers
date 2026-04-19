@@ -1,0 +1,59 @@
+\section{On-Chain Credit Registry}
+
+\label{sec:registry}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Credit Lifecycle}
+
+Each carbon credit follows a lifecycle managed by smart contracts:
+
+\begin{enumerate}
+  \item \textbf{Project registration}: Project boundaries, methodology,
+    and baseline parameters are recorded on-chain.
+  \item \textbf{Monitoring}: CarbonNet biomass estimates and change
+    detection results are committed as merkle roots at each monitoring
+    interval.
+  \item \textbf{Issuance}: Credits are minted as ERC-721 tokens when
+    verified carbon stock gains exceed the dynamic baseline by a
+    statistically significant margin.
+  \item \textbf{Buffer pool}: 20\% of issued credits are held in a
+    permanence buffer pool, released over the project crediting period
+    if no reversals occur.
+  \item \textbf{Retirement}: Credits are permanently burned when used
+    for offsetting claims, with the retirement event linked to the
+    retiree's account.
+  \item \textbf{Reversal adjustment}: If reversals are detected, buffer
+    pool credits are automatically cancelled proportional to the
+    biomass loss.
+\end{enumerate}
+
+\subsection{Credit Metadata}
+
+Each credit token contains or references:
+\begin{itemize}
+  \item Project ID and spatial boundary (GeoJSON hash).
+  \item Vintage year and monitoring period.
+  \item Biomass estimate with uncertainty bounds.
+  \item Dynamic baseline value.
+  \item Net sequestration (credit quantity in \tCO{}).
+  \item Links to raw satellite imagery (IPFS CIDs).
+  \item CarbonNet model version and parameters.
+  \item Reversal risk score.
+\end{itemize}
+
+\subsection{Transparency and Auditability}
+
+Any party can independently verify a credit by:
+\begin{enumerate}
+  \item Downloading the referenced satellite imagery from IPFS.
+  \item Running the open-source CarbonNet model.
+  \item Comparing the result against the on-chain biomass attestation.
+  \item Verifying the dynamic baseline against published control areas.
+\end{enumerate}
+
+This creates a fully reproducible verification chain---a fundamental
+departure from the opaque auditor reports of traditional carbon
+standards.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

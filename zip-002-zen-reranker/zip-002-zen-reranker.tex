@@ -1,0 +1,63 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{listings}
+\input{shared/lstlang}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{cite}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    citecolor=green
+}
+
+\title{\textbf{ZIP-002: Zen-Reranker Integration for Decentralized Semantic Optimization in Zoo Network}\\
+\large{Native 7680-Dimensional Embeddings for Cross-Model Experience Sharing}}
+
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Hanzo Industries \quad Lux Industries \quad Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{January 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+Decentralized Semantic Optimization (DSO) enables large language models to collaboratively improve via shared semantic experiences without centralized gradient aggregation. A critical challenge in DSO systems is the alignment of heterogeneous embedding spaces across diverse model architectures. Current approaches project model-specific embeddings into a canonical space, introducing semantic loss (8\%), latency overhead (31\%), and compression inefficiency. We present \textbf{Zen-Reranker-8B}, a specialized embedding model with \textbf{native 7680-dimensional output}, eliminating alignment overhead entirely. Our model achieves 98\% semantic preservation (vs.\ 92\% with alignment), 31\% lower latency (21.5ms vs.\ 31.2ms), and optimal BitDelta compression (31.87$\times$ vs.\ 29.9$\times$). We demonstrate Byzantine-robust aggregation maintaining 92\% accuracy under 30\% adversarial nodes. Zen-Reranker scores 68.4 on MTEB benchmarks (+0.6 over base Qwen3-Embedding-8B) while enabling seamless cross-model retrieval with 94.7\% Recall@5. Integration with Zoo Network's training-free GRPO infrastructure demonstrates practical deployment for decentralized AI training at \$10,800 training cost and \$0.0001 per embedding inference. Our work establishes native high-dimensional embeddings as a critical component for scalable decentralized AI systems.
+
+\textbf{Keywords:} Decentralized AI, Semantic Embeddings, BitDelta Compression, Byzantine Fault Tolerance, Training-Free GRPO, Zoo Network
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-motivation}
+\input{sections/04-zen-reranker-architecture}
+\input{sections/05-bitdelta-compression}
+\input{sections/06-byzantine-robust-aggregation}
+\input{sections/07-integration-with-zoo-network}
+\input{sections/08-economic-model}
+\input{sections/09-performance-benchmarks}
+\input{sections/10-security-analysis}
+\input{sections/11-comparison-with-alternatives}
+\input{sections/12-implementation}
+\input{sections/13-conclusion}
+\input{sections/99-acknowledgments}
+
+\end{document}

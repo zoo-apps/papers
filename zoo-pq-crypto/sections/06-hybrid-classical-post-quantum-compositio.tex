@@ -1,0 +1,25 @@
+\section{Hybrid Classical + Post-Quantum Composition}
+
+
+\subsection{Signature Composition}
+
+Hybrid signatures concatenate classical and PQ components:
+\begin{equation}
+\Sigma_{\text{hybrid}} = (\sigma_{\text{classical}}, \sigma_{\text{PQ}}, \text{tag})
+\end{equation}
+
+Verification requires \textbf{both} valid: $\text{Verify}_{\text{hybrid}} = \text{Verify}_{\text{classical}} \wedge \text{Verify}_{\text{PQ}}$. An adversary must break both to forge.
+
+\subsection{Key Encapsulation Composition}
+
+For key exchange, Zoo combines X25519 and \MLKEM{}-768:
+\begin{equation}
+K_{\text{shared}} = \text{HKDF-SHA256}(K_{\text{X25519}} \| K_{\text{ML-KEM}}, \text{info}, 32)
+\end{equation}
+
+Secure if either X25519 or \MLKEM{} remains unbroken.
+
+\subsection{Transition Timeline}
+
+Phase~1 (current): hybrid mode, both required. Phase~2 (2028): PQ-primary, classical optional. Phase~3 (2030+): PQ-only via DAO governance vote.
+

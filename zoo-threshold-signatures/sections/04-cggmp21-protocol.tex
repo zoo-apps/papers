@@ -1,0 +1,28 @@
+\section{CGGMP21 Protocol}
+
+\label{sec:cggmp}
+
+\subsection{Overview}
+
+\CGGMP{} \cite{canetti2021cggmp} implements threshold ECDSA without ever reconstructing the secret key, making it suitable for Bitcoin, Ethereum, and all secp256k1/secp256r1 chains. \TChain{} uses \CGGMP{} for all ECDSA-based signing.
+
+\subsection{Key Properties}
+
+\begin{itemize}
+\item \textbf{No key reconstruction}: At no point during keygen or signing is the full private key assembled in any single location.
+\item \textbf{Identifiable abort}: If any party deviates from the protocol, the honest parties can identify the cheater and abort with proof of misbehavior.
+\item \textbf{Presignature pipeline}: Signing is split into an expensive offline phase (presignature generation) and a fast online phase (message-dependent completion).
+\end{itemize}
+
+\subsection{Offline/Online Separation}
+
+Signing is split into an expensive \emph{offline} phase and a fast \emph{online} phase. The offline phase produces a presignature tuple $(R, k_i, \chi_i)$ independent of the message: each party samples $k_i, \gamma_i \in \mathbb{Z}_q$, broadcasts Paillier-encrypted $K_i = \text{Enc}(k_i)$ with range proofs, and runs multiplicative-to-additive (MtA) sub-protocols to compute shares $\delta_i$ such that $\sum \delta_i = k \cdot \gamma \pmod{q}$. From $\delta = k\gamma$, parties recover $R = g^{k^{-1}}$ and compute $\chi_i$ (shares of $k \cdot x$).
+
+In the online phase, given message hash $H(m)$ and a presignature, each party computes $\sigma_i = k_i \cdot H(m) + r \cdot \chi_i \pmod{q}$ where $r$ is the $x$-coordinate of $R$. The aggregator sums $\sigma = \sum_{i \in S} \sigma_i$ and outputs the ECDSA signature $(r, \sigma)$. The online phase requires a single round, enabling sub-second latency.
+
+\begin{theorem}[CGGMP21 Security]
+\label{thm:cggmp-security}
+Under the Strong RSA assumption, the DDH assumption, and in the random oracle model, the \CGGMP{} protocol achieves $t$-of-$n$ unforgeability with identifiable abort: any deviating party is identified with probability 1.
+\end{theorem}
+
+%% --------------------------------------------------------------------------

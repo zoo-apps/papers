@@ -1,0 +1,46 @@
+\section{Domain-Adaptive Pre-Training}
+
+\label{sec:pretraining}
+% ══════════════════════════════════════════════════════════════════════════════
+
+Standard ImageNet pre-training provides suboptimal features for
+fine-grained ecological recognition due to domain mismatch (controlled
+studio photos vs.\ field conditions) and category mismatch (1{,}000
+general categories vs.\ thousands of visually similar species).
+
+\subsection{Pre-Training Data}
+
+We assemble \textbf{EcoVision-28M}, a dataset of 28 million ecological
+images from:
+
+\begin{itemize}
+  \item \textbf{iNaturalist 2021}: 10 million images across 10{,}000
+    species \citep{van2021benchmarking}.
+  \item \textbf{GBIF media}: 8 million specimen and field images.
+  \item \textbf{Museum collections}: 5 million digitized specimen
+    photographs from 14 natural history museums.
+  \item \textbf{Camera trap archives}: 3 million images from Wildlife
+    Insights and LILA BC \citep{beery2021iwildcam}.
+  \item \textbf{Citizen science platforms}: 2 million images from
+    eBird, BugGuide, and Reef Life Survey.
+\end{itemize}
+
+\subsection{Self-Supervised Pre-Training}
+
+We pre-train ViT-L/14 using DINOv2 \citep{oquab2024dinov2} on
+EcoVision-28M for 300{,}000 iterations with batch size 1{,}024. The
+self-supervised objective learns representations that capture
+fine-grained visual structure without requiring species labels.
+
+\subsection{Supervised Fine-Tuning}
+
+After self-supervised pre-training, we fine-tune on the labeled subset
+(iNaturalist 2021, 10M images, 10{,}000 species) using a hierarchical
+classification head with losses at family, genus, and species level:
+\begin{equation}
+  \Loss_{\text{pretrain}} = \Loss_{\text{species}} + 0.3
+  \Loss_{\text{genus}} + 0.1 \Loss_{\text{family}}
+\end{equation}
+
+
+% ══════════════════════════════════════════════════════════════════════════════

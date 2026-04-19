@@ -1,0 +1,49 @@
+\section{Private AMM}
+
+\label{sec:amm}
+%----------------------------------------------------------------------
+
+\subsection{Encrypted Constant-Product Invariant}
+
+A standard constant-product AMM maintains the invariant $x \cdot y = k$ where $x$ and $y$ are reserve amounts. In the private AMM, reserves are encrypted:
+
+\begin{equation}
+\text{CKKS.Mul}(\hat{x}, \hat{y}) = \hat{k}
+\end{equation}
+
+A swap of encrypted amount $\hat{\Delta x}$ for token $X$ yields:
+
+\begin{equation}
+\hat{\Delta y} = \hat{y} - \frac{\hat{k}}{\hat{x} + \hat{\Delta x}}
+\end{equation}
+
+This computation is evaluated entirely in \CKKS{}, producing an encrypted output amount $\hat{\Delta y}$ that is decrypted only for the swapper via \TChain{}.
+
+\subsection{Liquidity Provider View}
+
+Liquidity providers cannot see individual swap amounts. They observe only:
+
+\begin{itemize}
+    \item Aggregate pool reserves (decrypted periodically, e.g., every 100 blocks)
+    \item Total fees earned (decrypted for LP withdrawal)
+    \item Pool utilization metrics (computed homomorphically)
+\end{itemize}
+
+This protects swappers from LP-side information extraction while giving LPs sufficient information for position management.
+
+\subsection{Concentrated Liquidity}
+
+Encrypted concentrated liquidity (a la Uniswap V3) requires range-bound position management:
+
+\begin{enumerate}
+    \item LPs define price ranges in plaintext (the range is public; the amount is private).
+    \item Deposit amounts are encrypted: $\hat{L} = \text{CKKS.Encrypt}(pk, L)$.
+    \item The AMM uses \TFHE{} to check whether the current price falls within each LP's range.
+    \item Active positions contribute encrypted liquidity; out-of-range positions contribute nothing.
+\end{enumerate}
+
+\subsection{Impermanent Loss Protection}
+
+Because swap amounts are encrypted, LPs cannot be targeted by toxic flow specifically designed to maximize impermanent loss. An attacker cannot observe pool state in real-time and craft adversarial trades.
+
+%----------------------------------------------------------------------

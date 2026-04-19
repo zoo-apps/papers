@@ -1,0 +1,29 @@
+\section{Introduction}
+
+
+The Zoo Network ecosystem generates economic activity that requires a native decentralized exchange: researchers trade ZOO tokens for compute credits, AI model owners license models for inference fees, and conservation donors swap stablecoins for impact tokens. Traditional DEX designs---constant-product AMMs on Ethereum, order books on centralized exchanges---fail to meet Zoo's requirements in three ways:
+
+\begin{enumerate}
+    \item \textbf{Latency}: AI inference markets require sub-second price updates. Ethereum AMM swaps take 12+ seconds.
+
+    \item \textbf{Throughput}: High-frequency model pricing requires processing millions of orders per second. EVM-based order books are limited to thousands.
+
+    \item \textbf{AI-native assets}: Model NFTs, inference credits, and research tokens have unique pricing dynamics that standard AMM curves do not capture.
+\end{enumerate}
+
+Zoo DEX addresses these challenges by leveraging the Lux DEX precompiles---native EVM opcodes for AMM operations that execute in the EVM without Solidity overhead---combined with a GPU-accelerated central limit order book (CLOB) for price discovery and matching.
+
+\subsection{Contributions}
+
+\begin{enumerate}
+    \item \textbf{Hybrid AMM+CLOB Architecture}: Combining precompile AMM pools with a GPU order book for optimal execution (Section~\ref{sec:architecture}).
+
+    \item \textbf{Model Pricing Oracle}: A demand-driven pricing mechanism for AI model NFTs (Section~\ref{sec:oracle}).
+
+    \item \textbf{Inference Credit Swaps}: Atomic conversion between compute denominations (Section~\ref{sec:credits}).
+
+    \item \textbf{MEV Resistance}: Encrypted order submission with fair ordering via PoAI (Section~\ref{sec:mev}).
+
+    \item \textbf{Performance}: 434M orders/sec matching engine with 0.12\% slippage benchmarks (Section~\ref{sec:performance}).
+\end{enumerate}
+

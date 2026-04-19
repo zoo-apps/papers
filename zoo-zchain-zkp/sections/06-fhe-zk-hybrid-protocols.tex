@@ -1,0 +1,15 @@
+\section{FHE-ZK Hybrid Protocols}
+
+
+For private computation, Z-Chain integrates with T-Chain's threshold FHE:
+
+\begin{enumerate}
+\item \textbf{Encrypted input}: User encrypts data under Zoo's public FHE key.
+\item \textbf{Homomorphic computation}: T-Chain validators evaluate the circuit on encrypted data.
+\item \textbf{ZK proof of correctness}: A STARK proof attests that the computation was performed correctly on the ciphertext.
+\item \textbf{Threshold decryption}: T-Chain validators (67-of-100 quorum) decrypt only the result, not the input.
+\item \textbf{Receipt}: Z-Chain issues a receipt linking the FHE output to the ZK proof.
+\end{enumerate}
+
+This enables verifiable private inference: a model runs on encrypted patient data, the output is decrypted, and a ZK proof certifies correctness---all without exposing the data.
+

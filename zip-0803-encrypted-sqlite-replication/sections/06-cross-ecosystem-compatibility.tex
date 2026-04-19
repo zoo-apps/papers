@@ -1,0 +1,23 @@
+\section{Cross-Ecosystem Compatibility}
+
+
+The \texttt{ghcr.io/hanzoai/replicate:latest} image is shared
+across all ecosystems:
+
+\begin{itemize}
+\item \textbf{Lux}: IAM, KMS, Gateway, Commerce (4 services)
+\item \textbf{Lux}: Future Base-powered services
+\item \textbf{Zoo}: Bridge and future Base-powered services
+\end{itemize}
+
+The only per-ecosystem differences are:
+\begin{itemize}
+\item S3 bucket name (\texttt{zoo-data} vs \texttt{zoo-data})
+\item S3 endpoint (GCS vs DigitalOcean Spaces)
+\item Region (\texttt{us-central1} vs \texttt{sfo3})
+\item Age encryption key pairs
+\end{itemize}
+
+All configuration is injected via ConfigMap and secrets.
+Zero code divergence between ecosystems.
+

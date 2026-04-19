@@ -1,0 +1,38 @@
+\section{Cross-References and Related Work}
+
+
+\subsection{Zoo Network Papers}
+
+\begin{itemize}
+\item \textbf{zoo-tokenomics} \cite{zoo-tokenomics}: Defines the $\textsc{Keeper}$ staking economics that determine validator weights in \Quasar{}.
+\item \textbf{zoo-pq-crypto} \cite{zoo-pq-crypto}: Details the cryptographic primitives (\Ringtail{}, ML-KEM, ML-DSA) used in the post-quantum path.
+\item \textbf{zoo-threshold-signatures} \cite{zoo-threshold-sigs}: Comprehensive treatment of the \Ringtail{} DKG and threshold signing protocol.
+\end{itemize}
+
+\subsection{Lux Network Papers}
+
+\begin{itemize}
+\item \textbf{lux-quasar-consensus} \cite{lux-quasar-consensus}: Original \Quasar{} specification for \Lux{} L0, from which Zoo's implementation derives.
+\item \textbf{lux-quantum-consensus} \cite{lux-quantum-consensus}: Broader analysis of quantum-resistant consensus across the \Lux{} ecosystem.
+\end{itemize}
+
+\subsection{Comparison with Prior Work}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Protocol} & \textbf{PQ-Safe} & \textbf{GPU Accel.} & \textbf{Finality (1k val.)} & \textbf{BFT Threshold} \\
+\midrule
+Tendermint & No & No & 6,000\,ms & $n/3$ \\
+HotStuff & No & No & 4,000\,ms & $n/3$ \\
+Ethereum PoS & No & No & 384,000\,ms & $n/3$ \\
+Quasar (Lux) & Yes & Optional & 1,200\,ms & $n/3$ \\
+\textbf{Quasar (Zoo)} & \textbf{Yes} & \textbf{Yes} & \textbf{920\,ms} & $n/3$ \\
+\bottomrule
+\end{tabular}
+\caption{Consensus protocol comparison}
+\label{tab:protocol-cmp}
+\end{table}
+

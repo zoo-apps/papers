@@ -1,0 +1,35 @@
+\section{Implementation}
+
+\label{sec:implementation}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Technology Stack}
+
+\begin{itemize}
+  \item \textbf{Mobile apps}: React Native (iOS/Android) with offline
+    observation caching.
+  \item \textbf{Backend}: FastAPI (Python) with PostgreSQL (PostGIS) for
+    spatial data.
+  \item \textbf{AI inference}: TaxoNet served via ONNX Runtime on
+    NVIDIA T4 GPUs; 45\,ms per image.
+  \item \textbf{Gamification engine}: PyTorch-based contextual bandit
+    model; daily retraining.
+  \item \textbf{Quality model}: Bayesian inference using NumPyro;
+    batch updates every 6 hours.
+  \item \textbf{Blockchain}: ZooRep token distribution via Zoo Network
+    smart contracts.
+  \item \textbf{Data storage}: Observations in PostgreSQL; images in
+    S3-compatible object storage; IPFS for immutable research-grade
+    data snapshots.
+\end{itemize}
+
+\subsection{Scalability}
+
+The platform processes approximately 10{,}000 observations per hour at
+peak usage. AI inference is the bottleneck, requiring 3 T4 GPUs at peak.
+The quality model runs asynchronously and does not affect submission
+latency. Challenge generation is precomputed in nightly batch runs and
+cached for real-time delivery.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

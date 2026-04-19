@@ -1,0 +1,55 @@
+\section{Formal Verification of Research Claims}
+
+\label{sec:verification}
+%----------------------------------------------------------------------
+
+\subsection{The Trust Problem in Mathematical Results}
+
+Published mathematical results are trusted because peer reviewers checked them. But peer review is fallible: errors in published proofs are discovered regularly, sometimes decades later. For results that underpin critical infrastructure (cryptographic protocols, safety-critical systems), informal trust is insufficient.
+
+\subsection{Lean 4 Proof Chain}
+
+\Zoo{} integrates Lean~4 \cite{demoura2021lean4} formal verification into the research publication pipeline:
+
+\begin{enumerate}
+    \item The researcher states a theorem in Lean~4.
+    \item The proof is developed interactively, with each step machine-checked.
+    \item The completed proof is compiled to a proof certificate.
+    \item The certificate hash is anchored on \IChain{} alongside the Research Capsule.
+    \item Any verifier can download the proof and re-check it independently.
+\end{enumerate}
+
+\subsection{Proof-Linked Publications}
+
+A Research Capsule containing a formal proof links the following chain:
+
+\begin{equation}
+\textit{theorem} \xrightarrow{\text{Lean 4}} \textit{proof} \xrightarrow{\text{BLAKE3}} \textit{hash} \xrightarrow{\text{IChain}} \textit{anchor}
+\end{equation}
+
+This creates an immutable, machine-verified record that the theorem was proved (not merely claimed) at the time of publication.
+
+\subsection{Verified Cryptographic Claims}
+
+For \Zoo{}'s own cryptographic infrastructure, formal verification provides a trust foundation:
+
+\begin{itemize}
+    \item \CKKS{} rescaling correctness (\texttt{Crypto/FHE/CKKS.lean}) \cite{zoo-fhe}
+    \item \textsc{TFHE} noise budget tracking (\texttt{Crypto/FHE/TFHE.lean})
+    \item Threshold signature security (\texttt{Crypto/Threshold/FROST.lean})
+    \item GPU scaling bounds (\texttt{GPU/FHEScaling.lean})
+\end{itemize}
+
+These proofs are anchored on \IChain{} and linked from the corresponding technical papers, allowing anyone to verify that the security claims are not merely argued but proved.
+
+\subsection{Incentivizing Formalization}
+
+Formalizing existing results is valuable but tedious. \Zoo{} incentivizes it:
+
+\begin{itemize}
+    \item \textbf{Formalization Bounties.} \DAO{} treasury funds bounties for formalizing high-impact results.
+    \item \textbf{Reputation Rewards.} Formalization efforts accrue reputation on the researcher's \DID{}.
+    \item \textbf{Citation Credit.} A formalized proof cites the original result, generating a usage receipt and compensation for the original authors.
+\end{itemize}
+
+%----------------------------------------------------------------------

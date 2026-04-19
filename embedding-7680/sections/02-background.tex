@@ -1,0 +1,40 @@
+\section{Background}
+
+
+\subsection{Embedding Model Architectures}
+
+Modern embedding models follow the encoder architecture:
+
+\begin{equation}
+\phi(x) = \text{Pool}(\text{Encoder}(x)) \in \mathbb{R}^d
+\end{equation}
+
+where $\text{Encoder}$ is typically a transformer and $\text{Pool}$ aggregates token representations (mean pooling, CLS token, or learned pooling).
+
+The output dimension $d$ is typically the model's hidden dimension or a learned projection thereof.
+
+\subsection{Semantic Similarity}
+
+Embedding quality is measured by how well cosine similarity correlates with semantic relatedness:
+
+\begin{equation}
+\text{sim}(x_1, x_2) = \frac{\phi(x_1) \cdot \phi(x_2)}{\|\phi(x_1)\| \|\phi(x_2)\|}
+\end{equation}
+
+Higher dimensions generally improve similarity quality but increase storage and computation costs.
+
+\subsection{The MTEB Benchmark}
+
+The Massive Text Embedding Benchmark (\MTEB{}) evaluates embeddings across 56 datasets covering:
+\begin{itemize}
+    \item Classification
+    \item Clustering
+    \item Pair classification
+    \item Reranking
+    \item Retrieval
+    \item Semantic textual similarity
+    \item Summarization
+\end{itemize}
+
+State-of-the-art models achieve 65-70 average score.
+

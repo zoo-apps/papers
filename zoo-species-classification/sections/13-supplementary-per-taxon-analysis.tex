@@ -1,0 +1,41 @@
+\section{Supplementary: Per-Taxon Analysis}
+
+\label{app:per_taxon}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\begin{table}[H]
+\centering
+\caption{Detailed per-taxon performance breakdown (5-way 5-shot \%).}
+\label{tab:per_taxon}
+\begin{tabular}{llcc}
+\toprule
+\textbf{Dataset} & \textbf{Difficulty} & \textbf{TaxoNet} &
+  \textbf{P$>$M$>$F} \\
+\midrule
+\multirow{3}{*}{ZooBirds}
+  & Inter-family & 97.8 & 96.1 \\
+  & Inter-genus & 93.6 & 88.4 \\
+  & Intra-genus & 86.2 & 78.9 \\
+\midrule
+\multirow{3}{*}{ZooInsects}
+  & Inter-family & 96.4 & 94.2 \\
+  & Inter-genus & 90.1 & 83.7 \\
+  & Intra-genus & 81.3 & 71.6 \\
+\midrule
+\multirow{3}{*}{ZooPlants}
+  & Inter-family & 97.1 & 95.3 \\
+  & Inter-genus & 92.8 & 86.1 \\
+  & Intra-genus & 84.7 & 74.8 \\
+\midrule
+\multirow{3}{*}{ZooMarine}
+  & Inter-family & 97.3 & 95.7 \\
+  & Inter-genus & 92.4 & 87.0 \\
+  & Intra-genus & 85.1 & 76.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+TaxoNet's advantage is most pronounced for intra-genus discrimination
+(+7.3\% to +9.9\% over P$>$M$>$F), precisely the setting where
+taxonomic prototypes provide the most value.
+

@@ -1,0 +1,49 @@
+\section{Security Analysis}
+
+\label{sec:security}
+
+\subsection{Byzantine Fault Tolerance}
+
+\begin{theorem}[Safety]
+If at most $f < n/3$ validators are Byzantine, no two honest validators finalize conflicting blocks.
+\end{theorem}
+
+\begin{proof}
+Block finalization requires $2f+1$ valid signatures. With $n = 3f+1$ total validators and at most $f$ Byzantine, any two sets of $2f+1$ signers overlap in at least one honest validator. An honest validator signs at most one block per height.
+\end{proof}
+
+\begin{theorem}[Liveness]
+In partial synchrony, if at most $f < n/3$ validators are Byzantine, honest transactions are eventually included.
+\end{theorem}
+
+\begin{proof}
+After GST, message delays are bounded. With $2f+1$ honest validators, quorum can always be formed. Leader rotation ensures eventual honest leader.
+\end{proof}
+
+\subsection{Incentive Compatibility}
+
+\begin{theorem}[Truthful Quality Reporting]
+Under the multi-party evaluation protocol, reporting true quality is a dominant strategy.
+\end{theorem}
+
+\begin{proof}
+The trimmed mean ignores extreme values. Lying increases variance but cannot shift the result beyond honest range. Deviating validators are identified and slashed.
+\end{proof}
+
+\begin{theorem}[No Free Riding]
+Workers cannot claim rewards without performing computation.
+\end{theorem}
+
+\begin{proof}
+\TEE{} attestation binds output to enclave execution. Probabilistic re-execution catches cheaters with high probability. Slashing exceeds expected gain from cheating.
+\end{proof}
+
+\subsection{Sybil Resistance}
+
+Sybil attacks are mitigated through:
+\begin{enumerate}
+    \item \textbf{Stake Requirement}: Validators must stake tokens
+    \item \textbf{Work Requirement}: Workers must perform verified computation
+    \item \textbf{Hardware Binding}: \TEE{} attestations bound to physical devices
+\end{enumerate}
+

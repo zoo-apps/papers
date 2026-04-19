@@ -1,0 +1,82 @@
+\section{Provenance-Preserving Storage}
+
+\label{sec:storage}
+
+\subsection{Content-Addressed Storage Layer}
+
+ZDC uses IPFS for content-addressed storage of data objects.
+Each ZDO is stored as a DAG of content-addressed blocks:
+
+\begin{equation}
+    \text{CID}(\text{ZDO}) = \text{hash}(\text{CID}(\mathcal{M}) \| \text{CID}(\mathcal{D}) \| \text{CID}(\mathcal{P}) \| \text{CID}(\mathcal{G}))
+\end{equation}
+
+This structure provides several properties:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Deduplication:} Identical data payloads shared across ZDOs are stored once and referenced by CID.
+    \item \textbf{Integrity:} Any modification to any component changes the root CID, making tampering detectable.
+    \item \textbf{Selective Access:} Components can be retrieved independently; a user can access metadata without downloading the full data payload.
+    \item \textbf{Versioning:} Updates produce new CIDs linked to previous versions through the provenance chain.
+\end{enumerate}
+
+\subsection{Persistence Layer}
+
+IPFS provides availability only while content is pinned by at least one node.
+ZDC ensures persistence through a multi-tier strategy:
+
+\begin{table}[H]
+\centering
+\caption{Data persistence tiers.}
+\label{tab:persistence}
+\begin{tabularx}{\textwidth}{@{}lccX@{}}
+\toprule
+\textbf{Tier} & \textbf{Replicas} & \textbf{Duration} & \textbf{Mechanism} \\
+\midrule
+Hot & 5+ & Immediate & Zoo Network edge nodes with pinning incentives \\
+Warm & 3+ & 1 year & Filecoin storage deals with verified miners \\
+Cold & 1+ & 10 years & Institutional partnerships (museums, universities) \\
+Archive & 1 & Permanent & Content hash anchored to Zoo blockchain \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Provenance Chain}
+
+The provenance chain $\mathcal{P}$ records the complete transformation history of a ZDO:
+
+\begin{equation}
+    \mathcal{P} = [p_0, p_1, \ldots, p_n]
+\end{equation}
+
+\noindent where each provenance record $p_i$ is:
+
+\begin{equation}
+    p_i = (\text{action}_i, \text{agent}_i, \text{input}_i, \text{output}_i, \text{method}_i, t_i, \text{sig}_i)
+\end{equation}
+
+Actions include \texttt{COLLECT}, \texttt{DIGITIZE}, \texttt{TRANSFORM}, \texttt{VALIDATE}, \texttt{AGGREGATE}, \texttt{ANNOTATE}, and \texttt{DERIVE}.
+The provenance chain is append-only and cryptographically linked: each record includes a hash of its predecessor, forming a hash chain anchored to the blockchain.
+
+A formal provenance query language enables traversal:
+
+\begin{equation}
+    \text{Ancestors}(\text{ZDO}_k, \text{action}) = \{z : z \xrightarrow{\text{action}^*} \text{ZDO}_k\}
+\end{equation}
+
+This enables researchers to trace any derived result back to its raw collection events, answering questions such as ``what field observations contribute to this species distribution model?''
+
+\subsection{Search and Discovery}
+
+ZDC implements a federated search layer supporting spatial, temporal, taxonomic, and free-text queries:
+
+\begin{equation}
+    \text{Search}(R_{\text{spatial}}, T_{\text{temporal}}, \tau_{\text{taxon}}, q_{\text{text}}) \rightarrow \{\text{ZDO}_i : \text{match}(\text{ZDO}_i) > \theta\}
+\end{equation}
+
+The search index is maintained by Zoo Network nodes as a distributed hash table augmented with a spatial R-tree index and a taxonomic hierarchy index.
+We use locality-sensitive hashing for approximate nearest-neighbor queries over embedding vectors derived from metadata and data content.
+
+% ============================================================
+% 5. Access Control
+% ============================================================

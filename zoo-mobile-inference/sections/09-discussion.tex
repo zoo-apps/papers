@@ -1,0 +1,25 @@
+\section{Discussion}
+
+\label{sec:discussion}
+
+\subsection{Accuracy-Size Tradeoff}
+
+ZooMobile demonstrates that the accuracy-size tradeoff for species recognition is more favorable than previously assumed, particularly when domain-specific knowledge (taxonomy) informs the compression process.
+The 4.5\% accuracy gap between ZooMobile (86.8\%) and the cloud baseline (91.8\%) must be evaluated against the practical alternative: no identification at all when connectivity is unavailable.
+For 73\% of identifications in our deployment, the only alternative to ZooMobile was visual identification by rangers, which averaged 67\% accuracy in controlled tests.
+
+\subsection{Limitations}
+
+Several limitations qualify our results.
+First, ZooBench-Field, while more realistic than existing benchmarks, was collected at sites with established monitoring programs; truly remote and undersampled regions may present additional challenges.
+Second, our evaluation focuses on visual species recognition; acoustic identification (bird calls, frog calls) requires a separate pipeline not addressed here.
+Third, the model update protocol assumes periodic connectivity; sites with zero connectivity for extended periods (months) cannot receive model improvements.
+
+\subsection{Ethical Considerations}
+
+Deploying species recognition technology raises concerns about misuse for poaching or illegal trade.
+ZooMobile mitigates these risks by withholding precise location data for IUCN-listed species, requiring ranger authentication for sensitive species information, and implementing audit logging of all identifications with location data accessible only to authorized conservation authorities.
+
+% ============================================================
+% 10. Conclusion
+% ============================================================

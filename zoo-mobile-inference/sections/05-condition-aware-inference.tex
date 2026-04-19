@@ -1,0 +1,63 @@
+\section{Condition-Aware Inference}
+
+\label{sec:condition}
+
+\subsection{Image Quality Estimation}
+
+Field photographs exhibit systematic quality degradation compared to curated datasets.
+The CAI module estimates image quality along four axes using lightweight (sub-5ms) estimators:
+
+\begin{equation}
+    \mathbf{q}(\mathbf{x}) = (q_{\text{blur}}, q_{\text{exposure}}, q_{\text{occlusion}}, q_{\text{distance}})
+\end{equation}
+
+Each estimator is a small convolutional network (3 layers, 50K parameters) trained on the ZooBench-Field dataset with human-annotated quality labels.
+
+\subsection{Adaptive Preprocessing}
+
+Based on the quality estimate, CAI selects from a library of preprocessing configurations:
+
+\begin{table}[H]
+\centering
+\caption{Condition-adaptive preprocessing pipeline.}
+\label{tab:preprocessing}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Condition} & \textbf{Preprocessing} & \textbf{Rationale} \\
+\midrule
+Low light & Histogram equalization + denoising & Recover detail from underexposed images \\
+Motion blur & Multi-scale inference (3 crops) & Capture subject at multiple blur scales \\
+Partial occlusion & Sliding window attention & Focus on visible body parts \\
+Long distance & Super-resolution (2x) + center crop & Enhance small subject in frame \\
+High quality & Standard resize only & Avoid unnecessary processing overhead \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Confidence Calibration}
+
+Field conditions systematically affect model confidence calibration.
+CAI applies condition-specific temperature scaling:
+
+\begin{equation}
+    p_{\text{cal}}(s \mid \mathbf{x}) = \text{softmax}\left(\frac{\mathbf{z}(\mathbf{x})}{T(\mathbf{q}(\mathbf{x}))}\right)
+\end{equation}
+
+\noindent where $T(\mathbf{q})$ is a temperature function learned on the ZooBench-Field validation set, mapping quality vectors to calibration temperatures.
+Under degraded conditions, the temperature increases, producing more uniform (less overconfident) probability distributions.
+
+When calibrated confidence falls below a threshold, CAI provides guidance rather than a definitive identification:
+
+\begin{equation}
+    \text{Output}(\mathbf{x}) = \begin{cases}
+        \text{ID}(s^*) & \text{if } p_{\text{cal}}(s^* \mid \mathbf{x}) \geq \tau_{\text{high}} \\
+        \text{TopK}(s_1, \ldots, s_k) & \text{if } \tau_{\text{low}} \leq p_{\text{cal}}(s^* \mid \mathbf{x}) < \tau_{\text{high}} \\
+        \text{Guidance}(\mathbf{q}) & \text{if } p_{\text{cal}}(s^* \mid \mathbf{x}) < \tau_{\text{low}}
+    \end{cases}
+\end{equation}
+
+\noindent where $\text{Guidance}(\mathbf{q})$ suggests specific actions to improve image quality (e.g., ``Move closer to the animal'' or ``Turn on flash'').
+
+% ============================================================
+% 6. ZooBench-Field Benchmark
+% ============================================================

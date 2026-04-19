@@ -1,0 +1,11 @@
+\section{Related Work}
+
+
+\textbf{Quasar Consensus}: The Lux Quasar protocol~\cite{lux-quasar-consensus} and its benchmarks~\cite{lux-quasar-benchmarks} provide the consensus foundation.
+
+\textbf{PoAI}: The Zoo PoAI protocol~\cite{zoo-poai-consensus} provides the compute verification layer. This paper analyzes the composition of both layers.
+
+\textbf{TEE Attestation}: The Lux A-Chain attestation framework~\cite{lux-achain-attestation} provides the TEE infrastructure that \PoAI{} uses for compute verification.
+
+\textbf{Layered Consensus}: Ethereum 2.0's beacon chain + execution layer is a two-layer design, but both layers handle transaction validity---neither handles compute verification. Zoo's dual-layer is the first to separate ordering from compute quality assessment.
+

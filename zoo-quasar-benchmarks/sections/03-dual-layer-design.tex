@@ -1,0 +1,79 @@
+\section{Dual-Layer Design}
+
+\label{sec:design}
+
+\subsection{Architecture}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=1.5cm,
+    layer/.style={rectangle, draw, minimum width=10cm, minimum height=1.2cm, align=center},
+    arrow/.style={->, thick}
+]
+    \node[layer, fill=blue!10] (quasar) {\textbf{Layer 1: Quasar} --- Block production, tx ordering, state finality (10ms)};
+    \node[layer, fill=green!10, below=0.5cm of quasar] (poai) {\textbf{Layer 2: PoAI} --- Compute verification, quality scoring, rewards (per epoch)};
+    \node[layer, fill=orange!10, below=0.5cm of poai] (gpu) {\textbf{GPU Workers} --- Inference, training, data processing (continuous)};
+
+    \draw[arrow] (quasar) -- (poai) node[midway, right, font=\small] {Epoch trigger};
+    \draw[arrow] (poai) -- (gpu) node[midway, right, font=\small] {Task assignment};
+    \draw[arrow, dashed] (gpu.east) to[bend left=60] node[midway, right, font=\small] {Attestations} (quasar.east);
+\end{tikzpicture}
+\caption{Zoo Network dual-layer consensus architecture. \Quasar{} runs continuously; \PoAI{} evaluates per epoch.}
+\label{fig:dual-layer}
+\end{figure}
+
+\subsection{Interaction Protocol}
+
+The two layers interact as follows:
+
+\begin{algorithm}[t]
+\caption{Dual-Layer Block Production}
+\label{alg:dual}
+\begin{algorithmic}[1]
+\STATE \textbf{Continuous (\Quasar{}):}
+\STATE Leader proposes block $B_k$ with transactions + AI attestations
+\STATE Validators vote on $B_k$ (2 rounds, $O(n)$ messages)
+\STATE Block finalized at time $t_k$
+\STATE \textbf{Per Epoch ($E_j$, every 100 blocks):}
+\STATE Collect all attestations from blocks $B_{100j}, \ldots, B_{100(j+1)-1}$
+\STATE \PoAI{} validators evaluate compute quality
+\STATE Compute rewards: $R_w = f(Q_w, C_w)$ for each worker $w$
+\STATE Emit reward transaction in epoch boundary block
+\STATE Update validator weights for next epoch
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Separation of Concerns}
+
+\begin{theorem}[Independence]
+\Quasar{} finality is independent of \PoAI{} evaluation. A \PoAI{} failure (e.g., quality scoring timeout) does not delay block finality.
+\end{theorem}
+
+\begin{proof}
+\Quasar{} processes transactions and attestations as opaque data. Block validity requires only signature verification and state transition correctness---not compute quality assessment. \PoAI{} evaluates quality asynchronously and emits reward transactions that are included in future blocks as standard transactions. If \PoAI{} fails to produce rewards in an epoch, the next epoch compensates by evaluating the backlog.
+\end{proof}
+
+\subsection{Safety}
+
+\begin{theorem}[Dual-Layer Safety]
+If \Quasar{} is safe (no conflicting blocks finalized) and \PoAI{} attestations are verified (TEE assumption), then:
+\begin{enumerate}
+    \item No invalid state transitions are finalized
+    \item No unverified compute is rewarded
+    \item Rewards are proportional to verified quality
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+(1) follows directly from \Quasar{} safety. (2) holds because \PoAI{} only distributes rewards for attestations that pass \TEE{} verification and quality scoring. (3) follows from the weighted median quality scoring protocol, which is Byzantine-resilient with $< n/3$ malicious evaluators~\cite{zoo-poai-consensus}.
+\end{proof}
+
+\subsection{Liveness}
+
+\begin{theorem}[Dual-Layer Liveness]
+If both \Quasar{} and \PoAI{} are live, all valid transactions are eventually included and all valid compute is eventually rewarded.
+\end{theorem}
+
+\Quasar{} liveness guarantees transaction inclusion. \PoAI{} liveness guarantees reward distribution. The epoch-based design ensures that temporary \PoAI{} unavailability (up to 10 epochs) does not affect \Quasar{} operation.
+

@@ -1,0 +1,112 @@
+\section{Mechanism Design}
+
+\label{sec:mechanism}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Stakeholders}
+
+A BIB involves five stakeholder roles:
+
+\begin{enumerate}
+  \item \textbf{Investors} ($I$): Provide upfront capital by purchasing
+    BIB tokens, seeking financial returns contingent on outcomes.
+  \item \textbf{Implementers} ($M$): Conservation organizations that
+    execute on-the-ground conservation activities.
+  \item \textbf{Outcome payers} ($O$): Entities (governments,
+    corporates, philanthropies) that commit to paying for verified
+    outcomes.
+  \item \textbf{Verifiers} ($V$): Decentralized oracle network that
+    assesses outcome achievement through monitoring data.
+  \item \textbf{Governance} ($G$): Zoo DAO, which sets standards,
+    arbitrates disputes, and manages protocol parameters.
+\end{enumerate}
+
+\subsection{Outcome Metrics}
+
+BIB outcomes are specified using the \textbf{SMART-B} framework
+(Specific, Measurable, Attributable, Realistic, Time-bound,
+Biodiversity-relevant):
+
+\begin{table}[H]
+\centering
+\caption{Example outcome metrics for BIB project archetypes.}
+\label{tab:metrics}
+\begin{tabular}{p{3cm}p{4cm}p{4cm}}
+\toprule
+\textbf{Project type} & \textbf{Primary metric} & \textbf{Verification} \\
+\midrule
+Species recovery & Population count $\geq$ threshold & Camera traps + eDNA \\
+Habitat protection & Forest area maintained (ha) & Satellite NDVI \\
+Corridor creation & Connectivity index $\geq$ target & Movement tracking \\
+Reef restoration & Coral cover (\%) increase & Underwater surveys \\
+Invasive removal & Target species abundance decrease & Transect surveys \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Payment Schedule}
+
+BIBs use a milestone-based payment structure with $T$ verification
+periods over the bond lifetime $[0, \tau]$:
+
+\begin{equation}
+  \text{Payment}_t = \begin{cases}
+    \pi_t^{\text{base}} + \pi_t^{\text{bonus}} \cdot \mathbb{1}[O_t \geq O_t^*]
+    & \text{if } O_t \geq O_t^{\min} \\
+    0 & \text{otherwise}
+  \end{cases}
+\end{equation}
+
+where $O_t$ is the measured outcome at period $t$, $O_t^{\min}$ is the
+minimum threshold, $O_t^*$ is the target for full payment,
+$\pi_t^{\text{base}}$ is the base payment, and $\pi_t^{\text{bonus}}$
+is the performance bonus.
+
+\subsection{Token Economics}
+
+\paragraph{Issuance.} A BIB issuance creates $N$ fungible tokens,
+each representing a fractional claim on the bond's payment stream:
+\begin{equation}
+  P_0 = \frac{C_{\text{total}} + F_{\text{admin}}}{N}
+\end{equation}
+
+\paragraph{Returns.} Token holders receive pro-rata shares of outcome
+payments:
+\begin{equation}
+  \E[\text{Return}] = \frac{1}{P_0} \sum_{t=1}^{T}
+  \frac{\pi_t^{\text{investor}}}{(1+r)^t} - 1
+\end{equation}
+
+\paragraph{Secondary market.} Tokens are transferable on decentralized
+exchanges, with pricing reflecting updated outcome probability
+assessments from oracle data.
+
+\subsection{Capital Flow Architecture}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=2cm,
+  box/.style={draw, rounded corners, minimum width=2.5cm,
+    minimum height=1cm, align=center, font=\small},
+  arrow/.style={-{Stealth[length=3mm]}, thick}
+]
+  \node[box] (investors) {Investors};
+  \node[box, right=3cm of investors] (escrow) {Smart Contract\\Escrow};
+  \node[box, right=3cm of escrow] (implementer) {Conservation\\Implementer};
+  \node[box, below=2cm of escrow] (oracle) {Oracle\\Network};
+  \node[box, below=2cm of investors] (payer) {Outcome\\Payer};
+
+  \draw[arrow] (investors) -- node[above]{\small tokens} (escrow);
+  \draw[arrow] (escrow) -- node[above]{\small capital} (implementer);
+  \draw[arrow] (oracle) -- node[right]{\small verification} (escrow);
+  \draw[arrow] (payer) -- node[left]{\small outcome payment} (escrow);
+  \draw[arrow, dashed] (escrow.south west) -- node[left]{\small returns}
+    (investors.south);
+\end{tikzpicture}
+\caption{BIB capital flow architecture.}
+\label{fig:flow}
+\end{figure}
+
+
+% ══════════════════════════════════════════════════════════════════════════════

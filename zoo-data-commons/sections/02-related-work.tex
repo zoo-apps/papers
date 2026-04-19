@@ -1,0 +1,37 @@
+\section{Related Work}
+
+\label{sec:related}
+
+\subsection{Biodiversity Data Infrastructure}
+
+The global biodiversity data landscape comprises several major platforms.
+GBIF provides a centralized index of species occurrence records with standardized Darwin Core format \citep{wieczorek2012darwin}.
+The Integrated Digitized Biocollections (iDigBio) focuses on museum specimen digitization \citep{nelson2019digitization}.
+OBIS (Ocean Biogeographic Information System) specializes in marine biodiversity data \citep{grassle2000ocean}.
+GenBank and BOLD provide genetic sequence repositories \citep{benson2018genbank}.
+
+These platforms operate as centralized aggregators: data providers push records to central servers that maintain authoritative copies.
+This architecture creates well-known problems of data staleness, attribution erosion, and governance concentration \citep{arinoetal2013}.
+
+\subsection{FAIR Data Principles}
+
+The FAIR principles have become the de facto standard for scientific data management \citep{wilkinson2016fair}.
+Implementation frameworks include FAIRsFAIR metrics \citep{devaraju2021fairsfair}, GO-FAIR implementation networks, and FAIR Digital Object architectures \citep{schultes2019fair}.
+However, most FAIR implementations are retrospective assessments of existing data rather than architecturally enforced properties.
+
+\subsection{Decentralized Data Systems}
+
+IPFS (InterPlanetary File System) provides content-addressed storage with deduplication and peer-to-peer distribution \citep{benet2014ipfs}.
+Filecoin extends IPFS with economic incentives for persistent storage \citep{protocol2017filecoin}.
+Ocean Protocol implements a decentralized data marketplace with compute-to-data capabilities \citep{mcconaghy2020ocean}.
+\citet{ramachandran2018trinity} proposed blockchain-based data provenance for healthcare, demonstrating the pattern we extend to biodiversity data.
+
+\subsection{Indigenous Data Sovereignty}
+
+The CARE Principles for Indigenous Data Governance (Collective Benefit, Authority to Control, Responsibility, Ethics) complement FAIR by centering the rights and interests of indigenous peoples in data management \citep{carroll2020care}.
+Traditional Knowledge (TK) labels provide a mechanism for indigenous communities to express culturally appropriate access conditions \citep{anderson2010tk}.
+ZDC's sovereign access tier directly implements these principles.
+
+% ============================================================
+% 3. Data Object Model
+% ============================================================

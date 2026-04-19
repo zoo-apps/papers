@@ -1,0 +1,38 @@
+\section{Architecture}
+
+
+\subsection{Chain Placement}
+
+Z-Chain operates as a specialized chain within the Zoo Network multi-chain architecture:
+
+\begin{itemize}
+\item \textbf{C-Chain} (Contract Chain): Application deployment. Consumes Z-Chain proofs via precompiles.
+\item \textbf{Z-Chain} (ZK Substrate): Proof registration, verification, and receipt generation. This paper's focus.
+\item \textbf{T-Chain} (Threshold Chain): FHE decryption coordination for private ZK-FHE hybrid protocols.
+\item \textbf{K-Chain} (Key Chain): Post-quantum key management (ML-KEM, ML-DSA) for proof signing.
+\end{itemize}
+
+\subsection{Two-Lane Design}
+
+\subsubsection{Production Lane}
+
+Three proof systems are permanently supported with stable verifier contracts:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llll}
+\toprule
+\textbf{System} & \textbf{Setup} & \textbf{PQ-Safe} & \textbf{Verify Gas} \\
+\midrule
+Groth16 & Trusted & No\textsuperscript{$\dagger$} & 230K \\
+PLONK & Universal & No\textsuperscript{$\dagger$} & 350K \\
+STARK & Transparent & Yes & 500K \\
+\bottomrule
+\end{tabular}
+\caption{Production proof systems. $\dagger$: Wrapped in PQZ for quantum resistance.}
+\end{table}
+
+\subsubsection{Research Lane}
+
+Experimental proof systems register under versioned capability IDs ($\geq 100$). Each carries an explicit risk label (\texttt{EXPERIMENTAL}, \texttt{AUDITED}, \texttt{DEPRECATED}) and runs in sandboxed verifier contracts that cannot affect production lane state.
+

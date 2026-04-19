@@ -1,0 +1,59 @@
+\section{Pre-Launch: Testnet Validation}
+
+
+All items must be \done\ before rehearsal begins.
+
+\subsection{VM Verification}
+
+\begin{tabularx}{\textwidth}{@{}l l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Chain} & \textbf{Criteria} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1  & EVM (C-Chain)  & Standard EVM conformance tests pass              & Core   & \pending \\
+2  & DEX (D-Chain)  & Order matching, AMM, limit orders verified        & Core   & \pending \\
+3  & FHE (F-Chain)  & Encrypted compute round-trip, TFHE gates correct  & Crypto & \pending \\
+4  & I-Chain        & DID issuance, revocation, resolution              & Auth   & \pending \\
+5  & K-Chain        & Key management, TLS cert provisioning, rotation   & Auth   & \pending \\
+6  & T-Chain        & MPC wallet creation via FROST DKG                 & Crypto & \pending \\
+7  & B-Chain        & Bridge lock/mint/burn/release full cycle           & Bridge & \pending \\
+8  & Z-Chain        & ZK proof generation and on-chain verification      & Crypto & \pending \\
+9  & Q-Chain        & Quantum-resistant signature schemes operational    & Crypto & \pending \\
+10 & A-Chain        & Agent execution, tool calls, state persistence     & AI     & \pending \\
+11 & G-Chain        & Governance proposals, voting, execution            & Gov    & \pending \\
+12 & O-Chain        & Oracle data feeds, attestation, freshness checks   & Data   & \pending \\
+13 & R-Chain        & Research coordination, dataset registry            & Sci    & \pending \\
+14 & Beluga (L3)    & L3 subnet boots, settles to Zoo L2                & Core   & \pending \\
+\bottomrule
+\end{tabularx}
+
+\subsection{GPU Acceleration Benchmarks}
+
+\begin{tabularx}{\textwidth}{@{}l X l l l@{}}
+\toprule
+\textbf{\#} & \textbf{Workload} & \textbf{Target} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1 & CEVM kernel execution (A100)       & $\geq$50K tx/s          & Core   & \pending \\
+2 & TFHE gate evaluation (bootstrapping)& $\leq$12ms per gate     & Crypto & \pending \\
+3 & BLS aggregate signature verify      & $\leq$2ms / 128 sigs   & Crypto & \pending \\
+4 & NTT for ZK proof generation          & $\leq$100ms / 2\textsuperscript{24} & Crypto & \pending \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Testing and Audit}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Item} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1 & E2E Playwright suite: all chains green           & QA     & \pending \\
+2 & Red team round 1 complete, findings remediated    & SecOps & \pending \\
+3 & Red team round 2 complete, findings remediated    & SecOps & \pending \\
+4 & Red team round 3 complete, 0 open findings        & SecOps & \pending \\
+5 & External audit report received and accepted        & SecOps & \pending \\
+6 & Formal proofs: 86 Lean~4 theorems compiled, 0 \texttt{sorry} & Formal & \pending \\
+7 & Bridge tested: \Lux{} mainnet $\leftrightarrow$ \Zoo{} testnet & Bridge & \pending \\
+8 & Fuzz testing: 72h continuous, 0 crashes            & QA     & \pending \\
+\bottomrule
+\end{tabularx}
+
+%% ---------------------------------------------------------------------------

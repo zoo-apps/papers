@@ -1,0 +1,66 @@
+\section{Conservation Competency Ontology}
+
+\label{sec:ontology}
+
+\subsection{Design Principles}
+
+The Conservation Competency Ontology (CCO) organizes conservation knowledge into a directed acyclic graph of learning objectives with prerequisite relationships.
+We adopt four design principles:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Ecological Validity:} Objectives reflect skills and knowledge demonstrably associated with effective conservation practice, validated through structured interviews with 142 conservation practitioners across 28 countries.
+    \item \textbf{Cultural Adaptability:} The ontology separates universal ecological principles from culturally situated knowledge, enabling localization without structural modification.
+    \item \textbf{Granularity Balance:} Objectives are sized to be achievable in 10--30 minute learning sessions, supporting mobile and intermittent access patterns common in field settings.
+    \item \textbf{Measurability:} Each objective includes assessment criteria specifiable as machine-evaluable rubrics.
+\end{enumerate}
+
+\subsection{Domain Structure}
+
+The CCO encompasses six domains, organized hierarchically:
+
+\begin{table}[H]
+\centering
+\caption{Conservation Competency Ontology domain structure.}
+\label{tab:cco_domains}
+\begin{tabularx}{\textwidth}{@{}lccX@{}}
+\toprule
+\textbf{Domain} & \textbf{Objectives} & \textbf{Levels} & \textbf{Description} \\
+\midrule
+Species Identification & 834 & 5 & Visual, acoustic, and behavioral identification across taxonomic groups \\
+Habitat Ecology & 612 & 4 & Ecosystem structure, function, and dynamics \\
+Threat Assessment & 487 & 4 & Anthropogenic and natural threats, risk analysis, vulnerability mapping \\
+Policy Frameworks & 391 & 3 & International conventions, national legislation, community governance \\
+Community Engagement & 298 & 3 & Stakeholder analysis, participatory methods, conflict resolution \\
+Field Methodology & 225 & 4 & Survey design, data collection, monitoring protocols \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Prerequisite Graph}
+
+Prerequisites are modeled as directed edges in the ontology graph.
+We define three edge types:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Hard prerequisite} ($\rightarrow_H$): Objective $B$ cannot be attempted without demonstrated mastery of $A$.
+    \item \textbf{Soft prerequisite} ($\rightarrow_S$): Knowledge of $A$ significantly aids learning of $B$, but $B$ is approachable without $A$.
+    \item \textbf{Co-requisite} ($\leftrightarrow_C$): Objectives $A$ and $B$ are mutually reinforcing and optimally learned in parallel.
+\end{itemize}
+
+The complete CCO graph contains 2,847 nodes, 4,213 hard prerequisites, 6,891 soft prerequisites, and 1,247 co-requisite pairs.
+We verify acyclicity of the hard prerequisite subgraph and compute topological orderings to ensure feasible learning paths exist for all objectives.
+
+\subsection{Formal Representation}
+
+Let $\mathcal{O} = \{o_1, o_2, \ldots, o_N\}$ denote the set of learning objectives, $N = 2847$.
+Each objective $o_i$ is characterized by a tuple:
+
+\begin{equation}
+    o_i = (d_i, \ell_i, \mathbf{c}_i, \mathcal{A}_i, \tau_i)
+\end{equation}
+
+\noindent where $d_i \in \mathcal{D}$ is the domain, $\ell_i \in \{1, \ldots, L_{d_i}\}$ is the proficiency level within domain $d_i$, $\mathbf{c}_i \in \{0,1\}^{|\mathcal{C}|}$ is a binary vector indicating cultural context tags from the set of cultural contexts $\mathcal{C}$, $\mathcal{A}_i$ is a set of assessment specifications, and $\tau_i \in \mathbb{R}^+$ is the estimated median time to mastery in minutes.
+
+% ============================================================
+% 4. Adaptive Learning Engine
+% ============================================================

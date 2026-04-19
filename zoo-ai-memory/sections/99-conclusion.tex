@@ -1,0 +1,80 @@
+\section{Conclusion}
+
+\label{sec:conclusion}
+%----------------------------------------------------------------------
+
+AI memory is not a retrieval engineering problem. It is a sovereignty problem. The question is not ``how do we store vectors efficiently?'' but ``who controls the agent's accumulated knowledge?''
+
+Memory Capsules answer this question decisively: the agent (or its owner) controls everything. The capsule is encrypted with keys the provider never sees, persists independently of any model or session, synchronizes across instances via CRDTs, and enforces fine-grained access through capability tokens and threshold reveal.
+
+The architecture demonstrates that sovereignty and utility are not in tension. Encrypted memory adds latency (8.84 seconds for FHE-encrypted recall vs. 8.4 milliseconds unencrypted), but this cost is borne only when the sensitivity of the data demands it. For the common case, standard encrypted vaults provide sub-10ms access with full ownership guarantees.
+
+Three directions warrant further investigation:
+
+\begin{enumerate}
+    \item \textbf{Memory Compression.} Reducing capsule storage costs through learned compression of episodic memory into semantic memory (distillation).
+    \item \textbf{Federated Memory.} Aggregating knowledge across many agents without any agent revealing its private state (federated learning applied to memory).
+    \item \textbf{Memory Proofs.} Formal verification (Lean 4) that garbage collection preserves all entries above the salience/confidence threshold.
+\end{enumerate}
+
+AI agents deserve memory they own. Memory Capsules make this real.
+
+\begin{thebibliography}{20}
+
+\bibitem{packer2023memgpt}
+C.~Packer, S.~Wooders, K.~Lin, V.~Fang, S.~G.~Patil, I.~Stoica, and J.~E.~Gonzalez,
+``MemGPT: Towards LLMs as Operating Systems,''
+\textit{arXiv preprint arXiv:2310.08560}, 2023.
+
+\bibitem{popa2011cryptdb}
+R.~A.~Popa, C.~M.~S.~Redfield, N.~Zeldovich, and H.~Balakrishnan,
+``CryptDB: Protecting Confidentiality with Encrypted Query Processing,''
+\textit{Proc.\ SOSP}, 2011.
+
+\bibitem{popa2014mylar}
+R.~A.~Popa, E.~Stark, J.~Helfer, S.~Valdez, N.~Zeldovich, M.~F.~Kaashoek, and H.~Balakrishnan,
+``Building Web Applications on Top of Encrypted Data Using Mylar,''
+\textit{Proc.\ NSDI}, 2014.
+
+\bibitem{shapiro2011crdt}
+M.~Shapiro, N.~Preguica, C.~Baquero, and M.~Zawirski,
+``Conflict-Free Replicated Data Types,''
+\textit{Proc.\ SSS}, Springer, 2011.
+
+\bibitem{zoo-agent-nft}
+Z.~Kelling,
+``Agent NFTs: A Token Standard for Autonomous AI Agents with Economic Agency,''
+Zoo Labs Foundation, 2021.
+
+\bibitem{zoo-tokenomics}
+Z.~Kelling,
+``Zoo Network Tokenomics: Fair Distribution Through Complete Airdrop,''
+Zoo Labs Foundation, 2025.
+
+\bibitem{lux-agent-sovereignty}
+Z.~Kelling,
+``Agent Sovereignty on Lux Network: Self-Owned AI with On-Chain Identity and Assets,''
+Lux Industries, 2025.
+
+\bibitem{zoo-fhe}
+Z.~Kelling,
+``Threshold Fully Homomorphic Encryption on Zoo Network: GPU-Accelerated Confidential Computation,''
+Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-threshold-signatures}
+Z.~Kelling,
+``Threshold Signatures on Zoo T-Chain,''
+Zoo Labs Foundation, 2026.
+
+\bibitem{cheon2017ckks}
+J.~H.~Cheon, A.~Kim, M.~Kim, and Y.~Song,
+``Homomorphic Encryption for Arithmetic of Approximate Numbers,''
+\textit{Proc.\ ASIACRYPT}, Springer, 2017.
+
+\bibitem{feldman1987vss}
+P.~Feldman,
+``A Practical Scheme for Non-Interactive Verifiable Secret Sharing,''
+\textit{Proc.\ FOCS}, 1987.
+
+\end{thebibliography}
+

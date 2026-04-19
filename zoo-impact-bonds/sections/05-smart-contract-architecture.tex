@@ -1,0 +1,97 @@
+\section{Smart Contract Architecture}
+
+\label{sec:contracts}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Contract Overview}
+
+The BIB smart contract system consists of four core contracts:
+
+\begin{enumerate}
+  \item \textbf{BIBFactory}: Creates and parameterizes new BIB issuances.
+  \item \textbf{BIBToken}: ERC-1155 multi-token representing bond
+    positions.
+  \item \textbf{BIBEscrow}: Manages capital flows, milestone triggers,
+    and payment distribution.
+  \item \textbf{BIBOracle}: Aggregates verification data and computes
+    outcome scores.
+\end{enumerate}
+
+\subsection{Outcome Verification Interface}
+
+\begin{lstlisting}[caption={Oracle verification interface.},
+  label={lst:oracle}]
+interface IBIBOracle {
+    struct VerificationReport {
+        uint256 bondId;
+        uint256 period;
+        uint256 metricValue;
+        bytes32 evidenceHash;
+        uint256 confidence;
+        address verifier;
+    }
+
+    function submitReport(
+        VerificationReport calldata report
+    ) external returns (bool);
+
+    function getOutcomeScore(
+        uint256 bondId,
+        uint256 period
+    ) external view returns (
+        uint256 score,
+        uint256 confidence
+    );
+
+    function resolveDispute(
+        uint256 bondId,
+        uint256 period
+    ) external;
+}
+\end{lstlisting}
+
+\subsection{Payment Logic}
+
+\begin{lstlisting}[caption={Milestone payment logic.},
+  label={lst:payment}]
+function processMilestone(
+    uint256 bondId,
+    uint256 period
+) external {
+    Bond storage bond = bonds[bondId];
+    require(
+        block.timestamp >= bond.milestones[period],
+        "Milestone not reached"
+    );
+
+    (uint256 score, uint256 conf) =
+        oracle.getOutcomeScore(bondId, period);
+    require(conf >= MIN_CONFIDENCE, "Low confidence");
+
+    uint256 payment;
+    if (score >= bond.targetThreshold) {
+        payment = bond.basePayment + bond.bonusPayment;
+    } else if (score >= bond.minThreshold) {
+        payment = bond.basePayment
+            * score / bond.targetThreshold;
+    }
+
+    _distributePayment(bondId, payment);
+}
+\end{lstlisting}
+
+\subsection{Risk Mitigation}
+
+\begin{itemize}
+  \item \textbf{Graduated release}: Capital released in tranches,
+    contingent on interim milestones.
+  \item \textbf{Insurance pool}: 5\% of issuance proceeds fund a shared
+    pool covering partial investor losses on failed bonds.
+  \item \textbf{Dispute resolution}: Two-tier mechanism using automated
+    rechecks followed by DAO governance vote.
+  \item \textbf{Force majeure}: Climate disasters or political
+    instability triggers can pause milestone clocks.
+\end{itemize}
+
+
+% ══════════════════════════════════════════════════════════════════════════════

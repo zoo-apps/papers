@@ -1,0 +1,62 @@
+\section{Threshold Settlement}
+
+\label{sec:settlement}
+%----------------------------------------------------------------------
+
+\subsection{T-Chain Coordination}
+
+Settlement is the only phase where decryption occurs. \TChain{} coordinates:
+
+\begin{enumerate}
+    \item The matching engine submits matched pairs $(\hat{O}_b, \hat{O}_a, \hat{q}_f)$ to \TChain{}.
+    \item \TChain{} validators verify the match proof (the encrypted comparison result $\hat{r} = \hat{1}$).
+    \item Each validator computes a partial decryption of $\hat{q}_f$ using its key share $sk_i$.
+    \item Once $t = 67$ partial decryptions are collected, the fill quantity $q_f$ is reconstructed.
+    \item The settlement contract transfers $q_f$ tokens from seller to buyer and $q_f \cdot p_{\textit{match}}$ payment from buyer to seller.
+\end{enumerate}
+
+\subsection{Partial Revelation}
+
+The settlement reveals only the information necessary for execution:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Information} & \textbf{Matched Orders} & \textbf{Unmatched Orders} \\
+\midrule
+Existence & Revealed & Revealed \\
+Side (buy/sell) & Revealed & Revealed \\
+Price & \textbf{Match price only} & \textbf{Never revealed} \\
+Quantity & \textbf{Fill quantity only} & \textbf{Never revealed} \\
+Submitter identity & Revealed to counterparty & Never revealed \\
+\bottomrule
+\end{tabular}
+\caption{Information revelation under Confidential DeFi}
+\label{tab:revelation}
+\end{table}
+
+Unmatched orders are \emph{never} decrypted. They expire silently, revealing nothing about the submitter's valuation.
+
+\subsection{Atomic Settlement}
+
+Settlement is atomic: either both legs of the trade execute or neither does. This is enforced by the settlement contract on \Zoo{} EVM:
+
+\begin{verbatim}
+function settle(
+    bytes32 match_id,
+    uint256 fill_qty,
+    uint256 match_price,
+    bytes   threshold_proof
+) external {
+    require(TChain.verify(threshold_proof, match_id));
+
+    token_base.transferFrom(seller, buyer, fill_qty);
+    token_quote.transferFrom(buyer, seller,
+                             fill_qty * match_price);
+
+    emit Settlement(match_id, fill_qty, match_price);
+}
+\end{verbatim}
+
+%----------------------------------------------------------------------

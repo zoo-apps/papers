@@ -1,0 +1,45 @@
+\section{Background}
+
+
+\subsection{Non-Fungible Tokens}
+
+\ERC{}-721 defines the standard NFT interface:
+
+\begin{lstlisting}[language=Solidity,caption=ERC-721 Interface (Simplified)]
+interface IERC721 {
+    function ownerOf(uint256 tokenId)
+        external view returns (address);
+    function transferFrom(address from, address to,
+        uint256 tokenId) external;
+    function approve(address to, uint256 tokenId)
+        external;
+}
+\end{lstlisting}
+
+NFTs represent unique digital assets: artwork, collectibles, domain names, and virtual land. However, \ERC{}-721 assumes tokens are \emph{passive}---they do not act, hold assets, or generate value independently.
+
+\subsection{Account Abstraction}
+
+\ERC{}-4337 introduces account abstraction, enabling smart contracts to act as wallets:
+
+\begin{itemize}
+    \item \textbf{UserOperation}: Pseudo-transactions signed by any validation logic
+    \item \textbf{Bundlers}: Aggregate operations for gas-efficient submission
+    \item \textbf{Paymasters}: Sponsor gas for approved operations
+\end{itemize}
+
+Account abstraction provides the foundation for agent-controlled wallets but lacks agent-specific semantics.
+
+\subsection{AI Agents}
+
+Modern AI agents combine:
+
+\begin{itemize}
+    \item \textbf{Language Models}: For reasoning and planning
+    \item \textbf{Tool Use}: For executing actions
+    \item \textbf{Memory}: For maintaining context
+    \item \textbf{Learning}: For improving from experience
+\end{itemize}
+
+Projects like AutoGPT, BabyAGI, and LangChain demonstrate agent capabilities but lack economic integration.
+

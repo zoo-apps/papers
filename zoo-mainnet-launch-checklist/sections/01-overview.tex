@@ -1,0 +1,25 @@
+\section{Overview}
+
+
+This document is the authoritative checklist for \Zoo{} Network mainnet launch.
+It covers pre-launch validation, rehearsal on staging, launch-day sequence,
+post-launch operations, and rollback procedures.
+
+\Zoo{} Network is a Layer~2 on \Lux{} mainnet comprising 14 virtual machines
+(chains) and one Layer~3 subnet (Beluga). All chains share \Lux{} consensus
+and settle to \Lux{} P-Chain.
+
+\medskip
+\noindent\textbf{Clusters:}
+\begin{itemize}[nosep]
+  \item \texttt{lux-k8s} --- \Lux{} mainnet validators (DOKS, SFO3)
+  \item \texttt{lux-test-k8s} --- Testnet / staging (DOKS, SFO3)
+  \item \texttt{hanzo-k8s} --- Shared platform services (IAM, KMS, gateway)
+\end{itemize}
+
+\noindent\textbf{Status legend:}
+\pending\ = pending,
+\done\ = complete,
+\blocked\ = blocked.
+
+%% ---------------------------------------------------------------------------

@@ -1,0 +1,39 @@
+\section{Inference Credit Swaps}
+
+\label{sec:credits}
+
+\subsection{Credit Denominations}
+
+The Zoo ecosystem uses two inference credit tokens:
+
+\begin{itemize}
+    \item \textbf{ZINF} (Zoo Inference Credits): Used on Zoo L2. 1 ZINF = 1 GPU-second of A100 inference.
+    \item \textbf{BINF} (Beluga Inference Credits): Used on Beluga L3. 1 BINF = 1 GPU-second of A100 inference on Beluga's model marketplace.
+\end{itemize}
+
+\subsection{Swap Mechanism}
+
+ZINF/BINF swaps use a constant-product AMM pool with a dynamic fee that adjusts based on the cross-chain inference utilization ratio:
+
+\begin{equation}
+\text{fee} = \text{baseFee} \cdot \left(1 + \delta \cdot \left|\frac{U_{\text{zoo}}}{U_{\text{beluga}}} - 1\right|\right)
+\end{equation}
+
+where $U_{\text{zoo}}$ and $U_{\text{beluga}}$ are inference utilization rates on each chain. When utilization is balanced, the fee is minimal; when one chain is overloaded, the fee increases to incentivize rebalancing.
+
+\subsection{Atomic Cross-Chain Conversion}
+
+For ZOO $\to$ BINF conversions, the DEX performs an atomic two-step:
+
+\begin{algorithm}[t]
+\caption{Atomic Inference Credit Conversion}
+\label{alg:credits}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: $x$ ZOO on Zoo L2, destination: Beluga L3
+\STATE Swap $x$ ZOO $\to$ $y$ ZINF on Zoo DEX (LP-9012)
+\STATE Bridge $y$ ZINF $\to$ Beluga via Warp message
+\STATE On Beluga: convert $y$ ZINF $\to$ $z$ BINF at bridge rate
+\STATE Total: $x$ ZOO $\to$ $z$ BINF in $\sim$2.5s
+\end{algorithmic}
+\end{algorithm}
+

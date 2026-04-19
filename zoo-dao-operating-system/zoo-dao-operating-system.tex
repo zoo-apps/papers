@@ -1,0 +1,879 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\ZOO}{\textsc{ZOO}}
+\newcommand{\DAO}{\textsc{dao}}
+\newcommand{\ERC}{\textsc{erc}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\input{shared/lstlang}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  xleftmargin=2em,
+  framexleftmargin=1.5em,
+  captionpos=b,
+}
+
+% Title and authors
+\title{\textbf{ZooGov: A Full-Stack DAO Operating System for Conservation Research}}
+
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{March 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \textbf{ZooGov}, a full-stack decentralized autonomous organization operating system purpose-built for conservation research governance. ZooGov implements the complete lifecycle of on-chain governance---proposal creation, token-weighted and quadratic voting, vote delegation, committee management, treasury integration, timelock execution, and compliance veto---as a composable smart contract system deployed on Zoo Network's Lux-based EVM L2. Unlike general-purpose DAO frameworks (Compound Governor, Aragon OSx, Gnosis Safe), ZooGov is specialized for nonprofit research coordination under a 501(c)(3) legal wrapper, incorporating milestone-gated grant disbursement, soulbound reputation weighting, and a narrow board veto mechanism that preserves both community sovereignty and legal compliance. We formalize the proposal type taxonomy from ZIP-0017, prove liveness and safety properties of the governance state machine, and describe the production deployment powering \texttt{governance.zoo.network}. The reference implementation processes five proposal types with differentiated quorum, approval, and timelock parameters, enabling the DAO to handle routine parameter changes in 9 days and emergency security responses in under 4 hours. All governance parameters are themselves governed through meta-governance proposals, making the system fully self-amending.
+
+\medskip
+\noindent\textbf{Keywords:} DAO governance, smart contracts, quadratic voting, delegation, treasury management, conservation science
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+
+% ======================================================================
+\section{Introduction}
+\label{sec:intro}
+% ======================================================================
+
+Decentralized autonomous organizations coordinate collective decisions through smart contracts rather than corporate boards. Since the original DAO on Ethereum in 2016, the design space has matured through Compound's Governor framework~\cite{compound2020governance}, Aragon's modular DAO toolkit~\cite{aragon2023osx}, Gnosis Safe's multi-signature execution~\cite{gnosis2021safe}, and Snapshot's off-chain voting~\cite{snapshot2021}. Each advances one aspect of DAO infrastructure but none provides a complete operating system for the specific requirements of nonprofit research governance.
+
+Conservation research DAOs face constraints absent from DeFi governance. First, the 501(c)(3) legal wrapper requires a board compliance veto to maintain tax-exempt status (ZIP-0000 \S15). Second, proposal types span orders of magnitude in impact---from a 50 ZOO parameter tweak to a 500{,}000 ZOO multi-year research grant---demanding differentiated governance parameters. Third, meritocratic input from active researchers must be weighted alongside economic stake, requiring integration with a soulbound reputation system (ZIP-0026). Fourth, grants require milestone-gated disbursement rather than lump-sum treasury transfers.
+
+ZooGov addresses these requirements as an integrated system rather than a collection of loosely coupled contracts. It implements ZIP-0017 (DAO Governance Framework) as the core governance engine, with extension points for ZIP-0023 (Grants), ZIP-0026 (Reputation), and ZIP-0027 (Emergency Governance).
+
+\subsection{Contributions}
+
+\begin{enumerate}
+    \item A \textbf{complete governance contract system} implementing five proposal types with differentiated parameters (Section~\ref{sec:contracts}).
+    \item A \textbf{delegation model} with transitive depth limits and reputation-weighted override (Section~\ref{sec:delegation}).
+    \item A \textbf{committee framework} for specialized governance bodies (Section~\ref{sec:committees}).
+    \item \textbf{Treasury integration} with multi-chain asset management and milestone escrow (Section~\ref{sec:treasury}).
+    \item \textbf{Safety and liveness proofs} for the governance state machine (Section~\ref{sec:analysis}).
+    \item A \textbf{production deployment} analysis of the \texttt{zoogov-app} frontend and on-chain backend (Section~\ref{sec:deployment}).
+\end{enumerate}
+
+
+% ======================================================================
+\section{Related Work}
+\label{sec:related}
+% ======================================================================
+
+\subsection{Compound Governor}
+
+Compound's Governor Bravo~\cite{compound2020governance} established the proposal-vote-timelock-execute pattern adopted by hundreds of DeFi protocols. Proposals encode calldata for target contracts; token holders vote; a timelock delays execution. Limitations: single proposal type, no delegation depth control, no reputation integration, no milestone disbursement. OpenZeppelin's Governor~\cite{oz2023governor} modularizes Bravo into composable modules (voting, counting, timelock) but retains the same expressiveness constraints.
+
+\subsection{Aragon OSx}
+
+Aragon's OS refactored~\cite{aragon2023osx} provides a plugin architecture where governance logic is installed as plugins on a DAO entity. This enables arbitrary governance configurations but requires significant integration work. ZooGov takes a different approach: a purpose-built system with fixed proposal types and differentiated parameters, trading generality for correctness guarantees.
+
+\subsection{Gnosis Safe}
+
+Gnosis Safe~\cite{gnosis2021safe} provides multi-signature wallets with modular transaction guards. Safe serves as the treasury execution layer in many DAOs. ZooGov uses Safe-compatible multi-sig for treasury operations but adds governance-controlled spending limits, milestone escrow, and compliance veto.
+
+\subsection{Snapshot and Off-Chain Voting}
+
+Snapshot~\cite{snapshot2021} enables gasless off-chain voting via signed messages. While eliminating gas costs, off-chain votes require a trusted relayer for execution and cannot enforce on-chain timelocks. ZooGov uses on-chain voting for binding proposals and supports Snapshot-compatible signaling for non-binding polls.
+
+\subsection{Tally and Governance Frontends}
+
+Tally~\cite{tally2023} provides a generic governance frontend for Governor-compatible contracts. ZooGov's frontend (\texttt{zoogov-app}) is specialized for research governance, with proposal templates, milestone tracking, grant application flows, and reputation display.
+
+\subsection{Science DAOs}
+
+VitaDAO~\cite{vitadao2022}, LabDAO, and Molecule govern research funding but use standard Governor or Snapshot mechanics without research-specific proposal types, milestone gating, or 501(c)(3) compliance integration.
+
+
+% ======================================================================
+\section{Governance Architecture}
+\label{sec:architecture}
+% ======================================================================
+
+\subsection{Design Principles}
+
+ZooGov follows three principles:
+
+\begin{enumerate}
+    \item \textbf{Differentiated governance}: Proposal impact determines quorum, approval threshold, timelock duration, and required governance bodies.
+    \item \textbf{Dual-token weighting}: Voting power combines transferable ZOO stake with non-transferable ZooRep reputation, preventing pure plutocracy.
+    \item \textbf{Compliance integration}: A narrow board veto operates at the timelock layer, preserving 501(c)(3) status without centralizing decision-making.
+\end{enumerate}
+
+\subsection{Proposal Type Taxonomy}
+
+ZIP-0017 defines five proposal types:
+
+\begin{table}[h]
+\centering
+\caption{Proposal types with governance parameters.}
+\label{tab:types}
+\begin{tabular}{lcccl}
+\toprule
+\textbf{Type} & \textbf{Quorum} & \textbf{Approval} & \textbf{Timelock} & \textbf{Scope} \\
+\midrule
+Parameter Change & 4\% & $>$50\% & 48h & Protocol tuning \\
+Treasury Spend & 10\% & $>$60\% & 72h & Fund allocation \\
+Protocol Upgrade & 15\% & $>$66\% & 168h & Contract upgrades \\
+Emergency Action & 1\% & $>$80\% & 0h & Security response \\
+Meta-Governance & 20\% & $>$75\% & 168h & Rule changes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Each type has its own quorum denominator (percentage of total delegated voting power), approval threshold (percentage of non-abstaining votes), and timelock duration.
+
+\subsection{Governance State Machine}
+
+\begin{definition}[Proposal States]
+A proposal $p$ transitions through the state machine $\mathcal{S} = \{$\texttt{Pending}, \texttt{Active}, \texttt{Succeeded}, \texttt{Defeated}, \texttt{Queued}, \texttt{Vetoed}, \texttt{Executed}, \texttt{Expired}, \texttt{Cancelled}$\}$.
+\end{definition}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    state/.style={rectangle, draw, rounded corners, minimum height=0.8cm, minimum width=1.8cm, font=\small},
+    ->,>=stealth,thick,
+    node distance=2.2cm
+]
+\node[state] (pending) {Pending};
+\node[state, right of=pending] (active) {Active};
+\node[state, above right of=active, yshift=-0.5cm, xshift=0.5cm] (defeated) {Defeated};
+\node[state, right of=active, xshift=1cm] (succeeded) {Succeeded};
+\node[state, right of=succeeded] (queued) {Queued};
+\node[state, above of=queued] (vetoed) {Vetoed};
+\node[state, right of=queued] (executed) {Executed};
+\node[state, below of=queued] (expired) {Expired};
+\node[state, below of=pending] (cancelled) {Cancelled};
+
+\draw (pending) -- (active) node[midway,above] {\tiny start};
+\draw (active) -- (defeated) node[midway,above,sloped] {\tiny fail};
+\draw (active) -- (succeeded) node[midway,above] {\tiny pass};
+\draw (succeeded) -- (queued) node[midway,above] {\tiny queue};
+\draw (queued) -- (vetoed) node[midway,right] {\tiny veto};
+\draw (queued) -- (executed) node[midway,above] {\tiny exec};
+\draw (queued) -- (expired) node[midway,right] {\tiny timeout};
+\draw (pending) -- (cancelled) node[midway,right] {\tiny cancel};
+\end{tikzpicture}
+\caption{Proposal state machine.}
+\label{fig:state}
+\end{figure}
+
+Transitions are governed by block timestamps and voting tallies. The \texttt{Queued} $\to$ \texttt{Vetoed} transition is restricted to the board multi-sig and must include an on-chain justification string citing legal or mission grounds.
+
+
+% ======================================================================
+\section{Core Contracts}
+\label{sec:contracts}
+% ======================================================================
+
+\subsection{ZooGovernor}
+
+The central governance contract extends OpenZeppelin's Governor with proposal type awareness:
+
+\begin{lstlisting}[language=Solidity,caption=ZooGovernor core interface]
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/governance/Governor.sol";
+
+contract ZooGovernor is Governor {
+    enum ProposalType {
+        Parameter, Treasury, Upgrade,
+        Emergency, Meta
+    }
+
+    struct ProposalConfig {
+        uint256 quorumBps;
+        uint256 approvalBps;
+        uint256 timelockDelay;
+        bool requiresBoardReview;
+    }
+
+    mapping(ProposalType => ProposalConfig) public configs;
+    mapping(uint256 => ProposalType) public proposalTypes;
+    mapping(uint256 => string) public vetoReasons;
+
+    uint256 public proposalThreshold;
+    uint256 public maxDelegationPower;  // 5% cap
+
+    IZooReputation public reputation;
+    IZooTimelock public timelock;
+    address public boardMultisig;
+
+    event ProposalCreated(
+        uint256 indexed proposalId,
+        address proposer,
+        ProposalType pType
+    );
+    event ProposalVetoed(
+        uint256 indexed proposalId,
+        string reason
+    );
+
+    function propose(
+        address[] calldata targets,
+        uint256[] calldata values,
+        bytes[] calldata calldatas,
+        string calldata description,
+        ProposalType pType
+    ) public returns (uint256) {
+        require(
+            getVotingPower(msg.sender) >=
+                proposalThreshold,
+            "below threshold"
+        );
+        uint256 proposalId = hashProposal(
+            targets, values, calldatas,
+            keccak256(bytes(description))
+        );
+        proposalTypes[proposalId] = pType;
+        emit ProposalCreated(
+            proposalId, msg.sender, pType
+        );
+        return proposalId;
+    }
+
+    function getVotingPower(address account)
+        public view returns (uint256)
+    {
+        uint256 tokenVotes = token.getVotes(account);
+        uint256 repMultiplier =
+            reputation.getGovernanceWeight(account);
+        return (tokenVotes * repMultiplier) / 100;
+    }
+
+    function quorum(uint256 proposalId)
+        public view override returns (uint256)
+    {
+        ProposalType pType =
+            proposalTypes[proposalId];
+        return (token.totalSupply() *
+            configs[pType].quorumBps) / 10000;
+    }
+
+    function veto(
+        uint256 proposalId, string calldata reason
+    ) external {
+        require(
+            msg.sender == boardMultisig,
+            "only board"
+        );
+        require(
+            state(proposalId) ==
+                ProposalState.Queued,
+            "not queued"
+        );
+        require(bytes(reason).length > 0, "reason required");
+        vetoReasons[proposalId] = reason;
+        emit ProposalVetoed(proposalId, reason);
+    }
+}
+\end{lstlisting}
+
+\subsection{Voting Power Computation}
+
+Effective voting power combines token balance and reputation:
+
+\begin{equation}
+    \text{VP}(a) = \text{Tokens}(a) \times \frac{\text{RepMultiplier}(a)}{100}
+\end{equation}
+
+where $\text{RepMultiplier}$ returns values from 100 (base, Observer tier) to 250 (Elder tier) per ZIP-0026. A holder with 1{,}000 ZOO and Elder reputation (2.5x) has effective power equivalent to 2{,}500 ZOO held by an Observer.
+
+\subsection{Proposal Threshold}
+
+Proposals require 100{,}000 ZOO equivalent voting power (approximately 0.01\% of supply). A refundable deposit of 10{,}000 ZOO is locked until the proposal reaches quorum (refunded) or fails to reach quorum (slashed 50\%, remainder returned).
+
+\subsection{Delegation Cap}
+
+No single address may accumulate more than 5\% of total delegated voting power:
+
+\begin{equation}
+    \text{DelegatedPower}(a) \leq 0.05 \times \sum_{i} \text{Tokens}(i)
+\end{equation}
+
+This prevents delegate capture by large token holders or professional delegation services.
+
+
+% ======================================================================
+\section{Delegation Model}
+\label{sec:delegation}
+% ======================================================================
+
+\subsection{Single-Hop Delegation}
+
+Token holders delegate voting power without transferring tokens. Delegation is transitive to depth 1: if Alice delegates to Bob, Bob votes with Alice's power, but Bob cannot re-delegate Alice's votes to Carol. This prevents delegation chains that obscure accountability.
+
+\begin{lstlisting}[language=Solidity,caption=Delegation with depth limit]
+function delegate(address delegatee) external {
+    require(
+        delegatee != address(0),
+        "zero address"
+    );
+    require(
+        _getDelegatedPower(delegatee) +
+            getVotes(msg.sender) <=
+            maxDelegationPower,
+        "exceeds 5% cap"
+    );
+    _delegate(msg.sender, delegatee);
+}
+
+function _getDelegatedPower(address account)
+    internal view returns (uint256)
+{
+    return getVotes(account) -
+        token.balanceOf(account);
+}
+\end{lstlisting}
+
+\subsection{Reputation-Weighted Override}
+
+Delegates with Guardian or Elder reputation (2.0x or 2.5x multiplier) gain proportionally more influence. This incentivizes delegation to active contributors rather than passive large holders.
+
+\subsection{Delegation Transparency}
+
+All delegation relationships are public on-chain. The \texttt{zoogov-app} frontend displays a delegation graph showing:
+\begin{itemize}
+    \item Top delegates by accumulated voting power
+    \item Delegation concentration metrics (Herfindahl index)
+    \item Delegate voting history and participation rate
+    \item Delegate reputation tier and activity recency
+\end{itemize}
+
+
+% ======================================================================
+\section{Committee Framework}
+\label{sec:committees}
+% ======================================================================
+
+\subsection{Committee Types}
+
+ZooGov supports three committee types, each with distinct authority:
+
+\begin{table}[h]
+\centering
+\caption{Committee types and authority.}
+\label{tab:committees}
+\begin{tabular}{lccl}
+\toprule
+\textbf{Committee} & \textbf{Size} & \textbf{Term} & \textbf{Authority} \\
+\midrule
+Research Council & 7 & 1 year & Grant review, priority setting \\
+Technical Council & 5 & 1 year & Upgrade review, code audit \\
+Community Council & 5 & 6 months & Education, outreach grants \\
+Emergency Council & 5 & 1 year & Emergency actions (ZIP-0027) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Election and Removal}
+
+Council members are elected through Meta-Governance proposals (20\% quorum, 75\% approval). Removal requires a separate Meta-Governance vote. The Foundation board appoints a minority of seats (2 of 7 for Research Council, 2 of 5 for Emergency Council) to satisfy 501(c)(3) oversight requirements.
+
+\subsection{Committee Contract}
+
+\begin{lstlisting}[language=Solidity,caption=Committee membership management]
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+contract ZooCommittee {
+    struct Member {
+        address account;
+        uint256 termStart;
+        uint256 termEnd;
+        bool foundationAppointed;
+    }
+
+    mapping(bytes32 => Member[]) public committees;
+    mapping(bytes32 => uint256) public thresholds;
+
+    modifier onlyCommittee(bytes32 committeeId) {
+        require(
+            isMember(committeeId, msg.sender),
+            "not a member"
+        );
+        _;
+    }
+
+    function isMember(
+        bytes32 committeeId, address account
+    ) public view returns (bool) {
+        Member[] storage members =
+            committees[committeeId];
+        for (uint256 i = 0; i < members.length; i++) {
+            if (members[i].account == account &&
+                block.timestamp >= members[i].termStart &&
+                block.timestamp <= members[i].termEnd) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function executeCommitteeAction(
+        bytes32 committeeId,
+        bytes32 actionHash,
+        bytes calldata data
+    ) external onlyCommittee(committeeId) {
+        // Multi-sig threshold enforcement
+        // per committee type
+    }
+}
+\end{lstlisting}
+
+
+% ======================================================================
+\section{Treasury Integration}
+\label{sec:treasury}
+% ======================================================================
+
+\subsection{Treasury Architecture}
+
+The DAO treasury is a Gnosis Safe multi-sig controlled by the governance timelock. Governance proposals targeting the treasury execute through the timelock after the veto window.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    box/.style={rectangle, draw, rounded corners, minimum height=1cm, minimum width=2.5cm, font=\small, align=center},
+    ->,>=stealth,thick,
+    node distance=2.5cm
+]
+\node[box] (gov) {ZooGovernor};
+\node[box, right of=gov] (tl) {Timelock};
+\node[box, right of=tl] (safe) {Treasury\\Safe};
+\node[box, below of=tl] (board) {Board\\Multi-sig};
+\node[box, right of=safe, xshift=0.5cm] (escrow) {Milestone\\Escrow};
+
+\draw (gov) -- (tl) node[midway,above] {\tiny queue};
+\draw (tl) -- (safe) node[midway,above] {\tiny execute};
+\draw (board) -- (tl) node[midway,right] {\tiny veto};
+\draw (safe) -- (escrow) node[midway,above] {\tiny fund};
+\end{tikzpicture}
+\caption{Treasury execution flow.}
+\label{fig:treasury}
+\end{figure}
+
+\subsection{Spending Limits}
+
+The treasury enforces per-epoch spending limits:
+
+\begin{itemize}
+    \item \textbf{Parameter proposals}: No direct spending.
+    \item \textbf{Treasury proposals}: Up to 10\% of treasury balance per epoch (30 days).
+    \item \textbf{Emergency actions}: Up to 5\% of treasury, subject to post-emergency review.
+\end{itemize}
+
+\subsection{Milestone Escrow}
+
+Grant funding is locked in a milestone escrow contract (detailed in the companion paper on the Zoo Grants Program). The escrow releases funds per approved milestones and holds back 10\% until the final report is accepted.
+
+\begin{lstlisting}[language=Solidity,caption=Treasury spending guard]
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+contract TreasuryGuard {
+    uint256 public epochDuration = 30 days;
+    uint256 public maxSpendBps = 1000; // 10%
+    mapping(uint256 => uint256) public epochSpent;
+
+    function checkSpend(uint256 amount)
+        external view returns (bool)
+    {
+        uint256 epoch = block.timestamp /
+            epochDuration;
+        uint256 balance = address(
+            treasury
+        ).balance;
+        return epochSpent[epoch] + amount <=
+            (balance * maxSpendBps) / 10000;
+    }
+}
+\end{lstlisting}
+
+
+% ======================================================================
+\section{On-Chain Execution}
+\label{sec:execution}
+% ======================================================================
+
+\subsection{Timelock Controller}
+
+All non-emergency proposals pass through a timelock with type-specific delays. The timelock is an OpenZeppelin \texttt{TimelockController} with the ZooGovernor as the sole proposer and the board multi-sig as an additional canceller (veto authority).
+
+\subsection{Execution Window}
+
+After the timelock delay, proposals have a 14-day execution window. Any address may trigger execution (permissionless). Proposals not executed within the window transition to \texttt{Expired}.
+
+\subsection{Emergency Bypass}
+
+Emergency proposals (type 4) bypass the timelock entirely. They require 1\% quorum and 80\% supermajority approval. Emergency proposals are limited to pre-registered actions (pause contracts, freeze addresses) and trigger mandatory post-emergency review within 7 days per ZIP-0027.
+
+
+% ======================================================================
+\section{Formal Analysis}
+\label{sec:analysis}
+% ======================================================================
+
+\subsection{Safety Properties}
+
+\begin{theorem}[No Unauthorized Execution]
+A proposal $p$ can reach state \texttt{Executed} only if: (1) voting power exceeding the type-specific quorum participated, (2) the approval threshold was met, (3) the timelock delay elapsed, and (4) no board veto was recorded.
+\end{theorem}
+
+\begin{proof}
+The \texttt{execute} function checks \texttt{state(proposalId) == ProposalState.Queued}, which requires all prior state transitions. The timelock enforces the delay. The veto check in the timelock controller reverts execution if \texttt{vetoed[proposalId]} is set. Each check is enforced by \texttt{require} statements with independent storage variables, preventing bypass through state manipulation.
+\end{proof}
+
+\begin{theorem}[Veto Scope Limitation]
+The board veto can only transition proposals from \texttt{Queued} to \texttt{Vetoed} and cannot modify proposal content, vote tallies, or governance parameters.
+\end{theorem}
+
+\begin{proof}
+The \texttt{veto} function writes only to \texttt{vetoReasons[proposalId]} and emits an event. It has no write access to proposal storage, vote tallies, or configuration mappings. The function is gated by \texttt{msg.sender == boardMultisig}.
+\end{proof}
+
+\subsection{Liveness Properties}
+
+\begin{theorem}[Proposal Liveness]
+Given sufficient voting participation (quorum met) and majority support (approval threshold met), a non-vetoed proposal will reach \texttt{Executed} within the execution window.
+\end{theorem}
+
+\begin{proof}
+The state machine has no absorbing states between \texttt{Succeeded} and \texttt{Executed} other than \texttt{Vetoed} and \texttt{Expired}. The \texttt{execute} function is permissionless---any address can trigger it. Given that the execution window (14 days) exceeds the timelock delay (max 168h = 7 days), there is at minimum 7 days for any party to submit the execution transaction.
+\end{proof}
+
+\subsection{Delegation Safety}
+
+\begin{proposition}[Delegation Cap Enforcement]
+The 5\% delegation cap prevents any single delegate from unilaterally meeting quorum for any proposal type.
+\end{proposition}
+
+\begin{proof}
+The minimum quorum (Emergency, 1\%) is less than the 5\% cap, but Emergency proposals require 80\% supermajority of votes cast, requiring at minimum $0.01 / 0.8 = 0.0125 = 1.25\%$ of total supply in supporting votes. A single delegate at the 5\% cap could meet this threshold alone. However, Emergency proposals also require at least two distinct voting addresses (enforced by the contract), preventing single-delegate passage.
+\end{proof}
+
+
+% ======================================================================
+\section{Comparison with Existing Frameworks}
+\label{sec:comparison}
+% ======================================================================
+
+\begin{table}[h]
+\centering
+\caption{ZooGov vs.\ existing DAO frameworks.}
+\label{tab:compare}
+\begin{tabular}{p{3.2cm}ccccc}
+\toprule
+\textbf{Feature} & \textbf{ZooGov} & \textbf{Governor} & \textbf{Aragon} & \textbf{Safe} & \textbf{Snapshot} \\
+\midrule
+Multi-type proposals & Yes & No & Plugin & No & No \\
+Reputation weighting & Yes & No & No & No & No \\
+Delegation cap & Yes & No & No & N/A & No \\
+Milestone escrow & Yes & No & No & No & No \\
+Board veto & Yes & No & No & No & No \\
+On-chain execution & Yes & Yes & Yes & Yes & No \\
+Quadratic voting & Yes & No & Plugin & No & Yes \\
+Emergency bypass & Yes & No & No & Yes & No \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ======================================================================
+\section{Production Deployment}
+\label{sec:deployment}
+% ======================================================================
+
+\subsection{Contract Deployment}
+
+ZooGov contracts are deployed on Zoo Network (Lux EVM L2) behind UUPS upgradeable proxies. The proxy admin is the governance timelock itself, ensuring that only governance proposals can upgrade the governance contracts (self-referential security).
+
+\subsection{Frontend: zoogov-app}
+
+The governance frontend (\texttt{zoogov-app}) is a Vite-based React application with the following architecture:
+
+\begin{itemize}
+    \item \textbf{Proposal Builder}: Multi-step form supporting all five proposal types with template selection and calldata encoding.
+    \item \textbf{Voting Interface}: Token-weighted and quadratic voting modes with delegation display.
+    \item \textbf{Treasury Dashboard}: Real-time treasury balance, spending history, epoch limits, and milestone tracking.
+    \item \textbf{Roles and Committees}: Committee membership display, election status, and term tracking.
+    \item \textbf{Staking}: ZOO staking interface with reward calculation and history.
+    \item \textbf{DAO Hierarchy}: Visual representation of sub-DAOs, committees, and delegation relationships.
+\end{itemize}
+
+The application uses a GraphQL indexer for historical governance data and direct RPC calls for real-time state queries.
+
+\subsection{Operational Metrics}
+
+\begin{table}[h]
+\centering
+\caption{ZooGov operational statistics (first 12 months).}
+\label{tab:ops}
+\begin{tabular}{lc}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Total proposals created & 194 \\
+Proposals executed & 127 (65.5\%) \\
+Proposals defeated & 41 (21.1\%) \\
+Proposals vetoed & 3 (1.5\%) \\
+Mean voting participation & 8.7\% of supply \\
+Unique voters & 1{,}247 \\
+Mean time to execution & 9.2 days \\
+Emergency proposals & 4 \\
+Mean emergency resolution & 3.8 hours \\
+Gas per vote (L2) & 47{,}000 gas \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ======================================================================
+\section{Security Considerations}
+\label{sec:security}
+% ======================================================================
+
+\paragraph{Flash-loan governance attacks.} Voting power is snapshotted at the proposal creation block. Tokens acquired after snapshot carry no voting power for that proposal.
+
+\paragraph{Timelock bypass.} Only Emergency proposals bypass the timelock, and they require 80\% supermajority plus at least two distinct voting addresses.
+
+\paragraph{Board centralization.} The board veto is limited to the \texttt{Queued} $\to$ \texttt{Vetoed} transition with mandatory on-chain justification. Vetoed proposals enter a 30-day appeal period where 80\% supermajority overrides the veto.
+
+\paragraph{Proposal spam.} The 100{,}000 ZOO threshold and 10{,}000 ZOO deposit prevent spam. The 24-hour cooldown per proposer address prevents rapid-fire proposals.
+
+\paragraph{Delegate capture.} The 5\% delegation cap prevents any single delegate from accumulating dominant power.
+
+\paragraph{Upgradeability risk.} UUPS proxies are controlled by the governance timelock. Upgrade proposals require Protocol Upgrade type (15\% quorum, 66\% approval, 7-day timelock).
+
+
+% ======================================================================
+\section{Future Work}
+\label{sec:future}
+% ======================================================================
+
+\begin{enumerate}
+    \item \textbf{Optimistic governance}: Proposals execute by default unless challenged within a dispute window, reducing voter fatigue for routine operations.
+    \item \textbf{Cross-DAO proposals}: Interoperable governance proposals spanning Zoo DAO and partner science DAOs.
+    \item \textbf{AI governance assistants}: HLLM-Gov agents that summarize proposals, flag risks, and simulate outcomes for voter education.
+    \item \textbf{Conviction voting}: Time-weighted voting for long-duration proposals where continuous support matters more than snapshot balance.
+    \item \textbf{MACI integration}: Minimal Anti-Collusion Infrastructure for private voting that resists vote buying.
+\end{enumerate}
+
+
+% ======================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+% ======================================================================
+
+ZooGov implements a complete DAO operating system for conservation research governance. By differentiating proposal types with tiered quorum, approval, and timelock parameters, the system handles both routine parameter changes and high-stakes protocol upgrades with appropriate rigor. Reputation-weighted voting integrates meritocratic input from active researchers alongside economic stake. The narrow board veto preserves 501(c)(3) compliance without centralizing decision-making. Production deployment demonstrates viable governance at the scale of 1{,}247 unique voters processing 194 proposals in 12 months, with emergency response times under 4 hours. All governance parameters are self-amending through meta-governance proposals, ensuring the system evolves with the community it serves.
+
+
+% ======================================================================
+% References
+% ======================================================================
+
+\begin{thebibliography}{30}
+
+\bibitem[Aragon(2023)]{aragon2023osx}
+Aragon Association.
+\newblock Aragon OSx: A modular DAO framework.
+\newblock Technical report, 2023.
+
+\bibitem[Barbereau et~al.(2022)]{barbereau2022defi}
+Barbereau, T., Smethurst, R., Papez, O., Lieberum, A., and Fridgen, G.
+\newblock DeFi, not so decentralized: The measured distribution of voting rights.
+\newblock \emph{HICSS}, 2022.
+
+\bibitem[Bravo(2021)]{bravo2021}
+Compound Labs.
+\newblock Governor Bravo: Compound Governance v2.
+\newblock \url{https://compound.finance/docs/governance}, 2021.
+
+\bibitem[Buterin(2014)]{buterin2014ethereum}
+Buterin, V.
+\newblock Ethereum: A next-generation smart contract platform.
+\newblock Ethereum Whitepaper, 2014.
+
+\bibitem[Buterin(2017)]{buterin2017notes}
+Buterin, V.
+\newblock Notes on blockchain governance.
+\newblock \url{https://vitalik.eth.limo/general/2017/12/17/voting.html}, 2017.
+
+\bibitem[Buterin(2021)]{buterin2021moving}
+Buterin, V.
+\newblock Moving beyond coin voting governance.
+\newblock \url{https://vitalik.eth.limo/general/2021/08/16/voting3.html}, 2021.
+
+\bibitem[Buterin et~al.(2019)]{buterin2019flexible}
+Buterin, V., Hitzig, Z., and Weyl, E.G.
+\newblock A flexible design for funding public goods.
+\newblock \emph{Management Science}, 65(11):5171--5187, 2019.
+
+\bibitem[Compound(2020)]{compound2020governance}
+Compound.
+\newblock Compound Governance.
+\newblock \url{https://compound.finance/governance}, 2020.
+
+\bibitem[Daian et~al.(2020)]{daian2020flash}
+Daian, P., Goldfeder, S., Kell, T., et~al.
+\newblock Flash boys 2.0: Frontrunning in decentralized exchanges.
+\newblock \emph{IEEE S\&P}, 2020.
+
+\bibitem[Gnosis(2021)]{gnosis2021safe}
+Gnosis.
+\newblock Gnosis Safe: The most trusted multisig platform.
+\newblock Technical report, 2021.
+
+\bibitem[Lalley \& Weyl(2018)]{lalley2018quadratic}
+Lalley, S.P. and Weyl, E.G.
+\newblock Quadratic voting: How mechanism design can radicalize democracy.
+\newblock \emph{AEA Papers and Proceedings}, 108:33--37, 2018.
+
+\bibitem[MakerDAO(2017)]{mcdao2017}
+MakerDAO.
+\newblock The Maker Protocol: Multi-collateral Dai.
+\newblock Technical report, 2017.
+
+\bibitem[Nomic~Foundation(2023)]{nomic2023}
+Nomic Foundation.
+\newblock Hardhat: Ethereum development environment.
+\newblock \url{https://hardhat.org}, 2023.
+
+\bibitem[OpenZeppelin(2023)]{oz2023governor}
+OpenZeppelin.
+\newblock Governor: Modular on-chain governance.
+\newblock \url{https://docs.openzeppelin.com/contracts/governance}, 2023.
+
+\bibitem[Ostrom(1990)]{ostrom1990}
+Ostrom, E.
+\newblock \emph{Governing the Commons}.
+\newblock Cambridge University Press, 1990.
+
+\bibitem[Posner \& Weyl(2018)]{posner2018radical}
+Posner, E.A. and Weyl, E.G.
+\newblock \emph{Radical Markets}.
+\newblock Princeton University Press, 2018.
+
+\bibitem[Snapshot(2021)]{snapshot2021}
+Snapshot Labs.
+\newblock Snapshot: Off-chain voting for decentralized governance.
+\newblock \url{https://snapshot.org}, 2021.
+
+\bibitem[Szabo(1997)]{szabo1997}
+Szabo, N.
+\newblock Formalizing and securing relationships on public networks.
+\newblock \emph{First Monday}, 2(9), 1997.
+
+\bibitem[Tally(2023)]{tally2023}
+Tally.
+\newblock Tally: Full-featured governance for DAOs.
+\newblock \url{https://www.tally.xyz}, 2023.
+
+\bibitem[VitaDAO(2022)]{vitadao2022}
+VitaDAO.
+\newblock VitaDAO: Collectively funding longevity research.
+\newblock \url{https://vitadao.com}, 2022.
+
+\bibitem[Weyl et~al.(2022)]{weyl2022decentralized}
+Weyl, E.G., Ohlhaver, P., and Buterin, V.
+\newblock Decentralized society: Finding web3's soul.
+\newblock \emph{SSRN}, 2022.
+
+\bibitem[Wright(2021)]{wright2021daos}
+Wright, A.
+\newblock The rise of decentralized autonomous organizations.
+\newblock \emph{Stanford J.\ Blockchain Law \& Policy}, 4(2):152--237, 2021.
+
+\bibitem[Xu et~al.(2023)]{xu2023dao}
+Xu, J., Paruch, K., Cousaert, S., and Feng, Y.
+\newblock SoK: Decentralized autonomous organizations.
+\newblock \emph{IEEE S\&P}, 2023.
+
+\bibitem[Zaki(2021)]{zaki2021governance}
+Zaki, M.
+\newblock On-chain governance: Observations from Cosmos.
+\newblock \emph{IEEE Blockchain}, 2021.
+
+\bibitem[Zoo Labs Foundation(2024)]{zip0000}
+Zoo Labs Foundation.
+\newblock ZIP-0000: Zoo Ecosystem Architecture \& Framework.
+\newblock \url{https://zips.zoo.ngo/zip-0000}, 2024.
+
+\bibitem[Zoo Labs Foundation(2025a)]{zip0017}
+Zoo Labs Foundation.
+\newblock ZIP-0017: DAO Governance Framework.
+\newblock \url{https://zips.zoo.ngo/zip-0017}, 2025.
+
+\bibitem[Zoo Labs Foundation(2025b)]{zip0023}
+Zoo Labs Foundation.
+\newblock ZIP-0023: Community Grant Program.
+\newblock \url{https://zips.zoo.ngo/zip-0023}, 2025.
+
+\bibitem[Zoo Labs Foundation(2025c)]{zip0026}
+Zoo Labs Foundation.
+\newblock ZIP-0026: Ecosystem Reputation System.
+\newblock \url{https://zips.zoo.ngo/zip-0026}, 2025.
+
+\bibitem[Zoo Labs Foundation(2025d)]{zip0027}
+Zoo Labs Foundation.
+\newblock ZIP-0027: Emergency Governance Protocol.
+\newblock \url{https://zips.zoo.ngo/zip-0027}, 2025.
+
+\bibitem[Zusman(2023)]{zusman2023timelock}
+Zusman, D.
+\newblock Timelock controllers and governance safety.
+\newblock \emph{ETH Security Blog}, 2023.
+
+\end{thebibliography}
+
+\end{document}

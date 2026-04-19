@@ -1,0 +1,68 @@
+\section{Implementation}
+
+\label{sec:implementation}
+
+\subsection{System Architecture}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.2cm,
+    box/.style={rectangle, draw, rounded corners, minimum width=2.8cm, minimum height=0.7cm, text centered, font=\footnotesize},
+    edge/.style={->, thick}
+]
+    \node[box, fill=blue!10] (ingest) {Ingestion API};
+    \node[box, fill=green!10, right=1.5cm of ingest] (validate) {Quality Engine};
+    \node[box, fill=orange!10, right=1.5cm of validate] (store) {IPFS Storage};
+    \node[box, fill=red!10, below=1cm of ingest] (index) {Search Index};
+    \node[box, fill=purple!10, below=1cm of validate] (chain) {Zoo Blockchain};
+    \node[box, fill=yellow!10, below=1cm of store] (access) {Access Control};
+
+    \draw[edge] (ingest) -- (validate);
+    \draw[edge] (validate) -- (store);
+    \draw[edge] (validate) -- (index);
+    \draw[edge] (store) -- (chain);
+    \draw[edge] (chain) -- (access);
+    \draw[edge] (index) -- (access);
+\end{tikzpicture}
+\caption{Zoo Data Commons system architecture.}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{Software Stack}
+
+\begin{table}[H]
+\centering
+\caption{ZDC software components.}
+\label{tab:software}
+\begin{tabularx}{\textwidth}{@{}llcX@{}}
+\toprule
+\textbf{Component} & \textbf{Language} & \textbf{Lines} & \textbf{Description} \\
+\midrule
+Ingestion Engine & Python & 7,200 & Darwin Core parsing, schema validation, format conversion \\
+Quality Assessor & Python & 5,800 & Automated quality scoring, anomaly detection \\
+IPFS Manager & Rust & 4,600 & Content-addressed storage, pinning management \\
+Provenance Tracker & Rust & 3,900 & Hash chain construction, provenance query engine \\
+Access Controller & Rust & 6,100 & ABE encryption, policy evaluation, DGC management \\
+Search Service & Go & 8,400 & Distributed index, spatial queries, full-text search \\
+Smart Contracts & Solidity & 2,800 & Curation market, staking, governance \\
+Web Interface & TypeScript & 11,200 & Data explorer, upload wizard, governance dashboard \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Interoperability}
+
+ZDC implements bidirectional synchronization with major biodiversity data platforms:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{GBIF:} Darwin Core Archive export/import with ZDO-to-DwCA mapping.
+    \item \textbf{iNaturalist:} Observation import with quality grade mapping.
+    \item \textbf{GenBank:} Genetic sequence cross-referencing via NCBI accession numbers.
+    \item \textbf{BOLD:} Barcode record linkage through specimen identifiers.
+    \item \textbf{eBird:} Checklist import with observer reputation mapping.
+\end{itemize}
+
+% ============================================================
+% 8. Evaluation
+% ============================================================

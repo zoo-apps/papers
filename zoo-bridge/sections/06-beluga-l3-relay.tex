@@ -1,0 +1,61 @@
+\section{Beluga L3 Relay}
+
+\label{sec:beluga}
+
+\subsection{Chained Warp Messages}
+
+Transfers to Beluga L3 (chain ID 420420) require chaining two Warp messages because Beluga validators are a subset of Zoo validators, not Lux validators:
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=3cm,
+    chain/.style={rectangle, draw, rounded corners, minimum width=2.5cm, minimum height=1.2cm, align=center, fill=blue!10},
+    arrow/.style={->, thick}
+]
+    \node[chain] (lux) {Lux L0\\(96369)};
+    \node[chain, right=of lux] (zoo) {Zoo L2\\(200200)};
+    \node[chain, right=of zoo] (beluga) {Beluga L3\\(420420)};
+
+    \draw[arrow] (lux) -- (zoo) node[midway, above, font=\small] {Warp 1};
+    \draw[arrow] (zoo) -- (beluga) node[midway, above, font=\small] {Warp 2};
+    \draw[arrow, dashed, bend right=30] (lux) to node[midway, below, font=\small] {2.4s total} (beluga);
+\end{tikzpicture}
+\caption{Beluga relay: two chained Warp messages for L0 $\to$ L3 transfer.}
+\label{fig:relay}
+\end{figure}
+
+\subsection{Aggregate Verification}
+
+To avoid double verification overhead, the Zoo relay contract produces an aggregate proof:
+
+\begin{equation}
+\sigma_{\text{relay}} = \text{BLS.Aggregate}(\sigma_{\text{warp1}}, \sigma_{\text{warp2}})
+\end{equation}
+
+Beluga verifies both hops in a single pairing check:
+
+\begin{equation}
+e(\sigma_{\text{relay}}, g_2) = e(H(W_1), pk_{\text{lux}}) \cdot e(H(W_2), pk_{\text{zoo}})
+\end{equation}
+
+This reduces verification gas from $2 \times 150\text{K} = 300\text{K}$ to $180\text{K}$ (40\% savings).
+
+\subsection{Relay Latency}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Hop} & \textbf{Latency (ms)} & \textbf{Cumulative (ms)} \\
+\midrule
+Lux $\to$ Zoo (Warp 1) & 1,200 & 1,200 \\
+Zoo relay processing & 50 & 1,250 \\
+Zoo $\to$ Beluga (Warp 2) & 1,100 & 2,350 \\
+Beluga execution & 50 & 2,400 \\
+\bottomrule
+\end{tabular}
+\caption{Beluga relay latency breakdown. Total: 2.4 seconds for L0 $\to$ L3 transfer.}
+\label{tab:relay}
+\end{table}
+

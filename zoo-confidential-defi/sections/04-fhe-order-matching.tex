@@ -1,0 +1,80 @@
+\section{FHE Order Matching}
+
+\label{sec:matching}
+%----------------------------------------------------------------------
+
+\subsection{Price Comparison Circuit}
+
+The core matching operation is comparing an encrypted bid price $\hat{p}_b$ against an encrypted ask price $\hat{p}_a$. Using \TFHE{}, we evaluate a greater-than-or-equal circuit on the bit representations:
+
+\begin{algorithm}
+\caption{Encrypted Price Comparison (\TFHE{})}
+\begin{algorithmic}[1]
+\REQUIRE Encrypted bid price $\hat{p}_b = (\hat{b}_{63}, \ldots, \hat{b}_0)$, encrypted ask price $\hat{p}_a = (\hat{a}_{63}, \ldots, \hat{a}_0)$
+\STATE $\hat{r} \leftarrow \text{TFHE.Encrypt}(pk, 0)$ \COMMENT{result bit}
+\FOR{$i = 63$ \textbf{downto} $0$}
+    \STATE $\hat{e}_i \leftarrow \text{TFHE.XNOR}(\hat{b}_i, \hat{a}_i)$ \COMMENT{bits equal?}
+    \STATE $\hat{g}_i \leftarrow \text{TFHE.AND}(\hat{b}_i, \text{TFHE.NOT}(\hat{a}_i))$ \COMMENT{bid bit > ask bit?}
+    \STATE $\hat{r} \leftarrow \text{TFHE.MUX}(\hat{e}_i, \hat{r}, \hat{g}_i)$ \COMMENT{propagate or update}
+\ENDFOR
+\RETURN $\hat{r}$ \COMMENT{encrypted bit: 1 if $p_b \geq p_a$, 0 otherwise}
+\end{algorithmic}
+\end{algorithm}
+
+This circuit evaluates in $O(b)$ where $b = 64$ is the bit width of the price representation. With programmable bootstrapping after each gate, noise does not accumulate.
+
+\subsection{Volume Matching}
+
+When a price match is found ($\hat{r} = \hat{1}$), the fill quantity is computed via \CKKS{}:
+
+\begin{equation}
+\hat{q}_{\textit{fill}} = \text{CKKS.Min}(\hat{q}_b, \hat{q}_a)
+\end{equation}
+
+where $\text{CKKS.Min}$ is implemented using the sign function approximated by a Chebyshev polynomial of degree 16:
+
+\begin{equation}
+\text{CKKS.Min}(\hat{x}, \hat{y}) = \frac{\hat{x} + \hat{y} - |\hat{x} - \hat{y}|}{2}
+\end{equation}
+
+with $|\hat{z}| \approx \hat{z} \cdot \text{sign}(\hat{z})$ evaluated homomorphically.
+
+\subsection{Matching Engine Architecture}
+
+The matching engine processes orders in price-time priority:
+
+\begin{algorithm}
+\caption{FHE Order Matching Engine}
+\begin{algorithmic}[1]
+\REQUIRE Encrypted order books $\hat{\mathcal{B}}$ (bids), $\hat{\mathcal{A}}$ (asks), sorted by submission time
+\STATE $\textit{matches} \leftarrow \emptyset$
+\FOR{each bid $\hat{O}_b \in \hat{\mathcal{B}}$}
+    \FOR{each ask $\hat{O}_a \in \hat{\mathcal{A}}$}
+        \STATE $\hat{r} \leftarrow \text{TFHE.GEQ}(\hat{p}_b, \hat{p}_a)$ \COMMENT{price match?}
+        \STATE $\hat{q}_f \leftarrow \text{CKKS.Min}(\hat{q}_b, \hat{q}_a)$ \COMMENT{fill quantity}
+        \STATE $\hat{m} \leftarrow \text{TFHE.AND}(\hat{r}, \text{TFHE.GT}(\hat{q}_f, \hat{0}))$ \COMMENT{valid match?}
+        \STATE Append $(\hat{O}_b, \hat{O}_a, \hat{q}_f, \hat{m})$ to $\textit{matches}$
+        \IF{$\hat{m}$ decrypts to 1 (via threshold)}
+            \STATE Update remaining quantities: $\hat{q}_b \leftarrow \hat{q}_b - \hat{q}_f$, $\hat{q}_a \leftarrow \hat{q}_a - \hat{q}_f$
+        \ENDIF
+    \ENDFOR
+\ENDFOR
+\RETURN $\textit{matches}$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{remark}
+The naive $O(|\mathcal{B}| \cdot |\mathcal{A}|)$ matching is acceptable because: (a) each comparison is independent and parallelizable across GPU cores, and (b) active order book depth on \Zoo{} \DEX{} is bounded (typically $< 1{,}000$ orders per pair).
+\end{remark}
+
+\subsection{Batch Matching Optimization}
+
+Rather than matching orders one-at-a-time, the engine batches all orders received within a block period (2 seconds) and matches them simultaneously. This provides:
+
+\begin{itemize}
+    \item \textbf{Fairness.} All orders in a batch are treated equally---no time advantage within a block.
+    \item \textbf{Efficiency.} GPU parallelism is maximized when processing a batch.
+    \item \textbf{MEV elimination.} Reordering within a batch does not affect matching outcomes when price-time priority considers only batch ordering.
+\end{itemize}
+
+%----------------------------------------------------------------------

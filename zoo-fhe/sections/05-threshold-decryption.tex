@@ -1,0 +1,52 @@
+\section{Threshold Decryption}
+
+\label{sec:threshold}
+%----------------------------------------------------------------------
+
+\subsection{Motivation}
+
+In a blockchain setting, no single entity should hold the decryption key. \Zoo{} distributes the \TFHE{}/\CKKS{} secret key across validators using Shamir secret sharing with a 67-of-100 reconstruction threshold.
+
+\subsection{Encrypt-to-Shares Protocol}
+
+Key generation proceeds as follows:
+
+\begin{enumerate}
+  \item A trusted dealer (the genesis ceremony) generates $\mathbf{s} \in \mathbb{Z}_q^n$ and computes Shamir shares $\mathbf{s}_i$ for $i \in \{1, \ldots, 100\}$ with threshold $t = 67$.
+  \item Each share $\mathbf{s}_i$ is encapsulated under validator $i$'s \MLKEM{}-768 public key and published to \Lux{} \KChain{} as a sealed transaction.
+  \item Validators decrypt their share locally and store it in a hardware security module (HSM) or TEE enclave.
+\end{enumerate}
+
+\begin{definition}[E2S Decryption]
+To decrypt ciphertext $\mathsf{ct} = (\mathbf{a}, b)$, each participating validator $i$ computes a partial decryption:
+\begin{equation}
+  d_i = \langle \mathbf{a}, \mathbf{s}_i \rangle + e_i
+\end{equation}
+where $e_i$ is a smudging noise term with $\|e_i\| \ll q/4$ to prevent share leakage. The aggregator reconstructs:
+\begin{equation}
+  m = b - \sum_{i \in S} \lambda_i \cdot d_i \pmod{q}, \quad |S| \geq 67
+\end{equation}
+where $\lambda_i$ are Lagrange interpolation coefficients for the set $S$.
+\end{definition}
+
+\subsection{67-of-100 Default Threshold}
+
+The threshold $t = 67$ is chosen to satisfy:
+
+\begin{itemize}
+  \item \textbf{Safety}: an adversary controlling fewer than 34 validators cannot decrypt any ciphertext.
+  \item \textbf{Liveness}: the system tolerates up to 33 offline or Byzantine validators while maintaining decryption capability.
+  \item \textbf{Alignment with BFT}: the $2/3 + 1$ threshold matches the Byzantine fault tolerance bound used in \Zoo{} \TChain{} consensus.
+\end{itemize}
+
+\subsection{Key Share Rotation}
+
+Validator set changes trigger proactive secret sharing (PSS). New shares are computed via a resharing protocol without reconstructing $\mathbf{s}$:
+
+\begin{equation}
+  \mathbf{s}_i^{(\mathrm{new})} = \sum_{j \in S_{\mathrm{old}}} \lambda_j \cdot \mathbf{s}_{j \to i}
+\end{equation}
+
+\noindent where $\mathbf{s}_{j \to i}$ is a re-share from old validator $j$ to new validator $i$, again encapsulated under \MLKEM{}-768. This ensures forward secrecy: compromised old shares cannot decrypt ciphertexts encrypted under the new epoch's public key.
+
+%----------------------------------------------------------------------

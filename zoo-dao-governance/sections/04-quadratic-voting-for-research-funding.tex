@@ -1,0 +1,74 @@
+\section{Quadratic Voting for Research Funding}
+
+\label{sec:qv}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Mechanism Design}
+
+In each funding round, the DAO allocates budget $B$ across $N$ proposals.
+Voter $i$ receives voice credits $v_i$ proportional to \ZOO{} holdings
+(capped). Voter $i$ allocates $k_{ij}$ votes to proposal $j$, paying
+$k_{ij}^2$ credits:
+\begin{equation}
+  \sum_{j=1}^{N} k_{ij}^2 \leq v_i \quad \forall i
+\end{equation}
+
+Total votes for proposal $j$:
+\begin{equation}
+  V_j = \sum_{i=1}^{M} k_{ij}
+\end{equation}
+
+Budget allocation proportional to squared total votes:
+\begin{equation}
+  B_j = B \cdot \frac{\max(V_j, 0)^2}{\sum_{j'} \max(V_{j'}, 0)^2}
+\end{equation}
+
+Negative votes are permitted to signal opposition.
+
+\subsection{Sybil Resistance}
+
+We implement three defenses: ZooRep gating ($\geq$50 ZooRep to vote),
+pairwise coordination detection \citep{buterin2019flexible}, and
+connection-weighted QV that scales credits by social graph uniqueness.
+
+\subsection{Formal Properties}
+
+\begin{theorem}[Efficiency of QV for Research Allocation]
+Under quasi-linear utility over research outcomes and sufficient voice
+credits, QV funding allocation converges to the utilitarian
+welfare-maximizing allocation as voter count increases.
+\end{theorem}
+
+\begin{proof}
+Under quasi-linear utility $u_i(B_j) = \theta_{ij} \cdot B_j -
+k_{ij}^2$ where $\theta_{ij}$ is voter $i$'s marginal valuation, the
+first-order condition gives $k_{ij}^* = \theta_{ij} / 2$. The aggregate
+vote $V_j = \sum_i \theta_{ij} / 2$ is proportional to total social
+valuation. The QF rule ensures funding proportional to the square of
+aggregate valuation, approximating the utilitarian optimum
+\citep{lalley2018quadratic}.
+\end{proof}
+
+\subsection{Comparison with Alternatives}
+
+\begin{table}[H]
+\centering
+\caption{Comparison of voting mechanisms for research funding.}
+\label{tab:voting}
+\begin{tabular}{p{3cm}cccc}
+\toprule
+\textbf{Property} & \textbf{1T1V} & \textbf{QV} &
+  \textbf{Conviction} & \textbf{Expert panel} \\
+\midrule
+Plutocracy resistance & Low & High & Medium & N/A \\
+Preference intensity & No & Yes & Partial & Yes \\
+Sybil resistance & High & Medium & High & High \\
+Participation cost & Low & Medium & Low & High \\
+Minority voice & Low & High & Medium & Low \\
+Scalability & High & High & High & Low \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ══════════════════════════════════════════════════════════════════════════════

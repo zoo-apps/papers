@@ -1,0 +1,55 @@
+\section{Sealed-Bid Auctions}
+
+\label{sec:auctions}
+%----------------------------------------------------------------------
+
+\subsection{Auction Structure}
+
+A sealed-bid auction on \Zoo{} operates as follows:
+
+\begin{enumerate}
+    \item \textbf{Commitment Phase.} Bidders encrypt their bids under the collective \FHE{} key and submit them on-chain. The auction contract records encrypted bids but cannot read them.
+    \item \textbf{Evaluation Phase.} After the bidding deadline, the auction contract evaluates encrypted bids homomorphically to determine the winner.
+    \item \textbf{Reveal Phase.} Only the winning bid (and, in second-price auctions, the second-highest bid) is decrypted via \TChain{} threshold protocol. Losing bids are never decrypted.
+\end{enumerate}
+
+\subsection{TFHE Winner Determination}
+
+For a first-price auction with $n$ encrypted bids $\hat{b}_1, \ldots, \hat{b}_n$:
+
+\begin{algorithm}
+\caption{Encrypted First-Price Auction}
+\begin{algorithmic}[1]
+\REQUIRE Encrypted bids $\hat{b}_1, \ldots, \hat{b}_n$
+\STATE $\hat{w} \leftarrow \hat{b}_1$ \COMMENT{current winner}
+\STATE $\hat{j} \leftarrow \text{TFHE.Encrypt}(pk, 1)$ \COMMENT{winner index}
+\FOR{$i = 2$ to $n$}
+    \STATE $\hat{r} \leftarrow \text{TFHE.GT}(\hat{b}_i, \hat{w})$
+    \STATE $\hat{w} \leftarrow \text{TFHE.MUX}(\hat{r}, \hat{b}_i, \hat{w})$
+    \STATE $\hat{j} \leftarrow \text{TFHE.MUX}(\hat{r}, \text{TFHE.Encrypt}(pk, i), \hat{j})$
+\ENDFOR
+\STATE Submit $(\hat{w}, \hat{j})$ to \TChain{} for threshold decryption
+\RETURN Winner index $j$, winning bid $w$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Second-Price (Vickrey) Auction}
+
+In a Vickrey auction, the winner pays the second-highest bid. The circuit extends the above to track both the highest and second-highest encrypted values:
+
+\begin{equation}
+(\hat{w}_1, \hat{w}_2) = \text{TFHE.TopTwo}(\hat{b}_1, \ldots, \hat{b}_n)
+\end{equation}
+
+The winner is determined by $\hat{w}_1$; the settlement price is $\hat{w}_2$. Only $\hat{w}_2$ is decrypted for settlement. The actual winning bid amount is never revealed---a property impossible in traditional auctions.
+
+\subsection{Auction Applications}
+
+\begin{itemize}
+    \item \textbf{NFT Auctions.} Sealed-bid NFT sales without sniping or bid-shading.
+    \item \textbf{Block Space Auctions.} Validators auction inclusion rights; builders submit encrypted bids for block space.
+    \item \textbf{Token Launch Auctions.} Fair price discovery for new tokens without front-running.
+    \item \textbf{Liquidation Auctions.} DeFi protocol liquidations without predatory bidding.
+\end{itemize}
+
+%----------------------------------------------------------------------

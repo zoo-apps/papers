@@ -1,0 +1,79 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tikz}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{xcolor}
+
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\KChain}{\textsc{K-Chain}}
+\newcommand{\TChain}{\textsc{T-Chain}}
+\newcommand{\IChain}{\textsc{I-Chain}}
+\newcommand{\KeyVM}{\textsc{KeyVM}}
+\newcommand{\MLKEM}{\textsc{ML-KEM}}
+\newcommand{\MLDSA}{\textsc{ML-DSA}}
+\newcommand{\SLHDSA}{\textsc{SLH-DSA}}
+\newcommand{\NTT}{\textsc{NTT}}
+
+% Title information
+\title{\textbf{Post-Quantum Distributed Key Management:\\ML-KEM and ML-DSA on Zoo Network's K-Chain}\\
+\large KeyVM: Replacing External KMS with Validator-Distributed Key Shares}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{October 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \KChain{} (\KeyVM{}), a chain-native distributed key management system for Zoo Network that replaces external Key Management Services (KMS) with validator-distributed key shares and post-quantum cryptographic primitives. \KChain{} implements ML-KEM (FIPS 203) for key encapsulation and ML-DSA (FIPS 204) for digital signatures, providing quantum-resistant security for all key operations. Classical BLS12-381 keypairs are maintained in parallel for fast consensus signing where post-quantum latency is prohibitive. Key material is split into $t$-of-$n$ threshold shares across validators using Shamir's secret sharing over lattice-based schemes, ensuring no single validator possesses complete key material. GPU-accelerated Number Theoretic Transform (NTT) operations reduce ML-KEM encapsulation and ML-DSA signing latency by $14\times$ compared to CPU implementations, enabling practical post-quantum key operations at consensus timescales. Secure memory clearing with constant-time operations prevents side-channel key extraction. Formal verification of cryptographic correctness is established through Lean 4 proofs (\texttt{Crypto/MLKEM.lean}, \texttt{Crypto/MLDSA.lean}, \texttt{Crypto/SLHDSA.lean}, \texttt{GPU/ConsensusScaling.lean}). We demonstrate that distributed post-quantum key management achieves equivalent operational security to centralized KMS while eliminating single points of compromise and providing forward secrecy against quantum adversaries.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\input{sections/01-introduction}
+\input{sections/02-key-types-and-lifecycle}
+\input{sections/03-ml-kem-post-quantum-key-encapsulation}
+\input{sections/04-ml-dsa-post-quantum-signatures}
+\input{sections/05-threshold-key-sharing}
+\input{sections/06-bls-keypairs-for-classical-consensus}
+\input{sections/07-gpu-ntt-acceleration}
+\input{sections/08-secure-memory-architecture}
+\input{sections/09-formal-verification}
+\input{sections/10-security-analysis}
+\input{sections/11-cross-chain-integration}
+\input{sections/99-conclusion}
+
+\end{document}

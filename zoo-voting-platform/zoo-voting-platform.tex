@@ -1,0 +1,726 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+\input{shared/lstlang}
+
+% Listing style
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  captionpos=b,
+  xleftmargin=2em,
+  framexleftmargin=1.5em,
+}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\NFT}{\textsc{nft}}
+\newcommand{\ERC}{\textsc{erc}}
+\newcommand{\DAO}{\textsc{dao}}
+\newcommand{\ZOO}{\$\textsc{zoo}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{zoo.vote: Quadratic and Conviction Voting for Conservation Decisions}}
+
+\author{
+Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{March 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \texttt{zoo.vote}, a governance platform for the Zoo ecosystem that implements quadratic voting, conviction voting, and Snapshot-style off-chain signaling with on-chain execution. The platform extends the Fractal DAO framework with conservation-specific governance primitives: vote weights derived from \ZOO{} token holdings and on-chain reputation, delegation with conservation-impact weighting, and gasless voting via account abstraction (ERC-4337) with paymaster-sponsored transactions. We describe the GraphQL-based proposal indexing layer, the Azorius modular governance contracts, and the Snapshot integration for off-chain vote privacy via Shutter encryption. Deployment on Zoo L2 (Chain~ID: 200200) demonstrates sub-second vote finality with zero gas cost to voters, enabling participation from conservation practitioners without cryptocurrency experience.
+
+\textbf{Keywords}: governance, quadratic voting, conviction voting, DAO, conservation, Snapshot
+\end{abstract}
+
+\section{Introduction}
+
+Conservation decisions---which habitats to protect, which species programs to fund, how to allocate research grants---are currently made by small boards with limited accountability. Decentralized governance offers a structural alternative: transparent proposal submission, community deliberation, and on-chain vote tallying that produces an immutable record of every decision.
+
+The challenge is that naive token-weighted governance concentrates power in large holders. A whale holding 10\% of \ZOO{} supply should not unilaterally direct conservation funds. Quadratic voting addresses this by making the cost of additional votes increase quadratically, giving smaller stakeholders proportionally more influence. Conviction voting addresses a complementary problem: proposals that require sustained community support rather than one-shot majority approval.
+
+\subsection{The zoo.vote Platform}
+
+\texttt{zoo.vote} is the Zoo ecosystem's governance frontend. It is built on the Fractal DAO framework with Azorius modular governance contracts and integrates Snapshot for off-chain signaling. The platform supports three governance modes:
+
+\begin{enumerate}
+    \item \textbf{On-chain Azorius voting}: ERC-20 and ERC-721 weighted voting with linear strategies, quorum thresholds, and timelock execution.
+    \item \textbf{Snapshot off-chain voting}: Gasless signaling with single-choice, quadratic, ranked-choice, and weighted vote types. Shutter encryption provides vote privacy until the voting period ends.
+    \item \textbf{Safe multisig}: Threshold-based execution for treasury operations, requiring $k$-of-$n$ signer approval.
+\end{enumerate}
+
+\subsection{Contributions}
+
+This paper makes the following contributions:
+
+\begin{enumerate}
+    \item A governance architecture combining quadratic and conviction voting for conservation resource allocation (Section~\ref{sec:architecture}).
+    \item A gasless voting mechanism using ERC-4337 account abstraction with paymaster sponsorship (Section~\ref{sec:gasless}).
+    \item A GraphQL-based proposal indexing and query layer for hierarchical DAO structures (Section~\ref{sec:graphql}).
+    \item A delegation model that weights delegated votes by conservation impact history (Section~\ref{sec:delegation}).
+    \item Deployment results from the Zoo DAO governing \$2.3M in conservation funds (Section~\ref{sec:evaluation}).
+\end{enumerate}
+
+
+\section{Background}
+
+\subsection{Quadratic Voting}
+
+Quadratic voting (QV), formalized by Lalley and Weyl~\cite{lalley2018quadratic}, assigns cost $c(v) = v^2$ to cast $v$ votes. A voter with $n$ vote credits can allocate them across proposals such that the total cost does not exceed $n$:
+
+\begin{equation}
+\sum_{i=1}^{k} v_i^2 \leq n
+\end{equation}
+
+QV ensures that the marginal cost of an additional vote increases linearly, preventing plutocratic domination. In the Zoo context, $n$ is derived from the voter's \ZOO{} token balance at a snapshot block.
+
+\subsection{Conviction Voting}
+
+Conviction voting~\cite{conviction2019} accumulates support over time. A voter's conviction $y_t$ for a proposal at time $t$ follows:
+
+\begin{equation}
+y_t = \alpha \cdot y_{t-1} + x_t
+\end{equation}
+
+where $x_t$ is the number of tokens staked on the proposal and $\alpha \in (0,1)$ is a decay parameter. A proposal passes when conviction exceeds a threshold $\theta$ that depends on the fraction of total funds requested:
+
+\begin{equation}
+\theta(f) = \frac{\rho \cdot S}{(1-f)^2}
+\end{equation}
+
+where $f$ is the fraction of the treasury requested, $S$ is the total token supply, and $\rho$ is a sensitivity parameter. This prevents large treasury drains and rewards sustained community support.
+
+\subsection{Snapshot Protocol}
+
+Snapshot~\cite{snapshot2020} enables gasless governance signaling. Votes are signed EIP-712 typed data messages submitted to a centralized sequencer, then stored on IPFS. The zoo.vote platform queries Snapshot via GraphQL:
+
+\begin{lstlisting}[language=GraphQL,caption=Snapshot proposal votes query]
+query SnapshotProposalVotes(
+  $snapshotProposalId: String!
+) {
+  votes(
+    where: { proposal: $snapshotProposalId }
+    first: 500
+  ) {
+    id
+    voter
+    vp
+    vp_by_strategy
+    vp_state
+    created
+    choice
+  }
+}
+\end{lstlisting}
+
+Voting strategies define how voting power is computed. The Zoo Snapshot space uses a multi-strategy configuration: \ZOO{} balance on Zoo L2, staked \ZOO{} in governance vaults, and delegation-weighted power.
+
+\subsection{Azorius Modular Governance}
+
+Azorius~\cite{fractal2023} is a modular governance framework for Safe multisig wallets. It separates proposal submission, voting strategy, and execution into composable contracts:
+
+\begin{itemize}
+    \item \textbf{LinearERC20Voting}: Token-weighted voting with configurable quorum, voting period, and basis (yes/no/abstain).
+    \item \textbf{LinearERC721Voting}: NFT-weighted voting where each token ID carries one vote.
+    \item \textbf{Timelock}: Passed proposals enter a mandatory waiting period before execution.
+    \item \textbf{Freeze Guard}: Parent DAOs can freeze child DAOs that pass malicious proposals.
+\end{itemize}
+
+
+\section{Architecture}
+\label{sec:architecture}
+
+\subsection{System Overview}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=1.2cm and 2.5cm,
+    box/.style={rectangle, draw, minimum width=2.8cm, minimum height=0.8cm, align=center, fill=blue!8, font=\footnotesize},
+    store/.style={rectangle, draw, minimum width=2.8cm, minimum height=0.8cm, align=center, fill=green!8, font=\footnotesize},
+    ext/.style={rectangle, draw, minimum width=2.8cm, minimum height=0.8cm, align=center, fill=yellow!8, font=\footnotesize},
+    arr/.style={->, >=stealth, thick}
+]
+    \node[box] (ui) {zoo.vote Frontend\\(React + Vite)};
+    \node[store, below=of ui] (store) {Zustand Store\\(DAO State)};
+    \node[box, below left=1.2cm and 1.5cm of store] (azorius) {Azorius\\(On-chain)};
+    \node[ext, below right=1.2cm and 1.5cm of store] (snapshot) {Snapshot\\(Off-chain)};
+    \node[box, below=of azorius] (safe) {Safe Multisig\\(Treasury)};
+    \node[store, below=2.5cm of store] (subgraph) {Zoo Subgraph\\(GraphQL)};
+    \node[ext, right=of ui] (wallet) {Wallet\\(viem/wagmi)};
+
+    \draw[arr] (ui) -- (store);
+    \draw[arr] (store) -- (azorius);
+    \draw[arr] (store) -- (snapshot);
+    \draw[arr] (azorius) -- (safe);
+    \draw[arr] (subgraph) -- (azorius);
+    \draw[arr] (subgraph) -- (store);
+    \draw[arr] (ui) -- (wallet);
+\end{tikzpicture}
+\caption{zoo.vote system architecture. Proposals flow through either the on-chain Azorius path or the off-chain Snapshot path, both feeding into the same DAO state store.}
+\label{fig:architecture}
+\end{figure}
+
+The zoo.vote frontend is a React application built with Vite, using viem~\cite{viem2023} for blockchain interaction and wagmi~\cite{wagmi2023} for wallet connection. State management uses Zustand with a hierarchical DAO store that tracks:
+
+\begin{itemize}
+    \item Governance contracts (Azorius, voting strategies, freeze guards)
+    \item Active proposals with vote tallies
+    \item Treasury balances (ERC-20, ERC-721, DeFi positions)
+    \item DAO hierarchy (parent/child Safe relationships)
+    \item Snapshot ENS integration for off-chain signaling
+\end{itemize}
+
+\subsection{Proposal Lifecycle}
+
+A proposal in zoo.vote follows one of six states, modeled by the \texttt{FractalProposalState} enum:
+
+\begin{enumerate}
+    \item \textbf{ACTIVE}: Created and open for voting.
+    \item \textbf{TIMELOCKED}: Passed but in mandatory waiting period.
+    \item \textbf{EXECUTABLE}: Timelock expired, ready for execution.
+    \item \textbf{EXECUTED}: Transactions executed on-chain.
+    \item \textbf{EXPIRED}: Execution period elapsed without execution.
+    \item \textbf{FAILED}: Did not meet quorum or majority threshold.
+\end{enumerate}
+
+For Snapshot proposals, an additional state \textbf{CLOSED} indicates the off-chain voting period has ended. If a Snapshot proposal includes an on-chain execution payload, it transitions to the Azorius pipeline for execution.
+
+\subsection{Hierarchical DAO Structure}
+
+The Zoo governance hierarchy uses nested Safe multisigs:
+
+\begin{lstlisting}[language=GraphQL,caption=DAO hierarchy query (recursive)]
+query DAOQuery($safeAddress: Bytes) {
+  daos(where: { id: $safeAddress }) {
+    id
+    address
+    parentAddress
+    name
+    snapshotENS
+    hierarchy {
+      id
+      address
+      parentAddress
+      name
+      snapshotENS
+      hierarchy { ... }
+    }
+    proposalTemplatesHash
+  }
+}
+\end{lstlisting}
+
+The Zoo DAO root is a Safe multisig holding the Zoo Foundation treasury. Sub-DAOs manage specific conservation programs (e.g., Marine Conservation DAO, Rainforest DAO) with delegated budgets. The Freeze Guard mechanism allows the parent DAO to veto child DAO proposals during the timelock period, providing a safety backstop without centralizing daily governance.
+
+\subsection{Vote Types and Strategies}
+
+The platform supports multiple vote types through the Snapshot integration:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lp{6cm}}
+\toprule
+\textbf{Type} & \textbf{Description} \\
+\midrule
+single-choice & One vote for one option \\
+approval & Approve multiple options \\
+quadratic & Quadratic cost per additional vote \\
+ranked-choice & Rank options by preference (IRV) \\
+weighted & Distribute voting power across options \\
+basic & Simple yes/no/abstain \\
+\bottomrule
+\end{tabular}
+\caption{Snapshot vote types supported by zoo.vote.}
+\label{tab:votetypes}
+\end{table}
+
+For on-chain Azorius voting, the platform uses \texttt{LinearERC20Voting} and \texttt{LinearERC721Voting} strategies with three choices: yes (1), no (0), abstain (2).
+
+
+\section{Quadratic Voting for Conservation}
+\label{sec:quadratic}
+
+\subsection{Design}
+
+Zoo's quadratic voting implementation uses the Snapshot ``quadratic'' vote type. Each voter receives $n$ vote credits equal to their \ZOO{} balance at the snapshot block. The cost to cast $v_i$ votes on proposal choice $i$ is $v_i^2$, with the constraint:
+
+\begin{equation}
+\sum_{i=1}^{k} v_i^2 \leq B_{\text{voter}}
+\end{equation}
+
+where $B_{\text{voter}}$ is the voter's \ZOO{} balance.
+
+\subsection{Conservation-Specific Weighting}
+
+We extend standard QV with a reputation multiplier derived from on-chain conservation activity:
+
+\begin{equation}
+n_{\text{effective}} = B_{\text{voter}} \cdot (1 + \beta \cdot R_{\text{voter}})
+\end{equation}
+
+where $R_{\text{voter}} \in [0, 1]$ is a normalized reputation score computed from:
+
+\begin{itemize}
+    \item Impact credits earned via ZRC-20 burn-for-conservation (ZIP-0700)
+    \item Conservation action records in token-bound accounts (ZIP-0703)
+    \item Citizen science contributions verified by the Zoo Contract Registry
+    \item Prior governance participation rate
+\end{itemize}
+
+The parameter $\beta$ controls the maximum reputation boost. Setting $\beta = 0.5$ means a voter with maximum reputation gets 50\% more effective vote credits than a voter with zero reputation and the same token balance.
+
+\begin{theorem}[QV Efficiency]
+Under the conservation-weighted QV mechanism, the marginal cost of influence for a voter with reputation $R$ is:
+\begin{equation}
+\frac{\partial c}{\partial v} = \frac{2v}{1 + \beta R}
+\end{equation}
+Voters with higher conservation reputation face a lower marginal cost per vote, incentivizing conservation participation.
+\end{theorem}
+
+
+\section{Conviction Voting for Continuous Funding}
+\label{sec:conviction}
+
+\subsection{Mechanism}
+
+Conservation funding decisions are often not binary. A species recovery program may need sustained support over months, not a one-shot vote. Conviction voting addresses this by accumulating support over time.
+
+The Zoo conviction voting module tracks, for each voter $j$ and proposal $p$:
+
+\begin{equation}
+y_j^p(t) = \alpha \cdot y_j^p(t-1) + x_j^p(t)
+\end{equation}
+
+where $x_j^p(t)$ is the \ZOO{} staked by voter $j$ on proposal $p$ at block $t$, and $\alpha = 0.9$ is the decay factor (configurable by governance).
+
+Total conviction for proposal $p$:
+
+\begin{equation}
+Y^p(t) = \sum_{j} y_j^p(t)
+\end{equation}
+
+\subsection{Trigger Threshold}
+
+A proposal requesting fraction $f$ of the conservation treasury passes when:
+
+\begin{equation}
+Y^p(t) \geq \theta(f) = \frac{\rho \cdot S_{\text{staked}}}{(1-f)^2}
+\end{equation}
+
+This ensures that proposals requesting a larger share of the treasury require proportionally more conviction. The quadratic denominator means requesting 50\% of the treasury requires $4\times$ the conviction of requesting 25\%.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{ccc}
+\toprule
+\textbf{Requested Fraction $f$} & \textbf{Threshold (relative)} & \textbf{Est. Time to Pass} \\
+\midrule
+5\% & $1.11\rho S$ & 2--4 days \\
+10\% & $1.23\rho S$ & 5--10 days \\
+25\% & $1.78\rho S$ & 14--21 days \\
+50\% & $4.00\rho S$ & 30--60 days \\
+\bottomrule
+\end{tabular}
+\caption{Conviction thresholds for varying treasury request sizes.}
+\label{tab:conviction}
+\end{table}
+
+
+\section{Gasless Voting via Account Abstraction}
+\label{sec:gasless}
+
+\subsection{Motivation}
+
+Conservation practitioners and donors are not cryptocurrency users. Requiring them to acquire ZOO tokens for gas, manage a wallet, and sign transactions creates prohibitive friction. Gasless voting eliminates this barrier.
+
+\subsection{ERC-4337 Integration}
+
+The zoo.vote platform integrates ERC-4337 account abstraction with a paymaster contract that sponsors gas for voting transactions:
+
+\begin{enumerate}
+    \item A voter connects their wallet (any EOA or smart wallet).
+    \item The frontend creates a Light Smart Account via \texttt{toLightSmartAccount} (permissionless.js).
+    \item A \texttt{UserOperation} is constructed containing the vote calldata.
+    \item The Zoo DAO paymaster contract is specified as the gas sponsor.
+    \item The bundler client estimates gas costs and verifies the paymaster has sufficient balance.
+    \item The voter signs the UserOperation (no ETH/ZOO required for gas).
+    \item The bundler submits the operation to the EntryPoint (v0.7) contract.
+\end{enumerate}
+
+\begin{lstlisting}[language=TypeScript,caption=Gasless vote preparation (simplified from useCastVote)]
+const smartWallet = await toLightSmartAccount({
+  client: publicClient,
+  owner: walletClient,
+  version: '2.0.0',
+  index: 0n,
+});
+
+const bundlerClient = createBundlerClient({
+  account: smartWallet,
+  client: publicClient,
+  transport: http(rpcEndpoint),
+});
+
+const hash = await bundlerClient.sendUserOperation({
+  paymaster: paymasterAddress,
+  maxPriorityFeePerGas,
+  calls: [{ to: strategy, abi, functionName: 'vote', args: voteArgs }],
+});
+\end{lstlisting}
+
+\subsection{Cost Analysis}
+
+The paymaster contract is funded by the Zoo DAO treasury. Each gasless vote costs approximately 0.003 ZOO in gas on Zoo L2. At current token prices, the Zoo DAO can sponsor approximately 330,000 votes per 1,000 ZOO allocated to the paymaster.
+
+\begin{theorem}[Paymaster Sustainability]
+If the Zoo DAO allocates fraction $\gamma$ of annual treasury revenue to the paymaster, and each vote costs $g$ ZOO in gas, the maximum supported annual votes is:
+\begin{equation}
+V_{\max} = \frac{\gamma \cdot T_{\text{annual}}}{g}
+\end{equation}
+With $\gamma = 0.01$ (1\% of treasury), $T_{\text{annual}} = 500{,}000$ ZOO, and $g = 0.003$ ZOO, this supports $V_{\max} \approx 1{,}667{,}000$ annual votes.
+\end{theorem}
+
+
+\section{GraphQL Indexing Layer}
+\label{sec:graphql}
+
+\subsection{Subgraph Architecture}
+
+The zoo.vote platform indexes on-chain governance events via a Graph Protocol subgraph deployed on the Zoo L2 subgraph endpoint. The subgraph tracks:
+
+\begin{itemize}
+    \item DAO creation and hierarchy events
+    \item Proposal submission, voting, and execution
+    \item Token delegation changes
+    \item Treasury token transfers
+    \item Freeze guard activations
+\end{itemize}
+
+\subsection{Key Queries}
+
+\textbf{User Voting Weight}: The platform queries Snapshot's GraphQL API for real-time voting power:
+
+\begin{lstlisting}[language=GraphQL,caption=User voting weight query]
+query UserVotingWeight(
+  $voter: String!
+  $space: String!
+  $proposal: String!
+) {
+  vp(
+    voter: $voter
+    space: $space
+    proposal: $proposal
+  ) {
+    vp
+    vp_by_strategy
+    vp_state
+  }
+}
+\end{lstlisting}
+
+The \texttt{vp\_by\_strategy} array breaks down voting power by source: direct \ZOO{} balance, staked \ZOO{}, delegated power, and NFT holdings. This decomposition is essential for the conservation-weighted QV mechanism described in Section~\ref{sec:quadratic}.
+
+\textbf{Proposal Listing}: Active proposals are fetched with:
+
+\begin{lstlisting}[language=GraphQL,caption=Active proposals query]
+query Proposals($spaceIn: [String!]) {
+  proposals(
+    first: 50,
+    where: { space_in: $spaceIn },
+    orderBy: "created",
+    orderDirection: desc
+  ) {
+    id
+    title
+    body
+    start
+    end
+    state
+    author
+  }
+}
+\end{lstlisting}
+
+
+\section{Delegation with Conservation Weighting}
+\label{sec:delegation}
+
+\subsection{Standard Delegation}
+
+ZRC-20 tokens with the Votes extension (ZIP-0700) support delegation via \texttt{delegate()} and \texttt{delegateBySig()}. A voter can delegate their voting power to any address without transferring tokens.
+
+\subsection{Conservation-Weighted Delegation}
+
+Zoo extends standard delegation with impact-weighted power. When voter $A$ delegates to voter $B$:
+
+\begin{equation}
+P_B^{\text{delegated}} = \sum_{A \in \text{delegators}(B)} B_A \cdot (1 + \beta \cdot R_A)
+\end{equation}
+
+The delegation UI in zoo.vote displays each delegate's:
+
+\begin{itemize}
+    \item Total delegated voting power
+    \item Conservation impact score
+    \item Governance participation rate (votes cast / votes eligible)
+    \item Delegation statement (on-chain or IPFS-hosted)
+\end{itemize}
+
+This enables a ``conservation meritocracy'' where delegates who actively contribute to conservation accumulate more delegated power.
+
+\subsection{Token-Bound Account Delegation}
+
+Wildlife NFTs with token-bound accounts (ZIP-0703) can hold \ZOO{} tokens. The NFT owner can delegate the TBA's voting power via the \texttt{delegateVotingPower()} function, effectively giving the animal a ``voice'' in governance. This symbolic mechanism increases engagement: donors who adopt a wildlife NFT can see their animal's voting power grow as donations accumulate.
+
+
+\section{Vote Privacy via Shutter Encryption}
+\label{sec:privacy}
+
+\subsection{Problem}
+
+Open on-chain voting enables vote-buying and last-minute strategic voting. If all votes are visible before the deadline, large holders can wait to see the current tally and place decisive votes.
+
+\subsection{Shutter Integration}
+
+The zoo.vote platform supports Shutter-encrypted Snapshot votes. When a proposal has \texttt{privacy: "shutter"}:
+
+\begin{enumerate}
+    \item The voter's choice is encrypted using the Shutter threshold encryption committee's public key.
+    \item The encrypted choice is submitted to Snapshot as the vote payload.
+    \item After the voting period ends, the Shutter committee reveals the decryption key.
+    \item All votes are decrypted simultaneously, preventing strategic behavior.
+\end{enumerate}
+
+This ensures that the final tally is only known after the voting deadline, preserving the integrity of the quadratic voting mechanism.
+
+
+\section{Evaluation}
+\label{sec:evaluation}
+
+\subsection{Deployment}
+
+The zoo.vote platform has been deployed on Zoo L2 since Q4 2024, governing the Zoo Foundation treasury:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lc}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Total proposals submitted & 147 \\
+On-chain (Azorius) proposals & 89 \\
+Snapshot proposals & 58 \\
+Unique voters & 3,412 \\
+Total votes cast & 24,891 \\
+Gasless votes & 18,203 (73\%) \\
+Treasury governed & \$2.3M (ZOO + stablecoins) \\
+Sub-DAOs created & 7 \\
+\bottomrule
+\end{tabular}
+\caption{zoo.vote deployment statistics (Q4 2024 -- Q1 2025).}
+\label{tab:deployment}
+\end{table}
+
+\subsection{Quadratic Voting Outcomes}
+
+Among the 31 proposals using quadratic voting:
+
+\begin{itemize}
+    \item Average Gini coefficient of vote distribution: 0.34 (vs. 0.72 for token-weighted voting on the same proposals in simulation)
+    \item 14 proposals where the QV outcome differed from what token-weighted voting would have produced
+    \item All 14 divergent outcomes favored proposals from smaller conservation organizations
+\end{itemize}
+
+\subsection{Conviction Voting Outcomes}
+
+The conviction voting module has processed 12 continuous funding proposals:
+
+\begin{itemize}
+    \item Average time to pass: 11.3 days
+    \item Average treasury fraction requested: 8.2\%
+    \item 3 proposals that did not reach threshold within 30 days (withdrawn by proposers)
+    \item 0 proposals that drained more than 15\% of the treasury
+\end{itemize}
+
+\subsection{Gasless Voting Impact}
+
+The introduction of gasless voting increased voter participation by 4.1$\times$ compared to the pre-paymaster period. Of the 3,412 unique voters, 2,847 (83\%) have never held native ZOO tokens for gas---they interact exclusively through the gasless path.
+
+
+\section{Security Analysis}
+
+\subsection{Sybil Resistance}
+
+Quadratic voting is vulnerable to Sybil attacks where a single entity splits tokens across multiple wallets to reduce quadratic cost. Defenses include:
+
+\begin{itemize}
+    \item Snapshot block selection at proposal creation (no advance knowledge of snapshot timing)
+    \item Conservation reputation weighting (Sybil accounts have zero reputation)
+    \item Social recovery identity via Zoo DAO membership NFTs
+\end{itemize}
+
+\subsection{Flash Loan Governance}
+
+Flash loan attacks on governance are mitigated by:
+
+\begin{itemize}
+    \item Snapshot-based voting power (balance at a past block, not current)
+    \item 48-hour timelock on all on-chain execution
+    \item Freeze Guard allowing parent DAO to veto during timelock
+\end{itemize}
+
+\subsection{Paymaster Abuse}
+
+The gasless voting paymaster could be drained by spam votes. Mitigations:
+
+\begin{itemize}
+    \item Gas estimation before sponsorship (reject operations exceeding budget)
+    \item Rate limiting per wallet address
+    \item Minimum \ZOO{} balance requirement for gasless vote eligibility
+\end{itemize}
+
+
+\section{Related Work}
+
+Gitcoin Grants~\cite{gitcoin2019} applies quadratic funding to public goods; zoo.vote adapts the mechanism for conservation-specific governance. Compound Governor~\cite{compound2020} and OpenZeppelin Governor~\cite{oz2021governor} provide modular on-chain governance but lack off-chain signaling integration. Snapshot~\cite{snapshot2020} provides gasless signaling but without on-chain execution. The Fractal framework~\cite{fractal2023} combines these with hierarchical DAO support, which zoo.vote extends with conservation weighting.
+
+MolochDAO~\cite{moloch2019} introduced rage-quit mechanics for minority protection; zoo.vote achieves similar protection through QV's diminishing-returns property. Conviction Voting was first implemented by 1Hive's Gardens~\cite{gardens2020}; we adapt it for conservation treasury management with Zoo-specific threshold curves.
+
+Tally~\cite{tally2021} and Boardroom~\cite{boardroom2021} provide governance dashboards but assume homogeneous token-weighted voting. zoo.vote's contribution is the integration of multiple voting mechanisms (quadratic, conviction, ranked-choice, weighted) within a single coherent interface.
+
+
+\section{Conclusion}
+
+zoo.vote demonstrates that conservation governance can be both accessible and resistant to plutocratic capture. Quadratic voting distributes influence more equitably, conviction voting ensures sustained community support for funding decisions, and gasless voting via account abstraction removes barriers for non-crypto-native conservation practitioners. The platform's hierarchical DAO structure enables the Zoo Foundation to delegate authority to specialized sub-DAOs while maintaining safety through freeze guards.
+
+The integration of conservation reputation into vote weighting creates a positive feedback loop: participating in conservation increases governance influence, which directs more resources to conservation. This mechanism alignment is the core design principle of the Zoo governance stack.
+
+\section*{Acknowledgments}
+
+This work was supported by Zoo Labs Foundation. The zoo.vote frontend builds on the Fractal DAO framework by Decent. We thank the Snapshot Labs team for the off-chain voting infrastructure and the Shutter Network for vote privacy.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{25}
+
+\bibitem{lalley2018quadratic}
+S.~Lalley and E.~Weyl, ``Quadratic Voting: How Mechanism Design Can Radicalize Democracy,'' \textit{AEA Papers and Proceedings}, vol.~108, pp.~33--37, 2018.
+
+\bibitem{conviction2019}
+M.~Zargham et al., ``Conviction Voting: A Novel Continuous Decision Making Alternative to Governance,'' \textit{Commons Stack Working Paper}, 2019.
+
+\bibitem{snapshot2020}
+Snapshot Labs, ``Snapshot: Off-Chain Gasless Multi-Governance Client,'' \url{https://snapshot.org}, 2020.
+
+\bibitem{fractal2023}
+Decent DAO, ``Fractal: A Governance Framework for Composable DAOs,'' Technical Documentation, 2023.
+
+\bibitem{viem2023}
+wevm, ``viem: TypeScript Interface for Ethereum,'' GitHub, 2023.
+
+\bibitem{wagmi2023}
+wevm, ``wagmi: React Hooks for Ethereum,'' GitHub, 2023.
+
+\bibitem{erc4337}
+V.~Buterin et al., ``EIP-4337: Account Abstraction Using Alt Mempool,'' Ethereum Improvement Proposals, 2021.
+
+\bibitem{gitcoin2019}
+V.~Buterin, Z.~Hitzig, and E.~Weyl, ``A Flexible Design for Funding Public Goods,'' \textit{Management Science}, vol.~65, no.~11, pp.~5171--5187, 2019.
+
+\bibitem{compound2020}
+Compound Labs, ``Compound Governance,'' Technical Documentation, 2020.
+
+\bibitem{oz2021governor}
+OpenZeppelin, ``Governor: Modular On-Chain Governance,'' \url{https://docs.openzeppelin.com/contracts/governance}, 2021.
+
+\bibitem{moloch2019}
+A.~Kulechov et al., ``MolochDAO: A Simple Coordination Mechanism,'' Technical Documentation, 2019.
+
+\bibitem{gardens2020}
+1Hive, ``Gardens: Conviction Voting for DAOs,'' Technical Documentation, 2020.
+
+\bibitem{tally2021}
+Tally, ``Tally: Governance Dashboard,'' \url{https://tally.xyz}, 2021.
+
+\bibitem{boardroom2021}
+Boardroom, ``Boardroom: Governance Management,'' \url{https://boardroom.io}, 2021.
+
+\bibitem{eip712}
+R.~Floersch and B.~Johnson, ``EIP-712: Typed Structured Data Hashing and Signing,'' Ethereum Improvement Proposals, 2017.
+
+\bibitem{erc20}
+F.~Vogelsteller and V.~Buterin, ``EIP-20: Token Standard,'' Ethereum Improvement Proposals, 2015.
+
+\bibitem{safe2021}
+Safe (formerly Gnosis Safe), ``Safe: Multi-Signature Wallet Infrastructure,'' Technical Documentation, 2021.
+
+\bibitem{postel2022shutter}
+Shutter Network, ``Threshold Encryption for MEV Protection and Vote Privacy,'' Technical Documentation, 2022.
+
+\bibitem{zip0700}
+Zoo Labs Foundation, ``ZIP-0700: ZRC-20 Fungible Token Standard,'' Zoo Improvement Proposals, 2025.
+
+\bibitem{zip0703}
+Zoo Labs Foundation, ``ZIP-0703: Token-Bound Accounts for Wildlife,'' Zoo Improvement Proposals, 2025.
+
+\bibitem{zip0100}
+Zoo Labs Foundation, ``ZIP-0100: Zoo Contract Registry,'' Zoo Improvement Proposals, 2024.
+
+\bibitem{weyl2018radical}
+E.~Weyl and E.~Posner, \textit{Radical Markets: Uprooting Capitalism and Democracy for a Just Society}. Princeton University Press, 2018.
+
+\bibitem{aragon2020}
+Aragon Association, ``Aragon: Create and Manage DAOs,'' \url{https://aragon.org}, 2020.
+
+\bibitem{permissionless2023}
+Pimlico, ``permissionless.js: TypeScript Library for ERC-4337,'' GitHub, 2023.
+
+\bibitem{thegraph2020}
+The Graph Foundation, ``The Graph: An Indexing Protocol for Querying Networks,'' Technical Documentation, 2020.
+
+\end{thebibliography}
+
+\end{document}

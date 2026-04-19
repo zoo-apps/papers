@@ -1,0 +1,119 @@
+\section{Experience Ledger}
+
+
+The Experience Ledger is Zoo's core innovation: a cryptographically verifiable, content-addressable repository of semantic optimization knowledge.
+
+\subsection{Data Structure}
+
+Each experience is a JSON object:
+\begin{verbatim}
+{
+  "id": "exp_abc123",
+  "domain": "math.algebra",
+  "text": "When solving quadratics, check discriminant
+           (b²-4ac) first. If negative, return 'no real
+           solutions' to avoid wasted computation.",
+  "confidence": 0.87,
+  "examples": [
+    {"input": "x² + 2x + 5 = 0",
+     "output": "No real solutions"},
+    {"input": "x² + 2x - 3 = 0",
+     "output": "x = 1 or x = -3"}
+  ],
+  "metadata": {
+    "created_at": "2025-10-17T12:00:00Z",
+    "created_by": "0x742d35Cc...",
+    "votes": {"upvotes": 24, "downvotes": 2},
+    "usage_count": 156
+  },
+  "embedding": [0.123, -0.456, ...],
+  "merkle_proof": "0xabc...def"
+}
+\end{verbatim}
+
+Key properties:
+\begin{itemize}
+\item \textbf{Concise}: $\leq 32$ words per experience \cite{tencent2025grpo}.
+\item \textbf{Strategic}: "When [context], [action]" pattern.
+\item \textbf{Generalizable}: Applicable to problem classes, not specific instances.
+\item \textbf{Verifiable}: Merkle proof ties experience to on-chain root hash.
+\end{itemize}
+
+\subsection{Storage Architecture}
+
+\subsubsection{IPFS: Mutable State}
+
+The current experience library is stored on IPFS \cite{benet2014ipfs}. Each update generates a new Content Identifier (CID). The Inference Router contract points to the latest CID.
+
+\begin{itemize}
+\item \textbf{Advantages}: Content-addressable, P2P replication, efficient updates.
+\item \textbf{Disadvantages}: CIDs change on every update; historical versions require explicit pinning.
+\end{itemize}
+
+\subsubsection{Arweave: Immutable History}
+
+All historical library versions are archived on Arweave \cite{arweave2018whitepaper}, a permanent storage blockchain. Each archive includes:
+\begin{itemize}
+\item Full experience library snapshot
+\item Merkle tree with root hash
+\item Timestamp and version number
+\end{itemize}
+
+This ensures \textit{complete auditability}: anyone can reconstruct model behavior at any point in time.
+
+\subsection{Merkle Tree Verification}
+
+Experiences are organized into a Merkle tree. The root hash is stored on-chain in the Experience Registry contract:
+
+\begin{algorithm}[H]
+\caption{Merkle Tree Construction}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} Experience set $E = \{e_1, \ldots, e_n\}$
+\STATE \textbf{Output:} Merkle root $r$
+\STATE Compute leaf hashes: $h_i \leftarrow \text{SHA256}(\text{JSON}(e_i))$
+\STATE Build tree: $r \leftarrow \text{MerkleTree}(\{h_i\})$
+\RETURN $r$
+\end{algorithmic}
+\end{algorithm}
+
+To verify an experience $e_j$, a user:
+\begin{enumerate}
+\item Computes $h_j = \text{SHA256}(\text{JSON}(e_j))$
+\item Obtains Merkle proof $\pi_j$ (path from $h_j$ to root $r$)
+\item Verifies $\text{VerifyProof}(r, h_j, \pi_j) = \text{True}$
+\end{enumerate}
+
+If verification succeeds, $e_j$ is guaranteed to be part of the canonical library.
+
+\subsection{DAO Governance}
+
+Experience updates undergo decentralized review:
+
+\begin{enumerate}
+\item \textbf{Proposal}: A contributor submits a new experience or modification. They stake KEEPER tokens (Zoo's governance token).
+\item \textbf{Voting}: Token holders vote (1 token = 1 vote). Threshold: 66\% approval required.
+\item \textbf{Execution}: If approved, the Experience Registry contract updates the Merkle root. The contributor receives a reward proportional to votes received.
+\item \textbf{Rejection}: If rejected, the contributor loses their stake (burned or redistributed to voters).
+\end{enumerate}
+
+This mechanism ensures experiences are high-quality, non-malicious, and aligned with community goals.
+
+\subsection{Experience Retrieval}
+
+Given a query $q$, the Semantic Context Manager retrieves the top-$k$ most relevant experiences:
+
+\begin{algorithm}[H]
+\caption{Experience Retrieval}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} Query $q$, experience library $E$, number $k$
+\STATE \textbf{Output:} Top-$k$ experiences $E_k$
+\STATE Compute query embedding: $\mathbf{v}_q \leftarrow \text{Embed}(q)$
+\STATE Compute similarities: $s_i \leftarrow \cos(\mathbf{v}_q, \mathbf{v}_{e_i})$ for all $e_i \in E$
+\STATE Sort by similarity: $E_{\text{sorted}} \leftarrow \text{sort}(E, s)$
+\STATE Select top-$k$: $E_k \leftarrow E_{\text{sorted}}[1:k]$
+\RETURN $E_k$
+\end{algorithmic}
+\end{algorithm}
+
+Embeddings are precomputed and stored alongside experiences. Common choices: \texttt{text-embedding-ada-002} (OpenAI), \texttt{bge-large-en-v1.5} (open-source).
+

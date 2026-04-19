@@ -1,0 +1,41 @@
+\section{Cryptographic Primitives}
+
+\label{sec:primitives}
+%----------------------------------------------------------------------
+
+\subsection{TFHE for Boolean Circuits}
+
+\TFHE{} (Torus Fully Homomorphic Encryption) \cite{chillotti2020tfhe} operates on encrypted bits. Each ciphertext encrypts a single bit; boolean gates (AND, OR, NOT, XOR) are evaluated homomorphically with \emph{programmable bootstrapping} to refresh noise. We use \TFHE{} for:
+
+\begin{itemize}
+    \item Price comparison: Is $\hat{p}_{\textit{bid}} \geq \hat{p}_{\textit{ask}}$? (encrypted comparison circuit)
+    \item Auction winner determination: Which encrypted bid is highest?
+    \item Order priority: Timestamp comparison for price-time priority matching
+\end{itemize}
+
+\subsection{CKKS for Approximate Arithmetic}
+
+\CKKS{} \cite{cheon2017ckks} encrypts vectors of approximate real numbers and supports addition and multiplication on ciphertexts. We use \CKKS{} for:
+
+\begin{itemize}
+    \item Volume matching: Computing fill quantities for partially matched orders
+    \item AMM calculations: Constant-product invariant evaluation on encrypted amounts
+    \item Fee computation: Calculating trading fees as a fraction of encrypted trade amounts
+\end{itemize}
+
+\subsection{Collective Key Generation}
+
+The \FHE{} public key is generated collectively by \TChain{} validators using distributed key generation (DKG):
+
+\begin{enumerate}
+    \item Each validator $v_i$ generates a local key pair $(sk_i, pk_i)$.
+    \item Validators run a DKG protocol to produce a collective public key $pk = \sum_{i=1}^{n} pk_i$.
+    \item The corresponding secret key $sk$ is never materialized; it exists only as shares $sk_i$ distributed across validators.
+    \item Decryption requires $t$-of-$n$ validators (default $t = 67$, $n = 100$) to contribute partial decryptions.
+\end{enumerate}
+
+\begin{theorem}[Decryption Security]
+Under the \textsc{RLWE} assumption with parameters $(N = 2^{14}, q = 2^{109})$, an adversary controlling fewer than $t$ validators cannot decrypt any ciphertext with probability greater than $2^{-128}$.
+\end{theorem}
+
+%----------------------------------------------------------------------

@@ -1,0 +1,473 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+\input{shared/lstlang}
+
+% Listing style
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  captionpos=b,
+  xleftmargin=2em,
+  framexleftmargin=1.5em,
+}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\NFT}{\textsc{nft}}
+\newcommand{\ERC}{\textsc{erc}}
+\newcommand{\DAO}{\textsc{dao}}
+\newcommand{\ZOO}{\$\textsc{zoo}}
+\newcommand{\MPC}{\textsc{mpc}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{Zoo Omnichain Teleport: Unified Liquidity and NFT Bridging across 18+ Chains}}
+
+\author{
+Vishnu Seesahai\thanks{vishnu@lux.network}, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Lux Partners \quad Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{September 2024}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present the Zoo Omnichain Teleport extension, which extends the Zoo-Lux Bridge Protocol (ZIP-0800) to support conservation DeFi across 270+ destination chains via the Lux Teleport architecture. The extension routes from Zoo EVM (Chain~ID: 200200) through the Lux Teleport hub (LPS-016) to native bridge programs on Solana, TON, Cosmos, and Move-based chains (Aptos, Sui), in addition to 50+ EVM chains. It introduces yield-bearing bridge tokens (yZETH, yZBTC, yZOO) that generate conservation yield while held on foreign chains, and chain-specific adapters that preserve conservation metadata in native formats: Metaplex metadata accounts on Solana, Jetton content cells on TON, and CW20 marketing info on Cosmos. The protocol is rooted in the Lux Teleport system first deployed by Seesahai and Kelling in 2022, extended here for omnichain conservation finance.
+
+\textbf{Keywords}: omnichain, Teleport, cross-chain, Solana, TON, Cosmos, yield-bearing bridge, conservation DeFi
+\end{abstract}
+
+\section{Introduction}
+
+ZIP-0800 established the Zoo $\leftrightarrow$ Lux bridge for EVM-to-EVM transfers with conservation metadata preservation. However, conservation capital exists across the entire blockchain ecosystem. Solana's high-throughput DEXs, TON's 900M+ user base, and Cosmos's interchain DeFi hubs represent significant liquidity and user pools that are inaccessible via an EVM-only bridge.
+
+The Lux Teleport system, originally deployed by Seesahai and Kelling in 2022~\cite{teleport2022}, provides the omnichain transport layer. Teleport routes messages from the Lux primary network to any supported destination chain via chain-specific relay adapters. ZIP-0802 builds the Zoo application layer on top of Teleport, adding conservation metadata serialization in native chain formats, yield-bearing bridge token wrappers, and MPC-threshold custody for cross-chain assets.
+
+\subsection{Design Goals}
+
+\begin{enumerate}
+    \item \textbf{270+ chain reach}: Conservation tokens accessible on every major blockchain ecosystem.
+    \item \textbf{Native metadata}: Conservation data stored in each chain's native format (Metaplex, Jetton, CW20), readable by local ecosystem tools.
+    \item \textbf{Yield generation}: Bridge tokens earn conservation yield while idle on foreign chains.
+    \item \textbf{Single security model}: All routes share the MPC signer set from ZIP-0800.
+\end{enumerate}
+
+\subsection{Contributions}
+
+\begin{enumerate}
+    \item The IZooOmnichainGateway interface extending ZIP-0800 for multi-chain routing (Section~\ref{sec:gateway}).
+    \item Chain-specific adapters for Solana, TON, Cosmos, and Move chains (Section~\ref{sec:adapters}).
+    \item Yield-bearing bridge token specification (yZETH, yZBTC, yZOO) (Section~\ref{sec:yield}).
+    \item MPC-threshold custody for cross-chain conservation assets (Section~\ref{sec:custody}).
+    \item Security analysis of cross-chain message verification and yield oracle manipulation (Section~\ref{sec:security}).
+\end{enumerate}
+
+
+\section{Chain Support}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{llll}
+\toprule
+\textbf{Chain Family} & \textbf{Adapter} & \textbf{Chains} & \textbf{Transport} \\
+\midrule
+EVM & TeleportEVMAdapter & Ethereum, Arbitrum, & Teleport relay \\
+ & & Base, BNB, +50 & (LPS-016) \\
+Solana & TeleportSolanaProgram & Solana mainnet & SPL bridge \\
+TON & TeleportTONContract & TON mainnet & FunC adapter \\
+Cosmos & TeleportCosmosModule & Osmosis, Injective, & IBC (LPS-017) \\
+ & & Hub, +20 & \\
+Move & TeleportMoveModule & Aptos, Sui & LPS-018 \\
+\bottomrule
+\end{tabular}
+\caption{Supported chain families and their Teleport adapters.}
+\label{tab:chains}
+\end{table}
+
+
+\section{Omnichain Gateway}
+\label{sec:gateway}
+
+\begin{lstlisting}[language=Solidity,caption=IZooOmnichainGateway interface]
+interface IZooOmnichainGateway
+    is IZooBridgeGateway {
+
+    struct OmnichainRoute {
+        uint256 destinationChainId;
+        bytes32 adapterType;
+        bytes recipientAddress; // Variable-length
+        uint256 maxBridgeFee;
+        bool yieldBearing;
+    }
+
+    function omnichainBridgeOut(
+        OmnichainRoute calldata route,
+        AssetType assetType,
+        address tokenContract,
+        uint256 tokenId,
+        uint256 amount
+    ) external payable returns (bytes32 messageId);
+
+    function estimateFee(
+        OmnichainRoute calldata route,
+        AssetType assetType,
+        uint256 amount
+    ) external view returns (uint256 feeInZoo);
+
+    function isChainSupported(uint256 chainId)
+        external view returns (bool);
+
+    event OmnichainBridgeInitiated(
+        bytes32 indexed messageId,
+        uint256 indexed destinationChainId,
+        bytes32 adapterType,
+        bool yieldBearing
+    );
+}
+\end{lstlisting}
+
+The gateway inherits from \texttt{IZooBridgeGateway} (ZIP-0800). Existing Zoo-to-Lux transfers continue to use the base \texttt{bridgeOut} function. The omnichain extension is opt-in via \texttt{omnichainBridgeOut}.
+
+
+\section{Chain-Specific Adapters}
+\label{sec:adapters}
+
+\subsection{Solana Adapter}
+
+The Teleport Solana program receives bridged conservation tokens and mints SPL equivalents:
+
+\begin{itemize}
+    \item Each bridged ZRC-20 maps to a unique SPL token mint.
+    \item Conservation metadata stored in a Metaplex metadata account linked to the mint: species ID, impact credits, provenance CID.
+    \item If \texttt{yieldBearing} is set, tokens are minted into a yield vault PDA that deposits into Solana conservation yield strategies.
+\end{itemize}
+
+\subsection{TON Adapter}
+
+The Teleport TON adapter uses a FunC contract:
+
+\begin{itemize}
+    \item Bridged ZRC-20 tokens represented as TON Jettons (TEP-74).
+    \item Conservation metadata stored in the Jetton wallet's on-chain content cell.
+    \item Users bridge back to Zoo via TON Connect wallet integration.
+\end{itemize}
+
+\subsection{Cosmos Adapter}
+
+The Teleport Cosmos adapter uses IBC (LPS-017) with CosmWasm contracts:
+
+\begin{itemize}
+    \item Dedicated \texttt{teleport-zoo} IBC channel per chain.
+    \item Bridged tokens represented as CW20 tokens with conservation metadata in the \texttt{marketing} info field.
+    \item Conservation yield distribution via IBC middleware hooks.
+\end{itemize}
+
+\subsection{Move Adapter}
+
+For Aptos and Sui, the Teleport Move adapter (LPS-018) deploys Move modules that:
+
+\begin{itemize}
+    \item Mint fungible assets (FA standard on Aptos, Coin on Sui) with conservation metadata in resource accounts.
+    \item Support NFT bridging via the Aptos Digital Asset standard and Sui Kiosk framework.
+\end{itemize}
+
+
+\section{Yield-Bearing Bridge Tokens}
+\label{sec:yield}
+
+When \texttt{yieldBearing} is set in the route, the destination adapter mints a yield-bearing wrapper:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{llll}
+\toprule
+\textbf{Token} & \textbf{Underlying} & \textbf{Yield Source} & \textbf{Conservation} \\
+\midrule
+yZETH & Bridged ZETH & ETH staking & 20\% of yield \\
+yZBTC & Bridged ZBTC & BTC staking & 20\% of yield \\
+yZOO & Bridged ZOO & ZOO staking & 100\% of yield \\
+\bottomrule
+\end{tabular}
+\caption{Yield-bearing bridge token specifications.}
+\label{tab:yield}
+\end{table}
+
+Yield is distributed on the destination chain by a Teleport yield oracle that relays yield accrual proofs from the source strategy. The oracle submits periodic updates (every 24 hours) and the yield-bearing token rebases accordingly.
+
+\begin{lstlisting}[language=Solidity,caption=IYieldBearingBridgeToken interface]
+interface IYieldBearingBridgeToken {
+    function exchangeRate()
+        external view returns (uint256);
+    function totalConservationYield()
+        external view returns (uint256);
+    function unwrap(uint256 amount)
+        external returns (uint256 underlyingAmount);
+
+    event YieldDistributed(
+        uint256 yieldAmount,
+        uint256 conservationShare,
+        uint256 newExchangeRate
+    );
+}
+\end{lstlisting}
+
+\begin{theorem}[Yield Conservation Bound]
+For yZOO, 100\% of yield is conservation yield by definition (ZOO staking IS conservation). For yZETH and yZBTC, conservation yield is bounded by:
+\begin{equation}
+Y_{\text{conservation}} = Y_{\text{total}} \cdot \frac{c}{10000}
+\end{equation}
+where $c = 2000$ (20\%). Negative yield (underlying strategy loss) is absorbed entirely by token holders; conservation yield is only generated on positive yield.
+\end{theorem}
+
+
+\section{MPC-Threshold Custody}
+\label{sec:custody}
+
+All cross-chain assets are custodied by the same MPC signer set from ZIP-0800. The signer set controls:
+
+\begin{enumerate}
+    \item Bridge gateway contracts on Zoo L2 and Lux C-Chain.
+    \item Adapter contracts on Solana (program upgrade authority), TON (contract admin), and Cosmos (CosmWasm contract admin).
+    \item Yield vault PDAs on Solana and yield strategy contracts on EVM chains.
+\end{enumerate}
+
+The MPC key rotation (30-day cycle) propagates to all chain adapters simultaneously. During the 24-hour overlap window, both old and new signer sets are accepted on all chains.
+
+\begin{definition}[Unified Security]
+The security of any omnichain route reduces to the security of the MPC signer set. An attacker must compromise $t = \lceil 2n/3 \rceil$ signers to forge a message on any route, regardless of destination chain.
+\end{definition}
+
+
+\section{Fee Structure}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Route} & \textbf{Fee} & \textbf{Split} \\
+\midrule
+Zoo to EVM chain & 0.10\% & 50/50 signers/conservation \\
+Zoo to Solana & 0.15\% & 50/50 \\
+Zoo to TON & 0.15\% & 50/50 \\
+Zoo to Cosmos (IBC) & 0.08\% & 50/50 \\
+Zoo to Move chains & 0.15\% & 50/50 \\
+Yield-bearing mint & Flat 5 ZOO & Conservation \\
+\bottomrule
+\end{tabular}
+\caption{Omnichain bridge fee schedule.}
+\label{tab:fees}
+\end{table}
+
+
+\section{Conservation Metadata Preservation}
+
+Each chain adapter stores conservation metadata in the chain's native format:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{llp{4.5cm}}
+\toprule
+\textbf{Chain} & \textbf{Storage} & \textbf{Fields} \\
+\midrule
+EVM & ERC-721 tokenURI & Full JSON metadata schema \\
+Solana & Metaplex metadata & speciesId, impactCredits, provenanceCID \\
+TON & Jetton content cell & speciesId, impactCredits (compact binary) \\
+Cosmos & CW20 marketing & speciesId, impactCredits, provenanceCID \\
+Move & Resource account & speciesId, impactCredits struct \\
+\bottomrule
+\end{tabular}
+\caption{Conservation metadata storage by chain family.}
+\label{tab:metadata}
+\end{table}
+
+This ensures that bridged Zoo conservation tokens are not opaque blobs on destination chains. Local ecosystem tools (Solana explorers, TON wallets, Cosmos dashboards) can read and display conservation metadata natively.
+
+
+\section{NFT Bridging across Heterogeneous Chains}
+
+ZRC-721 wildlife NFTs bridge to non-EVM chains with full metadata:
+
+\begin{enumerate}
+    \item NFT locked on Zoo L2. Species metadata and provenance snapshot serialized.
+    \item TBA frozen (ZIP-0703).
+    \item Teleport message routed to destination chain adapter.
+    \item Adapter mints a chain-native NFT:
+    \begin{itemize}
+        \item Solana: Metaplex NFT with metadata account.
+        \item TON: TON NFT (TEP-62) with content cell.
+        \item Cosmos: CW721 token with extension data.
+        \item Move: Digital Asset (Aptos) or Display object (Sui).
+    \end{itemize}
+    \item Conservation metadata stored in chain-native format.
+    \item On return: destination NFT burned, Zoo NFT unlocked, TBA unfrozen.
+\end{enumerate}
+
+
+\section{Security Analysis}
+\label{sec:security}
+
+\subsection{Cross-Chain Message Verification}
+
+Each chain adapter verifies Teleport relay proofs independently. A compromised adapter on one chain cannot affect others. The Teleport relay proof includes a Merkle inclusion proof against the Lux primary network's state root.
+
+\subsection{Yield Oracle Manipulation}
+
+The yield oracle submits proofs of yield accrual from source strategies. Proofs are verified against source chain state roots relayed by Teleport. Fraudulent yield claims are rejected.
+
+\subsection{Non-EVM Key Formats}
+
+Solana (Ed25519), TON (Ed25519), and Cosmos (secp256k1) use different key formats. Recipient addresses are validated against chain-specific address formats before the bridge message is relayed.
+
+\subsection{Yield-Bearing Token Depegging}
+
+If the underlying yield strategy suffers a loss, the exchange rate decreases. The conservation yield split is applied only to positive yield.
+
+\subsection{IBC Timeout}
+
+Cosmos IBC transfers have a configurable timeout (default 10 minutes). Timed-out transfers are automatically refunded on Zoo L2 via the standard IBC timeout callback.
+
+\subsection{Adapter Isolation}
+
+Each chain adapter is an independent contract/program. A vulnerability in the Solana adapter does not affect the TON or Cosmos adapters. The MPC signer set is the shared security assumption; individual adapter bugs are contained.
+
+
+\section{Related Work}
+
+LayerZero~\cite{layerzero2022} provides omnichain messaging via ultra-light nodes. Wormhole~\cite{wormhole2022} uses a guardian set for cross-chain attestation. Axelar~\cite{axelar2022} provides general message passing with proof-of-stake validator verification. Chainlink CCIP~\cite{ccip2023} offers cross-chain interoperability with oracle-based verification. deBridge~\cite{debridge2023} provides cross-chain asset transfers with validator attestation.
+
+The Lux Teleport system~\cite{teleport2022}, first deployed by Seesahai and Kelling in 2022, provides the native transport layer. Unlike generic bridges, Teleport leverages Lux's primary network validators for message verification, reducing the trust surface to the Lux validator set rather than an independent bridge committee.
+
+Cosmos IBC~\cite{ibc2019} provides trustless interchain communication via light client verification. Our Cosmos adapter uses IBC as the final-mile transport while Teleport handles the Zoo-to-Lux segment.
+
+Wormhole's Portal~\cite{portal2022} supports NFT bridging across chains but stores metadata as opaque byte arrays. Our chain-specific adapters store conservation metadata in native formats, making it readable by local ecosystem tools.
+
+
+\section{Conclusion}
+
+The Zoo Omnichain Teleport extends conservation DeFi to 270+ chains. By building on the Lux Teleport transport layer and adding chain-specific adapters for native metadata storage, the protocol ensures that Zoo conservation tokens are first-class citizens on every major blockchain ecosystem. Yield-bearing bridge tokens generate conservation yield from idle capital. The unified MPC security model reduces the attack surface to a single signer set, regardless of destination chain.
+
+\section*{Acknowledgments}
+
+This work was supported by Zoo Labs Foundation and Lux Partners. The Teleport architecture was originally designed and deployed by Vishnu Seesahai and Zach Kelling in 2022. We thank the Solana, TON, and Cosmos communities for chain-specific integration support.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{25}
+
+\bibitem{teleport2022}
+V.~Seesahai and Z.~Kelling, ``Lux Teleport: Omnichain Bridge Architecture,'' Lux Partners Technical Report LPS-016, 2022.
+
+\bibitem{lps017}
+Lux Partners, ``LPS-017: Teleport IBC Relay,'' Lux Protocol Standards, 2022.
+
+\bibitem{lps018}
+Lux Partners, ``LPS-018: Teleport Move Adapter,'' Lux Protocol Standards, 2023.
+
+\bibitem{layerzero2022}
+R.~Zarick et al., ``LayerZero: An Omnichain Interoperability Protocol,'' Technical Report, 2022.
+
+\bibitem{wormhole2022}
+Wormhole, ``Wormhole: Generic Message Passing Protocol,'' Technical Documentation, 2022.
+
+\bibitem{axelar2022}
+S.~Haouari et al., ``Axelar: Connecting All Blockchains,'' Technical Documentation, 2022.
+
+\bibitem{ccip2023}
+Chainlink, ``CCIP: Cross-Chain Interoperability Protocol,'' Technical Documentation, 2023.
+
+\bibitem{debridge2023}
+deBridge, ``deBridge: Cross-Chain Interoperability,'' Technical Documentation, 2023.
+
+\bibitem{ibc2019}
+C.~Goes et al., ``The Interblockchain Communication Protocol,'' Cosmos Network, 2019.
+
+\bibitem{portal2022}
+Wormhole, ``Portal: Cross-Chain NFT Bridge,'' Technical Documentation, 2022.
+
+\bibitem{tep74}
+TON Foundation, ``TEP-74: Jetton Standard,'' TON Enhancement Proposals, 2022.
+
+\bibitem{tep62}
+TON Foundation, ``TEP-62: NFT Standard,'' TON Enhancement Proposals, 2022.
+
+\bibitem{cw20}
+CosmWasm, ``CW20: Fungible Token Standard,'' \url{https://github.com/CosmWasm/cw-plus}, 2021.
+
+\bibitem{cw721}
+CosmWasm, ``CW721: Non-Fungible Token Standard,'' \url{https://github.com/CosmWasm/cw-nfts}, 2022.
+
+\bibitem{metaplex2022}
+Metaplex Foundation, ``Token Metadata Standard,'' \url{https://docs.metaplex.com}, 2022.
+
+\bibitem{zip0015}
+Zoo Labs Foundation, ``ZIP-0015: Zoo L2 Chain Architecture,'' Zoo Improvement Proposals, 2024.
+
+\bibitem{zip0042}
+Zoo Labs Foundation, ``ZIP-0042: Cross-Ecosystem Interoperability,'' Zoo Improvement Proposals, 2024.
+
+\bibitem{zip0100}
+Zoo Labs Foundation, ``ZIP-0100: Zoo Contract Registry,'' Zoo Improvement Proposals, 2024.
+
+\bibitem{zip0700}
+Zoo Labs Foundation, ``ZIP-0700: ZRC-20 Fungible Token Standard,'' Zoo Improvement Proposals, 2025.
+
+\bibitem{zip0703}
+Zoo Labs Foundation, ``ZIP-0703: Token-Bound Accounts for Wildlife,'' Zoo Improvement Proposals, 2025.
+
+\bibitem{zip0800}
+Zoo Labs Foundation, ``ZIP-0800: Zoo-Lux Bridge Protocol,'' Zoo Improvement Proposals, 2025.
+
+\bibitem{gg20}
+R.~Gennaro and S.~Goldfeder, ``One Round Threshold ECDSA with Identifiable Abort,'' \textit{IACR ePrint} 2020/540, 2020.
+
+\bibitem{lido2020}
+Lido, ``Lido: Liquid Staking for Ethereum,'' Technical Documentation, 2020.
+
+\bibitem{babylon2023}
+Babylon, ``Babylon: Bitcoin Staking Protocol,'' Technical Documentation, 2023.
+
+\bibitem{aptos2022}
+Aptos Labs, ``Aptos: A Safe, Scalable, and Upgradeable Layer~1 Blockchain,'' Technical Report, 2022.
+
+\end{thebibliography}
+
+\end{document}

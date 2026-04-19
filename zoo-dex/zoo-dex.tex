@@ -1,0 +1,75 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{definition}{Definition}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\DEX}{\textsc{dex}}
+\newcommand{\AMM}{\textsc{amm}}
+\newcommand{\CLOB}{\textsc{clob}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\title{\textbf{Zoo DEX: Decentralized Exchange for AI Assets and Research Tokens}}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{June 2024}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \textbf{Zoo DEX}, a decentralized exchange on the Zoo Network (chain ID 200200) that combines native EVM precompile AMM pools with a GPU-accelerated order book for trading AI assets and research tokens. Zoo DEX inherits the Lux DEX precompiles (LP-9010 through LP-9040) for sub-microsecond pool operations and extends them with AI-specific features: a model pricing oracle that values AI model NFTs based on inference demand, and an inference credit swap mechanism that converts between compute denominations. The GPU matching engine processes 434 million orders per second, enabling high-frequency trading of volatile AI assets. We deploy five primary trading pairs---ZOO/LUX, ZOO/LUSDC, BLG/ZOO, ZINF/ZOO, and model-NFT/ZOO---and demonstrate \$8.2M daily trading volume with 0.12\% average slippage for ZOO/LUX swaps. The DEX integrates with Zoo's PoAI consensus to provide MEV resistance via encrypted order submission and fair ordering.
+
+\textbf{Keywords}: decentralized exchange, DEX precompiles, GPU matching engine, AI asset trading, Zoo Network
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-background}
+\input{sections/03-zoo-dex-architecture}
+\input{sections/04-model-pricing-oracle}
+\input{sections/05-inference-credit-swaps}
+\input{sections/06-mev-resistance}
+\input{sections/07-performance-evaluation}
+\input{sections/08-tokenomics-integration}
+\input{sections/09-related-work}
+\input{sections/10-conclusion}
+\input{sections/99-acknowledgments}
+
+\end{document}

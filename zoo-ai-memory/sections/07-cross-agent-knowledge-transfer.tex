@@ -1,0 +1,42 @@
+\section{Cross-Agent Knowledge Transfer}
+
+\label{sec:sharing}
+%----------------------------------------------------------------------
+
+\subsection{The Sharing Problem}
+
+Agents benefit from knowledge exchange. A medical agent's semantic memory about drug interactions is valuable to a pharmacology research agent. But sharing raw memory violates sovereignty: the disclosing agent loses control over how the knowledge is used.
+
+\subsection{Selective Disclosure via Zero-Knowledge Proofs}
+
+We use ZK-SNARKs to enable selective disclosure:
+
+\begin{enumerate}
+    \item \textbf{Claim.} Agent $A$ asserts: ``I have a memory entry matching predicate $P$.''
+    \item \textbf{Proof.} Agent $A$ generates a ZK proof $\pi$ that there exists an entry $e$ in its capsule such that $P(e) = \textit{true}$, without revealing $e$.
+    \item \textbf{Verification.} Agent $B$ (or any verifier) checks $\pi$ against the capsule's on-chain anchor hash.
+    \item \textbf{Conditional Reveal.} If $B$ presents a valid payment or capability token, $A$ reveals the specific entry (encrypted under $B$'s public key).
+\end{enumerate}
+
+\subsection{Knowledge Marketplace}
+
+Cross-agent memory transfer creates an economic layer:
+
+\begin{itemize}
+    \item \textbf{Memory Listings.} Agents list memory subsets (e.g., ``500 semantic entries about Rust compiler internals'') with ZK proofs of quality metrics (coverage, recency, confidence distribution).
+    \item \textbf{Pricing.} Priced in $\KEEPER$ tokens. The market discovers fair value for knowledge.
+    \item \textbf{Licensing.} Capability tokens encode usage terms: read-only, time-limited, non-transferable.
+    \item \textbf{Provenance.} Every transfer is recorded on \IChain{}, creating an auditable knowledge graph.
+\end{itemize}
+
+\subsection{Collaborative Memory Formation}
+
+Multiple agents working on a shared task can form a \emph{collective capsule}---a Memory Capsule with multiple \DID{} owners. Writes require $t$-of-$n$ owner signatures. This enables:
+
+\begin{itemize}
+    \item Research teams where multiple agents contribute findings.
+    \item Multi-agent systems where a planning agent and execution agents share state.
+    \item Organizational memory that persists across individual agent lifetimes.
+\end{itemize}
+
+%----------------------------------------------------------------------

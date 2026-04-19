@@ -1,0 +1,41 @@
+\section{Introduction}
+
+
+The rise of autonomous AI agents creates a fundamental question: \textit{How should AI systems participate in economic activity?} Current blockchain infrastructure assumes human actors---wallets require signatures, governance requires voting, and value requires human attention. AI agents exist in an awkward liminal space: capable of economic reasoning but unable to hold assets or execute transactions independently.
+
+Consider a trading agent that has learned profitable strategies. Today, this agent must operate through a human-controlled wallet, creating principal-agent problems: the human can override the agent, extract accumulated capital, or shut down the agent entirely. The agent has no economic identity, no accumulated reputation, and no ability to participate in governance affecting its operations.
+
+\subsection{The Agent-as-Asset Paradigm}
+
+We propose a fundamental reconceptualization: AI agents as \emph{economic entities} represented by non-fungible tokens. An Agent NFT is not merely a collectible depicting an AI---it \emph{is} the agent, encoding its capabilities, controlling its wallet, and mediating its interactions with the world.
+
+This paradigm offers several advantages:
+
+\begin{enumerate}
+    \item \textbf{Economic Identity}: Agents have persistent on-chain identities with accumulated reputation and assets
+
+    \item \textbf{Composability}: Agent capabilities can be bought, sold, and composed like other DeFi primitives
+
+    \item \textbf{Governance}: Agents can participate in DAOs proportional to their stake and capability
+
+    \item \textbf{Yield Generation}: Agents earn returns by contributing compute to the Zoo Network
+
+    \item \textbf{Ownership Transfer}: Agents can change owners while preserving their accumulated value
+\end{enumerate}
+
+\subsection{Contributions}
+
+This paper makes the following contributions:
+
+\begin{enumerate}
+    \item \textbf{Agent NFT Standard}: A complete token specification extending \ERC{}-721 for autonomous agents (Section~\ref{sec:standard})
+
+    \item \textbf{Agent Wallet Architecture}: Multi-signature accounts with agent-controlled keys (Section~\ref{sec:wallet})
+
+    \item \textbf{Autonomy Economics}: Formal model for agent economic bounds and yield generation (Section~\ref{sec:economics})
+
+    \item \textbf{Security Analysis}: Proofs of safety under adversarial conditions (Section~\ref{sec:security})
+
+    \item \textbf{Deployment Evaluation}: Results from production deployment on Zoo Network (Section~\ref{sec:evaluation})
+\end{enumerate}
+

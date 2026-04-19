@@ -1,0 +1,20 @@
+\section{Introduction}
+
+%% ============================================================
+
+The proliferation of custom-trained AI models has created a new class of digital asset: the fine-tuned model. Unlike pre-trained foundation models that require billions of dollars in compute, custom models are produced by individuals and small teams through parameter-efficient methods such as \LoRA{} \cite{hu2021lora}, \QLoRA{} \cite{dettmers2023qlora}, and \GRPO{} \cite{shao2024deepseekmath}. The Gym platform demonstrates that competitive fine-tuning can be achieved for as little as \$18 per run \cite{zoo-gym}, yet no on-chain infrastructure exists to register, price, trade, and monetize these models natively.
+
+Existing approaches fall into two categories. General-purpose chains (Ethereum, Solana) can host model registries as smart contracts but impose gas costs unrelated to AI compute and lack primitives for inference metering. AI-specific L1 chains (Bittensor, Render) build consensus around compute contribution but sacrifice EVM compatibility and composability with the broader DeFi ecosystem.
+
+\Beluga{} occupies a third position: an \emph{application-specific L3} that inherits security from \Lux{} (L0) and interoperability from \Zoo{} (L2) while providing a gas token (\BLG{}) and precompile set designed exclusively for AI model economics. Every transaction on \Beluga{} has a clear AI-economic meaning:
+
+\begin{itemize}[nosep]
+    \item \textbf{Model registration} mints an ERC-721 NFT encoding the model's weights hash, architecture, and pricing.
+    \item \textbf{Inference requests} are routed through a native pricing precompile at \texttt{0x0300} that enforces per-token metering.
+    \item \textbf{Training bounties} are escrowed on-chain with verifiable completion criteria.
+    \item \textbf{Data contributions} are tracked via content-addressable records linked to the Experience Ledger \cite{zoo-experience-ledger}.
+\end{itemize}
+
+This paper describes the complete design. Section~\ref{sec:architecture} presents the L0/L2/L3 stack. Section~\ref{sec:token} specifies \BLG{} token economics. Sections~\ref{sec:earning} through \ref{sec:precompiles} detail earning mechanisms, smart contracts, and precompile specifications. Section~\ref{sec:consensus} adapts Proof of AI consensus for the L3 setting. Section~\ref{sec:security} analyzes the security model. Section~\ref{sec:migration} describes the migration path from Zoo contracts to a sovereign chain. Section~\ref{sec:related} surveys related work, and Section~\ref{sec:conclusion} concludes.
+
+%% ============================================================

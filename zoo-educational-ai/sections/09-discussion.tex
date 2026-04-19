@@ -1,0 +1,35 @@
+\section{Discussion}
+
+\label{sec:discussion}
+
+\subsection{Implications for Conservation Education}
+
+The results demonstrate that adaptive learning systems with ecological grounding can substantially improve conservation education outcomes in diverse, resource-constrained settings.
+Three findings merit particular attention.
+
+First, the 34\% retention advantage of ZooEd-Full over static curricula at 12 months represents a practically significant improvement for organizations investing in long-term workforce development.
+Second, the transfer results show that improved retention translates to measurably better field performance, addressing a long-standing critique that educational technology improves test scores without practical impact \citep{stern2014value}.
+Third, the ecological grounding mechanism demonstrates that connecting educational content to local environmental events through IoT sensor networks creates powerful contextual learning cues that standard spaced repetition cannot achieve.
+
+\subsection{Scalability Considerations}
+
+The edge node architecture enables ZooEd to operate in environments with intermittent or absent internet connectivity.
+Solar-powered edge nodes maintained 99.2\% uptime across deployment sites, with content synchronization occurring during periodic connectivity windows.
+The offline-first mobile client cached up to 500 learning activities, sufficient for 2--3 weeks of continuous use without synchronization.
+
+\subsection{Limitations}
+
+Several limitations qualify our findings.
+The quasi-experimental design, while strengthened by stratified matching, cannot fully control for self-selection effects.
+Assessment reliability for low-resource languages, though improved by calibration, remains below the $\kappa = 0.80$ threshold conventionally required for high-stakes decisions.
+The ecological grounding component depends on Zoo sensor network coverage, which was not uniform across sites; three sites had only basic weather station data, limiting the diversity of ecological triggers.
+
+\subsection{Ethical Considerations}
+
+Deploying AI-driven education in indigenous and marginalized communities raises important ethical questions.
+We addressed these through participatory design workshops at each site, community veto power over content, on-chain consent with right to deletion, and revenue sharing through token incentives.
+However, we acknowledge that the power dynamics inherent in technology deployment cannot be fully resolved through technical mechanisms alone \citep{couldry2019data}.
+
+% ============================================================
+% 10. Conclusion
+% ============================================================

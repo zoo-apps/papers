@@ -1,0 +1,39 @@
+\section{Platform Architecture}
+
+\label{sec:architecture}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{System Overview}
+
+ZooPlatform consists of five core subsystems:
+
+\begin{enumerate}
+  \item \textbf{Observation Interface}: Mobile and web apps for
+    submitting observations with photos, audio, GPS, and metadata.
+  \item \textbf{AI Identification}: TaxoNet-powered species suggestions
+    with calibrated confidence scores.
+  \item \textbf{Gamification Engine}: RL-based personalized challenge
+    generation and reward allocation.
+  \item \textbf{Quality Model}: Bayesian reliability estimation for
+    each observation.
+  \item \textbf{Incentive Layer}: ZooRep token distribution for
+    verified contributions.
+\end{enumerate}
+
+\subsection{Observation Protocol}
+
+ZooPlatform supports two observation modes:
+
+\paragraph{Opportunistic mode.} Any observation, any time. Low barrier
+to entry. Used for casual observations and rare species alerts.
+
+\paragraph{Survey mode.} Structured protocol with defined spatial extent,
+time duration, and completeness declaration. Produces higher-quality data
+suitable for occupancy modeling and abundance estimation.
+
+Both modes capture: species identification, photograph(s), GPS
+coordinates ($\pm$5\,m accuracy), timestamp, habitat description, and
+optional notes.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,90 @@
+\section{Performance Evaluation}
+
+\label{sec:evaluation}
+
+\subsection{Testnet Configuration}
+
+All benchmarks were performed on Zoo testnet (chain ID 200201):
+
+\begin{itemize}
+    \item \textbf{Validators}: 21 nodes with NVIDIA A100 GPUs
+    \item \textbf{FHE Parameters}: $N = 2^{14}$, $\log Q = 438$ (\CKKS{}); $n = 1024$ (\TFHE{})
+    \item \textbf{Security Level}: 128-bit post-quantum security
+    \item \textbf{Block Gas Limit}: 1B (Zoo inherits Lux's GPU-accelerated EVM~\cite{lux-evmgpu-benchmark})
+\end{itemize}
+
+\subsection{Inference Latency}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model} & \textbf{Params} & \textbf{Plaintext} & \textbf{Encrypted} & \textbf{Slowdown} \\
+\midrule
+MLP-3 & 1.2K & 0.3ms & 45ms & 150$\times$ \\
+CNN-Small & 62K & 2.1ms & 120ms & 57$\times$ \\
+ResNet-18 & 11.7M & 8.4ms & 340ms & 40$\times$ \\
+ViT-Tiny & 5.7M & 12ms & 890ms & 74$\times$ \\
+\bottomrule
+\end{tabular}
+\caption{Encrypted inference latency on Zoo testnet. \CKKS{} for linear layers, \TFHE{} for activations.}
+\label{tab:inference}
+\end{table}
+
+\subsection{Gradient Aggregation Throughput}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Gradient Size} & \textbf{Participants} & \textbf{Updates/s} & \textbf{Gas/Update} \\
+\midrule
+1K params & 10 & 4,200 & 85K \\
+10K params & 10 & 1,800 & 210K \\
+100K params & 10 & 1,200 & 480K \\
+1M params & 10 & 340 & 1.2M \\
+\bottomrule
+\end{tabular}
+\caption{Encrypted gradient aggregation throughput using \TFHE{} on Zoo testnet.}
+\label{tab:gradients}
+\end{table}
+
+\subsection{Comparison with Existing Systems}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{System} & \textbf{FHE on-chain} & \textbf{Dual Scheme} & \textbf{Threshold Dec} & \textbf{GPU Accel} \\
+\midrule
+fhEVM (Zama) & \checkmark & $\times$ & \checkmark & $\times$ \\
+Sunscreen & $\times$ & $\times$ & $\times$ & $\times$ \\
+Concrete ML & $\times$ & \checkmark & $\times$ & \checkmark \\
+\textbf{Zoo FHE} & \checkmark & \checkmark & \checkmark & \checkmark \\
+\bottomrule
+\end{tabular}
+\caption{Feature comparison. Zoo FHE is the first system combining all four capabilities.}
+\label{tab:comparison}
+\end{table}
+
+\subsection{Gas Cost Analysis}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Operation} & \textbf{Gas Cost} & \textbf{USD (at \$0.01/Mgas)} \\
+\midrule
+\texttt{ckksAdd} & 15,000 & \$0.00015 \\
+\texttt{ckksMul} & 65,000 & \$0.00065 \\
+\texttt{ckksMatMul} (256$\times$256) & 420,000 & \$0.0042 \\
+\texttt{tfheAdd} & 8,000 & \$0.00008 \\
+\texttt{tfheLt} & 45,000 & \$0.00045 \\
+\texttt{ckksToTfhe} & 120,000 & \$0.0012 \\
+\texttt{requestDecrypt} & 50,000 & \$0.0005 \\
+\bottomrule
+\end{tabular}
+\caption{Gas costs for FHE precompile operations on Zoo Network.}
+\label{tab:gas}
+\end{table}
+

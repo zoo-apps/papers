@@ -1,0 +1,106 @@
+\section{HabitatNet Architecture}
+
+\label{sec:architecture}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Spatial Graph Construction}
+
+\paragraph{Grid resolution.} We discretize the study area into 1\,km
+hexagonal cells, following \citet{jetz2019essential}. Hexagonal grids
+minimize edge effects and provide uniform adjacency
+\citep{birch2007rectangular}.
+
+\paragraph{Node features.} Each cell's feature vector $\mathbf{x}_i \in
+\R^{42}$ comprises:
+\begin{itemize}
+  \item 19 bioclimatic variables from WorldClim v2.1
+    \citep{fick2017worldclim}
+  \item 5 topographic variables: elevation, slope, aspect,
+    topographic roughness index (TRI), topographic wetness index (TWI)
+  \item 10 land cover class fractions from ESA WorldCover
+    \citep{zanaga2022esa}
+  \item 4 vegetation indices from MODIS: NDVI mean, NDVI seasonality,
+    LAI, FPAR
+  \item 4 hydrological variables: distance to water, flow accumulation,
+    precipitation seasonality, aridity index
+\end{itemize}
+
+\paragraph{Edge construction.} Edges connect each cell to its six
+hexagonal neighbors. Long-range edges (up to 50\,km) are added for cells
+along waterways and ridgelines, reflecting known dispersal corridors.
+
+\paragraph{Edge weights.} Dispersal permeability $w_{ij}$ is initialized
+from land cover resistance values but is subsequently refined through
+learning (Section~\ref{sec:edge_learning}).
+
+\subsection{Network Architecture}
+
+HabitatNet consists of four modules:
+
+\begin{enumerate}
+  \item \textbf{Feature Encoder}: A shared 3-layer MLP that projects raw
+    environmental features into a latent space:
+    \begin{equation}
+      \mathbf{h}_i^{(0)} = \text{MLP}_{\text{enc}}(\mathbf{x}_i)
+      \in \R^{128}
+    \end{equation}
+
+  \item \textbf{Graph Message Passing}: $L$ layers of graph attention
+    \citep{velickovic2018graph} with edge-conditioned convolution:
+    \begin{equation}
+      \mathbf{h}_i^{(\ell+1)} = \sigma\!\left(
+        \sum_{j \in \mathcal{N}(i)} \alpha_{ij}^{(\ell)} \,
+        \mathbf{W}^{(\ell)} \mathbf{h}_j^{(\ell)} +
+        \mathbf{W}_e^{(\ell)} \mathbf{e}_{ij}
+      \right)
+    \end{equation}
+    where $\alpha_{ij}^{(\ell)}$ are learned attention coefficients,
+    $\mathbf{e}_{ij}$ is the edge feature vector, and
+    $\sigma$ is the GELU activation.
+
+  \item \textbf{Species-Specific Readout}: For each species $k$, an
+    attention-weighted readout layer computes habitat suitability:
+    \begin{equation}
+      p_i^{(k)} = \sigma_{\text{sig}}\!\left(
+        \mathbf{w}_k^\top \mathbf{h}_i^{(L)} + b_k
+      \right)
+    \end{equation}
+    where $\mathbf{w}_k \in \R^{128}$ and $b_k \in \R$ are
+    species-specific parameters.
+
+  \item \textbf{Connectivity Module}: A spectral graph convolution layer
+    that computes Fiedler values \citep{fiedler1973algebraic} of the
+    predicted habitat subgraph, enabling differentiable connectivity
+    optimization.
+\end{enumerate}
+
+\subsection{Edge Weight Learning}
+\label{sec:edge_learning}
+
+Rather than relying on hand-crafted resistance surfaces, HabitatNet
+learns edge weights through a parameterized function:
+\begin{equation}
+  w_{ij} = \sigma_{\text{sig}}\!\left(
+    \text{MLP}_{\text{edge}}([\mathbf{x}_i \| \mathbf{x}_j \|
+    \mathbf{g}_{ij}])
+  \right)
+\end{equation}
+where $\mathbf{g}_{ij}$ encodes geographic distance and elevation
+difference, and $\|$ denotes concatenation. This allows the model to
+discover species-group-specific resistance patterns from occurrence data.
+
+\subsection{Climate Projection Integration}
+
+For future projections, we replace the 19 bioclimatic variables with
+downscaled CMIP6 projections \citep{eyring2016overview}. We use the
+ensemble median of 12 general circulation models (GCMs) under four SSP
+scenarios. The remaining features (topography, land cover) are kept
+static for the base analysis but can be updated with projected land-use
+change scenarios from LUH2 \citep{hurtt2020harmonization}.
+
+To account for GCM uncertainty, we propagate the full ensemble through
+HabitatNet and report the median and interquartile range of suitability
+predictions.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

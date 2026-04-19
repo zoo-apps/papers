@@ -1,0 +1,120 @@
+\section{Smart Contracts}
+\label{sec:contracts}
+%% ============================================================
+
+\Beluga{} ships with three core contracts, deployed at genesis. All contracts use the \texttt{@luxfi/standard} library \cite{lux-standard} for access control, upgradability (UUPS proxy), and reentrancy protection.
+
+\subsection{ModelRegistry.sol}
+
+An ERC-721 contract where each token represents a registered AI model.
+
+\begin{lstlisting}[language=Solidity,caption=ModelRegistry core interface]
+interface IModelRegistry {
+    struct ModelMetadata {
+        bytes32 weightsHash;     // SHA-256 of serialized weights
+        string  architecture;    // e.g. "qwen3-8b-lora"
+        uint256 paramCount;      // total parameter count
+        uint256 pricePerRequest; // BLG wei per inference
+        uint256 inferenceCount;  // lifetime request counter
+        address host;            // current inference host
+        bool    verified;        // governance-approved
+    }
+
+    function registerModel(
+        bytes32 weightsHash,
+        string calldata architecture,
+        uint256 paramCount,
+        uint256 pricePerRequest
+    ) external returns (uint256 tokenId);
+
+    function requestInference(
+        uint256 tokenId,
+        bytes calldata input
+    ) external payable returns (bytes32 requestId);
+
+    function getModel(uint256 tokenId)
+        external view returns (ModelMetadata memory);
+}
+\end{lstlisting}
+
+Key design decisions:
+\begin{itemize}[nosep]
+    \item The \texttt{weightsHash} is the canonical identifier---two models with the same weights hash are the same model regardless of who registered them (first-mover gets the NFT).
+    \item \texttt{pricePerRequest} is a floor set by the owner; the actual price is computed by the inference pricing precompile based on demand.
+    \item \texttt{inferenceCount} is incremented atomically by the precompile, not by the contract, preventing manipulation.
+    \item Transfer of the NFT transfers model ownership, including future inference revenue.
+\end{itemize}
+
+\subsection{TrainingBounty.sol}
+
+An escrow contract for training bounties using the \texttt{@luxfi/standard} ComputeMarket interface.
+
+\begin{lstlisting}[language=Solidity,caption=TrainingBounty core interface]
+interface ITrainingBounty {
+    struct Bounty {
+        address sponsor;
+        uint256 reward;          // BLG escrowed
+        bytes32 baseModelHash;   // starting model
+        string  targetBenchmark; // e.g. "mmlu"
+        uint256 targetDelta;     // basis points improvement
+        uint256 deadline;        // block number
+        BountyStatus status;
+    }
+
+    enum BountyStatus { Open, Claimed, Expired, Disputed }
+
+    function postBounty(
+        bytes32 baseModelHash,
+        string calldata targetBenchmark,
+        uint256 targetDelta,
+        uint256 deadline
+    ) external payable returns (uint256 bountyId);
+
+    function submitResult(
+        uint256 bountyId,
+        bytes32 resultWeightsHash,
+        uint256 measuredDelta,
+        bytes calldata teeAttestation
+    ) external;
+
+    function claimReward(uint256 bountyId) external;
+}
+\end{lstlisting}
+
+The dispute resolution mechanism uses a three-phase process:
+\begin{enumerate}[nosep]
+    \item \textbf{Challenge} (48h): Any party may challenge by staking 10\% of the bounty amount.
+    \item \textbf{Re-evaluation} (72h): Three randomly selected \PoAI{} validators independently re-run the evaluation.
+    \item \textbf{Settlement}: Majority vote determines outcome. Loser forfeits their stake.
+\end{enumerate}
+
+\subsection{InferenceRewards.sol}
+
+Distributes \BLG{} from the inference pool to hosts based on verified service:
+
+\begin{lstlisting}[language=Solidity,caption=InferenceRewards distribution]
+interface IInferenceRewards {
+    function claimHostReward(
+        uint256 modelId,
+        uint256 epoch
+    ) external;
+
+    function getEpochReward(uint256 epoch)
+        external view returns (uint256);
+
+    function getHostShare(
+        address host,
+        uint256 epoch
+    ) external view returns (uint256);
+}
+\end{lstlisting}
+
+Rewards are calculated per epoch (1 epoch = 7200 blocks $\approx$ 1 hour):
+
+\begin{equation}
+R_{\text{host}}^{(e)} = \frac{P_e}{N_e} \cdot \frac{Q_h}{\sum_{h' \in H} Q_{h'}}
+\end{equation}
+
+where $P_e$ is the pool emission for epoch $e$, $N_e$ is the number of active hosts, $Q_h$ is host $h$'s quality score (uptime $\times$ throughput $\times$ accuracy), and $H$ is the set of all active hosts in the epoch.
+
+%% ============================================================

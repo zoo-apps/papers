@@ -1,0 +1,60 @@
+\section{Threat Model and Privacy Requirements}
+
+
+\subsection{Adversary Model}
+
+We consider three adversary classes:
+
+\begin{definition}[Poaching Adversary]
+An adversary $\mathcal{A}_P$ seeks to determine the current or predicted future location of a specific target animal with sufficient precision to enable physical capture. $\mathcal{A}_P$ may have access to published movement data, species range maps, and local ecological knowledge.
+\end{definition}
+
+\begin{definition}[Inference Adversary]
+An adversary $\mathcal{A}_I$ seeks to re-identify individual animals from anonymized movement data using auxiliary information such as known capture locations, tagging dates, or published study areas.
+\end{definition}
+
+\begin{definition}[Network Adversary]
+An adversary $\mathcal{A}_N$ controls up to $f$ of $n$ nodes in the decentralized network and seeks to reconstruct private tracking data from network traffic, stored fragments, or query patterns.
+\end{definition}
+
+\subsection{Privacy Requirements}
+
+\begin{definition}[Spatial $k$-Anonymity for Wildlife]
+A wildlife tracking dataset $D$ satisfies spatial $k$-anonymity if, for every published location record $r \in D$, there exist at least $k-1$ distinct plausible locations within the cloaking region such that the target animal could be at any of these locations with probability at most $1/k$.
+\end{definition}
+
+\begin{definition}[Temporal $\delta$-Delay]
+A tracking dataset satisfies temporal $\delta$-delay if all published locations are at least $\delta$ time units old, where $\delta$ is calibrated to the species' maximum displacement rate:
+\begin{equation}
+\delta \geq \frac{R_{\text{cloak}}}{\bar{v}_{\max}}
+\end{equation}
+where $R_{\text{cloak}}$ is the cloaking radius and $\bar{v}_{\max}$ is the species' maximum sustained velocity.
+\end{definition}
+
+\begin{definition}[Movement Fidelity]
+A privacy-preserving transformation $\mathcal{T}$ satisfies $(\epsilon, \mathcal{M})$-movement fidelity if for every movement metric $m \in \mathcal{M}$ computed on original data $D$ and transformed data $\mathcal{T}(D)$:
+\begin{equation}
+\frac{|m(\mathcal{T}(D)) - m(D)|}{m(D)} \leq \epsilon
+\end{equation}
+\end{definition}
+
+\subsection{Species-Specific Privacy Tiers}
+
+We define four privacy tiers based on IUCN conservation status and poaching risk:
+
+\begin{table}[htbp]
+\centering
+\caption{Species-specific privacy tiers.}
+\label{tab:tiers}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Tier} & \textbf{IUCN Status} & $k$\textbf{-Anonymity} & \textbf{Delay} $\delta$ & \textbf{Cloaking Radius} \\
+\midrule
+Critical & CR, EN (high poach risk) & $k \geq 50$ & 90 days & $\geq$ 50 km \\
+High & EN, VU (moderate risk) & $k \geq 20$ & 30 days & $\geq$ 20 km \\
+Standard & VU, NT & $k \geq 10$ & 7 days & $\geq$ 5 km \\
+Open & LC (no poach risk) & $k \geq 3$ & 1 day & $\geq$ 1 km \\
+\bottomrule
+\end{tabular}
+\end{table}
+

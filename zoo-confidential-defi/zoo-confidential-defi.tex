@@ -1,0 +1,93 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc,fit}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{xcolor}
+\usepackage{listings}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\TChain}{\textsc{T-Chain}}
+\newcommand{\KChain}{\textsc{K-Chain}}
+\newcommand{\TFHE}{\textsc{TFHE}}
+\newcommand{\CKKS}{\textsc{CKKS}}
+\newcommand{\FHE}{\textsc{FHE}}
+\newcommand{\MEV}{\textsc{MEV}}
+\newcommand{\AMM}{\textsc{AMM}}
+\newcommand{\DEX}{\textsc{DEX}}
+\newcommand{\KEEPER}{\textsc{Keeper}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=black
+}
+
+% Title information
+\title{\textbf{Confidential DeFi: Private Trading, Sealed Auctions,\\and Encrypted Order Matching on Zoo Network}\\
+\large Eliminating MEV Through Fully Homomorphic Encryption}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{May 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+Decentralized finance leaks value at every layer. Front-running extracts \$1.5B+ annually from Ethereum traders. Sandwich attacks inflate slippage. Information asymmetry between informed and uninformed participants produces a market where the fastest extractor wins, not the best price-discoverer. We present \textbf{Confidential DeFi} on \Zoo{} Network: a suite of protocols where orders are encrypted at submission, matched homomorphically without decryption, and settled via threshold decryption of only the matched pairs. The core primitive is an \FHE{}-native \DEX{} virtual machine that evaluates encrypted limit orders using \TFHE{} boolean circuits for price comparison and \CKKS{} approximate arithmetic for volume matching. Sealed-bid auctions evaluate encrypted bids without revealing amounts until the auction concludes. A private \AMM{} processes encrypted swap amounts, exposing only aggregate pool state to liquidity providers. All decryption is coordinated by \Zoo{} \TChain{} with a 67-of-100 validator quorum, ensuring no single party can observe orderflow. We benchmark the system at 340 encrypted order matches per second on GPU-accelerated validators, with end-to-end latency of 2.8 seconds from submission to settlement---practical for a blockchain \DEX{} where block times are 2 seconds. Compared to existing solutions (Flashbots Protect, MEV-Share, Penumbra, Renegade), \Zoo{} Confidential DeFi provides stronger privacy guarantees (full orderflow encryption vs.\ partial hiding) with competitive throughput.
+
+\textbf{Keywords}: confidential DeFi, FHE, MEV, encrypted order matching, sealed-bid auction, private AMM, threshold decryption
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%----------------------------------------------------------------------
+
+\input{sections/01-introduction}
+\input{sections/02-cryptographic-primitives}
+\input{sections/03-encrypted-orderflow}
+\input{sections/04-fhe-order-matching}
+\input{sections/05-sealed-bid-auctions}
+\input{sections/06-private-amm}
+\input{sections/07-threshold-settlement}
+\input{sections/08-comparison-to-existing-solutions}
+\input{sections/09-benchmarks}
+\input{sections/10-security-analysis}
+\input{sections/99-conclusion}
+
+\end{document}

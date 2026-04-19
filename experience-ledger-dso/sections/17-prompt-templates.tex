@@ -1,0 +1,138 @@
+\section{Prompt Templates}
+
+
+\subsection{Stage 1: Trajectory Summarization}
+
+\begin{lstlisting}[caption=Full Summarization Prompt]
+An agent system was provided with the following 
+experiences:
+
+{experience_library}
+
+The agent then produced this trajectory to solve 
+the given problem:
+
+PROBLEM: {query}
+
+TRAJECTORY: {full_trajectory}
+
+OUTCOME: {correct/wrong}
+
+GROUND TRUTH: {answer}
+
+Please summarize the trajectory step-by-step:
+
+1. For each step, describe what action is being 
+   taken, and which experience (if any) has been 
+   used in this step.
+
+2. Given the grading of this rollout and the 
+   correct answer, identify and explain any steps 
+   that represent detours, errors, or backtracking.
+
+3. Maintain all the core outcome of each step 
+   (e.g., intermediate results, decisions made).
+
+Only return the trajectory summary. Be concise 
+but precise.
+\end{lstlisting}
+
+\subsection{Stage 2: Group Critique}
+
+\begin{lstlisting}[caption=Full Group Critique Prompt]
+Review these problem-solving attempts and extract 
+generalizable experiences:
+
+PROBLEM: {query}
+
+GROUND TRUTH: {answer}
+
+CURRENT EXPERIENCES:
+{experience_library}
+
+TRAJECTORY SUMMARIES:
+{summary_1}
+...
+{summary_G}
+
+TASK:
+1. Trajectory Analysis:
+   - For successful steps: Identify key correct 
+     decisions and patterns
+   - For errors: Pinpoint where and why reasoning 
+     went wrong
+   - Note strategies used or missed
+
+2. Update Existing Experiences:
+   - Options: [add, modify, delete]
+   - Max 3 operations per group
+   - Requirements:
+     * Each experience must begin with context 
+       ("When...", "For...")
+     * Focus on strategic patterns, not 
+       calculations
+     * Max 32 words per experience
+     * Must be generalizable (no problem-specific 
+       constants)
+
+Return JSON array:
+[
+  {
+    "option": "add",
+    "experience": "When... then..."
+  },
+  {
+    "option": "modify",
+    "old_id": "exp_abc123",
+    "experience": "Refined version..."
+  },
+  ...
+]
+\end{lstlisting}
+
+\subsection{Stage 3: Batch Consolidation}
+
+\begin{lstlisting}[caption=Full Consolidation Prompt]
+Consolidate suggested experience updates into 
+final revisions:
+
+CURRENT EXPERIENCES:
+{experience_library}
+
+SUGGESTED UPDATES FROM ALL GROUPS:
+{all_group_operations}
+
+REQUIREMENTS:
+1. Each experience must be clear, generalizable, 
+   and ≤32 words
+2. Focus on strategic thinking patterns, not 
+   specific calculations
+3. Avoid duplication - merge similar experiences
+4. Ensure consistency across the library
+
+OPTIONS: [add, modify, merge, delete]
+
+For merge operations, combine multiple similar 
+experiences into one superior version.
+
+Return JSON array with final operations:
+[
+  {
+    "option": "add",
+    "experience": "...",
+    "reason": "New insight from Group 3"
+  },
+  {
+    "option": "merge",
+    "exp_ids": ["exp_abc", "exp_def"],
+    "experience": "Merged version...",
+    "reason": "Both addressed same pattern"
+  },
+  {
+    "option": "delete",
+    "exp_id": "exp_xyz",
+    "reason": "Proven incorrect in evaluation"
+  }
+]
+\end{lstlisting}
+

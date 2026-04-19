@@ -1,0 +1,30 @@
+\section{Ringtail: Post-Quantum Threshold Signatures}
+
+
+\subsection{Construction}
+
+NIST standards lack threshold signatures. \Ringtail{} fills this gap with a $(t, n)$-threshold scheme based on Ring-LWE \cite{lyubashevsky2010ideal, lux-ringtail-pq}, using parameters $d = 1024$, $q = 2^{32} - 5$ (NTT-friendly), $\sigma = 3.19$ (Gaussian width), $\beta = 2^{20}$ (norm bound).
+
+\subsection{Threshold Protocol}
+
+DKG: each party $P_i$ samples polynomial $f_i(x) \in R_q[x]$ of degree $t - 1$, broadcasts commitments, and sends encrypted shares via \MLKEM{}. Collective public key: $PK = \sum_{i=1}^{n} C_{i,0}$.
+
+Signing with $t$ signers from $\mathcal{T}$: each $P_i$ computes partial signature $\sigma_i = \lambda_i \cdot sk_i \cdot H_{\text{lat}}(M) + e_i$ with Lagrange coefficients $\lambda_i$ and fresh noise $e_i$. Aggregation: $\sigma = \sum_{i \in \mathcal{T}} \sigma_i$. Verification checks $\|\sigma\|_\infty < t \cdot \beta$ and the algebraic relation against $PK$.
+
+\subsection{Sizes}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lc}
+\toprule
+\textbf{Component} & \textbf{Size (bytes)} \\
+\midrule
+Public key / Secret key share & 4,096 / 4,096 \\
+Signature share / Threshold signature & 4,096 / 4,096 \\
+DKG commitment / DKG share (encrypted) & 4,096 / 5,280 \\
+\bottomrule
+\end{tabular}
+\caption{\Ringtail{} object sizes ($d = 1024$, $q = 2^{32} - 5$)}
+\label{tab:ringtail-sizes}
+\end{table}
+

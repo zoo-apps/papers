@@ -1,0 +1,55 @@
+\section{Agent NFT Wallets}
+
+\label{sec:agent-wallets}
+
+\subsection{Agent Architecture}
+
+Zoo Network's AI agents~\cite{zoo-agent-nft} are autonomous entities that:
+
+\begin{itemize}
+    \item Hold ZOO tokens and other assets in their own wallets
+    \item Execute DeFi transactions (swaps, liquidity provision)
+    \item Perform inference tasks and collect PoAI rewards
+    \item Interact with other agents and human operators
+\end{itemize}
+
+Each agent's wallet key is distributed via MPC across:
+
+\begin{enumerate}
+    \item \textbf{Operator}: The human or organization that deployed the agent
+    \item \textbf{Agent runtime}: The TEE enclave running the agent's inference loop
+    \item \textbf{Recovery}: A time-locked escrow for emergency fund recovery
+\end{enumerate}
+
+\subsection{Autonomous Signing}
+
+For routine operations (inference execution, small transfers), the agent runtime and operator can sign collaboratively without escrow involvement:
+
+\begin{algorithm}[t]
+\caption{Agent Autonomous Transaction}
+\label{alg:agent}
+\begin{algorithmic}[1]
+\STATE Agent runtime constructs transaction $tx$
+\STATE Agent runtime verifies $tx$ against policy (amount limits, approved contracts)
+\IF{policy check passes}
+    \STATE Agent runtime generates partial signature $\sigma_{\text{agent}}$
+    \STATE Operator co-signer (automated) generates $\sigma_{\text{op}}$
+    \STATE Combine: $\sigma = \text{CGGMP.Combine}(\sigma_{\text{agent}}, \sigma_{\text{op}})$
+    \STATE Submit $tx$ with $\sigma$ to Zoo Network
+\ELSE
+    \STATE Escalate to manual operator approval
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Policy Enforcement}
+
+Agent wallets enforce on-chain policies:
+
+\begin{itemize}
+    \item \textbf{Spending limits}: Maximum ZOO transfer per transaction and per day
+    \item \textbf{Contract allowlist}: Agent can only interact with approved contracts
+    \item \textbf{Cooldown}: Minimum interval between high-value transactions
+    \item \textbf{Kill switch}: Operator can freeze agent wallet with single share
+\end{itemize}
+

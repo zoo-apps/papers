@@ -1,0 +1,42 @@
+\section{Teleport Bridge Protocol}
+
+\label{sec:teleport}
+
+\subsection{Instant Transfer}
+
+Teleport~\cite{lux-teleport-protocol} enables sub-second token transfers by leveraging shared validator sets:
+
+\begin{algorithm}[t]
+\caption{Teleport Transfer (ZOO $\to$ LUX)}
+\label{alg:teleport}
+\begin{algorithmic}[1]
+\STATE User submits Teleport request on Zoo L2: burn $x$ ZOO
+\STATE Zoo validators attest to the burn (Quasar finality: 10ms)
+\STATE Attestation forwarded to Lux P-Chain
+\STATE P-Chain verifies attestation (shared validator set)
+\STATE Lux C-Chain mints $x \cdot r$ wZOO (where $r$ is the exchange rate)
+\STATE Total latency: $\sim$340ms
+\end{algorithmic}
+\end{algorithm}
+
+Teleport is faster than Warp because it exploits the shared validator set between Lux L0 and Zoo L2---the same validators secure both chains, so cross-chain attestation is a local operation rather than a network message.
+
+\subsection{Supported Pairs}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Pair} & \textbf{Teleport} & \textbf{Warp} & \textbf{Median Latency} \\
+\midrule
+ZOO $\leftrightarrow$ LUX & \checkmark & \checkmark & 340ms (Teleport) \\
+ZOO $\leftrightarrow$ wETH & $\times$ & \checkmark & 1.2s (Warp) \\
+ZOO $\leftrightarrow$ BLG & $\times$ & \checkmark & 2.4s (Relay) \\
+ZINF $\leftrightarrow$ BINF & $\times$ & \checkmark & 2.4s (Relay) \\
+Model NFT & $\times$ & \checkmark & 1.2s (Warp) \\
+\bottomrule
+\end{tabular}
+\caption{Bridge transfer options by asset pair. Teleport is only available for native token pairs with shared validators.}
+\label{tab:pairs}
+\end{table}
+

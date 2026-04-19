@@ -1,0 +1,353 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\input{shared/lstlang}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\NFT}{\textsc{nft}}
+\newcommand{\ERC}{\textsc{erc}}
+\newcommand{\LLM}{\textsc{llm}}
+\newcommand{\DAO}{\textsc{dao}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{The Zoo AI Research Agenda:\\Decentralized, User-Owned, Conservation-Aligned AI}}
+
+\author{
+Antje Worring, Zach Kelling\thanks{research@zoo.ngo}\\
+\textit{Hanzo Industries \quad Lux Industries \quad Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{December 2024}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present the Zoo AI research agenda, a coordinated program across six technical thrusts: Hamiltonian Large Language Models (HLLMs) for energy-based inference, the Eco-1/Z-JEPA hyper-modal architecture with active inference alignment, BitDelta and DeltaSoup for privacy-preserving personalization, NFT-based model ownership, avatar tutors for prerequisite-aware education, and spatial web agents for conservation field applications. Each thrust addresses a distinct failure mode of centralized AI: fragility under distribution shift, opacity of reasoning, absence of user ownership, inability to personalize at scale, pedagogical incoherence, and lack of embodied grounding. We formalize the relationships between these thrusts and the broader Zoo infrastructure---Hanzo for compute orchestration, Lux for settlement and identity, and Zen for base model provision---and define the mathematical invariants that unify them. The agenda targets verifiable, user-sovereign AI that operates under conservation-aligned objectives, where model behavior is auditable on-chain and users retain ownership of the adaptations they create.
+\end{abstract}
+
+\section{Introduction}
+
+The dominant paradigm in AI research concentrates model training, serving, and governance within a small number of organizations. This concentration creates several structural problems: users cannot own or transfer the models shaped by their data; personalization requires transmitting private information to centralized servers; alignment is imposed top-down without community input; and deployment to conservation-critical environments (wildlife monitoring, habitat assessment, climate modeling) is limited by API availability and latency constraints.
+
+Zoo addresses these problems through a layered architecture. Lux Network provides post-quantum consensus and decentralized identity via DIDs of the form \texttt{did:lux:122:0x...}. Hanzo Network operates the AI compute chain (chain ID 36900), where participants earn \$AI tokens by contributing GPU resources. Zoo Network sits as the application layer, coordinating model training, serving, personalization, and governance through on-chain primitives.
+
+This paper describes the research agenda that spans this stack, organized into six thrusts and their interdependencies.
+
+\subsection{Design Principles}
+
+Three principles constrain the research program:
+
+\begin{enumerate}
+    \item \textbf{User sovereignty.} Users own the models shaped by their interactions. Ownership is represented as on-chain NFTs (ZIP-0006), and personalization deltas are stored under the user's key (ZIP-0007).
+    \item \textbf{Verifiability.} Every inference, training step, and model merge can be audited. Compute receipts follow LP-105, and optional ZKML proofs provide cryptographic verification.
+    \item \textbf{Conservation alignment.} The system is designed so that deploying AI to conservation tasks---species classification, habitat monitoring, anti-poaching---is a first-class use case, not an afterthought.
+\end{enumerate}
+
+\section{Research Thrusts}
+
+\subsection{Thrust 1: Hamiltonian Large Language Models}
+
+Standard autoregressive LLMs define token generation as a chain of conditional probabilities $p(x_t \mid x_{<t})$. HLLMs (ZIP-0001) reformulate this through Hamiltonian mechanics, introducing an energy function $H(q, p)$ over position $q$ (token embeddings) and momentum $p$ (latent dynamics):
+
+\begin{equation}
+H(q, p) = U(q) + K(p) = -\log p_{\text{data}}(q) + \frac{1}{2} p^\top M^{-1} p
+\label{eq:hamiltonian}
+\end{equation}
+
+The key property is \emph{energy conservation}: the Hamiltonian remains constant along trajectories, which bounds the divergence of long-context reasoning. We prove in the companion paper~\cite{zoo_hllm} that this yields tighter concentration bounds for multi-step inference than standard attention mechanisms.
+
+\begin{definition}[Hamiltonian Inference Trajectory]
+A sequence of states $(q_0, p_0), (q_1, p_1), \ldots, (q_T, p_T)$ generated by the leapfrog integrator with step size $\epsilon$ such that $|H(q_t, p_t) - H(q_0, p_0)| \leq C\epsilon^2$ for all $t \leq T$.
+\end{definition}
+
+\subsection{Thrust 2: Eco-1 and Z-JEPA}
+
+Eco-1 (ZIP-0003) is a hyper-modal MoE architecture whose backbone is Z-JEPA---Zoo's Joint Embedding Predictive Architecture. Z-JEPA extends Meta's V-JEPA~\cite{bardes2024vjepa} from video to arbitrary modality combinations (video, audio, text, 3D point clouds) by learning cross-modal prediction in latent space rather than pixel/waveform space.
+
+The planning component uses Expected Free Energy (EFE) from Friston's active inference framework~\cite{friston2017active}:
+
+\begin{equation}
+G(\pi) = \underbrace{\mathbb{E}_{Q(\tilde{o} \mid \pi)} \bigl[ \log Q(\tilde{s} \mid \pi) - \log Q(\tilde{s} \mid \tilde{o}, \pi) \bigr]}_{\text{epistemic value (information gain)}} - \underbrace{\mathbb{E}_{Q(\tilde{o} \mid \pi)} \bigl[ \log P(\tilde{o}) \bigr]}_{\text{pragmatic value (goal satisfaction)}}
+\label{eq:efe}
+\end{equation}
+
+where $\pi$ is a policy, $\tilde{o}$ are predicted observations, and $\tilde{s}$ are hidden states. Actions are selected to minimize $G(\pi)$, which naturally balances exploration (epistemic) and exploitation (pragmatic).
+
+\begin{theorem}[MoE Load Balance under EFE Routing]
+Let $\mathcal{E} = \{E_1, \ldots, E_K\}$ be the set of experts and $g_k(x)$ the gating weight for expert $k$ on input $x$. If gating is derived from EFE minimization with epistemic weight $\alpha \in (0, 1)$, then the expected load imbalance satisfies
+$\text{Var}[\bar{g}_k] \leq \frac{1-\alpha}{K} + O(1/N)$
+where $N$ is the batch size and $\bar{g}_k = \frac{1}{N} \sum_{i=1}^N g_k(x_i)$.
+\end{theorem}
+
+\subsection{Thrust 3: BitDelta and DeltaSoup}
+
+Personalization at scale requires storing per-user adaptations without replicating the full model. BitDelta (ZIP-0007) compresses the fine-tuning delta $\delta_u = W_f - W_b$ to a 1-bit sign matrix plus per-tensor scale factors:
+
+\begin{equation}
+\hat{W}_f = W_b + \gamma_u \cdot \text{sign}(\delta_u)
+\label{eq:bitdelta}
+\end{equation}
+
+This achieves $10\times$ memory reduction. DeltaSoup aggregates deltas from multiple users via Byzantine-robust trimmed mean~\cite{blanchard2017machine} to produce community Reference Adapters. The companion paper~\cite{zoo_bitdelta} proves that 1-bit quantization of deltas reduces jailbreak attack success by approximately 60\%, because the quantization acts as a regularizer on the delta manifold.
+
+\subsection{Thrust 4: NFT-Based Model Ownership}
+
+ZIP-0006 defines the ZRC-AI standard, extending ERC-721~\cite{entriken2018erc721} with model-specific metadata: model hash, training operation count, performance scores, and specialization domain. Users mint their personalized model as an NFT, which can be sold, leased, forked, or merged with other model NFTs.
+
+\begin{definition}[Model NFT Valuation]
+The value of a model NFT $M$ is
+$V(M) = V_{\text{base}} + V_{\text{delta}} + V_{\text{reputation}}$
+where $V_{\text{base}}$ is the frozen base model value (constant across all NFTs sharing the same base), $V_{\text{delta}}$ is the replacement cost of the user's BitDelta adapter, and $V_{\text{reputation}}$ is the discounted expected future yield based on on-chain performance history.
+\end{definition}
+
+\subsection{Thrust 5: Avatar Tutors}
+
+ZIP-0008 specifies a roster of animal-themed pedagogical agents (Oliver Owl for logic, Diana Dolphin for biology, Sam Sloth for computer science, Elena Elephant for mathematics, Pedro Penguin for physics). Each avatar maintains:
+
+\begin{itemize}
+    \item A \emph{prerequisite graph} $\mathcal{G} = (V, E)$ where vertices are concepts and edges are prerequisite relations.
+    \item A \emph{mastery vector} $\mu \in [0, 1]^{|V|}$ tracking the learner's proficiency on each concept.
+    \item A \emph{scaffolding policy} $\pi_s: \mathcal{G} \times \mu \to \mathcal{A}$ mapping the current graph state and mastery to a pedagogical action (demonstrate, guided practice, independent practice, remediation).
+\end{itemize}
+
+The mastery threshold is 0.8: no concept is introduced until all prerequisites exceed this threshold.
+
+\subsection{Thrust 6: Spatial Web and Agent Economies}
+
+ZIP-0011 integrates IEEE 2874 Spatial Web standards~\cite{ieee2874} with active inference agents. Agents perceive 3D environments via point cloud encoders and scene graph networks, act to minimize expected free energy, and trade services through an on-chain agent-to-agent economy. Resource tokens (COMPUTE, MEMORY, KNOWLEDGE, INFERENCE) mediate exchanges, and reputation is tracked via Lux DIDs.
+
+\section{Infrastructure Dependencies}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Layer} & \textbf{System} & \textbf{Role} \\
+\midrule
+L0 Consensus & Lux Network & Post-quantum settlement, DIDs \\
+L1 Compute & Hanzo Network & GPU compute chain (chain 36900) \\
+App Layer & Zoo Network & Model orchestration, governance \\
+Base Models & Zen & Qwen3+ foundation models \\
+\bottomrule
+\end{tabular}
+\caption{Infrastructure stack and roles.}
+\label{tab:stack}
+\end{table}
+
+\subsection{Compute Flow}
+
+A typical inference request traverses:
+
+\begin{enumerate}
+    \item User submits request to Zoo Network with their Lux DID.
+    \item Zoo resolves the user's BitDelta adapter from on-chain registry.
+    \item Hanzo allocates GPU resources and loads the Zen base model.
+    \item The base model weights are fused with the BitDelta adapter via a single kernel: $W = W_b + \gamma \cdot \text{sign}(\delta)$.
+    \item Inference executes; a compute receipt (LP-105) is generated.
+    \item The receipt is anchored on Lux for auditability.
+\end{enumerate}
+
+\subsection{Identity and Ownership}
+
+All participants---users, agents, models, datasets---are identified by Lux DIDs. Model ownership is recorded as ERC-721 tokens on Zoo chain. BitDelta adapters are content-addressed on IPFS with their hash registered on-chain.
+
+\section{Cross-Thrust Invariants}
+
+The six thrusts are not independent. We identify four invariants that must hold across them.
+
+\begin{theorem}[Safety Monotonicity]
+\label{thm:safety}
+Let $S(M)$ denote the safety score of model $M$ on a standard benchmark (TruthfulQA, HarmBench). For any BitDelta adapter $\delta$ applied to base model $M_b$ via Equation~\ref{eq:bitdelta}:
+\[
+S(M_b + \gamma \cdot \text{sign}(\delta)) \geq 0.95 \cdot S(M_b)
+\]
+That is, personalization degrades safety by at most 5\%.
+\end{theorem}
+
+\begin{theorem}[Ownership Composability]
+\label{thm:compose}
+If user $A$ owns model NFT $M_A$ and user $B$ owns $M_B$, then the DeltaSoup merge $M_{AB}$ is a new NFT whose royalty map distributes yield proportionally to each contributor's delta weight norm:
+\[
+r_A = \frac{\|\delta_A\|_1}{\|\delta_A\|_1 + \|\delta_B\|_1}, \quad r_B = 1 - r_A
+\]
+\end{theorem}
+
+\begin{proposition}[EFE Convergence for Avatar Tutors]
+An avatar tutor operating under the EFE objective (Equation~\ref{eq:efe}) with the prerequisite graph as its generative model converges to a teaching policy that presents concepts in topological order with respect to $\mathcal{G}$, given sufficient interaction episodes.
+\end{proposition}
+
+\section{Conservation Applications}
+
+Zoo's architecture is designed so that conservation tasks benefit from every thrust:
+
+\begin{itemize}
+    \item \textbf{Species classification}: Eco-1 processes camera trap video via Z-JEPA, identifying species from motion patterns rather than single frames.
+    \item \textbf{Habitat assessment}: Spatial web agents process satellite imagery and LiDAR point clouds, maintaining 3D scene graphs of ecosystems.
+    \item \textbf{Anti-poaching}: Active inference agents patrol virtual representations of protected areas, minimizing expected free energy to optimally cover terrain.
+    \item \textbf{Education}: Avatar tutors teach conservation biology to local communities, adapting to prerequisite knowledge and available languages.
+    \item \textbf{Citizen science}: BitDelta enables field researchers to personalize models on-device (Nano-1 at 3B parameters), contributing their deltas to community Reference Adapters via DeltaSoup.
+\end{itemize}
+
+\section{Evaluation Strategy}
+
+Each thrust defines its own evaluation protocol. The cross-cutting metrics are:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metric} & \textbf{Target} & \textbf{Thrust} \\
+\midrule
+Energy conservation error & $\leq C\epsilon^2$ & HLLM \\
+Video QA accuracy & $\geq 89\%$ & Eco-1 \\
+Compression ratio & $\geq 10\times$ & BitDelta \\
+Safety preservation & $\geq 95\%$ & BitDelta \\
+Learning gains & $\geq 30\%$ improvement & Avatar Tutors \\
+Spatial QA accuracy & $\geq 89\%$ & Spatial Web \\
+Transaction throughput & $\geq 10{,}000$ TPS & Agent Economy \\
+\bottomrule
+\end{tabular}
+\caption{Cross-thrust evaluation targets.}
+\label{tab:eval}
+\end{table}
+
+\section{Related Work}
+
+Decentralized AI has been explored by several projects. Bittensor~\cite{rao2020bittensor} incentivizes model serving via a blockchain-based marketplace but does not address user ownership or personalization. Fetch.ai~\cite{fetchai2019} deploys autonomous economic agents but lacks the active inference grounding we adopt from Friston~\cite{friston2017active}. Ocean Protocol~\cite{oceanprotocol2019} provides data marketplaces but not model ownership. SingularityNET~\cite{goertzel2017singularitynet} offers an AI service marketplace without per-user personalization.
+
+On the model architecture side, V-JEPA~\cite{bardes2024vjepa} and its successor V-JEPA 2~\cite{bardes2025vjepa2} demonstrate self-supervised video understanding but do not integrate cross-modal prediction or active inference planning. Mixtral~\cite{jiang2024mixtral} demonstrates efficient MoE architectures but lacks the Hamiltonian routing we propose. BitDelta~\cite{liu2024bitdelta} introduces 1-bit delta compression but does not address community aggregation (DeltaSoup) or on-chain ownership.
+
+\section{Conclusion}
+
+The Zoo AI research agenda defines six coordinated thrusts that, taken together, address the structural deficiencies of centralized AI: HLLMs for stable long-context reasoning, Z-JEPA for hyper-modal perception, BitDelta for scalable personalization, NFT ownership for user sovereignty, avatar tutors for equitable education, and spatial web agents for conservation-grounded deployment. The mathematical invariants connecting these thrusts---safety monotonicity, ownership composability, EFE convergence---ensure that the system maintains its guarantees as components are composed. The infrastructure layering across Lux, Hanzo, and Zoo provides the settlement, compute, and application layers necessary for production deployment.
+
+\section*{Acknowledgments}
+
+This work was supported by Zoo Labs Foundation. We thank the Hanzo and Lux engineering teams for infrastructure support.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{35}
+
+\bibitem{zoo_hllm}
+A.~Worring and Z.~Kelling, ``Hamiltonian Large Language Models: Energy-Based Inference for Zoo AI,'' Zoo Labs Foundation, Technical Report, 2024.
+
+\bibitem{zoo_bitdelta}
+A.~Worring and Z.~Kelling, ``BitDelta and DeltaSoup: Personalized and Community AI through Compact Model Updates,'' Zoo Labs Foundation, Technical Report, 2025.
+
+\bibitem{bardes2024vjepa}
+A.~Bardes, Q.~Garrido, J.~Ponce, X.~Chen, M.~Rabbat, Y.~LeCun, M.~Assran, and N.~Ballas, ``V-JEPA: Latent Video Prediction for Visual Representation Learning,'' in \emph{Proc.\ ICLR}, 2024.
+
+\bibitem{bardes2025vjepa2}
+A.~Bardes \emph{et al.}, ``V-JEPA 2: Self-Supervised Video Models Enable Understanding, Prediction, and Planning,'' \emph{arXiv:2506.09985}, 2025.
+
+\bibitem{friston2017active}
+K.~Friston, T.~FitzGerald, F.~Rigoli, P.~Schwartenbeck, J.~O'Doherty, and G.~Pezzulo, ``Active Inference and Learning,'' \emph{Neuroscience \& Biobehavioral Reviews}, vol.~68, pp.~862--879, 2017.
+
+\bibitem{friston2010free}
+K.~Friston, ``The Free-Energy Principle: A Unified Brain Theory?'' \emph{Nature Reviews Neuroscience}, vol.~11, no.~2, pp.~127--138, 2010.
+
+\bibitem{liu2024bitdelta}
+J.~Liu, N.~Dedhia, S.~Wu, H.~Hu, and C.~De~Sa, ``BitDelta: Your Fine-Tune May Only Be Worth One Bit,'' in \emph{Proc.\ NeurIPS}, 2024.
+
+\bibitem{wortsman2022model}
+M.~Wortsman \emph{et al.}, ``Model Soups: Averaging Weights of Multiple Fine-Tuned Models Improves Accuracy Without Increasing Inference Time,'' in \emph{Proc.\ ICML}, 2022.
+
+\bibitem{blanchard2017machine}
+P.~Blanchard, E.~M.~El~Mhamdi, R.~Guerraoui, and J.~Stainer, ``Machine Learning with Adversaries: Byzantine Tolerant Gradient Descent,'' in \emph{Proc.\ NeurIPS}, 2017.
+
+\bibitem{entriken2018erc721}
+W.~Entriken, D.~Shirley, J.~Evans, and N.~Sachs, ``EIP-721: Non-Fungible Token Standard,'' Ethereum Improvement Proposals, 2018.
+
+\bibitem{jiang2024mixtral}
+A.~Q.~Jiang \emph{et al.}, ``Mixtral of Experts,'' \emph{arXiv:2401.04088}, 2024.
+
+\bibitem{touvron2023llama}
+H.~Touvron \emph{et al.}, ``LLaMA: Open and Efficient Foundation Language Models,'' \emph{arXiv:2302.13971}, 2023.
+
+\bibitem{ieee2874}
+IEEE Standards Association, ``IEEE 2874-2023: Standard for Spatial Web Protocol, Architecture, and Governance,'' 2023.
+
+\bibitem{rao2020bittensor}
+A.~Rao, ``Bittensor: A Peer-to-Peer Intelligence Market,'' Technical Report, 2020.
+
+\bibitem{fetchai2019}
+Fetch.AI, ``The Fetch.AI Technical White Paper,'' 2019.
+
+\bibitem{oceanprotocol2019}
+T.~McConaghy \emph{et al.}, ``Ocean Protocol: A Decentralized Substrate for AI Data and Services,'' Technical Report, 2019.
+
+\bibitem{goertzel2017singularitynet}
+B.~Goertzel \emph{et al.}, ``SingularityNET: A Decentralized, Open Market and Inter-Network for AIs,'' 2017.
+
+\bibitem{hu2022lora}
+E.~J.~Hu, Y.~Shen, P.~Wallis, Z.~Allen-Zhu, Y.~Li, S.~Wang, L.~Wang, and W.~Chen, ``LoRA: Low-Rank Adaptation of Large Language Models,'' in \emph{Proc.\ ICLR}, 2022.
+
+\bibitem{dettmers2024qlora}
+T.~Dettmers, A.~Pagnoni, A.~Holtzman, and L.~Zettlemoyer, ``QLoRA: Efficient Finetuning of Quantized Language Models,'' in \emph{Proc.\ NeurIPS}, 2024.
+
+\bibitem{lecun2022path}
+Y.~LeCun, ``A Path Towards Autonomous Machine Intelligence,'' Open Review, version 0.9.2, 2022.
+
+\bibitem{hinton2006reducing}
+G.~E.~Hinton and R.~R.~Salakhutdinov, ``Reducing the Dimensionality of Data with Neural Networks,'' \emph{Science}, vol.~313, no.~5786, pp.~504--507, 2006.
+
+\bibitem{schmidhuber2015deep}
+J.~Schmidhuber, ``Deep Learning in Neural Networks: An Overview,'' \emph{Neural Networks}, vol.~61, pp.~85--117, 2015.
+
+\bibitem{vaswani2017attention}
+A.~Vaswani \emph{et al.}, ``Attention Is All You Need,'' in \emph{Proc.\ NeurIPS}, 2017.
+
+\bibitem{vygotsky1978mind}
+L.~S.~Vygotsky, \emph{Mind in Society: The Development of Higher Psychological Processes}. Harvard University Press, 1978.
+
+\bibitem{bloom1968learning}
+B.~S.~Bloom, ``Learning for Mastery,'' \emph{Evaluation Comment}, vol.~1, no.~2, pp.~1--12, 1968.
+
+\bibitem{sweller1988cognitive}
+J.~Sweller, ``Cognitive Load During Problem Solving: Effects on Learning,'' \emph{Cognitive Science}, vol.~12, no.~2, pp.~257--285, 1988.
+
+\bibitem{buterin2014ethereum}
+V.~Buterin, ``Ethereum: A Next-Generation Smart Contract and Decentralized Application Platform,'' 2014.
+
+\bibitem{champion2024expected}
+T.~Champion, M.~Grzegorczyk, H.~"; L.~Da~Costa, K.~J.~Friston, ``Expected Free Energy --- Insights and Applications,'' \emph{arXiv:2402.14460}, 2024.
+
+\end{thebibliography}
+
+\end{document}

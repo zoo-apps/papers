@@ -1,0 +1,35 @@
+\section{MEV Resistance}
+
+\label{sec:mev}
+
+\subsection{Encrypted Order Submission}
+
+Zoo DEX uses threshold encryption to prevent front-running and sandwich attacks:
+
+\begin{algorithm}[t]
+\caption{Encrypted Order Submission}
+\label{alg:mev}
+\begin{algorithmic}[1]
+\STATE User encrypts order: $o_{\text{enc}} = \text{Enc}(pk_{\text{block}}, \text{order})$
+\STATE Submit $o_{\text{enc}}$ to Zoo mempool
+\STATE Block proposer collects encrypted orders
+\STATE After block commitment, validators threshold-decrypt orders
+\STATE Orders executed in deterministic sequence (by encrypted hash)
+\RETURN Execution results
+\end{algorithmic}
+\end{algorithm}
+
+The block encryption key $pk_{\text{block}}$ is generated per-block by the validator committee. No single validator can decrypt orders before the block is committed.
+
+\subsection{Fair Ordering}
+
+PoAI validators enforce fair ordering: within each block, transactions are ordered by the hash of their encrypted ciphertext, not by gas price or arrival time. This eliminates priority gas auctions (PGA) and ensures all users pay the same effective price.
+
+\begin{theorem}[MEV Elimination]
+Under the encrypted order submission protocol with $< n/3$ Byzantine validators, no validator can extract MEV by reordering, inserting, or front-running user transactions.
+\end{theorem}
+
+\begin{proof}
+Orders are encrypted under a threshold key requiring $\geq 2n/3$ validators to decrypt. A coalition of $< n/3$ validators cannot decrypt orders before block commitment. After commitment, the execution order is deterministic (hash-based), leaving no room for reordering. Insertion of synthetic transactions requires knowing the order contents, which is impossible pre-decryption.
+\end{proof}
+

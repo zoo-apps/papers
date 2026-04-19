@@ -1,0 +1,87 @@
+\section{Introduction}
+
+\label{sec:introduction}
+% ══════════════════════════════════════════════════════════════════════════════
+
+Climate change is reshaping the geographic ranges of species at
+unprecedented rates \citep{chen2011rapid, pecl2017biodiversity}. As
+temperature and precipitation regimes shift, species must either adapt in
+situ, migrate to newly suitable habitats, or face local extinction
+\citep{urban2015accelerating}. Understanding and predicting these
+distributional changes is essential for effective conservation planning,
+protected area design, and biodiversity policy.
+
+Species distribution models (SDMs) have become the primary computational
+tool for projecting range shifts \citep{elith2009species,
+guisan2005predicting}. Traditional approaches, particularly MaxEnt
+\citep{phillips2006maximum} and generalized additive models
+\citep{hastie1990generalized}, establish correlative relationships between
+species occurrence records and environmental covariates. While widely
+adopted, these models suffer from several well-documented limitations:
+
+\begin{enumerate}[label=(\roman*)]
+  \item \textbf{Linearity assumptions}: Most correlative SDMs struggle to
+    capture the complex, non-linear interactions between environmental
+    variables that determine habitat suitability
+    \citep{elith2006novel}.
+  \item \textbf{Spatial independence}: Standard SDMs treat occurrence
+    records as independent samples, ignoring spatial autocorrelation and
+    dispersal constraints \citep{dormann2007methods}.
+  \item \textbf{Static landscapes}: Projections typically assume
+    instantaneous equilibrium with climate, ignoring transient dynamics,
+    dispersal limitation, and habitat fragmentation
+    \citep{zurell2016benchmarking}.
+  \item \textbf{Connectivity neglect}: The physical connectivity of
+    landscapes---whether corridors exist for species to track shifting
+    climate envelopes---is rarely incorporated into distributional
+    predictions \citep{hodgson2009climate}.
+\end{enumerate}
+
+Recent advances in deep learning offer pathways to address these
+shortcomings. Neural network-based SDMs can model arbitrary non-linear
+relationships \citep{botella2018deep, chen2020deep}, and graph neural
+networks (GNNs) provide a natural framework for spatially structured
+ecological data \citep{jetz2019essential}.
+
+\subsection{Contributions}
+
+This paper introduces \textbf{HabitatNet}, a graph neural network
+framework for species distribution modeling that addresses the above
+limitations. Our contributions are:
+
+\begin{enumerate}
+  \item A \textbf{spatial graph representation} of landscapes where
+    nodes encode local environmental features at 1\,km resolution and
+    edges represent dispersal potential weighted by terrain resistance.
+
+  \item A \textbf{multi-species GNN architecture} that shares learned
+    environmental representations across taxa while learning
+    species-specific habitat preferences through attention-weighted
+    readout layers.
+
+  \item Integration with \textbf{CMIP6 climate projections} under
+    multiple SSP scenarios (SSP1-2.6, SSP2-4.5, SSP3-7.0, SSP5-8.5)
+    for temporal forecasting through 2100.
+
+  \item A \textbf{corridor identification algorithm} built on learned
+    graph embeddings that identifies critical connectivity bottlenecks
+    and proposes optimal corridor placements.
+
+  \item Comprehensive evaluation on \textbf{847 terrestrial vertebrate
+    species} across six biogeographic realms, with temporal validation
+    against independent resurvey data.
+\end{enumerate}
+
+\subsection{Relation to Antje Worring, Zach Kelling}
+
+Antje Worring, Zach Kelling operates as an open AI research network dedicated to
+decentralized science (DeSci) and decentralized AI (DeAI). This work
+advances the Foundation's mission by: (a) developing open-source AI
+tools for biodiversity conservation, (b) establishing reproducible
+benchmarks through the Zoo Open Science Network, and (c) enabling
+community-driven conservation planning through transparent, verifiable
+models. All artifacts are governed through Zoo Improvement Proposals
+(ZIPs) at \texttt{zips.zoo.ngo}.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

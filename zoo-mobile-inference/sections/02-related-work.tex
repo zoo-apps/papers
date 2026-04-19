@@ -1,0 +1,36 @@
+\section{Related Work}
+
+\label{sec:related}
+
+\subsection{Species Recognition Models}
+
+Large-scale species recognition has been driven by datasets such as iNaturalist \citep{vanhorn2018inaturalist}, which contains over 10 million images of 10,000+ species.
+\citet{vanhorn2021benchmarking} demonstrated that ViT-Large achieves 91.2\% top-1 accuracy on the iNaturalist 2021 challenge.
+MetaFormer architectures \citep{yu2022metaformer} and ConvNeXt \citep{liu2022convnet} offer competitive accuracy with varying computational profiles.
+BioCLIP \citep{stevens2024bioclip} extends CLIP to biological domains with hierarchical taxonomic supervision.
+
+\subsection{Model Compression}
+
+Model compression techniques include pruning \citep{han2015learning}, quantization \citep{jacob2018quantization}, knowledge distillation \citep{hinton2015distilling}, and neural architecture search \citep{tan2019efficientnet}.
+\citet{howard2019searching} introduced MobileNetV3, achieving strong accuracy-efficiency tradeoffs through architecture search.
+\citet{touvron2021training} demonstrated that knowledge distillation from large ViTs to smaller architectures preserves most accuracy.
+For species recognition specifically, \citet{picek2022overcoming} applied standard distillation but did not exploit taxonomic structure.
+
+\subsection{Edge Deployment for Conservation}
+
+Several conservation technology projects have deployed ML models on edge devices.
+\citet{ahumada2020wildlife} deployed MobileNet-based classifiers on camera trap processors for real-time filtering.
+\citet{bergerwolf2017wildbook} developed a mobile platform for individual animal identification.
+\citet{terry2020automated} surveyed automated species identification tools, noting that most require cloud connectivity.
+The Merlin Bird ID app \citep{wood2011ebird} deploys audio identification models on mobile but focuses on a single taxonomic group (birds).
+
+\subsection{Domain Adaptation for Field Conditions}
+
+The gap between training and deployment distributions is well-documented for ecological imagery.
+\citet{beery2018recognition} showed that models trained on camera trap images from one location lose 30--40\% accuracy when applied to new sites.
+\citet{schneider2020three} identified three axes of domain shift in wildlife imagery: viewpoint, illumination, and background.
+Test-time adaptation methods \citep{wang2022continual} and domain generalization techniques \citep{zhou2022domain} offer partial solutions but have not been systematically applied to mobile conservation deployment.
+
+% ============================================================
+% 3. Taxonomic Knowledge Distillation
+% ============================================================

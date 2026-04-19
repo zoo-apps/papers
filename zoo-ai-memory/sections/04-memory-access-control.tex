@@ -1,0 +1,48 @@
+\section{Memory Access Control}
+
+\label{sec:access}
+%----------------------------------------------------------------------
+
+\subsection{Capability-Based Model}
+
+Access to a Memory Capsule is governed by \emph{capability tokens}---unforgeable, delegable, scopeable authorization objects. Unlike ACLs (which attach permissions to identities), capabilities attach permissions to tokens that can be passed between agents.
+
+\begin{definition}[Memory Capability]
+A capability $c = (\textit{issuer}, \textit{holder}, \textit{scope}, \textit{expiry}, \sigma)$ where:
+\begin{itemize}
+    \item $\textit{issuer}$ is the \DID{} of the capsule owner.
+    \item $\textit{holder}$ is the \DID{} of the authorized agent (or $\bot$ for bearer tokens).
+    \item $\textit{scope} \subseteq \{\texttt{read}, \texttt{write}, \texttt{delete}\} \times \mathcal{T} \times \mathcal{F}$ specifies allowed operations, memory types $\mathcal{T}$, and optional tag filters $\mathcal{F}$.
+    \item $\textit{expiry}$ is a UNIX timestamp after which the capability is void.
+    \item $\sigma$ is the issuer's signature over the above fields.
+\end{itemize}
+\end{definition}
+
+\subsection{DID Authentication}
+
+All capability checks begin with \DID{} authentication on \IChain{}. The requesting agent presents its \DID{} and a fresh challenge-response signature. \IChain{} resolves the \DID{} document, extracts the verification key, and validates the signature.
+
+\subsection{Threshold Reveal for Sensitive Memories}
+
+Certain memories are too sensitive for any single key to unlock. These are encrypted under a threshold scheme managed by \TChain{}:
+
+\begin{enumerate}
+    \item The memory entry is encrypted with a symmetric key $k_e$.
+    \item $k_e$ is split into $n$ shares via Shamir's Secret Sharing, distributed to \TChain{} validators.
+    \item Decryption requires $t$-of-$n$ validators to contribute their shares (default: $t = \lceil 2n/3 \rceil$).
+    \item The requesting agent must present a valid capability token \emph{and} achieve quorum.
+\end{enumerate}
+
+This prevents both the agent owner (who cannot unilaterally decrypt) and any subset of validators (who lack the capability token) from accessing the memory alone.
+
+\subsection{Delegation and Revocation}
+
+Capabilities support bounded delegation:
+
+\begin{itemize}
+    \item \textbf{Attenuation.} A holder can create a derived capability with equal or narrower scope. A read-write capability can be attenuated to read-only; a full-type capability can be narrowed to episodic-only.
+    \item \textbf{Depth Limits.} Each capability carries a delegation depth counter. The issuer sets the maximum depth; each delegation decrements it.
+    \item \textbf{Revocation.} The issuer publishes a revocation record to \IChain{}. Validators check the revocation list before honoring capabilities. Revocation propagates within one \IChain{} block confirmation ($\sim$2 seconds).
+\end{itemize}
+
+%----------------------------------------------------------------------

@@ -1,0 +1,95 @@
+\section{Full JSON Schemas}
+
+
+\subsection{Experience Schema}
+
+\begin{lstlisting}[language=json,caption=Complete Experience JSON]
+{
+  "id": "exp_sha256_abc123def456...",
+  "version": "1.0",
+  "domain": "math.geometry",
+  "subdomain": "intersection_problems",
+  "text": "When solving geometry problems with 
+           intersections, validate solutions lie 
+           within bounded regions, not extensions.",
+  "confidence": 0.87,
+  "difficulty": "medium",
+  "examples": [
+    {
+      "input": "Find intersection of lines AB and CD...",
+      "output": "Point P at (2, 3)",
+      "correct": true,
+      "trajectory": "Used parametric equations...",
+      "reasoning": "Validated P lies on both segments."
+    },
+    {
+      "input": "Intersection of circle and line...",
+      "output": "Points Q1=(1,2), Q2=(3,4)",
+      "correct": false,
+      "trajectory": "Solved quadratic, got two roots...",
+      "reasoning": "Failed to check Q2 is outside circle."
+    }
+  ],
+  "metadata": {
+    "created_at": "2025-09-15T14:30:00Z",
+    "created_by": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+    "votes": {
+      "upvotes": 24,
+      "downvotes": 2,
+      "abstain": 3
+    },
+    "usage_count": 156,
+    "usage_success_rate": 0.78,
+    "domains_applied": ["geometry", "optimization", "physics"],
+    "avg_confidence_gain": 0.12,
+    "related_experiences": ["exp_xyz789", "exp_abc321"]
+  },
+  "embedding": [0.123, -0.456, 0.789, ...],  // 7680-dim
+  "merkle_proof": {
+    "root": "0xdef456...",
+    "path": ["0xaaa111", "0xbbb222", ...],
+    "index": 42
+  },
+  "ipfs_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3...",
+  "arweave_id": "tx_7vXqL1TzYG3u9pXhNkL..."
+}
+\end{lstlisting}
+
+\subsection{Library Schema}
+
+\begin{lstlisting}[language=json,caption=Experience Library JSON]
+{
+  "library_version": "2.3.0",
+  "base_model": "Qwen3-32B-Instruct",
+  "base_model_hash": "sha256:abc123...",
+  "total_experiences": 94,
+  "domains": [
+    {"name": "math.geometry", "count": 23},
+    {"name": "math.algebra", "count": 18},
+    {"name": "reasoning.logic", "count": 15},
+    ...
+  ],
+  "experiences": [
+    {/* experience 1 */},
+    {/* experience 2 */},
+    ...
+  ],
+  "merkle_root": "0x123456789abcdef...",
+  "ipfs_cid": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3...",
+  "arweave_id": "tx_7vXqL1TzYG3u9pXhNkL...",
+  "created_at": "2025-09-20T10:00:00Z",
+  "previous_version": "2.2.0",
+  "changelog": [
+    {"op": "add", "exp_id": "exp_new123", "reason": "..."},
+    {"op": "modify", "exp_id": "exp_old456", "reason": "..."},
+    {"op": "delete", "exp_id": "exp_bad789", "reason": "..."}
+  ],
+  "governance": {
+    "proposal_id": "prop_42",
+    "votes": {"yes": 670000, "no": 120000, "abstain": 50000},
+    "quorum": 0.12,
+    "approved": true
+  }
+}
+\end{lstlisting}
+

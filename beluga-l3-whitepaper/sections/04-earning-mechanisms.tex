@@ -1,0 +1,101 @@
+\section{Earning Mechanisms}
+\label{sec:earning}
+%% ============================================================
+
+\Beluga{} defines six distinct mechanisms for earning \BLG{}, each backed by a dedicated smart contract.
+
+\subsection{Training and Fine-Tuning}
+
+Participants earn \BLG{} by submitting verifiable training runs. Supported methods include \LoRA{}, \QLoRA{}, full fine-tuning, and \GRPO{}-based optimization \cite{zoo-gym}. The workflow:
+
+\begin{enumerate}
+    \item \textbf{Commit}: Trainer commits a hash of their training configuration (base model, hyperparameters, dataset hash) to \texttt{TrainingBounty.sol}.
+    \item \textbf{Execute}: Training runs off-chain on GPU infrastructure. The trainer produces a \TEE{} attestation \cite{zoo-poai} of the compute performed.
+    \item \textbf{Submit}: Trainer submits the resulting weights hash, evaluation metrics, and \TEE{} attestation.
+    \item \textbf{Verify}: The \PoAI{} verification committee (Section~\ref{sec:consensus}) validates the attestation and re-runs evaluation on a sample.
+    \item \textbf{Reward}: If verified, \BLG{} is released from escrow proportional to the improvement achieved:
+\end{enumerate}
+
+\begin{equation}
+R_{\text{train}} = B \cdot \frac{\Delta_{\text{eval}}}{\Delta_{\text{target}}} \cdot \min\left(1, \frac{\Delta_{\text{eval}}}{\Delta_{\text{target}}}\right)
+\end{equation}
+
+where $B$ is the bounty amount, $\Delta_{\text{eval}}$ is the measured improvement, and $\Delta_{\text{target}}$ is the bounty's target improvement. Rewards are capped at $B$ to prevent gaming.
+
+\subsection{Data Contribution (DeltaSoup)}
+
+DeltaSoup is the data contribution protocol, named for its role as the ``soup'' of ingredients that feeds model training. Contributors earn \BLG{} through three activities:
+
+\begin{description}[nosep]
+    \item[Curation] Assembling coherent datasets from heterogeneous sources. Reward scales with dataset usage (number of training runs that reference the dataset).
+    \item[Labeling/Annotation] Providing human labels, preference rankings, or structured annotations. Reward is per-label with quality multipliers from inter-annotator agreement.
+    \item[Cleaning/Deduplication] Removing duplicates, fixing encoding errors, standardizing formats. Reward is proportional to the byte-count of data cleaned, verified by diff against the original.
+\end{description}
+
+All data contributions are registered in the Experience Ledger \cite{zoo-experience-ledger} as content-addressable records, enabling provenance tracking and royalty distribution when models trained on the data generate inference revenue.
+
+\begin{equation}
+R_{\text{data}} = \sum_{m \in \text{models}} \alpha_m \cdot \text{revenue}(m) \cdot \text{contribution}(d, m)
+\end{equation}
+
+where $\alpha_m$ is the data royalty rate for model $m$ and $\text{contribution}(d, m)$ measures the fraction of $m$'s training data attributable to dataset $d$.
+
+\subsection{Inference Hosting}
+
+Inference hosts keep models loaded on GPU memory and serve requests. Hosts earn \BLG{} through two channels:
+
+\begin{enumerate}
+    \item \textbf{Availability reward}: A passive \BLG{} drip for keeping models loaded and responsive, verified by periodic heartbeat probes. The rate is:
+    \begin{equation}
+    R_{\text{avail}} = r_{\text{base}} \cdot \text{uptime} \cdot \text{capacity}
+    \end{equation}
+    where $r_{\text{base}}$ is the per-epoch base rate, uptime is the fraction of successful heartbeats, and capacity is the model's parameter count normalized to a 7B reference.
+
+    \item \textbf{Per-request reward}: A fee paid by the requester for each inference call, priced by the \texttt{0x0300} precompile based on model size, sequence length, and current demand:
+    \begin{equation}
+    f_{\text{request}} = p_{\text{base}} \cdot \left(\frac{\text{params}}{7 \times 10^9}\right)^{0.7} \cdot \left(\frac{\text{seq\_len}}{2048}\right) \cdot (1 + \beta \cdot \text{utilization})
+    \end{equation}
+    where $p_{\text{base}}$ is the base price in \BLG{}, and $\beta$ is a demand elasticity parameter.
+\end{enumerate}
+
+\subsection{Evaluation and Red-Teaming}
+
+Evaluators earn \BLG{} bounties by running standardized benchmarks and discovering adversarial inputs:
+
+\begin{description}[nosep]
+    \item[Benchmark execution] Run established benchmarks (MMLU, HumanEval, GSM8K) against registered models. Reward is a flat fee per evaluation, paid by the model owner or from the \DAO{} treasury for public evaluations.
+    \item[Adversarial discovery] Find inputs that cause incorrect, harmful, or inconsistent outputs. Bounties are posted per-model with severity tiers: \textbf{Critical} (safety violation, 1000 \BLG{}), \textbf{High} (factual hallucination, 500 \BLG{}), \textbf{Medium} (inconsistency, 200 \BLG{}), \textbf{Low} (formatting error, 50 \BLG{}).
+\end{description}
+
+Red-team findings are recorded on-chain as evaluation attestations, building a public adversarial test suite for each model.
+
+\subsection{Governance}
+
+\BLG{} holders participate in governance by staking tokens to the \texttt{BelugaGovernor} contract:
+
+\begin{itemize}[nosep]
+    \item \textbf{Model promotion}: Vote on which models are promoted to ``verified'' status in the marketplace.
+    \item \textbf{Dataset acceptance}: Vote on whether submitted datasets meet quality standards for inclusion in the canonical data commons.
+    \item \textbf{Parameter changes}: Vote on chain parameters (gas limits, fee coefficients, bounty sizes).
+    \item \textbf{Treasury allocation}: Vote on treasury disbursements via timelock-gated proposals.
+\end{itemize}
+
+Governance uses a conviction voting model where voting power increases with stake duration:
+
+\begin{equation}
+\text{power}(s, t) = s \cdot (1 + \gamma \cdot \min(t, t_{\max}))
+\end{equation}
+
+where $s$ is the staked amount, $t$ is the staking duration in days, $\gamma$ is the conviction multiplier (default: 0.001 per day), and $t_{\max}$ is the maximum bonus cap (365 days).
+
+\subsection{Bridge and DeFi}
+
+\BLG{} is tradeable on Zoo DEX via the BLG/ZOO liquidity pool, bridged through Teleport. Additional earning opportunities:
+
+\begin{itemize}[nosep]
+    \item \textbf{Liquidity provision}: Supply BLG/ZOO liquidity and earn trading fees.
+    \item \textbf{Cross-chain arbitrage}: Price discrepancies between \Beluga{} native and bridged \BLG{} on \Zoo{} create arbitrage opportunities.
+    \item \textbf{Model-backed lending}: Use model NFTs as collateral for \BLG{} loans (future feature, requires oracle integration).
+\end{itemize}
+
+%% ============================================================

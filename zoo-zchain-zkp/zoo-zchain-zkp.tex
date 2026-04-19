@@ -1,0 +1,48 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{booktabs}
+\usepackage{multirow}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+
+\title{\textbf{Z-Chain: A Universal Zero-Knowledge Proof Platform\\with Post-Quantum Security on Zoo Network}}
+
+\author{
+Antje Worring, Zach Kelling\thanks{research@zoo.ngo}\\
+\textit{Zoo Labs Foundation (501c3)}
+}
+
+\date{February 2026}
+
+\begin{document}
+
+\zoocoverpage
+\maketitle
+
+\begin{abstract}
+We present Z-Chain, the zero-knowledge proof substrate of Zoo Network, providing universal proving, cheap verification, and composable proofs across all Zoo chains. Z-Chain implements a dual-lane architecture: a \emph{production lane} (Groth16, PLONK, STARK) for stable deployments, and a \emph{research lane} for experimental proof systems with versioned capability identifiers. The core primitive is the \emph{Universal Receipt}---a chain-native proof-of-proof object that enables recursive composition, cross-chain verification, and long-term auditability. We integrate post-quantum security through Poseidon2 hash commitments (replacing Pedersen, achieving 2000$\times$ speedup at 7.5$\times$ lower gas cost), ML-DSA signature verification within ZK circuits, and STARK proofs over the Goldilocks field for transparent, quantum-resistant proving. The PQZ (Post-Quantum Zero-Knowledge) algorithm combines these primitives into a unified framework where: (1) proofs are generated using STARKs with Poseidon2 commitments, (2) verification uses ML-DSA-signed receipts, (3) cross-chain export uses Groth16 wrappers for EVM compatibility, and (4) private computation uses FHE-ZK hybrid protocols on Zoo's T-Chain. We benchmark Z-Chain at 12,000 proof verifications per second on GPU-accelerated validators with 1.8-second end-to-end latency from proof submission to receipt finalization. Formal verification in Lean 4 proves soundness, completeness, and zero-knowledge properties for all three production proof systems. This work establishes the first post-quantum zero-knowledge infrastructure integrated natively into a blockchain consensus layer.
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-architecture}
+\input{sections/03-the-pqz-algorithm}
+\input{sections/04-universal-receipt-format}
+\input{sections/05-zk-precompile-isa}
+\input{sections/06-fhe-zk-hybrid-protocols}
+\input{sections/07-formal-verification}
+\input{sections/08-empirical-evaluation}
+\input{sections/99-conclusion}
+
+\end{document}

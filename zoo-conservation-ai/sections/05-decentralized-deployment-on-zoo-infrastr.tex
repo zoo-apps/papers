@@ -1,0 +1,50 @@
+\section{Decentralized Deployment on Zoo Infrastructure}
+
+
+\subsection{Data Pipeline}
+
+Camera trap images are uploaded to the \Zoo{} Data Commons (see companion paper~\cite{zoo2026commons}) with the following metadata schema:
+
+\begin{lstlisting}[basicstyle=\footnotesize\ttfamily, frame=single, caption={Camera trap metadata schema (JSON-LD).}]
+{
+  "@context": "https://schema.zoo.ngo/camera-trap",
+  "deployment_id": "serengeti-2026-001",
+  "camera_id": "CT-S225-A01",
+  "timestamp": "2026-01-15T03:42:17Z",
+  "location": {"lat": -2.3285, "lon": 34.8342},
+  "trigger_type": "motion",
+  "sequence_id": "seq-20260115-034217",
+  "sequence_position": 1,
+  "image_hash": "sha256:a1b2c3d4..."
+}
+\end{lstlisting}
+
+\subsection{Federated Model Training}
+
+To protect sensitive location data (particularly for endangered species), we employ federated learning across partner conservation sites. Each site trains a local model adaptation on its private data and shares only gradient updates with the central aggregator:
+
+\begin{equation}
+\theta_{t+1} = \theta_t + \frac{1}{K} \sum_{k=1}^{K} \frac{n_k}{n} \Delta \theta_k^t
+\end{equation}
+
+where $K$ is the number of participating sites, $n_k$ is the local dataset size, $n = \sum_k n_k$, and $\Delta \theta_k^t$ are the locally computed parameter updates. Differential privacy noise is added to prevent reconstruction of sensitive location data from shared gradients.
+
+\subsection{Inference at the Edge}
+
+For real-time processing in field deployments, we provide optimized models for edge devices:
+
+\begin{table}[htbp]
+\centering
+\caption{Edge deployment performance.}
+\label{tab:edge}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Platform} & \textbf{Model Size} & \textbf{Accuracy (\%)} & \textbf{Latency (ms)} & \textbf{Power (W)} \\
+\midrule
+NVIDIA Jetson Nano & 28 MB & 89.4 & 180 & 5.0 \\
+Raspberry Pi 4 & 12 MB & 84.2 & 420 & 3.5 \\
+Coral Edge TPU & 8 MB & 86.7 & 95 & 2.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+

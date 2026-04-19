@@ -1,0 +1,46 @@
+\section{Introduction}
+
+
+\subsection{The KMS Problem}
+
+Centralized Key Management Services (KMS) represent a fundamental contradiction in decentralized systems. Blockchain networks that rely on AWS KMS, HashiCorp Vault, or similar services inherit the trust assumptions, availability constraints, and jurisdictional exposure of those providers. A KMS outage halts signing. A KMS compromise exposes all key material. A KMS subpoena reveals private keys to state actors.
+
+Three specific failures motivate \KChain{}:
+
+\begin{enumerate}
+\item \textbf{Single Point of Compromise}: Centralized key storage means one breach exposes all keys. The 2024 LastPass breach demonstrated that even security-focused companies lose key material.
+\item \textbf{Quantum Vulnerability}: Existing KMS implementations use RSA or ECDSA. Shor's algorithm on a sufficiently large quantum computer breaks both. Keys encrypted today can be harvested and decrypted later (``harvest now, decrypt later'' attacks).
+\item \textbf{Availability Dependence}: Cloud KMS outages (AWS us-east-1, 2023) halt all dependent operations. A blockchain's liveness should not depend on a single cloud provider.
+\end{enumerate}
+
+\subsection{Chain-Native Key Management}
+
+\KChain{} resolves these failures by distributing key management across validators as a first-class blockchain primitive. Every cryptographic key in the Zoo ecosystem---signing keys, encryption keys, identity keys---is managed through \KeyVM{} transactions. Key material never exists in complete form on any single node.
+
+\subsection{Post-Quantum Readiness}
+
+NIST finalized three post-quantum standards in 2024:
+
+\begin{itemize}
+\item \textbf{ML-KEM} (FIPS 203, formerly CRYSTALS-Kyber): Lattice-based key encapsulation mechanism.
+\item \textbf{ML-DSA} (FIPS 204, formerly CRYSTALS-Dilithium): Lattice-based digital signature algorithm.
+\item \textbf{SLH-DSA} (FIPS 205, formerly SPHINCS+): Hash-based stateless digital signature algorithm.
+\end{itemize}
+
+\KChain{} implements all three, with ML-KEM as the default encapsulation scheme and ML-DSA as the default signature scheme. SLH-DSA serves as a conservative fallback if lattice assumptions are weakened.
+
+\subsection{Contributions}
+
+\begin{itemize}
+\item A distributed key management chain (\KeyVM{}) that replaces centralized KMS with validator-distributed threshold shares.
+\item Integration of FIPS 203 (ML-KEM) and FIPS 204 (ML-DSA) as native key operations with threshold adaptations.
+\item GPU-accelerated NTT kernels achieving $14\times$ speedup for lattice polynomial operations.
+\item Secure memory architecture with constant-time operations and cryptographic clearing.
+\item Formal verification of ML-KEM, ML-DSA, and SLH-DSA correctness in Lean 4.
+\item Integration protocols with \TChain{} (threshold signatures) and \IChain{} (identity).
+\end{itemize}
+
+\subsection{Paper Organization}
+
+Section~2 covers key types and lifecycle. Section~3 details ML-KEM integration. Section~4 covers ML-DSA for post-quantum signatures. Section~5 presents threshold key sharing. Section~6 describes BLS keypairs for classical consensus. Section~7 covers GPU NTT acceleration. Section~8 addresses secure memory. Section~9 presents formal verification. Section~10 analyzes security. Section~11 discusses cross-chain integration. Section~12 concludes.
+

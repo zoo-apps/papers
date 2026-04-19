@@ -1,0 +1,130 @@
+\section{Experimental Evaluation}
+
+
+\subsection{Datasets}
+
+We evaluate on four benchmark datasets:
+
+\begin{table}[htbp]
+\centering
+\caption{Evaluation datasets.}
+\label{tab:datasets}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Dataset} & \textbf{Images} & \textbf{Species} & \textbf{Sites} & \textbf{Duration} \\
+\midrule
+Snapshot Serengeti & 7,100,000 & 61 & 225 & 2010--2023 \\
+Wildlife Insights & 12,400,000 & 847 & 1,842 & 2015--2025 \\
+LILA BC (Caltech) & 3,200,000 & 293 & 486 & 2012--2024 \\
+Zoo Partner Sites & 1,800,000 & 412 & 127 & 2022--2026 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Species Classification Results}
+
+\begin{table}[htbp]
+\centering
+\caption{Species classification accuracy (\%) on Wildlife Insights test set.}
+\label{tab:classification}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Method} & \textbf{Top-1} & \textbf{Top-5} & \textbf{Genus} & \textbf{Family} & \textbf{Params (M)} \\
+\midrule
+ResNet-152~\cite{norouzzadeh2018} & 88.7 & 95.1 & 92.4 & 96.8 & 60.2 \\
+EfficientNet-B7~\cite{tan2019} & 91.2 & 96.8 & 94.1 & 97.9 & 66.3 \\
+ViT-L/16~\cite{dosovitskiy2021} & 93.1 & 97.4 & 95.6 & 98.3 & 304.4 \\
+MegaDetector + ResNet~\cite{beery2019mega} & 90.4 & 96.2 & 93.7 & 97.5 & 85.1 \\
+\midrule
+\ConservAI{} (single-frame) & 93.8 & 97.6 & 96.1 & 98.5 & 82.4 \\
+\ConservAI{} (with TCA) & \textbf{96.3} & \textbf{98.9} & \textbf{97.8} & \textbf{99.2} & 89.7 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The hierarchical classifier with TCA achieves 96.3\% top-1 accuracy, a 3.2 percentage point improvement over the strongest baseline (ViT-L/16) while using 3.4$\times$ fewer parameters.
+
+\subsection{Population Estimation}
+
+We evaluate population estimation on the Snapshot Serengeti dataset where ground-truth abundance estimates are available from aerial surveys:
+
+\begin{table}[htbp]
+\centering
+\caption{Population estimation: mean absolute percentage error (\%) by species.}
+\label{tab:population}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Species} & \textbf{N-mixture} & \textbf{SECR (manual)} & \textbf{ConservAI} \\
+\midrule
+Wildebeest & 14.2 & --- & \textbf{7.8} \\
+Zebra & 12.8 & 9.4 & \textbf{6.9} \\
+Thomson's Gazelle & 18.7 & --- & \textbf{11.2} \\
+Lion & 22.1 & 8.7 & \textbf{7.1} \\
+Leopard & 28.4 & 11.2 & \textbf{9.8} \\
+Elephant & 9.6 & --- & \textbf{5.4} \\
+\midrule
+\textbf{Mean} & 17.6 & 9.8 & \textbf{8.2} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Habitat Quality Assessment}
+
+We validate the habitat quality index against expert-assessed habitat condition scores at 127 Zoo partner sites:
+
+\begin{table}[htbp]
+\centering
+\caption{Habitat quality index correlation with expert assessments.}
+\label{tab:habitat}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Method} & \textbf{Pearson $r$} & \textbf{Spearman $\rho$} \\
+\midrule
+NDVI only & 0.61 & 0.58 \\
+Multi-spectral (no camera data) & 0.74 & 0.71 \\
+Camera trap diversity only & 0.68 & 0.65 \\
+\ConservAI{} (fused) & \textbf{0.89} & \textbf{0.86} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The fused approach achieves a Pearson correlation of 0.89 with expert assessments, demonstrating that integrating satellite and camera trap data provides substantially better habitat characterization than either source alone.
+
+\subsection{Temporal Context Attention Ablation}
+
+\begin{table}[htbp]
+\centering
+\caption{Ablation study of TCA components on Snapshot Serengeti.}
+\label{tab:tca_ablation}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Configuration} & \textbf{Top-1 (\%)} & \textbf{FPR (\%)} & \textbf{Latency (ms)} \\
+\midrule
+Single frame (no TCA) & 93.8 & 4.8 & 42 \\
+Burst averaging & 94.6 & 3.9 & 48 \\
+TCA (intra-sequence only) & 95.4 & 2.7 & 56 \\
+TCA (inter-sequence, $n$=1) & 95.9 & 2.1 & 62 \\
+TCA (inter-sequence, $n$=3) & \textbf{96.3} & \textbf{1.8} & 71 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Each component of TCA contributes meaningfully. Inter-sequence attention provides the largest single improvement for reducing false positives, as it leverages the prior that the same species tend to revisit the same location.
+
+\subsection{Computational Efficiency}
+
+\begin{table}[htbp]
+\centering
+\caption{Inference throughput comparison (images/second on V100).}
+\label{tab:efficiency}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Method} & \textbf{Detection} & \textbf{Classification} & \textbf{End-to-end} & \textbf{GPU Mem (GB)} \\
+\midrule
+MegaDetector + ViT-L & 18.2 & 12.4 & 7.3 & 14.8 \\
+EfficientNet-B7 & --- & 31.6 & 24.1 & 6.2 \\
+\ConservAI{} & 23.8 & 19.4 & 14.1 & 8.4 \\
+\bottomrule
+\end{tabular}
+\end{table}
+

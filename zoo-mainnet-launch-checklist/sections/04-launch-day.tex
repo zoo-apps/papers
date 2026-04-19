@@ -1,0 +1,66 @@
+\section{Launch Day}
+
+
+Launch proceeds only after rehearsal sign-off. All times are UTC.
+A launch coordinator runs the sequence; no ad-hoc changes permitted.
+
+\subsection{Genesis and Validators}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Action} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1 & Genesis block signed by founding validators (multisig)       & Core   & \pending \\
+2 & Bootstrap 5 GPU validator nodes on \texttt{lux-k8s}          & DevOps & \pending \\
+3 & P-Chain L1 creation confirmed on \Lux{} mainnet              & Core   & \pending \\
+4 & All 14 chain creation transactions confirmed                 & Core   & \pending \\
+5 & Validator registration confirmed for 5 founding nodes        & Core   & \pending \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Service Activation}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Action} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1  & Verify all 14 chain RPCs responding via gateway                & Core   & \pending \\
+2  & Bridge activation: \Lux{} mainnet $\leftrightarrow$ \Zoo{} mainnet & Bridge & \pending \\
+3  & Bridge: first transfer confirmed both directions               & Bridge & \pending \\
+4  & Blockscout explorer live at \texttt{explore.zoo.ngo}           & DevOps & \pending \\
+5  & Explorer indexing all 14 chains                                & DevOps & \pending \\
+6  & DNS cutover: \texttt{api.zoo.ngo} points to mainnet gateway    & DevOps & \pending \\
+7  & DNS cutover: \texttt{explore.zoo.ngo} points to Blockscout     & DevOps & \pending \\
+8  & TLS certificates valid and proxied via Cloudflare              & DevOps & \pending \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Monitoring}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Action} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1 & Prometheus scraping all validator and chain metrics         & DevOps & \pending \\
+2 & Grafana dashboards live: consensus, throughput, latency     & DevOps & \pending \\
+3 & Alerting rules active: missed blocks, high latency, disk    & DevOps & \pending \\
+4 & PagerDuty escalation configured for critical alerts         & DevOps & \pending \\
+5 & Structured logging flowing to observability stack            & DevOps & \pending \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Launch Sign-off}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Gate} & \textbf{Approver} & \textbf{Status} \\
+\midrule
+1 & All 14 chains producing blocks          & CTO    & \pending \\
+2 & Bridge operational both directions       & CTO    & \pending \\
+3 & Explorer indexing confirmed              & CTO    & \pending \\
+4 & Monitoring and alerting verified         & CTO    & \pending \\
+5 & Public announcement authorized           & CEO    & \pending \\
+\bottomrule
+\end{tabularx}
+
+%% ---------------------------------------------------------------------------

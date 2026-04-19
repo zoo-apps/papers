@@ -1,0 +1,81 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\input{shared/lstlang}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\PoAI}{\textsc{PoAI}}
+\newcommand{\LLM}{\textsc{llm}}
+\newcommand{\TEE}{\textsc{tee}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{Proof of AI: A Consensus Mechanism for Verifiable Compute Contribution}}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Hanzo Industries \quad Lux Industries \quad Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{February 2024}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We introduce \textbf{Proof of AI} (\PoAI{}), a novel consensus mechanism designed for networks where participants contribute AI compute rather than hash power or stake. Unlike Proof of Work which wastes energy on cryptographic puzzles, or Proof of Stake which concentrates power among token holders, \PoAI{} rewards nodes for performing \emph{useful} AI computation: inference, training, and experience extraction. Our protocol combines three components: (1) \textbf{Compute Verification} using Trusted Execution Environments (\TEE{}s) to attest that claimed work was performed, (2) \textbf{Quality Scoring} via multi-party evaluation to assess the value of contributed compute, and (3) \textbf{Attestation Aggregation} using BLS signatures for efficient on-chain verification. We prove that \PoAI{} achieves Byzantine fault tolerance under standard assumptions while incentivizing economically rational behavior. Experimental evaluation on a 100-node testnet demonstrates 847 TPS throughput with 2.3-second finality, while rewarding nodes proportional to their AI contribution quality.
+
+\textbf{Keywords}: consensus mechanism, proof of useful work, AI compute verification, trusted execution environments
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-background}
+\input{sections/03-poai}
+\input{sections/04-compute-verification}
+\input{sections/05-quality-scoring}
+\input{sections/06-security-analysis}
+\input{sections/07-experimental-evaluation}
+\input{sections/08-related-work}
+\input{sections/09-future-work}
+\input{sections/10-conclusion}
+\input{sections/12-attestation-format}
+\input{sections/13-quality-scoring-functions}
+\input{sections/14-slashing-conditions}
+\input{sections/99-acknowledgments}
+
+\end{document}

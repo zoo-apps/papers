@@ -1,0 +1,37 @@
+\section{Supplementary: Feature Importance Analysis}
+
+\label{app:features}
+% ══════════════════════════════════════════════════════════════════════════════
+
+We analyze feature importance using integrated gradients
+\citep{chen2020deep} applied to the feature encoder. Across all 847
+species, the most influential variables are:
+
+\begin{table}[H]
+\centering
+\caption{Top 10 features by mean integrated gradient magnitude across all
+species.}
+\label{tab:features}
+\begin{tabular}{clc}
+\toprule
+\textbf{Rank} & \textbf{Feature} & \textbf{Importance} \\
+\midrule
+1  & Annual mean temperature (BIO1)      & 0.187 \\
+2  & Annual precipitation (BIO12)        & 0.156 \\
+3  & Elevation                           & 0.134 \\
+4  & Tree cover fraction                 & 0.121 \\
+5  & Temperature seasonality (BIO4)      & 0.098 \\
+6  & NDVI mean                           & 0.089 \\
+7  & Precipitation seasonality (BIO15)   & 0.076 \\
+8  & Distance to water                   & 0.062 \\
+9  & Slope                               & 0.048 \\
+10 & Temperature annual range (BIO7)     & 0.041 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Feature importance varies substantially across taxa: for amphibians,
+precipitation variables dominate; for birds, temperature and NDVI are
+most influential; for mammals, tree cover and elevation are primary
+drivers.
+

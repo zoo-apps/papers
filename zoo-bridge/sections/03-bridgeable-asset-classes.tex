@@ -1,0 +1,78 @@
+\section{Bridgeable Asset Classes}
+
+\label{sec:assets}
+
+\subsection{Asset Taxonomy}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{llll}
+\toprule
+\textbf{Asset} & \textbf{Lux L0} & \textbf{Zoo L2} & \textbf{Beluga L3} \\
+\midrule
+Tokens & LUX (native) & ZOO (native) & BLG (native) \\
+Model NFTs & --- & ERC-721 & License NFT \\
+Data commits & --- & bytes32 hash & Access token \\
+Inference credits & --- & ERC-20 (ZINF) & ERC-20 (BINF) \\
+\bottomrule
+\end{tabular}
+\caption{Asset representations across the three-chain ecosystem.}
+\label{tab:assets}
+\end{table}
+
+\subsection{Token Bridging}
+
+ZOO tokens are bridged between Lux and Zoo via a canonical lock-and-mint mechanism:
+
+\begin{enumerate}
+    \item \textbf{Lock}: User deposits ZOO into the bridge contract on Zoo L2
+    \item \textbf{Warp}: Bridge emits a Warp message to Lux L0
+    \item \textbf{Mint}: Bridge contract on Lux L0 mints wrapped ZOO (wZOO)
+    \item \textbf{Reverse}: wZOO burned on Lux $\to$ Warp message $\to$ ZOO unlocked on Zoo
+\end{enumerate}
+
+For LUX $\to$ Zoo transfers, the reverse applies: LUX locked on L0, wLUX minted on Zoo.
+
+\subsection{Model NFT Bridging}
+
+Model NFTs require metadata-preserving bridging:
+
+\begin{algorithm}[t]
+\caption{Model NFT Bridge Transfer}
+\label{alg:nft-bridge}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Model NFT $M$ on Zoo L2, destination Beluga L3
+\STATE Lock $M$ in Zoo bridge escrow contract
+\STATE Construct metadata payload:
+\STATE \quad $p = (\text{tokenId}, \text{modelHash}, \text{arch}, \text{accuracy}, \text{custodyKey})$
+\STATE Emit Warp message $W = (\text{Zoo}, \text{Beluga}, p, \sigma)$
+\STATE On Beluga L3:
+\STATE \quad Verify $\sigma$ against Zoo validator set
+\STATE \quad Mint License NFT with metadata from $p$
+\STATE \quad License NFT references original model on Zoo via \texttt{modelHash}
+\RETURN License NFT on Beluga L3
+\end{algorithmic}
+\end{algorithm}
+
+The License NFT on Beluga is not a copy of the model; it is a license to invoke inference on the original model hosted on Zoo L2. This preserves the model's custody under Zoo MPC while enabling economic activity on Beluga.
+
+\subsection{Research Data Commitments}
+
+Research data commitments are 32-byte Poseidon2 hashes binding to encrypted data stored on Zoo's data availability layer:
+
+\begin{equation}
+C = \text{Poseidon2}(\text{dataHash} \| \text{schemaHash} \| \text{accessPolicy})
+\end{equation}
+
+Bridging a data commitment to Beluga creates an access token: an ERC-20 token whose holder can request threshold decryption of the underlying data on Zoo.
+
+\subsection{Inference Credits}
+
+Inference credits (ZINF on Zoo, BINF on Beluga) are exchanged at a floating rate determined by the inference market:
+
+\begin{equation}
+\text{rate} = \frac{\text{ZINF\_supply} \cdot \text{avg\_inference\_cost\_zoo}}{\text{BINF\_supply} \cdot \text{avg\_inference\_cost\_beluga}}
+\end{equation}
+
+The bridge contract maintains a Uniswap-style constant-product pool for ZINF/BINF conversion.
+

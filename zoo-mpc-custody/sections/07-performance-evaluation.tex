@@ -1,0 +1,76 @@
+\section{Performance Evaluation}
+
+\label{sec:evaluation}
+
+\subsection{Signing Latency}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Protocol} & \textbf{Threshold} & \textbf{Keygen (ms)} & \textbf{Pre-sign (ms)} & \textbf{Sign (ms)} \\
+\midrule
+CGGMP21 & (2, 3) & 850 & 120 & 45 \\
+CGGMP21 & (3, 5) & 2,100 & 340 & 95 \\
+CGGMP21 & (5, 9) & 8,400 & 1,200 & 280 \\
+FROST & (2, 3) & 180 & --- & 12 \\
+FROST & (3, 5) & 420 & --- & 28 \\
+FROST & (5, 9) & 1,600 & --- & 85 \\
+\bottomrule
+\end{tabular}
+\caption{MPC protocol latency on Zoo testnet. FROST is 3--4$\times$ faster than CGGMP21 for signing.}
+\label{tab:latency}
+\end{table}
+
+\subsection{Throughput}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Protocol} & \textbf{Signs/sec (2,3)} & \textbf{Signs/sec (3,5)} \\
+\midrule
+CGGMP21 & 22 & 10 \\
+CGGMP21 (pre-signed) & 420 & 180 \\
+FROST & 83 & 35 \\
+\bottomrule
+\end{tabular}
+\caption{Signing throughput. CGGMP21 with pre-signing achieves highest throughput for batch operations.}
+\label{tab:throughput}
+\end{table}
+
+\subsection{Network Overhead}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Phase} & \textbf{Messages} & \textbf{Bytes/Party} & \textbf{Rounds} \\
+\midrule
+CGGMP21 Keygen & $O(n^2)$ & 12,800 & 5 \\
+CGGMP21 Pre-sign & $O(t^2)$ & 4,200 & 4 \\
+CGGMP21 Sign & $O(t)$ & 256 & 1 \\
+FROST Keygen & $O(n^2)$ & 3,200 & 2 \\
+FROST Sign & $O(t)$ & 128 & 2 \\
+\bottomrule
+\end{tabular}
+\caption{Network communication overhead for (2, 3)-threshold.}
+\label{tab:network}
+\end{table}
+
+\subsection{Security Analysis}
+
+\begin{theorem}[Key Security]
+Under the $(2, 3)$-threshold, an adversary controlling a single party (researcher, DAO, or escrow) cannot produce a valid signature or learn any information about the private key.
+\end{theorem}
+
+\begin{proof}
+Both CGGMP21 (UC-secure~\cite{cggmp2021}) and FROST (secure in the algebraic group model~\cite{komlo2020frost}) guarantee that $t - 1$ shares reveal no information about $sk$ under the discrete logarithm assumption. With $t = 2$ and a single corrupted party, the adversary holds 1 share, which is insufficient.
+\end{proof}
+
+\begin{theorem}[Identifiable Abort]
+If a signing session fails due to a malicious party, the protocol identifies the malicious party with probability 1.
+\end{theorem}
+
+CGGMP21 provides identifiable abort natively. FROST achieves it via the identifiable abort extension, where each party proves correctness of their partial signature via a Schnorr proof of knowledge.
+

@@ -1,0 +1,50 @@
+\section{Economic Model}
+
+
+\subsection{Cost Breakdown}
+
+\begin{table}[t]
+\centering
+\caption{Experience Ledger Operational Costs (Annual)}
+\label{tab:costs}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Component} & \textbf{Cost (USD)} & \textbf{Notes} \\
+\midrule
+\IPFS{} pinning (3 nodes) & 1,200 & 100 GB storage \\
+Arweave archival (52 versions) & 15.60 & 200-year guarantee \\
+On-chain transactions (104) & 10.40 & 2× per week \\
+Embedding generation & 500 & ZenEmbed API \\
+LLM introspection (extraction) & 2,000 & GPT-4 / DeepSeek \\
+Governance platform & 0 & Open-source \\
+\midrule
+\textbf{Total} & \textbf{3,726} & \multirow{2}{*}{vs. \$50K+ for single fine-tune} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Sustainability}: A 501(c)(3) non-profit (\Zoo{} Labs Foundation) can sustain this with modest grants or community donations. For comparison, training a single 70B model from scratch costs \$2--5M.
+
+\subsection{Incentive Alignment}
+
+\textbf{Data Contributors}:
+\begin{itemize}
+    \item Earn KEEPER tokens proportional to contribution quality
+    \item Receive inference credits (1 credit = 1000 tokens)
+    \item Gain reputation for governance participation
+\end{itemize}
+
+\textbf{GPU Operators}:
+\begin{itemize}
+    \item Earn fees for inference ($\sim$\$0.02/query)
+    \item Stake KEEPER as collateral (slashed for incorrect proofs)
+    \item Priority routing for high-reputation nodes
+\end{itemize}
+
+\textbf{KEEPER Holders}:
+\begin{itemize}
+    \item Voting power in \DAO{}
+    \item Revenue share from commercial API usage (20\% allocated to treasury)
+    \item Deflationary tokenomics: 10\% of fees burned quarterly
+\end{itemize}
+

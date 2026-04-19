@@ -1,0 +1,50 @@
+\section{Research Data Access Control}
+
+\label{sec:data-access}
+
+\subsection{Encrypted Data Vaults}
+
+Research datasets are stored as encrypted blobs on Zoo Network's data availability layer:
+
+\begin{equation}
+D_{\text{enc}} = \text{AES-256-GCM}(k_{\text{data}}, D_{\text{raw}})
+\end{equation}
+
+The data encryption key $k_{\text{data}}$ is itself encrypted under the MPC group's public key:
+
+\begin{equation}
+k_{\text{enc}} = \text{ECIES.Enc}(pk_{\text{mpc}}, k_{\text{data}})
+\end{equation}
+
+Decryption requires threshold cooperation to recover $k_{\text{data}}$.
+
+\subsection{Access Tiers}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Tier} & \textbf{Data Type} & \textbf{Threshold} & \textbf{Approval} \\
+\midrule
+Public & Aggregated statistics & None & Automatic \\
+Restricted & De-identified records & $(1, 3)$ & Researcher only \\
+Confidential & Raw GPS/genetic data & $(2, 3)$ & Researcher + DAO \\
+Classified & Anti-poaching intelligence & $(3, 3)$ & All parties \\
+\bottomrule
+\end{tabular}
+\caption{Research data access tiers with increasing threshold requirements.}
+\label{tab:tiers}
+\end{table}
+
+\subsection{Institutional Review Protocol}
+
+For Confidential and Classified data, the DAO's approval involves an on-chain institutional review:
+
+\begin{enumerate}
+    \item \textbf{Application}: Requesting researcher submits an access application with stated purpose, data handling plan, and ethics declaration.
+    \item \textbf{Review}: Three DAO-appointed reviewers evaluate the application (7-day review period).
+    \item \textbf{Vote}: Reviewers vote approve/reject. Majority (2/3 reviewers) required.
+    \item \textbf{Access}: On approval, DAO key share activated for threshold decryption.
+    \item \textbf{Audit}: Data access logged on-chain; usage auditable by any ZOO token holder.
+\end{enumerate}
+

@@ -1,0 +1,57 @@
+\section{Storage Architecture}
+
+\label{sec:storage}
+
+\subsection{Three-Layer Design}
+
+The Experience Ledger uses a three-layer storage architecture:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Layer} & \textbf{Purpose} & \textbf{Latency} & \textbf{Cost} \\
+\midrule
+On-chain & Root verification & 1-10s & High \\
+\IPFS{} & Active storage & 100-500ms & Low \\
+Arweave & Permanent archive & 1-5s & Medium \\
+\bottomrule
+\end{tabular}
+\caption{Storage layer characteristics}
+\label{tab:storage}
+\end{table}
+
+\subsection{\IPFS{} Integration}
+
+Experiences are stored as IPLD (InterPlanetary Linked Data) nodes:
+
+\begin{lstlisting}[caption=IPLD Experience Node]
+{
+  "Data": <CBOR-encoded experience>,
+  "Links": [
+    {"Name": "embedding", "Cid": "bafy..."},
+    {"Name": "metadata", "Cid": "bafy..."}
+  ]
+}
+\end{lstlisting}
+
+\subsection{Arweave Permanence}
+
+Critical library snapshots are archived to Arweave:
+
+\begin{equation}
+\text{Cost}_{\text{Arweave}}(n) = 0.001 \times n \text{ bytes} \times \text{AR/GB}
+\end{equation}
+
+At current rates (\$15/GB for 200+ years), archiving 10,000 experiences costs approximately \$0.50.
+
+\subsection{Content Deduplication}
+
+Content-addressing provides automatic deduplication:
+
+\begin{theorem}[Deduplication Savings]
+For $n$ experiences with $d$ duplicates, storage cost is $O((n-d) \cdot s)$ where $s$ is average experience size.
+\end{theorem}
+
+In practice, we observe 15-30\% deduplication across experience libraries due to common reasoning patterns.
+

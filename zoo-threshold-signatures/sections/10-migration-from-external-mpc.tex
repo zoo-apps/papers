@@ -1,0 +1,49 @@
+\section{Migration from External MPC}
+
+\label{sec:migration}
+
+\subsection{Replacing the MPC StatefulSet}
+
+Prior to \TChain{}, Zoo Network's bridge and custody operations ran on a dedicated MPC cluster deployed as a Kubernetes StatefulSet (\texttt{mpc-signer-0} through \texttt{mpc-signer-n}). This architecture suffered from:
+
+\begin{itemize}
+\item Manual key rotation requiring coordinated downtime.
+\item Separate monitoring and alerting stacks.
+\item No on-chain accountability for MPC failures.
+\item Independent scaling from the validator set.
+\end{itemize}
+
+\TChain{} subsumes all functionality of the MPC StatefulSet. The migration proceeds in three phases:
+
+\begin{enumerate}
+\item \textbf{Phase 1 -- Parallel operation}: \TChain{} runs alongside the legacy MPC cluster. New keys are generated on \TChain{}; existing keys remain on the StatefulSet.
+\item \textbf{Phase 2 -- Key migration}: Existing keys are reshared from the StatefulSet participants to the \TChain{} validator set via the \texttt{threshold\_reshare} protocol.
+\item \textbf{Phase 3 -- Decommission}: The MPC StatefulSet is drained and removed. All signing requests route to \TChain{}.
+\end{enumerate}
+
+\subsection{Bridge Integration}
+
+Zoo's cross-chain bridges (connecting to Lux L0, Ethereum, Bitcoin) previously called the MPC cluster via internal gRPC. \TChain{} exposes an HTTP compatibility layer at \texttt{/v1/threshold/compat} that accepts the legacy request format and translates it to \ThresholdVM{} transactions. This allows bridge contracts to migrate incrementally without a flag-day cutover.
+
+\subsection{HTTP Compatibility Layer}
+
+The compatibility layer translates legacy MPC API calls:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Legacy Endpoint} & \textbf{T-Chain Translation} \\
+\midrule
+\texttt{POST /mpc/keygen} & \texttt{threshold\_keygen} \\
+\texttt{POST /mpc/sign} & \texttt{threshold\_sign} \\
+\texttt{POST /mpc/reshare} & \texttt{threshold\_reshare} \\
+\texttt{GET /mpc/key/:id} & \texttt{threshold\_pubkey} \\
+\texttt{GET /mpc/status/:session} & \texttt{threshold\_status} \\
+\bottomrule
+\end{tabular}
+\caption{Legacy MPC to T-Chain endpoint mapping}
+\label{tab:compat}
+\end{table}
+
+%% --------------------------------------------------------------------------

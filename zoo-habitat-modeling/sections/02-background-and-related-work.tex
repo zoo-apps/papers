@@ -1,0 +1,59 @@
+\section{Background and Related Work}
+
+\label{sec:background}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Classical Species Distribution Models}
+
+The dominant paradigm in SDM is the correlative approach, which relates
+species presence (and sometimes absence) records to environmental
+predictors. MaxEnt \citep{phillips2006maximum} maximizes entropy of the
+predicted distribution subject to constraints from observed feature
+means. Boosted regression trees \citep{elith2008working} and random
+forests \citep{cutler2007random} offer non-parametric alternatives that
+accommodate interactions among predictors. Ensemble approaches such as
+BIOMOD2 \citep{thuiller2009biomod} combine multiple algorithms to reduce
+model uncertainty.
+
+Despite their utility, correlative SDMs rest on the assumption that
+current species-environment relationships are stable under future
+conditions---the \emph{stationarity assumption}---which climate change
+directly violates \citep{dormann2012correlation}.
+
+\subsection{Deep Learning for SDMs}
+
+Neural networks were first applied to SDMs by \citet{lek1996application},
+but modern deep learning architectures have dramatically expanded
+capability. Convolutional neural networks (CNNs) applied to
+remotely-sensed imagery can predict species occurrence from raw satellite
+data \citep{deneu2021convolutional}. Deep species distribution models
+(DeepSDM) use multi-layer perceptrons with environmental covariates as
+inputs \citep{botella2018deep}. However, these approaches treat each
+spatial location independently and do not leverage landscape structure.
+
+\subsection{Graph Neural Networks}
+
+GNNs generalize deep learning to graph-structured data
+\citep{kipf2017semi, velickovic2018graph}. Message-passing neural
+networks \citep{gilmer2017neural} iteratively update node representations
+by aggregating information from neighbors. Spatial applications of GNNs
+include traffic forecasting \citep{li2018diffusion}, molecular property
+prediction \citep{duvenaud2015convolutional}, and social network analysis
+\citep{hamilton2017inductive}. In ecology, GNNs remain underexplored,
+though recent work has applied them to food web modeling
+\citep{strydom2021graph} and metapopulation dynamics
+\citep{mcinerny2022graph}.
+
+\subsection{Connectivity and Corridor Modeling}
+
+Circuit theory \citep{mcrae2006isolation, mcrae2008using} models
+landscape connectivity as electrical resistance, where current flow
+between nodes indicates movement probability. Least-cost path analysis
+\citep{adriaensen2003application} identifies single optimal routes.
+Omniscape \citep{landau2021omnidirectional} extends circuit theory to
+continuous surfaces. These approaches require pre-specified resistance
+surfaces, which are typically hand-crafted from land cover maps---a
+limitation HabitatNet addresses by learning resistance from data.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

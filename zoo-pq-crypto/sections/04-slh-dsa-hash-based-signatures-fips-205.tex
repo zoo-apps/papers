@@ -1,0 +1,28 @@
+\section{SLH-DSA: Hash-Based Signatures (FIPS 205)}
+
+
+\subsection{Construction}
+
+\SLHDSA{} (formerly SPHINCS+) is a stateless hash-based scheme whose security reduces solely to hash function second-preimage resistance---no lattice or number-theoretic assumptions. Zoo deploys \SLHDSA{}-SHA2-192s.
+
+The scheme uses a hypertree of $d = 7$ XMSS trees of height $h/d$ ($h = 63$ total), with FORS few-time signatures at the leaves. This provides $2^{63}$ signing capacity per key pair with the most conservative security margin of any post-quantum scheme.
+
+\subsection{Performance and Usage}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Parameter} & \textbf{SLH-DSA-SHA2-192s} & \textbf{ML-DSA-65} \\
+\midrule
+Public key / Secret key & 48\,B / 96\,B & 1,952\,B / 4,032\,B \\
+Signature & 16,224\,B & 3,309\,B \\
+Sign / Verify & 280\,ms / 6.2\,ms & 0.68\,ms / 0.25\,ms \\
+\bottomrule
+\end{tabular}
+\caption{\SLHDSA{}: compact keys, large signatures, slow operations}
+\label{tab:slhdsa-perf}
+\end{table}
+
+Reserved for high-assurance, low-frequency operations: root CA key certification, DAO constitutional amendments, long-term validator identity binding, cross-chain bridge anchors.
+

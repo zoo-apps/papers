@@ -1,0 +1,72 @@
+\section{Introduction}
+
+
+The rapid advancement of large language models (LLMs) has been accompanied by an unsustainable escalation in training costs, computational requirements, and model opacity \cite{kaplan2020scaling,hoffmann2022training}. Fine-tuning state-of-the-art models like GPT-4, Claude, or DeepSeek-V3 can cost tens of thousands of dollars, require thousands of training examples, and produce black-box parameter updates that resist interpretability and governance \cite{ouyang2022training}. This creates fundamental barriers:
+
+\begin{enumerate}
+    \item \textbf{Economic Barriers}: Only well-funded organizations can afford to adapt foundation models to specialized domains.
+    \item \textbf{Data Barriers}: Collecting 10,000+ high-quality training examples is prohibitive for most applications.
+    \item \textbf{Opacity Barriers}: Parameter updates lack interpretability, making AI safety and governance nearly impossible.
+    \item \textbf{Brittleness Barriers}: Fine-tuned models suffer catastrophic forgetting and fail to transfer across domains \cite{kirkpatrick2017overcoming}.
+    \item \textbf{Verification Barriers}: Modified model weights cannot be cryptographically verified, enabling model poisoning attacks.
+\end{enumerate}
+
+We propose a radical alternative: \textbf{what if models never changed at all?}
+
+\subsection{Core Insight: Context as the Learning Medium}
+
+Recent work demonstrates that sufficiently capable foundation models possess latent knowledge that can be activated through carefully constructed prompts \cite{wei2022chain,yao2023tree,brown2020language}. If a frozen model can solve complex problems when provided with relevant examples in context, then \textit{learning becomes a curation problem}—identifying which experiences to include in the context window rather than which gradients to apply to billions of parameters.
+
+This insight motivates our \textbf{Hamiltonian Large Language Model (HLLM)} framework, which formalizes the trade-off between context expansion (adding experiences) and inference cost (computational complexity) through a physics-inspired conservation law:
+
+\begin{equation}
+\Psi \cdot \Theta = \kappa
+\label{eq:hamiltonian}
+\end{equation}
+
+where $\Psi$ represents policy mass (semantic context/experiences), $\Theta$ represents inference cost (model entropy/complexity), and $\kappa$ is a conserved constant representing system equilibrium. As we expand context with valuable experiences ($\Psi \uparrow$), the model's effective uncertainty decreases ($\Theta \downarrow$), maintaining balance.
+
+\subsection{Training-Free Group Relative Policy Optimization}
+
+Building on Group Relative Policy Optimization (GRPO) \cite{shao2024deepseekmath}, which eliminates value networks by computing advantages through group-relative comparisons, we introduce \textbf{Training-Free GRPO (TF-GRPO)}. Instead of using advantages to update model parameters via gradient descent, we use them to extract \textit{semantic advantages}—natural language insights about what strategies lead to success.
+
+\textbf{Key Innovation:} An LLM introspects its own rollouts, comparing successful vs. failed attempts to distill reusable strategic patterns. These patterns form an \textbf{Experience Library} that augments future inferences, creating a virtuous cycle of improvement \textit{without ever modifying model weights}.
+
+\subsection{Contributions}
+
+Our work makes the following contributions:
+
+\begin{enumerate}
+    \item \textbf{Theoretical Framework}: We introduce Hamiltonian mechanics to LLM optimization, proving that context expansion can substitute for parameter updates under certain conditions (\Cref{sec:theory}).
+
+    \item \textbf{Training-Free GRPO Algorithm}: A three-stage semantic extraction pipeline that converts numerical advantages into human-readable experiences (\Cref{sec:algorithm}).
+
+    \item \textbf{Experience Library Architecture}: Content-addressable storage with Merkle tree verification, enabling decentralized governance and cryptographic auditability (\Cref{sec:architecture}).
+
+    \item \textbf{Empirical Validation}: Strong benchmark results on AIME 2024/2025 mathematics (82.7\%/73.3\%) using only 100 training samples and \$18 in compute, outperforming \$10,000+ fine-tuning by +2.7\% (\Cref{sec:results}).
+
+    \item \textbf{Cross-Domain Transfer}: Demonstration that frozen models with domain-specific experience libraries outperform specialized fine-tuned models across diverse tasks (mathematics, web navigation, coding) (\Cref{sec:transfer}).
+
+    \item \textbf{Open-Source Implementation}: Full integration into the Gym platform (\url{https://github.com/zooai/gym}) with deployment on Zoo Network's decentralized compute infrastructure (\Cref{sec:implementation}).
+
+    \item \textbf{Governance Framework}: DAO-based experience curation with KEEPER token voting, enabling transparent community control over model behavior (\Cref{sec:governance}).
+\end{enumerate}
+
+\subsection{Impact and Implications}
+
+The shift from parameter space to context space has profound implications:
+
+\begin{itemize}
+    \item \textbf{Democratization}: Reducing costs by 556× (from \$10,000 to \$18) makes advanced AI accessible to researchers, educators, and small organizations worldwide.
+
+    \item \textbf{Transparency}: Human-readable experiences replace black-box parameter updates, enabling stakeholder understanding and oversight.
+
+    \item \textbf{Modularity}: Experiences can be toggled, versioned, and composed like software libraries rather than monolithic fine-tuned models.
+
+    \item \textbf{Safety}: Content-addressable storage with Merkle proofs creates an immutable audit trail of all model behavior changes.
+
+    \item \textbf{Decentralization}: Experience libraries can be collectively curated through DAO governance, removing single points of control.
+\end{itemize}
+
+This work extends prior work: from \textit{training models} to \textit{curating knowledge}.
+

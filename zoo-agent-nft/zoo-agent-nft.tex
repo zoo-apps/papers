@@ -1,0 +1,80 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\input{shared/lstlang}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\NFT}{\textsc{nft}}
+\newcommand{\ERC}{\textsc{erc}}
+\newcommand{\LLM}{\textsc{llm}}
+\newcommand{\DAO}{\textsc{dao}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{Agent NFTs: A Token Standard for Autonomous AI Agents with Economic Agency}}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Hanzo Industries \quad Lux Industries \quad Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{October 2021}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We introduce the \textbf{Agent NFT Standard}, a token specification that enables AI agents to hold assets, execute transactions, and participate in economic activity as first-class on-chain entities. Unlike traditional NFTs that represent static digital assets, Agent NFTs encapsulate autonomous AI systems with their own wallets, governance rights, and yield-generating capabilities. Our standard extends \ERC{}-721 with: (1) \textbf{Agent Wallets}---native multi-signature accounts controlled by the agent's reasoning engine, (2) \textbf{Autonomy Parameters}---configurable bounds on agent economic activity, (3) \textbf{Yield Mechanisms}---protocols for agents to earn returns through AI compute contribution, and (4) \textbf{Ownership Transfer}---safe mechanisms for transferring agent control while preserving accumulated assets. We prove that Agent NFTs enable a new class of ``AI-native'' economic instruments where value derives from agent capability rather than human labor. Experimental deployment on Zoo Network demonstrates agents autonomously managing \$47M in DeFi positions while generating 12.3\% APY through compute contribution.
+
+\textbf{Keywords}: NFT, autonomous agents, AI economics, smart contracts, DeFi
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-background}
+\input{sections/03-agent-nft-standard}
+\input{sections/04-agent-wallet-architecture}
+\input{sections/05-autonomy-economics}
+\input{sections/06-security-analysis}
+\input{sections/07-implementation}
+\input{sections/08-experimental-evaluation}
+\input{sections/09-related-work}
+\input{sections/10-future-work}
+\input{sections/11-conclusion}
+\input{sections/13-complete-smart-contract-interface}
+\input{sections/14-autonomy-parameter-recommendations}
+\input{sections/99-acknowledgments}
+
+\end{document}

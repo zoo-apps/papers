@@ -1,0 +1,78 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\FHE}{\textsc{fhe}}
+\newcommand{\TFHE}{\textsc{tfhe}}
+\newcommand{\CKKS}{\textsc{ckks}}
+\newcommand{\TEE}{\textsc{tee}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\title{\textbf{Zoo FHE: Privacy-Preserving AI Training and Inference on the Zoo Network}}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{August 2024}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \textbf{Zoo FHE}, a framework for privacy-preserving AI training and inference on the Zoo Network (chain ID 200200), a conservation-focused L2 on Lux Network. Zoo FHE combines two fully homomorphic encryption schemes---\TFHE{} for boolean/integer operations and \CKKS{} for approximate fixed-point arithmetic---to support encrypted model weights, encrypted inference, and encrypted training gradients. The system is exposed to smart contracts via an EVM precompile at address \texttt{0x0700}, enabling on-chain privacy-preserving computation without off-chain trusted parties. We introduce threshold decryption for model outputs using a $(t, n)$-threshold scheme where decryption requires cooperation of $t$ committee members from a set of $n$. We evaluate Zoo FHE on three conservation-critical applications: private wildlife monitoring (encrypted camera trap classification), confidential medical AI for veterinary diagnostics, and encrypted genomics for species conservation. Our benchmarks on Zoo testnet show encrypted inference latency of 340ms for a ResNet-18 classifier using \CKKS{}, and encrypted gradient aggregation throughput of 1,200 updates/second using \TFHE{}, both executing within the EVM precompile with gas costs under 500,000 per operation.
+
+\textbf{Keywords}: fully homomorphic encryption, privacy-preserving AI, Zoo Network, encrypted inference, conservation AI
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-background}
+\input{sections/03-zoo-fhe-architecture}
+\input{sections/04-encrypted-ai-primitives}
+\input{sections/05-threshold-decryption}
+\input{sections/06-conservation-applications}
+\input{sections/07-performance-evaluation}
+\input{sections/08-security-analysis}
+\input{sections/09-related-work}
+\input{sections/10-future-work}
+\input{sections/11-conclusion}
+\input{sections/99-acknowledgments}
+
+\end{document}

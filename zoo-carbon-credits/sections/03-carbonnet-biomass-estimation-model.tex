@@ -1,0 +1,89 @@
+\section{CarbonNet: Biomass Estimation Model}
+
+\label{sec:carbonnet}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Architecture}
+
+CarbonNet is a multi-modal deep learning model that fuses three data
+streams to estimate above-ground biomass:
+
+\begin{enumerate}
+  \item \textbf{Optical branch}: A ResNet-50 encoder processes
+    Sentinel-2 Level-2A surface reflectance imagery (13 spectral bands,
+    10--60\,m resolution) through spatial and spectral attention.
+  \item \textbf{Radar branch}: A separate ResNet-50 encoder processes
+    Sentinel-1 SAR backscatter (VV and VH polarizations, 10\,m
+    resolution), which penetrates cloud cover and is sensitive to
+    woody biomass.
+  \item \textbf{LiDAR branch}: A point cloud encoder processes GEDI
+    full-waveform LiDAR returns to extract canopy height profiles.
+\end{enumerate}
+
+The three branches are fused through a cross-attention mechanism:
+\begin{equation}
+  \mathbf{z} = \text{CrossAttention}(\mathbf{h}_{\text{opt}},
+  \mathbf{h}_{\text{sar}}, \mathbf{h}_{\text{lidar}}) \in \R^{256}
+\end{equation}
+
+A regression head maps $\mathbf{z}$ to AGB in Mg/ha:
+\begin{equation}
+  \hat{B} = \text{MLP}(\mathbf{z}) \in \R_{\geq 0}
+\end{equation}
+
+\subsection{Training Data}
+
+\paragraph{GEDI-Biomass training set.} We use 4.2 million GEDI
+footprints (25\,m diameter) with associated AGB estimates from the GEDI
+Level-4A product \citep{dubayah2022gedi}. Each footprint is paired with
+co-located Sentinel-2 and Sentinel-1 imagery within a 30-day window.
+
+\paragraph{Field plot calibration.} We further calibrate against 12{,}847
+field inventory plots from the Forest Observation System
+\citep{schepaschenko2019forest}, spanning tropical, temperate, and boreal
+forests across 47 countries.
+
+\subsection{Loss Function}
+
+We minimize a composite loss:
+\begin{equation}
+  \Loss = \Loss_{\text{MSE}} + \lambda_1 \Loss_{\text{spatial}} +
+  \lambda_2 \Loss_{\text{uncertainty}}
+\end{equation}
+
+where $\Loss_{\text{MSE}}$ is the mean squared error on AGB,
+$\Loss_{\text{spatial}}$ is a spatial smoothness regularizer penalizing
+discontinuities at tile boundaries, and $\Loss_{\text{uncertainty}}$ is
+the negative log-likelihood of a heteroscedastic Gaussian that
+encourages well-calibrated uncertainty estimates.
+
+\subsection{Results}
+
+\begin{table}[H]
+\centering
+\caption{AGB estimation accuracy on independent validation plots. RMSE
+in Mg/ha. Best results in \textbf{bold}.}
+\label{tab:agb}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model} & \textbf{Tropical} & \textbf{Temperate} &
+  \textbf{Boreal} & \textbf{All} \\
+\midrule
+Allometric (plot-based) & 42.1 & 31.7 & 24.3 & 35.2 \\
+Random Forest & 31.4 & 24.8 & 19.1 & 27.6 \\
+GBM (XGBoost) & 29.8 & 23.1 & 18.4 & 25.9 \\
+ESA CCI Biomass & 33.7 & 25.6 & 20.7 & 28.3 \\
+Lang et al.\ (2023) & 26.2 & 20.4 & 16.8 & 22.1 \\
+\textbf{CarbonNet} & \textbf{22.7} & \textbf{17.3} &
+  \textbf{13.8} & \textbf{18.4} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+CarbonNet achieves 18.4 Mg/ha RMSE across all biomes, a 34\%
+improvement over the current operational standard (ESA CCI Biomass). The
+improvement is largest in tropical forests (+33\%), where dense canopy
+structure makes biomass estimation most challenging.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

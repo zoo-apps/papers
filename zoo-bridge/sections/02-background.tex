@@ -1,0 +1,32 @@
+\section{Background}
+
+
+\subsection{Lux Warp Messaging}
+
+Lux Warp~\cite{lux-warp-messaging} enables verified cross-chain communication between any two Lux chains:
+
+\begin{definition}[Warp Message]
+A Warp message $W = (\text{src}, \text{dst}, \text{payload}, \sigma_{\text{agg}})$ consists of:
+\begin{itemize}
+    \item Source chain ID and destination chain ID
+    \item Arbitrary payload (up to 32KB)
+    \item Aggregated BLS signature from source chain validators
+\end{itemize}
+\end{definition}
+
+Verification on the destination chain checks that the aggregated signature represents a quorum ($\geq 67\%$) of the source chain's validator set, weighted by stake.
+
+\subsection{Lux Teleport}
+
+Teleport~\cite{lux-teleport-protocol} provides instant token transfers by pre-positioning liquidity on both chains:
+
+\begin{definition}[Teleport Transfer]
+A Teleport transfer atomically burns tokens on the source chain and mints on the destination chain within a single consensus round, achieving sub-second finality without requiring multi-block confirmation.
+\end{definition}
+
+Teleport is faster than Warp (which requires message propagation and verification) but is limited to fungible tokens with pre-existing liquidity pools.
+
+\subsection{Post-Quantum Signatures}
+
+Lux Warp uses BLS signatures over the BLS12-381 curve. While BLS12-381 is not post-quantum secure, the Lux roadmap includes migration to hash-based aggregate signatures (SPHINCS+ variants) for PQ safety. Zoo Bridge is designed to be signature-scheme agnostic: the bridge contracts verify a generic \texttt{verifyAggregate()} call that can be backed by BLS today and hash-based signatures post-migration.
+

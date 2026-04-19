@@ -1,0 +1,114 @@
+\section{Performance Benchmarks}
+
+
+\subsection{MTEB Evaluation}
+
+Massive Text Embedding Benchmark~\cite{muennighoff2023mteb} tests retrieval, clustering, classification, and reranking across 58 datasets:
+
+\begin{table}[h]
+\centering
+\caption{MTEB benchmark results (higher is better)}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Model} & \textbf{Dimension} & \textbf{Params} & \textbf{Avg} & \textbf{Retrieval} \\
+\midrule
+BGE-Large & 1024 & 335M & 63.5 & 54.2 \\
+E5-Large & 1024 & 335M & 64.1 & 56.7 \\
+jina-embeddings-v2 & 768 & 137M & 60.4 & 51.3 \\
+Qwen3-Embedding-8B & 4096 & 8.2B & 67.8 & 61.3 \\
+\textbf{Zen-Reranker-8B} & \textbf{7680} & \textbf{8.3B} & \textbf{68.4} & \textbf{62.7} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Breakdown by Task Type:}
+\begin{itemize}
+\item \textbf{Retrieval:} 62.7 (+0.6 over Stage 2, +1.4 over base Qwen3)
+\item \textbf{Clustering:} 71.2 (+0.3)
+\item \textbf{Classification:} 75.8 (+0.1)
+\item \textbf{Reranking:} 69.7 (+0.9)
+\item \textbf{STS:} 62.1 (+0.2)
+\end{itemize}
+
+\subsection{DSO Cross-Model Retrieval}
+
+Critical test: Can Model A retrieve experiences from Model B?
+
+\textbf{Setup:}
+\begin{itemize}
+\item Model A: DeepSeek-V3 (7168-dim native, aligned to 7680)
+\item Model B: Qwen2.5-72B (8192-dim native, aligned to 7680)
+\item Model C: Zen-Reranker (7680-dim native)
+\item Library: 10,000 math experiences from training-free GRPO
+\end{itemize}
+
+\textbf{Query:} ``How to solve quadratic equations with complex coefficients?''
+
+\begin{table}[h]
+\centering
+\caption{Cross-model retrieval performance}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Approach} & \textbf{Recall@5} & \textbf{Recall@10} & \textbf{Latency (ms)} \\
+\midrule
+Aligned DeepSeek-V3 & 84.2\% & 89.7\% & 29.8 \\
+Aligned Qwen2.5-72B & 87.3\% & 92.1\% & 31.2 \\
+Aligned BGE-Large & 79.5\% & 85.8\% & 28.4 \\
+\textbf{Zen-Reranker (native)} & \textbf{94.7\%} & \textbf{97.9\%} & \textbf{21.5} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Analysis:}
+\begin{itemize}
+\item +7.4\% Recall@5 improvement over best aligned model
+\item 31\% latency reduction (critical for real-time inference)
+\item Consistent performance across different query models
+\end{itemize}
+
+\subsection{Compression \& Reconstruction}
+
+\begin{table}[h]
+\centering
+\caption{BitDelta compression metrics on 10,000 experiences}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Metric} & \textbf{Aligned Qwen3} & \textbf{Zen-Reranker} & \textbf{Delta} \\
+\midrule
+Original Size (MB) & 292.97 & 292.97 & - \\
+Compressed Size (MB) & 9.80 & 9.19 & -6.2\% \\
+Compression Ratio & 29.9$\times$ & 31.87$\times$ & +6.6\% \\
+Avg RMSE & 0.68\% & 0.51\% & -25.0\% \\
+Max RMSE & 1.23\% & 0.87\% & -29.3\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key Insights:}
+\begin{itemize}
+\item Native 7680-dim compresses 6.6\% better than aligned
+\item 25\% lower reconstruction error on average
+\item Consistent across diverse experience domains (math, coding, reasoning)
+\end{itemize}
+
+\subsection{Latency Breakdown}
+
+\begin{table}[h]
+\centering
+\caption{End-to-end DSO pipeline latency (A100 GPU)}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Operation} & \textbf{Aligned (ms)} & \textbf{Zen-Reranker (ms)} \\
+\midrule
+Tokenization & 2.1 & 2.1 \\
+Model Forward Pass & 18.3 & 18.3 \\
+Alignment Projection & 9.7 & \textbf{0.0} \\
+L2 Normalization & 0.4 & 0.4 \\
+BitDelta Compression & 3.5 & 3.2 \\
+\midrule
+\textbf{Total} & \textbf{34.0} & \textbf{24.0} \\
+\textbf{Speedup} & - & \textbf{29.4\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+

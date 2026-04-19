@@ -1,0 +1,199 @@
+\section{System Architecture}
+
+
+\ConservAI{} comprises four interconnected modules operating on the \Zoo{} decentralized infrastructure. Figure~\ref{fig:architecture} illustrates the complete pipeline.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    node distance=1.2cm,
+    box/.style={rectangle, draw, rounded corners, minimum width=3cm, minimum height=0.8cm, align=center, fill=blue!8},
+    data/.style={rectangle, draw, minimum width=2.5cm, minimum height=0.6cm, align=center, fill=green!8},
+    arrow/.style={->, thick}
+]
+\node[data] (input) {Camera Trap\\Images};
+\node[box, right=of input] (detect) {Animal\\Detection};
+\node[box, right=of detect] (tca) {Temporal Context\\Attention};
+\node[box, below=of tca] (classify) {Hierarchical\\Classifier};
+\node[box, left=of classify] (pop) {Population\\Estimation};
+\node[data, below=of input] (sat) {Satellite\\Imagery};
+\node[box, below=of pop] (habitat) {Habitat Quality\\Assessment};
+\node[data, right=of classify] (output) {Conservation\\Reports};
+
+\draw[arrow] (input) -- (detect);
+\draw[arrow] (detect) -- (tca);
+\draw[arrow] (tca) -- (classify);
+\draw[arrow] (classify) -- (pop);
+\draw[arrow] (classify) -- (output);
+\draw[arrow] (pop) -- (habitat);
+\draw[arrow] (sat) -- (habitat);
+\draw[arrow] (habitat) -- (output);
+\end{tikzpicture}
+\caption{ConservAI system architecture showing the four main processing modules.}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{Animal Detection Module}
+
+The detection module serves as the first stage, filtering empty frames and localizing animals within images. We build upon the MegaDetector architecture~\cite{beery2019mega} with several modifications:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Backbone}: We replace the Faster R-CNN backbone with an EfficientDet-D4~\cite{tan2020} backbone, reducing inference time by 2.1$\times$ while maintaining detection accuracy.
+    \item \textbf{Multi-scale detection}: A feature pyramid network with deformable convolutions handles the extreme scale variation in camera trap images (from nearby rodents to distant elephants).
+    \item \textbf{Confidence calibration}: Temperature scaling~\cite{guo2017} ensures that detection confidence scores are well-calibrated, enabling reliable thresholding across deployment sites.
+\end{itemize}
+
+The detection module achieves 97.8\% recall at 95.2\% precision on the LILA BC benchmark, with a per-image inference time of 42ms on an NVIDIA V100 GPU.
+
+\subsection{Temporal Context Attention}
+
+Camera traps typically capture burst sequences of 3--10 images per trigger event, and sequential trigger events at a single location are temporally correlated. Our Temporal Context Attention (TCA) mechanism exploits this structure.
+
+\begin{definition}[Trigger Sequence]
+A trigger sequence $S = \{I_1, I_2, \ldots, I_k\}$ is an ordered set of images captured within a single camera trap activation event, where $k$ is typically 3--10.
+\end{definition}
+
+\begin{definition}[Temporal Context Window]
+The temporal context window $W_t$ for a trigger sequence at time $t$ includes the current sequence and $n$ preceding and following sequences within a time horizon $\Delta$:
+\begin{equation}
+W_t = \{S_{t-n}, \ldots, S_{t-1}, S_t, S_{t+1}, \ldots, S_{t+n}\} \quad \text{where} \quad |t_i - t| \leq \Delta
+\end{equation}
+\end{definition}
+
+For each image $I_i$ in a trigger sequence, we extract a feature vector $\mathbf{f}_i \in \mathbb{R}^d$ using the detection backbone. The TCA mechanism computes attention weights across the temporal context:
+
+\begin{equation}
+\alpha_{ij} = \frac{\exp\left(\frac{\mathbf{q}_i^T \mathbf{k}_j}{\sqrt{d_k}} + b(t_i - t_j)\right)}{\sum_{l \in W_t} \exp\left(\frac{\mathbf{q}_i^T \mathbf{k}_l}{\sqrt{d_k}} + b(t_i - t_l)\right)}
+\end{equation}
+
+where $\mathbf{q}_i = W_Q \mathbf{f}_i$, $\mathbf{k}_j = W_K \mathbf{f}_j$ are query and key projections, $d_k$ is the key dimension, and $b(\cdot)$ is a learned temporal bias function that encodes the time difference between trigger events. The temporally-attended feature is:
+
+\begin{equation}
+\hat{\mathbf{f}}_i = \mathbf{f}_i + \sum_{j \in W_t} \alpha_{ij} \cdot W_V \mathbf{f}_j
+\end{equation}
+
+\begin{proposition}[TCA Improves Discrimination]
+Let $p_{\text{single}}$ be the probability of correct classification from a single frame and $p_{\text{TCA}}$ be the probability using temporal context with $k$ correlated observations. Under independent noise assumption with correlation coefficient $\rho$ between frames in the same trigger sequence:
+\begin{equation}
+p_{\text{TCA}} \geq 1 - (1 - p_{\text{single}})^{k(1-\rho)}
+\end{equation}
+\end{proposition}
+
+The TCA mechanism reduces the false positive rate on visually ambiguous species pairs by 62\% relative to single-frame classification.
+
+\subsection{Hierarchical Species Classifier}
+
+The classifier exploits the Linnaean taxonomic hierarchy (Kingdom $\supset$ Phylum $\supset$ Class $\supset$ Order $\supset$ Family $\supset$ Genus $\supset$ Species) to structure predictions and provide graceful degradation.
+
+\subsubsection{Architecture}
+
+We employ a tree-structured softmax with shared representations at higher taxonomic levels and specialized branches at lower levels. Let $\mathcal{T}$ denote the taxonomic tree with nodes $\{v_1, \ldots, v_N\}$. For each internal node $v$ with children $\text{ch}(v) = \{c_1, \ldots, c_m\}$, we define a local classifier:
+
+\begin{equation}
+P(c_j | v, \hat{\mathbf{f}}) = \frac{\exp(\mathbf{w}_{c_j}^T \mathbf{h}_v + b_{c_j})}{\sum_{l=1}^{m} \exp(\mathbf{w}_{c_l}^T \mathbf{h}_v + b_{c_l})}
+\end{equation}
+
+where $\mathbf{h}_v = g_v(\hat{\mathbf{f}})$ is a node-specific feature transformation. The species-level probability is the product along the root-to-leaf path:
+
+\begin{equation}
+P(\text{species}_s | \hat{\mathbf{f}}) = \prod_{v \in \text{path}(\text{root}, s)} P(\text{next}(v, s) | v, \hat{\mathbf{f}})
+\end{equation}
+
+\subsubsection{Graceful Degradation}
+
+When the species-level confidence falls below a threshold $\tau$, the system reports the highest taxonomic level at which confidence exceeds $\tau$:
+
+\begin{equation}
+\text{prediction}(\hat{\mathbf{f}}) = \arg\max_{v \in \text{path}(\text{root}, \hat{s})} \left\{ v : P(v | \hat{\mathbf{f}}) \geq \tau \right\}
+\end{equation}
+
+This provides ecologically useful information even when species-level identification is uncertain---knowing that an image contains a felid (family) is more informative than a low-confidence species prediction.
+
+\subsubsection{Training with Label Smoothing}
+
+We apply taxonomically-aware label smoothing that redistributes probability mass according to taxonomic distance:
+
+\begin{equation}
+\tilde{y}_i = (1 - \epsilon) \cdot y_i + \epsilon \cdot \frac{d_{\text{tax}}(i, y^*)}{\sum_j d_{\text{tax}}(j, y^*)}
+\end{equation}
+
+where $d_{\text{tax}}(i, j)$ is the normalized taxonomic distance between species $i$ and $j$, and $\epsilon$ is the smoothing parameter.
+
+\subsection{Population Estimation Module}
+
+The population estimation module combines detection counts with mark-recapture analysis when individual identification is feasible.
+
+\subsubsection{Detection-Based Abundance}
+
+For each camera station $s$ and time interval $[t_1, t_2]$, the raw detection count $n_s$ is adjusted for detection probability $p_s$ and temporal activity patterns:
+
+\begin{equation}
+\hat{N}_s = \frac{n_s}{p_s \cdot A_s} \cdot \frac{T}{t_2 - t_1}
+\end{equation}
+
+where $A_s$ is the activity overlap coefficient (the proportion of the species' active period covered by effective camera trap operation) and $T$ is the standardization period.
+
+\subsubsection{Spatially Explicit Capture-Recapture}
+
+For species with identifiable individuals, we implement a Bayesian spatially explicit capture-recapture (SECR) model~\cite{efford2004}. The activity center of individual $i$ is modeled as:
+
+\begin{equation}
+\mathbf{s}_i \sim \text{Uniform}(\mathcal{S})
+\end{equation}
+
+The detection probability at trap $j$ for individual $i$ with activity center $\mathbf{s}_i$ follows a half-normal detection function:
+
+\begin{equation}
+p_{ij} = g_0 \cdot \exp\left(-\frac{\|\mathbf{s}_i - \mathbf{x}_j\|^2}{2\sigma^2}\right)
+\end{equation}
+
+where $g_0$ is the baseline detection probability, $\mathbf{x}_j$ is the location of trap $j$, and $\sigma$ controls the spatial scale of detection decline. Population density is estimated as:
+
+\begin{equation}
+\hat{D} = \frac{\hat{N}}{|\mathcal{S}|}
+\end{equation}
+
+\subsubsection{Re-Identification Network}
+
+We train a triplet embedding network for individual re-identification. The network maps cropped animal images to a 128-dimensional embedding space $\phi: \mathcal{I} \to \mathbb{R}^{128}$ trained with the triplet loss:
+
+\begin{equation}
+\mathcal{L}_{\text{triplet}} = \sum_{(a,p,n)} \max\left(0, \|\phi(a) - \phi(p)\|_2 - \|\phi(a) - \phi(n)\|_2 + m\right)
+\end{equation}
+
+where $(a, p, n)$ are anchor, positive, and negative triplets, and $m$ is the margin parameter.
+
+\subsection{Habitat Quality Assessment}
+
+The habitat module integrates multi-temporal satellite imagery with camera trap-derived biodiversity indicators.
+
+\subsubsection{Satellite-Derived Features}
+
+We extract a suite of spectral indices from Sentinel-2 imagery at 10m resolution:
+
+\begin{table}[htbp]
+\centering
+\caption{Satellite-derived habitat features.}
+\label{tab:sat_features}
+\begin{tabular}{lll}
+\toprule
+\textbf{Feature} & \textbf{Formula} & \textbf{Indicator} \\
+\midrule
+NDVI & $(B8 - B4)/(B8 + B4)$ & Vegetation density \\
+EVI & $2.5(B8 - B4)/(B8 + 6B4 - 7.5B2 + 1)$ & Enhanced vegetation \\
+NDWI & $(B3 - B8)/(B3 + B8)$ & Water availability \\
+BSI & $((B11+B4)-(B8+B2))/((B11+B4)+(B8+B2))$ & Bare soil \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Habitat Quality Index}
+
+The composite habitat quality index $H(x, y, t)$ at spatial coordinates $(x, y)$ and time $t$ is computed as:
+
+\begin{equation}
+H(x, y, t) = \sum_{i=1}^{F} w_i \cdot f_i(x, y, t) + \beta \cdot B(x, y, t) + \gamma \cdot C(x, y)
+\end{equation}
+
+where $f_i$ are normalized satellite features, $B$ is the camera trap-derived biodiversity indicator (Shannon diversity index of detected species), $C$ is the landscape connectivity score computed via circuit theory~\cite{mcrae2008}, and $w_i, \beta, \gamma$ are learned weights.
+

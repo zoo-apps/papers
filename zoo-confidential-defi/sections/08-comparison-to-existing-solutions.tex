@@ -1,0 +1,43 @@
+\section{Comparison to Existing Solutions}
+
+\label{sec:comparison}
+%----------------------------------------------------------------------
+
+\subsection{Flashbots Protect}
+
+Flashbots Protect routes transactions through a private relay, hiding them from the public mempool. The relay operator (Flashbots) observes all transactions. Users must trust the relay not to extract \MEV{} itself. \Zoo{} Confidential DeFi requires no trusted relay; orders are encrypted under a collective key that no single party holds.
+
+\subsection{MEV-Share}
+
+MEV-Share allows users to share partial information (``hints'') about their transactions with searchers, receiving a portion of extracted \MEV{} in return. This reduces but does not eliminate \MEV{}---users still lose value, just less of it. \Zoo{} eliminates \MEV{} entirely: there is no information to share because there is no information to extract.
+
+\subsection{Penumbra}
+
+Penumbra implements a shielded pool (Multi-Asset Shielded Pool, MASP) for private transfers and swaps. Swaps use a batch auction mechanism where all swaps in a block execute at the same clearing price. However, Penumbra does not support limit orders, on-chain order books, or sealed-bid auctions. \Zoo{} provides full order book functionality with encrypted limit orders.
+
+\subsection{Renegade}
+
+Renegade implements a dark pool using multiparty computation (MPC). Two-party matching is performed via garbled circuits. Limitations: (a) matching is pairwise (two parties at a time), not batch; (b) both parties must be online simultaneously; (c) the MPC coordinator observes metadata. \Zoo{}'s \FHE{}-based approach handles arbitrary batch sizes, operates asynchronously, and reveals no metadata to validators.
+
+\subsection{Summary}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Property} & \textbf{Flashbots} & \textbf{MEV-Share} & \textbf{Penumbra} & \textbf{Renegade} & \textbf{\Zoo{}} \\
+\midrule
+Full orderflow privacy & No & No & Yes & Yes & \textbf{Yes} \\
+On-chain matching & No & No & Batch only & No & \textbf{Yes} \\
+Limit orders & N/A & N/A & No & Yes & \textbf{Yes} \\
+Sealed auctions & No & No & No & No & \textbf{Yes} \\
+No trusted party & No & No & Yes & Partial & \textbf{Yes} \\
+Asynchronous & Yes & Yes & Yes & No & \textbf{Yes} \\
+\bottomrule
+\end{tabular}
+\caption{Feature comparison across \MEV{} mitigation approaches}
+\label{tab:feature_comparison}
+\end{table}
+
+%----------------------------------------------------------------------

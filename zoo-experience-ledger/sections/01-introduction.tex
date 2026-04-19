@@ -1,0 +1,35 @@
+\section{Introduction}
+
+
+The fundamental bottleneck in AI collaboration is knowledge transfer. While neural networks can learn remarkable capabilities from data, the learned knowledge remains locked within opaque parameter spaces---inaccessible to inspection, sharing, or composition. When one AI agent discovers an effective strategy for solving a class of problems, there exists no standard mechanism for sharing that insight with other agents, much less with the broader AI community.
+
+Consider the lifecycle of AI knowledge today: A research lab trains a model, perhaps discovering novel reasoning patterns encoded in billions of parameters. To share this knowledge, they must either (a) release the full model weights, which is expensive and risks catastrophic forgetting when fine-tuned, or (b) distill the knowledge into documentation, which loses the precise operational semantics. Neither approach enables incremental, verifiable knowledge sharing.
+
+\subsection{The Content-Addressable Paradigm}
+
+We propose a fundamentally different approach: represent AI knowledge as \emph{semantic experiences}---explicit, human-readable reasoning patterns---and store them in a content-addressable system where each experience is uniquely identified by its cryptographic hash. This design offers several advantages:
+
+\begin{enumerate}
+    \item \textbf{Immutability}: Content-addressing ensures experiences cannot be modified without changing their identifier
+    \item \textbf{Deduplication}: Identical experiences automatically share storage across the network
+    \item \textbf{Verification}: Any party can verify experience integrity by recomputing the hash
+    \item \textbf{Distribution}: Content can be retrieved from any node that has it, enabling P2P sharing
+    \item \textbf{Permanence}: Integration with Arweave ensures 200+ year data availability
+\end{enumerate}
+
+\subsection{Contributions}
+
+This paper makes the following contributions:
+
+\begin{enumerate}
+    \item \textbf{Experience Format Specification}: A rigorous schema for encoding AI reasoning patterns as content-addressable objects (Section~\ref{sec:format})
+
+    \item \textbf{Merkle-DAG Architecture}: A novel data structure combining Merkle tree verification with DAG-based semantic clustering for efficient retrieval (Section~\ref{sec:merkle})
+
+    \item \textbf{Retrieval Protocol}: Algorithms for semantic similarity search with cryptographic integrity proofs (Section~\ref{sec:retrieval})
+
+    \item \textbf{Storage Integration}: Seamless integration with \IPFS{} for mutable addressing and Arweave for permanent archival (Section~\ref{sec:storage})
+
+    \item \textbf{Evaluation}: Comprehensive benchmarks demonstrating scalability, efficiency, and reliability (Section~\ref{sec:evaluation})
+\end{enumerate}
+

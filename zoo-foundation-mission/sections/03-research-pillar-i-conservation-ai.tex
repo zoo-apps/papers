@@ -1,0 +1,61 @@
+\section{Research Pillar I: Conservation AI}
+
+
+\subsection{Genomic Sequencing \& Analysis}
+
+Our Conservation AI initiative digitally preserves endangered species through whole-genome sequencing, computational analysis, and immutable blockchain storage. Key projects include:
+
+\subsubsection{African Elephant Genomics (2024-2025)}
+Partnering with African Wildlife Foundation, we sequenced 47 forest elephant (\textit{Loxodonta cyclotis}) genomes from Central African populations. Using custom-trained transformer models (fine-tuned Qwen3-7B via Gym), we:
+\begin{itemize}
+    \item Identified 18 novel conserved genomic regions under positive selection.
+    \item Mapped population structure revealing three genetically distinct subpopulations.
+    \item Detected 127 single nucleotide polymorphisms (SNPs) associated with ivory morphology—enabling forensic ivory trade tracking.
+    \item Stored complete genome assemblies (3.2 billion base pairs each) on Arweave with IPFS mirrors, ensuring permanent accessibility.
+\end{itemize}
+
+\subsubsection{Coral Metagenomics (Ongoing)}
+Climate-driven coral bleaching threatens 75\% of reefs by 2050 \citep{hughes2018spatial}. We analyze coral holobiont metagenomes (coral + symbiotic algae + microbiome) to identify thermal tolerance mechanisms. Our AI pipeline:
+\begin{enumerate}
+    \item \textbf{Metagenomic Assembly}: Deep learning-based contig assembly using MetaGLM (fine-tuned via Gym).
+    \item \textbf{Functional Annotation}: Transformer models predicting gene function from sequence alone, bypassing costly lab validation.
+    \item \textbf{Symbiont Optimization}: Identifying thermally resistant \textit{Symbiodinium} strains for assisted evolution interventions.
+\end{enumerate}
+
+Results stored on-chain include 14 terabases of metagenomic data, 8,400 heat-shock protein variants, and AI-predicted functional annotations for 420,000 coral genes.
+
+\subsection{De-Extinction Research}
+
+Beyond preservation, we explore \textit{de-extinction}—resurrecting extinct species via genetic engineering. Our approach combines:
+
+\begin{itemize}
+    \item \textbf{Ancient DNA Recovery}: Extracting degraded DNA from museum specimens, permafrost remains, and sub-fossils.
+    \item \textbf{Genome Reconstruction}: AI-powered gap-filling using phylogenetic context (e.g., reconstructing woolly mammoth genomes by comparing Asian elephant references).
+    \item \textbf{CRISPR Design}: Machine learning models predicting optimal guide RNA sequences for genome editing.
+    \item \textbf{Ethical Frameworks}: Blockchain-recorded community governance votes on de-extinction candidates.
+\end{itemize}
+
+\textbf{Case Study: Passenger Pigeon Genome} \\
+In collaboration with Revive \& Restore, we reconstructed 92\% of the passenger pigeon (\textit{Ectopistes migratorius}) genome from 1870s museum specimens. Our custom DNA-BERT model filled 340 million base pair gaps by learning evolutionary constraints from extant Columbidae genomes. The complete genome (1.27 gigabases) resides permanently on Arweave, accessible via \texttt{ar://passengerpigeonv1}.
+
+\subsection{Computational Biodiversity Monitoring}
+
+AI enables real-time, planetary-scale biodiversity monitoring:
+
+\begin{itemize}
+    \item \textbf{Bioacoustic Surveillance}: Deploying autonomous recording units in rainforests, analyzing 50,000 hours of audio via fine-tuned Whisper models to detect species from vocalizations.
+    \item \textbf{Camera Trap Analysis}: Training YOLOv9 models (via Gym's multimodal pipelines) identifying 4,300 species from camera trap images—reducing human labeling from months to hours.
+    \item \textbf{eDNA Metabarcoding}: Using transformers to detect species from environmental DNA in water/soil samples.
+\end{itemize}
+
+\subsection{Blockchain for Conservation Integrity}
+
+All genomic data, species observations, and conservation decisions record on Zoo Network blockchain:
+
+\begin{itemize}
+    \item \textbf{Immutable Provenance}: Every genome assembly includes cryptographic hash, sequencing metadata, and contributor attributions.
+    \item \textbf{Access Control}: Smart contracts governing data access—public for research, restricted for commercially sensitive data (e.g., anti-poaching intelligence).
+    \item \textbf{Incentive Alignment}: Contributors earning KEEPER tokens redeemable for compute credits or governance rights.
+    \item \textbf{Verification}: Independent scientists verifying sequencing quality, with verification recorded on-chain.
+\end{itemize}
+

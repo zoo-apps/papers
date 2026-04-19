@@ -1,0 +1,166 @@
+\section{Evaluation}
+
+\label{sec:evaluation}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Datasets}
+
+We evaluate on four domain-specific benchmarks:
+
+\begin{table}[H]
+\centering
+\caption{Evaluation datasets. ``Novel'' species have no overlap with
+training data.}
+\label{tab:datasets}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Dataset} & \textbf{Taxon} & \textbf{Novel species} &
+  \textbf{Images} & \textbf{Source} \\
+\midrule
+ZooBirds & Aves & 412 & 24{,}720 & eBird, Macaulay \\
+ZooInsects & Insecta & 638 & 31{,}900 & iNaturalist, BugGuide \\
+ZooPlants & Plantae & 524 & 26{,}200 & PlantNet, herbaria \\
+ZooMarine & Mixed marine & 293 & 14{,}650 & Reef Life Survey \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Citizen science field test.} We additionally evaluate on
+2{,}847 field photographs submitted by 312 citizen science volunteers
+through the Zoo platform, covering 187 species across all four taxa.
+Images are accompanied by GPS coordinates and dates.
+
+\subsection{Baselines}
+
+\begin{itemize}
+  \item \textbf{ProtoNet} \citep{snell2017prototypical}: Standard
+    prototypical network with ResNet-50 backbone.
+  \item \textbf{MAML} \citep{finn2017model}: Model-agnostic
+    meta-learning with 5 inner-loop steps.
+  \item \textbf{DeepEMD} \citep{zhang2020deepemd}: Earth mover's
+    distance matching for few-shot.
+  \item \textbf{FEAT} \citep{ye2020few}: Set-to-set function with
+    transformer adaptation.
+  \item \textbf{P$>$M$>$F} \citep{hu2022pushing}: Pre-train, meta-learn,
+    fine-tune pipeline.
+  \item \textbf{DINOv2+kNN}: DINOv2 features with $k$-nearest-neighbor
+    classification (no meta-learning).
+\end{itemize}
+
+All baselines use ViT-L/14 backbone for fair comparison except where
+architecturally infeasible.
+
+\subsection{Results: Standard Few-Shot}
+
+\begin{table}[H]
+\centering
+\caption{Few-shot classification accuracy (\%) on novel species. Mean
+$\pm$ 95\% CI over 10{,}000 episodes.}
+\label{tab:fewshot}
+\begin{tabular}{l cc cc cc cc}
+\toprule
+& \multicolumn{2}{c}{\textbf{ZooBirds}} &
+  \multicolumn{2}{c}{\textbf{ZooInsects}} &
+  \multicolumn{2}{c}{\textbf{ZooPlants}} &
+  \multicolumn{2}{c}{\textbf{ZooMarine}} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+  \cmidrule(lr){8-9}
+\textbf{Method} & 1-shot & 5-shot & 1-shot & 5-shot &
+  1-shot & 5-shot & 1-shot & 5-shot \\
+\midrule
+ProtoNet & 62.3 & 79.8 & 54.7 & 73.2 & 58.1 & 76.4 & 60.9 & 78.1 \\
+MAML & 64.1 & 81.3 & 56.2 & 74.8 & 59.7 & 77.9 & 62.4 & 79.6 \\
+DeepEMD & 67.8 & 84.1 & 59.3 & 78.6 & 63.2 & 81.2 & 65.7 & 82.3 \\
+FEAT & 69.2 & 85.4 & 61.1 & 80.3 & 65.1 & 82.7 & 67.3 & 83.8 \\
+P$>$M$>$F & 72.6 & 87.9 & 64.8 & 83.1 & 68.4 & 85.3 & 70.1 & 86.2 \\
+DINOv2+kNN & 71.3 & 86.2 & 63.1 & 81.4 & 66.7 & 83.9 & 68.8 & 84.7 \\
+\midrule
+\textbf{TaxoNet} & \textbf{80.1} & \textbf{92.4} & \textbf{74.2} &
+  \textbf{89.1} & \textbf{78.9} & \textbf{91.6} & \textbf{80.4} &
+  \textbf{91.7} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+TaxoNet achieves the highest accuracy across all datasets and shot
+settings. The largest improvement over the next-best method (P$>$M$>$F)
+is on ZooInsects (+9.4\% 1-shot), consistent with insects having the
+deepest taxonomic hierarchies and most confusable species pairs.
+
+\subsection{Results: Citizen Science Field Test}
+
+\begin{table}[H]
+\centering
+\caption{Field identification accuracy (\%) on citizen science
+photographs. ``+Geo'' adds geographic and temporal priors.}
+\label{tab:citizen}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Method} & \textbf{Top-1} & \textbf{Top-3} & \textbf{Top-5} &
+  \textbf{Top-1 +Geo} \\
+\midrule
+iNaturalist CV & 82.3 & 91.4 & 94.1 & 87.6 \\
+DINOv2+kNN & 76.8 & 88.2 & 92.3 & 83.1 \\
+P$>$M$>$F (5-shot) & 79.4 & 89.7 & 93.2 & 85.8 \\
+\textbf{TaxoNet (5-shot)} & \textbf{84.7} & \textbf{93.1} &
+  \textbf{96.2} & \textbf{94.7} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+With geographic priors, TaxoNet achieves 94.7\% top-1 accuracy on
+citizen science data, exceeding iNaturalist's trained classifier on
+overlapping species. This demonstrates the practical value of combining
+few-shot visual recognition with ecological metadata.
+
+\subsection{Ablation Studies}
+
+\begin{table}[H]
+\centering
+\caption{Ablation study on ZooBirds (5-way 5-shot accuracy \%).}
+\label{tab:ablation}
+\begin{tabular}{lc}
+\toprule
+\textbf{Configuration} & \textbf{Accuracy} \\
+\midrule
+Full TaxoNet & \textbf{92.4} \\
+\midrule
+\quad -- Taxonomic prototypes (species only) & 88.7 \\
+\quad -- Rank attention (uniform weights) & 90.1 \\
+\quad -- Domain-adaptive pre-training (ImageNet init) & 86.3 \\
+\quad -- Taxonomic episode sampling (uniform) & 89.8 \\
+\quad -- Spatial attention (CLS token only) & 90.6 \\
+\quad -- Taxonomic triplet loss & 91.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Domain-adaptive pre-training provides the largest single contribution
+(+6.1\%), followed by taxonomic prototypes (+3.7\%) and taxonomic
+episode sampling (+2.6\%).
+
+\subsection{Rank-Attention Analysis}
+
+\begin{table}[H]
+\centering
+\caption{Learned rank-attention weights $\alpha_r$ for different query
+difficulty levels.}
+\label{tab:rank_attention}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Query difficulty} & $\alpha_{\text{family}}$ &
+  $\alpha_{\text{genus}}$ & $\alpha_{\text{species}}$ \\
+\midrule
+Easy (inter-family) & 0.62 & 0.24 & 0.14 \\
+Medium (inter-genus) & 0.18 & 0.49 & 0.33 \\
+Hard (intra-genus) & 0.07 & 0.28 & 0.65 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The rank-attention module adaptively shifts weight toward species-level
+prototypes for hard (intra-genus) queries and toward family-level
+prototypes for easy (inter-family) queries.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

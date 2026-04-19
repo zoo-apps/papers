@@ -1,0 +1,100 @@
+\section{Decentralized Semantic Optimization Algorithm}
+
+\label{sec:dso}
+
+\subsection{Operations}
+
+The \DSO{} algorithm supports three operations:
+
+\begin{definition}[Experience Operations]
+\begin{enumerate}
+    \item \textbf{Add}($e$): Insert new experience $e$ if non-redundant
+    \item \textbf{Modify}($e_{\text{old}}, e_{\text{new}}$): Replace $e_{\text{old}}$ with refined $e_{\text{new}}$
+    \item \textbf{Delete}($e$): Remove obsolete or incorrect experience $e$
+\end{enumerate}
+\end{definition}
+
+\subsection{Extraction Pipeline}
+
+\begin{algorithm}[t]
+\caption{Semantic Advantage Extraction}
+\label{alg:extraction}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Query $q$, rollouts $\{o_1, \ldots, o_G\}$, ground truth $y$, library $\mathcal{E}$
+\STATE \textbf{Output}: Operations $\Omega$
+\STATE \COMMENT{Stage 1: Summarize trajectories}
+\FOR{$i = 1$ \textbf{to} $G$}
+    \STATE $s_i \leftarrow \text{LLM.summarize}(q, o_i, r_i, y)$
+\ENDFOR
+\STATE \COMMENT{Stage 2: Extract group advantages}
+\STATE $\Omega_{\text{raw}} \leftarrow \text{LLM.extract}(q, \{s_1, \ldots, s_G\}, \mathcal{E}, y)$
+\STATE \COMMENT{Stage 3: Consolidate}
+\STATE $\Omega \leftarrow \text{LLM.consolidate}(\Omega_{\text{raw}}, \mathcal{E})$
+\RETURN $\Omega$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Stage 1 Prompt} (Trajectory Summarization):
+\begin{quote}
+\textit{An agent was provided with the following experiences and produced this trajectory. Summarize step-by-step: (1) what actions were taken, (2) which experiences guided decisions, (3) identify errors or detours given the correct answer.}
+\end{quote}
+
+\textbf{Stage 2 Prompt} (Group Critique):
+\begin{quote}
+\textit{Review these problem-solving attempts and extract generalizable experiences. Identify patterns in successful vs. failed trajectories. Suggest updates: Add (new insights), Modify (refine existing), Delete (incorrect). Max 3 operations per group. Each experience must begin with context ("When...") and be ≤32 words.}
+\end{quote}
+
+\textbf{Stage 3 Prompt} (Batch Consolidation):
+\begin{quote}
+\textit{Consolidate suggested updates into final revisions. Merge similar experiences, eliminate redundancy, ensure each is clear and generalizable (≤32 words). Return JSON operations: Add/Modify/Merge/Delete.}
+\end{quote}
+
+\subsection{Conflict Resolution}
+
+When multiple operations target the same experience $e$:
+
+\begin{enumerate}
+    \item \textbf{Delete + Modify}: Prioritize Delete (indicates fundamental incorrectness)
+    \item \textbf{Modify + Modify}: Merge into single Modify via LLM synthesis
+    \item \textbf{Add + Add} (similar): Check embedding similarity; if $> 0.9$, merge
+\end{enumerate}
+
+\subsection{Convergence Analysis}
+
+\begin{definition}[Experience Library Convergence]
+A library $\mathcal{E}$ converges if:
+\begin{equation}
+\lim_{t \to \infty} \|\mathcal{E}_{t+1} - \mathcal{E}_t\| = 0
+\end{equation}
+where $\|\cdot\|$ measures embedding space distance.
+\end{definition}
+
+\begin{theorem}[Convergence Under \DSO{}]
+Given bounded query distribution $\mathcal{Q}$ and $G \geq 5$, \DSO{} converges to a stable library in $O(|\mathcal{Q}|)$ training steps.
+\end{theorem}
+
+\begin{proof}[Proof Sketch]
+Each epoch extracts at most $k$ new experiences (where $k = 3 \times$ batch size). As coverage increases (Theorem 1), the probability of extracting novel insights decreases exponentially: $P(\text{novel} | \mathcal{E}_t) \approx e^{-|\mathcal{E}_t|/d}$. Once coverage exceeds 95\%, subsequent epochs yield mostly Modify/Delete operations with diminishing magnitude. By Lyapunov stability, $\mathcal{E}_t$ converges to a local optimum.
+\end{proof}
+
+\subsection{Hyperparameters}
+
+\begin{table}[t]
+\centering
+\caption{\DSO{} Hyperparameters}
+\label{tab:hyperparams}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Description} \\
+\midrule
+Group size $G$ & 5--8 & Rollouts per query \\
+Sampling temp & 0.7 & Diversity in generation \\
+Top-$k$ retrieval & 5 & Experiences per context \\
+Sim threshold $\tau$ & 0.6 & Relevance cutoff \\
+Max exp length & 32 words & Conciseness constraint \\
+Epochs & 3 & Training iterations \\
+LLM (extraction) & GPT-4 / DeepSeek-V3 & Introspection model \\
+\bottomrule
+\end{tabular}
+\end{table}
+

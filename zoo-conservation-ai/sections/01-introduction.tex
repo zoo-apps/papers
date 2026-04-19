@@ -1,0 +1,31 @@
+\section{Introduction}
+
+
+Biodiversity loss represents one of the most pressing global challenges of the 21st century. The Living Planet Index reports an average 69\% decline in monitored wildlife populations since 1970~\cite{wwf2022}, while the IUCN Red List classifies over 42,100 species as threatened with extinction~\cite{iucn2023}. Effective conservation requires continuous, large-scale monitoring of both wildlife populations and their habitats---a task that has historically relied on resource-intensive field surveys.
+
+Camera traps have emerged as a primary tool for non-invasive wildlife monitoring, with an estimated 5--10 million units deployed globally~\cite{steenweg2017}. These motion-activated cameras generate vast image datasets: the Snapshot Serengeti project alone has produced over 7.1 million capture events~\cite{swanson2015}. However, the bottleneck has shifted from data collection to data processing. Manual classification of camera trap images requires an estimated 300--500 hours of expert labor per 100,000 images~\cite{tabak2019}, creating a processing backlog that undermines the timeliness of conservation decisions.
+
+\subsection{Challenges in Automated Wildlife Monitoring}
+
+Automated analysis of camera trap imagery presents several distinct challenges:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Extreme class imbalance}: Empty triggers and common species dominate datasets, with rare or endangered species comprising less than 0.1\% of captures~\cite{beery2019}.
+    \item \textbf{Visual similarity}: Many species are visually similar, particularly under low-light infrared capture conditions typical of nocturnal camera traps.
+    \item \textbf{Occlusion and partial visibility}: Animals frequently appear partially occluded by vegetation, and multiple individuals may overlap within a single frame.
+    \item \textbf{Domain shift}: Models trained on one geographic region or camera model often fail when deployed in new environments~\cite{beery2018}.
+    \item \textbf{Temporal context}: Single-frame classification discards valuable temporal information from burst-mode captures and sequential activations.
+\end{enumerate}
+
+\subsection{Contributions}
+
+This paper makes the following contributions:
+
+\begin{enumerate}[leftmargin=*]
+    \item A \textbf{hierarchical species recognition architecture} that exploits taxonomic structure, achieving 96.3\% top-1 accuracy across 847 species with graceful degradation to genus-level identification for ambiguous cases.
+    \item A \textbf{Temporal Context Attention} (TCA) mechanism that aggregates information across sequential camera trap activations, improving species discrimination and reducing false positive rates by 62\%.
+    \item A \textbf{density-aware population estimation} module that combines detection, re-identification, and capture-recapture statistics to produce population estimates with 8.2\% mean absolute error.
+    \item A \textbf{multi-spectral habitat quality index} that fuses satellite-derived vegetation indices with ground-truth camera trap observations to produce fine-grained habitat assessments.
+    \item Full integration with the \Zoo{} Data Commons for decentralized data sharing, model provenance, and reproducible evaluation.
+\end{enumerate}
+

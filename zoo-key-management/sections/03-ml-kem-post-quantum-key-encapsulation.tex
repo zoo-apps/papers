@@ -1,0 +1,40 @@
+\section{ML-KEM: Post-Quantum Key Encapsulation}
+
+
+\subsection{FIPS 203 Overview}
+
+ML-KEM is a lattice-based key encapsulation mechanism built on the Module Learning With Errors (MLWE) problem. Security relies on the hardness of finding short vectors in structured lattices.
+
+\begin{definition}[ML-KEM Parameters]
+\KChain{} supports two security levels:
+\begin{itemize}
+\item \textbf{ML-KEM-768}: $k=3$, NIST security level 3 ($\approx$ AES-192). Default for general key encapsulation.
+\item \textbf{ML-KEM-1024}: $k=4$, NIST security level 5 ($\approx$ AES-256). Required for long-term key protection.
+\end{itemize}
+\end{definition}
+
+\subsection{Threshold ML-KEM}
+
+Standard ML-KEM is a single-party scheme. \KChain{} adapts it for threshold operation. During key generation, each validator $v_i$ samples a secret share $s_i \in R_q^k$, computes a public share $\text{pk}_i = A \cdot s_i + e_i$ with a ZK proof of well-formedness, and the aggregate public key is computed via Lagrange interpolation: $\text{pk} = \sum_{i=1}^{n} \lambda_i \cdot \text{pk}_i$.
+
+Decapsulation is similarly distributed: each responding validator $v_i$ computes a partial decapsulation $d_i = \text{Decompress}(ct, s_i)$ with a ZK proof. Once $t$ partial results are collected, \KeyVM{} aggregates them into the shared secret.
+
+\subsection{Key Sizes}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Scheme} & \textbf{Public Key} & \textbf{Ciphertext} & \textbf{Shared Secret} \\
+\midrule
+ML-KEM-768 & 1,184 bytes & 1,088 bytes & 32 bytes \\
+ML-KEM-1024 & 1,568 bytes & 1,568 bytes & 32 bytes \\
+ECDH (P-256) & 64 bytes & 64 bytes & 32 bytes \\
+\bottomrule
+\end{tabular}
+\caption{Key and ciphertext sizes (ML-KEM vs classical)}
+\label{tab:kem-sizes}
+\end{table}
+
+The $18\times$--$24\times$ size increase over classical ECDH is the cost of quantum resistance. On-chain, only public keys are stored; ciphertexts are transmitted off-chain.
+

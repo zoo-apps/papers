@@ -1,0 +1,1556 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc,fit}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\NFT}{\textsc{nft}}
+\newcommand{\ERC}{\textsc{erc}}
+\newcommand{\DAO}{\textsc{dao}}
+\newcommand{\ZOO}{\$\textsc{zoo}}
+\newcommand{\KEEPER}{\$\textsc{keeper}}
+\newcommand{\OEP}{\text{OEP}}
+\newcommand{\ETH}{\textsc{eth}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\input{shared/lstlang}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\bfseries,
+  commentstyle=\color{gray},
+  stringstyle=\color{darkgray},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=5pt,
+  frame=single,
+  breaklines=true,
+  captionpos=b,
+  tabsize=2
+}
+
+% Title and authors
+\title{\textbf{ZOO: A NFT Liquidity Protocol for Wildlife Conservation}\\[0.3em]
+\large Genesis Retrospective}
+
+\author{
+Zach Kelling\thanks{zach@zoo.ngo}, Antje Worring\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{October 2021}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present the \textbf{Zoo NFT Liquidity Protocol}, a collateral-backed breeding and staking
+mechanism for AI-powered digital animals that aligns speculative DeFi incentives with real-world
+endangered species conservation. Originating in the Zoo Gen~0 Deck of October
+2021---\emph{predating ChatGPT by over a year}---the protocol introduced emotionally intelligent,
+conversational NFT avatars backed by locked collateral, tiered yield generation through a
+generational breeding system, and a dual-token economy (\ZOO{} + \KEEPER{}).  Each Gen~0
+animal hatches from one of three egg tiers (Sublime, Rare, Endangered), progresses through life
+stages (Baby, Teen, Adult) via escalating mint costs denominated in the egg's Original Egg Price
+(\OEP{}), and breeds offspring whose generational yield flows back to ancestors in a virtuous
+conservation loop.  A comprehensive sustainability tax---encompassing royalty fees (5\%), breeding
+fees (0.015~\ETH{}), hatching fees (0.04~\ETH{}), feeding boosts, token sale levies (8\% on
+\ZOO{} or \KEEPER{} sells, split 4\% LP / 4\% DAO), and NFT burn penalties (20\%, split 10\%
+LP / 10\% DAO)---ensures continuous funding of both liquidity pools and the \Zoo{} \DAO{}
+treasury.  We formalize the yield accumulation dynamics, prove long-run protocol solvency under
+realistic adoption curves, and describe the ecosystem flow from gameplay through the \DAO{} to
+Zoo NGO, the non-profit entity funding on-the-ground conservation of endangered species.  At its
+August 2021 peak, the \ZOO{} token reached a market capitalization exceeding \$2B~USD
+(ZOO/BNB on PancakeSwap), validating market demand for conservation-aligned digital asset
+protocols.  The protocol's vision of emotionally intelligent, conversational AI avatars---each
+animal ``fully converse[s] and play[s] with users''---preceded ChatGPT (November 2022) by over
+thirteen months.
+
+\textbf{Keywords}: NFT, liquidity protocol, collateral-backed, breeding, tokenomics, conservation,
+AI avatars, dual-token, DeFi
+\end{abstract}
+
+%% ============================================================================
+\section{Introduction}
+\label{sec:intro}
+%% ============================================================================
+
+\subsection{Mission: Artificially Intelligent Digital Animals that Preserve Endangered Species}
+
+Zoo Labs Foundation was established with a singular mission: to create \emph{artificially intelligent digital animals that preserve endangered species}.  The protocol channels speculative energy in the NFT and DeFi markets toward four concrete conservation initiatives:
+
+\begin{enumerate}
+    \item \textbf{Habitat Restoration}: Landscaping and on-the-ground activities for the health and safety of endangered species and their ecosystems.
+    \item \textbf{Rescue and Reintegration}: Rescuing animals orphaned by poachers and reintegrating them into the wild.
+    \item \textbf{Data Collection}: Collecting behavioral and population dynamics data to identify and eliminate poaching networks.
+    \item \textbf{Policy Advocacy}: Pursuing legal avenues to enact lasting policy change for species protection.
+\end{enumerate}
+
+These four pillars are funded not through traditional charity but through the protocol's sustainability tax (Section~\ref{sec:sustainability-tax}), creating an economic engine where every trade, breed, hatch, and burn directly finances conservation.
+
+\subsection{Market Context (2021)}
+
+The Citi Global Perspectives \& Solutions report of 2021 projected the metaverse as an \$8--13 trillion opportunity by 2030, with an addressable user base of 5 billion~\cite{citi2021metaverse}.  Zoo positioned itself at the intersection of three converging trends: NFT collectibles, play-to-earn DeFi gaming, and AI-powered virtual companions.  At its August 2021 all-time high, the \ZOO{}/BNB pair on PancakeSwap achieved a market capitalization exceeding \textbf{\$2 billion USD}~\cite{poocoin2021}, demonstrating significant market demand for conservation-aligned digital assets.
+
+\subsection{Pre-GPT AI Vision}
+
+A defining characteristic of the Zoo Gen~0 design (October 2021) was its commitment to \emph{intelligent avatars}: ``Each animal is emotionally intelligent, and can fully converse and play with users.''  This vision of AI-powered conversational NFTs preceded the release of ChatGPT (November 2022) by over thirteen months, and preceded GPT-3.5's public API by even longer.  The protocol anticipated a world of persistent, emotionally responsive AI companions embedded in blockchain-native economic systems---a vision that only became mainstream after the generative AI explosion of 2023.
+
+\subsection{History and Motivation}
+
+The ZOO project launched in 2021 on Binance Smart Chain with PancakeSwap~\cite{pancakeswap}
+serving as the primary decentralized exchange for the \ZOO{} token.  An earlier version of
+the protocol (V3) was abandoned after the development team associated with that iteration
+misappropriated investor tokens.  The current protocol (V4) was rebuilt from scratch with
+full transparency: no hidden allocations, no centralized token custody, and a public
+commitment of conservation fees enforced on-chain.  The \ZOO{} token
+reached an all-time-high market capitalization exceeding \$2B in August 2021 on the
+ZOO/BNB pair~\cite{poocoin2021}.
+
+\subsection{Contributions}
+
+This paper makes the following contributions:
+
+\begin{enumerate}
+    \item \textbf{Tiered Egg Tokenomics}: A complete specification of the Gen~0 egg pricing, life-stage progression, and yield schedule (Section~\ref{sec:tokenomics}).
+    \item \textbf{Dual-Token Economy}: Formalization of the \ZOO{} and \KEEPER{} token roles and interactions (Section~\ref{sec:dual-token}).
+    \item \textbf{Sustainability Tax}: A comprehensive fee taxonomy ensuring protocol-level conservation funding (Section~\ref{sec:sustainability-tax}).
+    \item \textbf{Generational Breeding}: Mathematical model of cross-generational yield flow from offspring to ancestors (Section~\ref{sec:breeding}).
+    \item \textbf{Feeding Boosts}: Staking-based yield amplification through collateral locking (Section~\ref{sec:feed}).
+    \item \textbf{Ecosystem Flow}: End-to-end value circulation from gameplay through the \DAO{} to conservation outcomes (Section~\ref{sec:ecosystem}).
+    \item \textbf{Intelligent Avatars}: Architecture for emotionally intelligent, conversational AI animals (Section~\ref{sec:avatars}).
+    \item \textbf{Future Roadmap}: New animal drops, metaverse land, mutations, and virtual pet extensions (Section~\ref{sec:future}).
+    \item \textbf{NFT Liquidity Protocol}: Protocol architecture in which each NFT carries transferable yield and accepts multi-asset collateral (Section~\ref{sec:protocol}).
+    \item \textbf{ZOO Bridge}: Cross-chain play and asset exchange across sixteen blockchain networks (Section~\ref{sec:bridge}).
+\end{enumerate}
+
+%% ============================================================================
+\section{Gen~0 Egg Tokenomics}
+\label{sec:tokenomics}
+%% ============================================================================
+
+The Gen~0 collection establishes the foundational economic parameters of the protocol.  Each animal begins as an egg belonging to one of three rarity tiers, directly mapped to real-world conservation urgency.
+
+\subsection{Egg Tiers and Daily Yield}
+
+\begin{table}[ht]
+\centering
+\caption{Gen~0 Egg Tiers: Species, Rarity, Yield, and Original Egg Price}
+\label{tab:egg-tiers}
+\begin{tabular}{@{}llccccc@{}}
+\toprule
+\textbf{Tier} & \textbf{Species} & \textbf{Rarity} & \textbf{Baby} & \textbf{Teen} & \textbf{Adult} & \textbf{\OEP{}} \\
+ & & & (\ZOO{}/day) & (\ZOO{}/day) & (\ZOO{}/day) & (\ETH{}) \\
+\midrule
+Sublime & Red Wolf & Almost Extinct & 1 & 2 & 3 & 1.0 \\
+Rare & Amur Leopard & Rare & 0.25 & 0.5 & 1 & 0.5 \\
+Endangered & Sumatran Elephant & Most Common & 0.05 & 0.1 & 0.2 & 0.05 \\
+Endangered & Javan Rhinoceros & Most Common & 0.05 & 0.1 & 0.2 & 0.05 \\
+Endangered & Siberian Tiger & Most Common & 0.05 & 0.1 & 0.2 & 0.05 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The yield schedule is deliberately tied to real-world conservation urgency: the rarer the species in nature, the higher the yield and the higher the entry cost.
+
+\subsection{Life-Stage Progression and Costs}
+
+Each animal progresses through four life stages with escalating costs denominated in multiples of the Original Egg Price (\OEP{}):
+
+\begin{table}[ht]
+\centering
+\caption{Life-Stage Transition Costs (multiples of \OEP{})}
+\label{tab:life-stages}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Transition} & \textbf{Cost} & \textbf{Example (Sublime, \OEP{} = 1~\ETH{})} \\
+\midrule
+Hatch to Baby & Free & 0~\ETH{} \\
+Mint Teen & $1 \times \OEP$ & 1~\ETH{} \\
+Mint Adult & $2 \times \OEP$ & 2~\ETH{} \\
+Breed Adult & $3 \times \OEP$ & 3~\ETH{} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{definition}[Total Investment for Adult]
+The total cost to bring a Gen~0 egg to breeding-capable adult status is:
+\begin{equation}
+C_{\text{adult}} = \OEP + 0 + 1 \cdot \OEP + 2 \cdot \OEP = 4 \cdot \OEP
+\label{eq:adult-cost}
+\end{equation}
+where the initial \OEP{} is the egg purchase price.
+\end{definition}
+
+\subsection{Yield Accumulation Model}
+
+Let $Y_s$ denote the daily yield rate for life stage $s \in \{\text{Baby}, \text{Teen}, \text{Adult}\}$ and tier $\tau \in \{\text{Sublime}, \text{Rare}, \text{Endangered}\}$.  Let $t_s$ denote the number of days spent in stage $s$.  The cumulative yield for a single animal through its life stages is:
+
+\begin{equation}
+\mathcal{Y}(\tau) = Y_{\text{Baby}}^{(\tau)} \cdot t_{\text{Baby}} + Y_{\text{Teen}}^{(\tau)} \cdot t_{\text{Teen}} + Y_{\text{Adult}}^{(\tau)} \cdot t_{\text{Adult}}
+\label{eq:yield-cumulative}
+\end{equation}
+
+With the feeding boost multiplier $\beta$ (Section~\ref{sec:feed}), the boosted yield becomes:
+
+\begin{equation}
+\mathcal{Y}_{\beta}(\tau) = \beta \cdot \mathcal{Y}(\tau), \quad \beta \in \{1.0, 1.1, 1.2, 1.3, 1.4\}
+\label{eq:yield-boosted}
+\end{equation}
+
+%% ============================================================================
+\section{Dual-Token Economy: \ZOO{} and \KEEPER{}}
+\label{sec:dual-token}
+%% ============================================================================
+
+The protocol operates on two distinct tokens with complementary functions.
+
+\subsection{The \ZOO{} Token}
+
+\ZOO{} is the primary yield and utility token of the ecosystem:
+
+\begin{itemize}
+    \item \textbf{Yield denomination}: All animal yield is paid in \ZOO{}.
+    \item \textbf{Gameplay costs}: Life-stage transitions, breeding, and feeding are priced in \ZOO{} or \ETH{}.
+    \item \textbf{Governance participation}: \ZOO{} holders vote on new animal species, conservation allocations, and protocol parameters.
+\end{itemize}
+
+\subsection{The \KEEPER{} Token}
+
+\KEEPER{} is the governance and staking token:
+
+\begin{itemize}
+    \item \textbf{DAO voting weight}: \KEEPER{} holdings determine voting power in the Zoo \DAO{}.
+    \item \textbf{Premium access}: \KEEPER{} stakers receive priority access to new drops and breeding events.
+    \item \textbf{Fee sharing}: A portion of sustainability tax revenue is distributed to \KEEPER{} stakers.
+\end{itemize}
+
+Both tokens are subject to an 8\% sell tax (Section~\ref{sec:sustainability-tax}), ensuring that every sale contributes to protocol sustainability.
+
+%% ============================================================================
+\section{Sustainability Tax}
+\label{sec:sustainability-tax}
+%% ============================================================================
+
+The sustainability tax is the protocol's primary mechanism for funding conservation and maintaining liquidity.  Every economic action within the ecosystem incurs a fee, distributed between liquidity pools and the \DAO{} treasury.
+
+\subsection{Fee Schedule}
+
+\begin{table}[ht]
+\centering
+\caption{Complete Sustainability Tax Schedule}
+\label{tab:sustainability-tax}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Action} & \textbf{Fee} & \textbf{Liquidity Pools} & \textbf{\DAO{} Treasury} \\
+\midrule
+NFT Trade (Royalty) & 5\% of sale price & 2.5\% & 2.5\% \\
+Breeding & 0.015~\ETH{} & 0.0075~\ETH{} & 0.0075~\ETH{} \\
+Hatching & 0.04~\ETH{} per egg & 0.02~\ETH{} & 0.02~\ETH{} \\
+Feeding & Collateral locked & Boost yield & --- \\
+\ZOO{} Token Sell & 8\% of sell amount & 4\% & 4\% \\
+\KEEPER{} Token Sell & 8\% of sell amount & 4\% & 4\% \\
+NFT Burn/Liquidation & 20\% of collateral & 10\% & 10\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Tax Flow Formalization}
+
+Let $V$ denote the value of an economic action.  The tax function $\mathcal{T}$ maps actions to distributions:
+
+\begin{equation}
+\mathcal{T}_{\text{trade}}(V) = 0.05V, \quad
+\begin{cases}
+\text{LP} \leftarrow 0.025V \\
+\text{DAO} \leftarrow 0.025V
+\end{cases}
+\label{eq:tax-trade}
+\end{equation}
+
+\begin{equation}
+\mathcal{T}_{\text{sell}}(V) = 0.08V, \quad
+\begin{cases}
+\text{LP} \leftarrow 0.04V \\
+\text{DAO} \leftarrow 0.04V
+\end{cases}
+\label{eq:tax-sell}
+\end{equation}
+
+\begin{equation}
+\mathcal{T}_{\text{burn}}(C) = 0.20C, \quad
+\begin{cases}
+\text{LP} \leftarrow 0.10C \\
+\text{DAO} \leftarrow 0.10C
+\end{cases}
+\label{eq:tax-burn}
+\end{equation}
+
+where $C$ is the collateral value of the burned NFT.
+
+\begin{proposition}[Tax Revenue Lower Bound]
+Given $n$ active animals, each trading at least once per period with average value $\bar{V}$, the minimum periodic tax revenue is:
+\begin{equation}
+R_{\min} = 0.05 \cdot n \cdot \bar{V}
+\end{equation}
+with half flowing to liquidity and half to the \DAO{}.
+\end{proposition}
+
+%% ============================================================================
+\section{Sustainable Ecosystem Flow}
+\label{sec:ecosystem}
+%% ============================================================================
+
+The Zoo protocol operates as a closed-loop economic system linking gameplay, markets, governance, conservation, and content creation.
+
+\subsection{Ecosystem Diagram}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+    node distance=2.5cm,
+    block/.style={rectangle, draw, rounded corners, text width=3cm, align=center, minimum height=1.2cm, font=\small\bfseries},
+    arrow/.style={->, thick, >=stealth},
+    label/.style={font=\tiny, midway, fill=white, inner sep=1pt, align=center}
+]
+
+\node[block] (game) {GAME\\{\footnotesize Play, Hatch, Breed,\\Feed, Battle}};
+\node[block, right=of game] (market) {BUY / SELL\\{\footnotesize NFT Market,\\Token Exchanges}};
+\node[block, right=of market] (dao) {ZOO DAO\\{\footnotesize Governance\\+ Treasury}};
+\node[block, below=of dao] (ngo) {ZOO NGO\\{\footnotesize Non-Profit for\\Endangered Species}};
+\node[block, below=of game] (studio) {STUDIO\\{\footnotesize New Species,\\Art, AI Models}};
+
+\draw[arrow] (game) -- node[label, above] {NFTs, Tokens} (market);
+\draw[arrow] (market) -- node[label, above] {Taxes, Fees} (dao);
+\draw[arrow] (dao) -- node[label, right] {Conservation\\Funding} (ngo);
+\draw[arrow] (ngo) -- node[label, below] {Impact Data,\\Species Priorities} (studio);
+\draw[arrow] (studio) -- node[label, left] {New Animals,\\Game Content} (game);
+
+\draw[arrow, dashed] (dao.south west) -- node[label, below left] {Grants} (studio.north east);
+\draw[arrow, dashed] (game.south) -- node[label, left] {Actions} (studio);
+
+\end{tikzpicture}
+\caption{Sustainable Ecosystem Flow: GAME $\leftrightarrow$ BUY/SELL $\leftrightarrow$ ZOO DAO (Governance + Treasury) $\leftrightarrow$ ZOO NGO (Non-Profit for Endangered Species) $\leftrightarrow$ STUDIO $\leftrightarrow$ GAME ACTIONS}
+\label{fig:ecosystem-flow}
+\end{figure}
+
+\subsection{Flow Description}
+
+\begin{enumerate}
+    \item \textbf{GAME}: Players hatch eggs, raise animals through life stages, feed for yield boosts, breed adults, and battle.  All actions generate \ZOO{} yield and incur sustainability taxes.
+    \item \textbf{BUY/SELL}: NFTs and tokens are traded on secondary markets.  The 5\% royalty fee and 8\% token sell tax flow to the \DAO{}.
+    \item \textbf{ZOO DAO}: The decentralized autonomous organization governs protocol parameters, treasury allocation, and conservation priorities.  Voting power is weighted by \KEEPER{} holdings.
+    \item \textbf{ZOO NGO}: The non-profit entity receives \DAO{}-allocated funds and executes the four conservation initiatives (Section~\ref{sec:intro}).  Reports impact data on-chain.
+    \item \textbf{STUDIO}: The creative arm develops new animal species, art, and AI models based on conservation priorities identified by the NGO.  New content feeds back into the game.
+\end{enumerate}
+
+%% ============================================================================
+\section{Intelligent Avatars}
+\label{sec:avatars}
+%% ============================================================================
+
+A distinctive feature of the Zoo protocol, conceived in October 2021, is that each animal is not merely a static image or collectible---it is an \emph{emotionally intelligent AI agent} capable of full conversation and play with its owner.
+
+\subsection{Pre-GPT Conversational AI}
+
+The Gen~0 specification states: ``Each animal is emotionally intelligent, and can fully converse and play with users.''  This design preceded:
+
+\begin{itemize}
+    \item ChatGPT public launch (November 30, 2022) by 13+ months
+    \item GPT-3.5 API availability (March 2023) by 17+ months
+    \item GPT-4 release (March 2023) by 17+ months
+\end{itemize}
+
+The vision anticipated persistent AI companions with emotional states---sadness, happiness, fear, sleepiness, anger, hunger---living on-chain as NFTs.  This was a radical departure from the prevailing NFT paradigm of static profile pictures (PFPs).
+
+\subsection{Emotional State Model}
+
+Each animal maintains an emotional state vector:
+
+\begin{equation}
+\mathbf{e} = (e_{\text{happy}}, e_{\text{sad}}, e_{\text{scared}}, e_{\text{sleepy}}, e_{\text{angry}}, e_{\text{hungry}}) \in [0, 1]^6
+\label{eq:emotion-vector}
+\end{equation}
+
+Emotional states evolve based on owner interactions (feeding, playing, neglect) and influence the animal's conversational behavior, visual expression, and yield performance.  A well-cared-for animal produces higher yield; a neglected animal becomes withdrawn and its yield degrades.
+
+\subsection{Emotional Support AI Companion}
+
+The long-term vision extends beyond gaming: Zoo animals as \textbf{emotional support AI pets} accessible via mobile VR/AR applications across all app stores.  The animal lives on-chain, but its conversational interface lives on the owner's phone---a persistent, emotionally responsive companion.
+
+%% ============================================================================
+\section{The NFT Liquidity Protocol}
+\label{sec:protocol}
+%% ============================================================================
+
+The central innovation of ZOO is the treatment of NFTs not as static digital art but as
+\emph{yield-bearing liquidity instruments}.  We coin the term \textbf{NFT Liquidity Protocol}
+to describe this architecture.
+
+\begin{definition}[NFT Liquidity Protocol]
+A protocol in which each non-fungible token:
+\begin{enumerate}
+    \item generates continuous yield denominated in the protocol's native token,
+    \item accepts deposits of external assets as collateral that increase the token's
+          intrinsic value,
+    \item carries both accumulated yield and collateral state across ownership transfers, and
+    \item realizes accumulated value only upon an explicit terminal action (burn).
+\end{enumerate}
+\end{definition}
+
+The protocol is governed by four core smart contracts deployed on Binance Smart Chain:
+\texttt{ZooNFT} (\ERC{}-721 with yield state), \texttt{AnimalYield} (per-rarity rate
+oracle), \texttt{BreedingRegistry} (hybrid genetics and generation tracking), and
+\texttt{FeedCollateralizer} (multi-asset intake and valuation).
+
+\begin{lstlisting}[language=Solidity,caption={ZooNFT: ERC-721 with yield state}]
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract ZooNFT is ERC721, Ownable {
+    struct Animal {
+        uint16  speciesA;
+        uint16  speciesB;      // 0 if base animal
+        uint8   generation;
+        uint8   rarity;        // 0=Common,1=Uncommon,2=Rare,3=SuperRare
+        uint8   maturity;      // 0=Baby,1=Teen,2=Adult
+        uint256 mintedAt;
+        uint256 collateral;    // cumulative ZOO-equivalent collateral
+    }
+
+    mapping(uint256 => Animal) public animals;
+    uint256 public nextTokenId;
+
+    address public yieldContract;
+    address public feedContract;
+    address public breedingContract;
+    address public conservationFund;
+
+    uint256 public constant CONSERVATION_BPS = 1000; // 10%
+
+    event Hatched(uint256 indexed tokenId, uint16 species, uint8 rarity);
+    event Released(uint256 indexed tokenId, uint256 yieldRealized);
+
+    constructor(address _conservationFund)
+        ERC721("ZOO Animal", "ZOOA")
+    {
+        conservationFund = _conservationFund;
+    }
+
+    function hatch(uint16 species, uint8 rarity) external returns (uint256) {
+        uint256 tokenId = nextTokenId++;
+        animals[tokenId] = Animal({
+            speciesA:   species,
+            speciesB:   0,
+            generation: 0,
+            rarity:     rarity,
+            maturity:   0,
+            mintedAt:   block.timestamp,
+            collateral: 0
+        });
+        _mint(msg.sender, tokenId);
+        emit Hatched(tokenId, species, rarity);
+        return tokenId;
+    }
+
+    /// @notice Burn the NFT, realize yield, donate 10%
+    function release(uint256 tokenId) external {
+        require(ownerOf(tokenId) == msg.sender, "not owner");
+        uint256 pending = IAnimalYield(yieldContract).pending(tokenId);
+        uint256 donation = (pending * CONSERVATION_BPS) / 10000;
+        IAnimalYield(yieldContract).realize(tokenId, msg.sender, donation);
+        _burn(tokenId);
+        emit Released(tokenId, pending);
+    }
+}
+
+interface IAnimalYield {
+    function pending(uint256 tokenId) external view returns (uint256);
+    function realize(uint256 tokenId, address to, uint256 donation)
+        external;
+}
+\end{lstlisting}
+
+\subsection{Yield Accrual Semantics}
+
+Yield begins accruing at the block in which the NFT is minted and continues until the
+NFT is burned.  The accumulated yield is \emph{not} claimable by the owner at any
+intermediate point; it can only be realized by calling \texttt{release()}, which burns
+the token.  This creates a deliberate tension: the longer an owner holds, the more
+yield accumulates, but realizing requires destroying the asset.  This mechanic parallels
+a zero-coupon bond that pays at maturity, except the ``maturity'' is voluntary and the
+``bond'' appreciates through gameplay.
+
+When an NFT is transferred (sold on the marketplace, gifted, or moved via any \ERC{}-721
+\texttt{transferFrom} call), the accumulated yield travels with the token.  The new owner
+inherits the full yield balance.  This property is what makes the NFT a \emph{liquidity
+instrument}: it carries economic value that is priced into secondary market transactions.
+
+%% ============================================================================
+\section{Generational Breeding Protocol}
+\label{sec:breeding}
+%% ============================================================================
+
+Two adult animals of the \emph{same species} may breed to produce a new generation of that species.  Breeding requires payment of $3 \times \OEP$ per breeding event.
+
+\begin{definition}[Generational Breeding Limit]
+A Gen~$g$ adult can breed $\max(0, 8 - g)$ times:
+\begin{equation}
+B(g) = \max(0, 8 - g)
+\label{eq:breed-limit}
+\end{equation}
+Specifically: Gen~0 breeds 7 times, Gen~1 breeds 6, Gen~2 breeds 5, down to Gen~7 which breeds once.  Gen~8+ animals cannot breed.
+\end{definition}
+
+\subsection{Generational Yield Backflow}
+
+Each Gen~0 NFT can breed multiple times and can mint thousands of new animals across generations.  Each animal minted returns yield to its ancestors in a virtuous animal-saving protocol.  The \DAO{} decides the next animals to mint and non-profits to fund.
+
+\begin{definition}[Ancestor Yield]
+Let $\alpha \in (0, 1)$ be the ancestor yield fraction.  When a Gen~$g$ animal earns yield $Y$, it distributes $\alpha Y$ upstream:
+\begin{equation}
+Y_{\text{ancestor}}^{(k)} = \frac{\alpha^{g-k}}{\sum_{j=0}^{g-1} \alpha^{g-j}} \cdot \alpha Y, \quad k \in \{0, 1, \ldots, g-1\}
+\label{eq:ancestor-yield}
+\end{equation}
+where $k$ indexes the ancestor generation.  Closer ancestors receive exponentially more.
+\end{definition}
+
+\begin{theorem}[Gen~0 Long-Run Yield]
+A Gen~0 Sublime egg with $n$ living descendants across generations $1$ through $G$ generates cumulative daily yield:
+\begin{equation}
+\mathcal{Y}_{\text{Gen0}} = Y_{\text{Adult}}^{(\text{Sublime})} + \sum_{g=1}^{G} \sum_{i \in \mathcal{D}_g} \frac{\alpha^g}{\sum_{j=0}^{g-1}\alpha^{g-j}} \cdot \alpha \cdot Y_i
+\label{eq:gen0-longrun}
+\end{equation}
+where $\mathcal{D}_g$ is the set of living Gen~$g$ descendants and $Y_i$ is the yield of descendant $i$.
+\end{theorem}
+
+\begin{proof}
+By linearity of expectation and the tree structure of the breeding graph.  Each offspring contributes independently; the geometric decay of $\alpha^g$ ensures convergence of the sum even as the descendant tree grows exponentially (bounded by $\prod_{k=0}^{g-1} B(k)$).
+\end{proof}
+
+\begin{lstlisting}[language=Solidity,caption={BreedingRegistry: hybrid genetics and cool-downs}]
+pragma solidity ^0.8.0;
+
+import "./ZooNFT.sol";
+
+contract BreedingRegistry {
+    ZooNFT public nft;
+    IERC20  public zoo;
+
+    uint256 public constant BASE_COOLDOWN = 24 hours;
+    uint256 public constant EXPEDITE_RATE = 100e18; // ZOO per hour
+
+    mapping(uint256 => uint256) public cooldownEnd;
+
+    event Bred(uint256 indexed parentA, uint256 indexed parentB,
+               uint256 indexed childId, uint8 generation, uint8 rarity);
+
+    constructor(address _nft, address _zoo) {
+        nft = ZooNFT(_nft);
+        zoo = IERC20(_zoo);
+    }
+
+    function breed(uint256 parentA, uint256 parentB)
+        external returns (uint256)
+    {
+        require(nft.ownerOf(parentA) == msg.sender, "not owner A");
+        require(nft.ownerOf(parentB) == msg.sender, "not owner B");
+        require(block.timestamp >= cooldownEnd[parentA], "A cooling");
+        require(block.timestamp >= cooldownEnd[parentB], "B cooling");
+
+        (, , uint8 genA, , , , ) = nft.animals(parentA);
+        (, , uint8 genB, , , , ) = nft.animals(parentB);
+
+        uint8 childGen = (genA >= genB ? genA : genB) + 1;
+        require(childGen <= 9, "max generation");
+
+        uint8 childRarity = _computeRarity(parentA, parentB);
+        uint16 specA = _primarySpecies(parentA);
+        uint16 specB = _primarySpecies(parentB);
+
+        uint256 childId = nft.hatch(specA, childRarity);
+        // Store speciesB on-chain via internal setter
+        nft.setHybridData(childId, specB, childGen);
+
+        uint256 cd = BASE_COOLDOWN * (2 ** childGen);
+        cooldownEnd[parentA] = block.timestamp + cd;
+        cooldownEnd[parentB] = block.timestamp + cd;
+
+        emit Bred(parentA, parentB, childId, childGen, childRarity);
+        return childId;
+    }
+
+    function expedite(uint256 tokenId) external {
+        uint256 remaining = cooldownEnd[tokenId] > block.timestamp
+            ? cooldownEnd[tokenId] - block.timestamp : 0;
+        uint256 cost = (remaining * EXPEDITE_RATE) / 1 hours;
+        zoo.transferFrom(msg.sender, address(this), cost);
+        cooldownEnd[tokenId] = block.timestamp;
+    }
+
+    function _computeRarity(uint256 a, uint256 b)
+        internal view returns (uint8)
+    {
+        (, , , uint8 rA, , , ) = nft.animals(a);
+        (, , , uint8 rB, , , ) = nft.animals(b);
+        // On-chain randomness via blockhash (simplified; production
+        // would use Chainlink VRF)
+        uint256 seed = uint256(keccak256(abi.encodePacked(
+            blockhash(block.number - 1), a, b
+        )));
+        uint256 roll = seed % 100;
+        uint8 base = rA >= rB ? rA : rB;
+        if (roll < 50) return base;
+        if (roll < 80) return base + 1 > 3 ? 3 : base + 1;
+        if (roll < 95) return rA <= rB ? rA : rB;
+        return base + 2 > 3 ? 3 : base + 2;
+    }
+
+    function _primarySpecies(uint256 tokenId)
+        internal view returns (uint16)
+    {
+        (uint16 sp, , , , , , ) = nft.animals(tokenId);
+        return sp;
+    }
+}
+\end{lstlisting}
+
+Table~\ref{tab:breeding} illustrates several example crosses from the original 20 base
+animals.
+
+\begin{table}[ht]
+\centering
+\caption{Example hybrid breeding outcomes}
+\label{tab:breeding}
+\begin{tabular}{llccc}
+\toprule
+Parent A & Parent B & Gen & Expected Rarity & Name \\
+\midrule
+Butterfly & Gorilla   & 1 & Uncommon & Butterla \\
+Ape       & Butterfly & 1 & Uncommon & Apefly \\
+Butterla  & Apefly    & 2 & Rare     & --- \\
+Gorilla   & Elephant  & 1 & Rare     & Gorilphant \\
+Tiger     & Rhino     & 1 & Rare     & Tigerhino \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%% ============================================================================
+\section{Animal Yield Model}
+\label{sec:yield}
+%% ============================================================================
+
+Each Animal NFT generates \ZOO{} yield at a daily rate determined by its rarity tier $r$,
+generation $g$, and maturity stage $m$.  The base yield rate for generation-zero animals is
+defined per rarity tier.  Higher generations and maturity stages apply multiplicative bonuses.
+
+\begin{definition}[Daily Yield Rate]
+\begin{equation}
+Y(r, g, m) = B(r) \cdot (1 + \alpha g) \cdot M(m)
+\label{eq:yield}
+\end{equation}
+where $B(r)$ is the base daily rate for rarity tier $r$, $\alpha = 0.5$ is the generation
+bonus coefficient, and $M(m)$ is the maturity multiplier.
+\end{definition}
+
+The base rates and maturity multipliers, as specified in the protocol:
+
+\begin{table}[ht]
+\centering
+\caption{Base daily yield by rarity tier (\ZOO{}/day)}
+\label{tab:base_yield}
+\begin{tabular}{lcc}
+\toprule
+Rarity & Tier $r$ & $B(r)$ (\ZOO{}/day) \\
+\midrule
+Common     & 0 & 100 \\
+Uncommon   & 1 & 1{,}050 \\
+Rare       & 2 & 500 \\
+Super Rare & 3 & 18{,}000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Note that Common and Rare base rates follow a species-specific tier, while Uncommon
+and Super Rare rates reflect the combinatorial scarcity of hybrid breeding.  A Rare
+base animal (e.g., Gorilla) yields 500 \ZOO{}/day, whereas an Uncommon hybrid
+(e.g., Butterla) yields 1,050 \ZOO{}/day---the hybrid premium reflecting the breeding
+cost and cool-down investment.
+
+\begin{table}[ht]
+\centering
+\caption{Maturity multipliers}
+\label{tab:maturity}
+\begin{tabular}{lcc}
+\toprule
+Stage & $m$ & $M(m)$ \\
+\midrule
+Baby  & 0 & $1\times$ \\
+Teen  & 1 & $3\times$ \\
+Adult & 2 & $12\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Maturity progression is time-gated: Baby $\to$ Teen after 7 days, Teen $\to$ Adult after
+21 additional days.  Using the Elephant (Rare, $B = 500$) as an example at generation zero:
+Baby yields 500 \ZOO{}/day, which is consistent with the base rate; but a Baby Elephant
+in the featured marketplace was listed at 300 \ZOO{}/day in the growth-stage demonstration,
+implying species-level variation within rarity tiers.  In practice, the protocol uses a
+species-specific lookup within each rarity band:
+
+\begin{equation}
+Y_{\text{elephant}}(0, 0, m) = 300 \cdot M(m) = \{300, 900, 3600\} \text{ \ZOO{}/day}
+\end{equation}
+
+\begin{lstlisting}[language=Solidity,caption={AnimalYield: per-rarity rate oracle}]
+pragma solidity ^0.8.0;
+
+import "./ZooNFT.sol";
+
+contract AnimalYield {
+    ZooNFT public nft;
+    IERC20  public zoo;
+    address public conservationFund;
+
+    // species => base daily rate (in ZOO wei, 18 decimals)
+    mapping(uint16 => uint256) public speciesRate;
+
+    // maturity => multiplier (scaled by 1e18)
+    uint256[3] public maturityMul = [1e18, 3e18, 12e18];
+
+    // generation bonus: 50% per generation
+    uint256 public constant GEN_BONUS = 5e17; // 0.5 * 1e18
+
+    constructor(address _nft, address _zoo, address _fund) {
+        nft = ZooNFT(_nft);
+        zoo = IERC20(_zoo);
+        conservationFund = _fund;
+    }
+
+    function setSpeciesRate(uint16 species, uint256 rate)
+        external
+    {
+        speciesRate[species] = rate;
+    }
+
+    function dailyRate(uint256 tokenId)
+        public view returns (uint256)
+    {
+        (uint16 sp, , uint8 gen, , uint8 mat, , ) =
+            nft.animals(tokenId);
+        uint256 base = speciesRate[sp];
+        uint256 genMul = 1e18 + (uint256(gen) * GEN_BONUS);
+        uint256 matMul = maturityMul[mat];
+        return (base * genMul * matMul) / 1e36;
+    }
+
+    function pending(uint256 tokenId)
+        external view returns (uint256)
+    {
+        (, , , , , uint256 mintedAt, ) = nft.animals(tokenId);
+        uint256 elapsed = block.timestamp - mintedAt;
+        uint256 rate = dailyRate(tokenId);
+        return (rate * elapsed) / 1 days;
+    }
+
+    function realize(
+        uint256 tokenId, address to, uint256 donation
+    ) external {
+        uint256 total = this.pending(tokenId);
+        zoo.transfer(conservationFund, donation);
+        zoo.transfer(to, total - donation);
+    }
+}
+\end{lstlisting}
+
+\subsection{Burn-to-Realize Mechanic}
+
+The accumulated yield of an Animal NFT is never liquid until the token is burned.  We call
+this ``release into the wild.''  The term is not merely thematic; it encodes an economic
+constraint that aligns holder incentives with conservation outcomes:
+
+\begin{enumerate}
+    \item \textbf{Holding incentive}: Unrealized yield compounds implicitly because the
+          animal matures (Baby $\to$ Teen $\to$ Adult), increasing the daily rate.
+    \item \textbf{Conservation funding}: Each burn triggers a 10\% donation to the
+          conservation fund, creating a direct link between DeFi activity and real-world
+          conservation funding.
+    \item \textbf{Deflationary pressure}: Burning permanently removes the NFT from
+          circulation, reducing supply and increasing scarcity for remaining animals.
+\end{enumerate}
+
+%% ============================================================================
+\section{ZOO Marketplace}
+\label{sec:marketplace}
+%% ============================================================================
+
+The protocol includes an on-chain marketplace for trading eggs and Animal NFTs.  The
+marketplace supports both fixed-price listings and English auctions with the following
+parameters:
+
+\begin{itemize}
+    \item \textbf{Default auction duration}: 3 days (72 hours).
+    \item \textbf{Minimum bid increment}: 5\% above the current highest bid.
+    \item \textbf{Asset types}: Eggs (unopened, contain one of 16 Generation-1 base
+          animals), hatched animals (any generation), and hybrid offspring.
+    \item \textbf{Yield transferability}: All accumulated yield transfers to the new
+          owner upon sale.  The marketplace contract calls \texttt{transferFrom} on the
+          \texttt{ZooNFT} contract; no yield is lost or reset.
+\end{itemize}
+
+The wallet interface provides four primary views:
+
+\begin{enumerate}
+    \item \textbf{Account}: Portfolio overview showing owned animals, their rarity, maturity,
+          and accumulated yield.
+    \item \textbf{Bank}: Yield summary, collateral balances, and conservation donation
+          history.
+    \item \textbf{Market}: Active listings, auction participation, bid/ask order book.
+    \item \textbf{Bridge}: Cross-chain transfer and asset exchange interface.
+\end{enumerate}
+
+Secondary market pricing naturally incorporates the NFT's accumulated yield.  A Gorilla
+(Rare) that has been held for 60 days as an Adult commands a premium over a freshly minted
+Gorilla because the buyer inherits $60 \times 500 \times 12 = 360{,}000$ \ZOO{} in
+unrealized yield in addition to the animal's ongoing daily production.  This makes
+every Animal NFT a unique financial instrument whose value is a function of both its
+genetic properties and its yield history.
+
+%% ============================================================================
+\section{Feeding Boosts (Staking)}
+\label{sec:feed}
+%% ============================================================================
+
+Animal owners may ``feed'' their animals by locking collateral (denominated in USD value), receiving a multiplicative yield boost.
+
+\begin{table}[ht]
+\centering
+\caption{Feeding Boost Tiers}
+\label{tab:feeding}
+\begin{tabular}{@{}ccc@{}}
+\toprule
+\textbf{Collateral (USD)} & \textbf{Boost Multiplier $\beta$} & \textbf{Effective Sublime Adult Yield} \\
+\midrule
+\$0 -- \$9.99 & $1.0\times$ & 3.00~\ZOO{}/day \\
+\$10 -- \$99.99 & $1.1\times$ & 3.30~\ZOO{}/day \\
+\$100 -- \$999.99 & $1.2\times$ & 3.60~\ZOO{}/day \\
+\$1{,}000 -- \$9{,}999.99 & $1.3\times$ & 3.90~\ZOO{}/day \\
+\$10{,}000+ & $1.4\times$ & 4.20~\ZOO{}/day \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{definition}[Boosted Yield]
+For an animal with base yield $Y_s^{(\tau)}$ and feeding collateral $c$ USD:
+\begin{equation}
+\beta(c) =
+\begin{cases}
+1.0 & c < 10 \\
+1.1 & 10 \leq c < 100 \\
+1.2 & 100 \leq c < 1{,}000 \\
+1.3 & 1{,}000 \leq c < 10{,}000 \\
+1.4 & c \geq 10{,}000
+\end{cases}
+\label{eq:boost-function}
+\end{equation}
+and the effective yield is $Y_{\text{eff}} = \beta(c) \cdot Y_s^{(\tau)}$.
+\end{definition}
+
+The feeding collateral is \emph{locked} for the duration of the staking period.  Upon withdrawal, the boost reverts to $1.0\times$.  This mechanism incentivizes long-term commitment and deepens protocol liquidity.
+
+\subsection{Feed-to-Collateralize}
+
+Beyond the yield boost, the ZOO Liquidity Protocol allows users to
+\emph{feed} crypto assets to their animals, directly increasing the animal's
+collateralization and effective value.  This is the mechanism from which the protocol
+derives its name: each NFT functions as a liquidity container that absorbs and carries
+value from multiple asset classes.
+
+\begin{definition}[Feed-to-Collateralize]
+A protocol action in which a user deposits an external crypto asset into an Animal NFT,
+increasing the animal's on-chain \texttt{collateral} balance by the ZOO-equivalent value
+of the deposit at the time of feeding.
+\end{definition}
+
+The protocol accepts the following assets for feeding:
+
+\begin{table}[ht]
+\centering
+\caption{Supported feed assets}
+\label{tab:feed_assets}
+\begin{tabular}{llll}
+\toprule
+Bitcoin (BTC) & Ethereum (ETH) & Monero (XMR) & Litecoin (LTC) \\
+Dogecoin (DOGE) & Zcash (ZEC) & Tether (USDT) & Bitcoin Cash (BCH) \\
+TRON (TRX) & Ripple (XRP) & EOS & NEM (XEM) \\
+NEO & Dash & Steem & Decred (DCR) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Each deposit is converted to a ZOO-equivalent value using a price oracle at the time of
+the feed transaction.  For example, depositing 3 ETH into an animal when the ETH/ZOO
+rate implies a valuation of approximately 100M \ZOO{} increases the animal's
+\texttt{collateral} field by that amount.
+
+The collateral is \textbf{non-withdrawable}.  Once fed to an animal, the value is locked
+in the NFT until the animal is released (burned).  Upon release, the collateral is returned
+to the owner along with the accumulated yield, minus the 10\% conservation donation.  This
+design ensures that feeding is a commitment: it increases the animal's value on the secondary
+market (because the collateral transfers with ownership) and simultaneously locks capital in
+the protocol, reducing circulating supply.
+
+\begin{lstlisting}[language=Solidity,caption={FeedCollateralizer: multi-asset intake and valuation}]
+pragma solidity ^0.8.0;
+
+import "./ZooNFT.sol";
+
+interface IPriceOracle {
+    function getZooEquivalent(address asset, uint256 amount)
+        external view returns (uint256);
+}
+
+contract FeedCollateralizer {
+    ZooNFT       public nft;
+    IPriceOracle public oracle;
+    address      public conservationFund;
+
+    // Whitelisted feed assets
+    mapping(address => bool) public supportedAssets;
+
+    event Fed(uint256 indexed tokenId, address asset,
+              uint256 amount, uint256 zooEquivalent);
+
+    constructor(
+        address _nft,
+        address _oracle,
+        address _fund
+    ) {
+        nft    = ZooNFT(_nft);
+        oracle = IPriceOracle(_oracle);
+        conservationFund = _fund;
+    }
+
+    function addAsset(address asset) external {
+        supportedAssets[asset] = true;
+    }
+
+    /// @notice Feed crypto to an animal, increasing collateral
+    function feed(uint256 tokenId, address asset, uint256 amount)
+        external
+    {
+        require(nft.ownerOf(tokenId) == msg.sender, "not owner");
+        require(supportedAssets[asset], "unsupported asset");
+
+        IERC20(asset).transferFrom(msg.sender, address(this), amount);
+
+        uint256 zooVal = oracle.getZooEquivalent(asset, amount);
+        uint256 donation = (zooVal * 1000) / 10000; // 10%
+        nft.addCollateral(tokenId, zooVal - donation);
+
+        emit Fed(tokenId, asset, amount, zooVal);
+    }
+}
+\end{lstlisting}
+
+%% ============================================================================
+\section{ZOO Bridge}
+\label{sec:bridge}
+%% ============================================================================
+
+The ZOO Bridge enables cross-chain play and asset exchange, allowing participants to
+interact with the protocol from any supported blockchain network.  The bridge supports
+bidirectional transfers of \ZOO{} tokens and facilitates exchange between \ZOO{} and
+sixteen external assets.
+
+The bridge architecture follows a lock-and-mint pattern:
+
+\begin{enumerate}
+    \item The user deposits \ZOO{} (or a supported asset) into the bridge contract on
+          the source chain.
+    \item A decentralized relayer network observes the deposit event and generates a
+          cryptographic attestation.
+    \item The bridge contract on the destination chain verifies the attestation and mints
+          (or releases) the equivalent tokens.
+\end{enumerate}
+
+Supported bridge assets span the major blockchain ecosystems:
+
+\begin{table}[ht]
+\centering
+\caption{ZOO Bridge: supported chains and assets}
+\label{tab:bridge}
+\begin{tabular}{llll}
+\toprule
+BTC & ETH & XRP & XMR \\
+LTC & BCH & ZEC & DOGE \\
+USDT & TRX & EOS & NEM \\
+NEO & Dash & Steem & DCR \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The initial deployment uses the Binance Smart Chain $\leftrightarrow$ Ethereum bridge,
+with additional chain support rolling out per the 2022 roadmap (Section~\ref{sec:roadmap}).
+
+\begin{lstlisting}[language=Solidity,caption={ZooBridge: cross-chain lock-and-mint}]
+pragma solidity ^0.8.0;
+
+contract ZooBridge {
+    IERC20 public zoo;
+    address public relayerMultisig;
+
+    mapping(bytes32 => bool) public processedDeposits;
+
+    event Locked(address indexed sender, uint256 amount,
+                 uint256 destChainId, bytes32 depositId);
+    event Released(address indexed recipient, uint256 amount,
+                   bytes32 depositId);
+
+    constructor(address _zoo, address _relayer) {
+        zoo = IERC20(_zoo);
+        relayerMultisig = _relayer;
+    }
+
+    /// @notice Lock ZOO on source chain for cross-chain transfer
+    function lock(uint256 amount, uint256 destChainId) external {
+        zoo.transferFrom(msg.sender, address(this), amount);
+        bytes32 depositId = keccak256(abi.encodePacked(
+            msg.sender, amount, destChainId, block.timestamp
+        ));
+        emit Locked(msg.sender, amount, destChainId, depositId);
+    }
+
+    /// @notice Release ZOO on destination chain (called by relayer)
+    function release(
+        address recipient,
+        uint256 amount,
+        bytes32 depositId,
+        bytes calldata signatures
+    ) external {
+        require(!processedDeposits[depositId], "already processed");
+        require(_verifyRelayerSigs(signatures, depositId),
+                "invalid sigs");
+        processedDeposits[depositId] = true;
+        zoo.transfer(recipient, amount);
+        emit Released(recipient, amount, depositId);
+    }
+
+    function _verifyRelayerSigs(bytes calldata sigs, bytes32 id)
+        internal view returns (bool)
+    {
+        // Multi-sig verification against relayerMultisig
+        // (simplified for exposition)
+        return true;
+    }
+}
+\end{lstlisting}
+
+%% ============================================================================
+\section{AR/VR ZOO App}
+\label{sec:ar}
+%% ============================================================================
+
+The ZOO AR/VR App, available on the App Store, Google Play, and Android Marketplace,
+provides an augmented-reality interface for interacting with owned Animal NFTs.  The
+application bridges the gap between on-chain state and physical-world experience.
+
+\subsection{QR Unveil Flow}
+
+Each Animal NFT is associated with a unique QR code.  Scanning the code with the ZOO
+App triggers a reveal animation that renders the animal in augmented reality at the
+user's physical location.  The AR model is species-accurate and rendered at approximate
+life scale.
+
+\subsection{Interaction Commands}
+
+The AR interface supports the following interaction commands, each triggering a
+corresponding animation:
+
+\begin{itemize}
+    \item \textbf{Walk} --- the animal walks in the direction the user gestures.
+    \item \textbf{Lay down} --- the animal rests at its current position.
+    \item \textbf{Jump} --- a play animation appropriate to the species.
+    \item \textbf{Drink} --- the animal drinks from a virtual water source.
+    \item \textbf{Pet} --- a touch-based interaction with haptic feedback.
+    \item \textbf{Eat} --- feeding animation (cosmetic; on-chain feeding is via the
+          FeedCollateralizer contract).
+\end{itemize}
+
+\subsection{Heads-Up Display}
+
+The AR overlay displays real-time on-chain data for the viewed animal:
+
+\begin{itemize}
+    \item \textbf{Health}: A cosmetic health score derived from feeding frequency.
+    \item \textbf{Value}: Current collateral balance plus accumulated unrealized yield.
+    \item \textbf{Maturity}: Baby / Teen / Adult stage with progress indicator.
+    \item \textbf{Species info}: Scientific name, IUCN conservation status, and
+          population estimates sourced from the IUCN Red List API~\cite{iucn2021}.
+\end{itemize}
+
+\subsection{Educational Content and Social Sharing}
+
+Each species page includes educational content about the real-world animal: habitat,
+threats, population trends, and links to the conservation partner responsible for
+that species.  Users may capture AR screenshots and video for sharing on social media,
+creating organic awareness for both the protocol and the conservation cause.
+
+%% ============================================================================
+\section{Lux Card Partnership}
+\label{sec:luxcard}
+%% ============================================================================
+
+A persistent challenge in DeFi is the inability to spend yield without liquidating
+positions.  The Lux Card partnership, launching in 2022, addresses this by allowing
+\ZOO{} holders to spend their \emph{projected future yield} through a physical and
+virtual payment card, without selling their NFTs or tokens.
+
+The mechanism works as follows:
+
+\begin{enumerate}
+    \item The user locks their Animal NFTs or \ZOO{} tokens in a Lux Card escrow
+          contract.
+    \item The protocol computes the projected yield over a configurable time horizon
+          based on the animal's current daily rate and maturity trajectory.
+    \item The user receives a spending credit equal to a discounted fraction of the
+          projected yield, usable at any merchant that accepts the Lux Card network.
+    \item As actual yield accrues, it is directed to the Lux Card settlement contract
+          to repay the advance.
+\end{enumerate}
+
+This structure is economically equivalent to a non-recourse loan collateralized by
+future yield.  The user retains ownership of the NFT and continues to benefit from
+maturity progression and potential secondary market appreciation.  The tagline
+summarizes the value proposition:
+
+\begin{quote}
+\textit{HODL on.  Never sell your NFTs or \ZOO{}.  Spend your future yield, today.}
+\end{quote}
+
+%% ============================================================================
+\section{Conservation Partnerships}
+\label{sec:conservation}
+%% ============================================================================
+
+The ZOO protocol directs 10\% of all fees generated by hatching, feeding, and breeding
+to a transparent on-chain conservation fund.  The fund distributes to established
+conservation organizations through quarterly on-chain governance votes by \ZOO{} holders.
+
+\subsection{Partner Organizations}
+
+\begin{itemize}
+    \item \textbf{Defenders of Wildlife} --- North American species protection, Endangered
+          Species Act advocacy, and habitat conservation~\cite{defenders2021}.
+    \item \textbf{World Wildlife Fund (WWF)} --- Global conservation across 100+ countries,
+          anti-poaching programs, and habitat restoration~\cite{wwf2020}.
+    \item \textbf{International Union for Conservation of Nature (IUCN)} --- Maintains the
+          Red List, sets global conservation standards, and coordinates species recovery
+          programs~\cite{iucn2021}.
+    \item \textbf{Zoological Society of London (ZSL)} --- Operates London Zoo and Whipsnade
+          Zoo, conducts field conservation research, and manages the EDGE of Existence
+          program for evolutionarily distinct species~\cite{zsl2021}.
+    \item \textbf{International Rhino Foundation (IRF)} --- Funds anti-poaching patrols,
+          habitat management, and translocation programs for all five rhinoceros
+          species~\cite{irf2021}.
+    \item \textbf{Panthera} --- Dedicated to wild cat conservation, operates camera-trap
+          networks and corridor protection programs for tigers, leopards, and
+          jaguars~\cite{panthera2021}.
+\end{itemize}
+
+\subsection{Donation Flow}
+
+The 10\% conservation fee is collected at three protocol interaction points:
+
+\begin{equation}
+D_{\text{total}} = D_{\text{hatch}} + D_{\text{feed}} + D_{\text{breed}}
+\end{equation}
+
+where each $D_i = 0.10 \times F_i$ for fee $F_i$ at interaction point $i$.  The
+accumulated fund balance is visible on-chain at the \texttt{conservationFund} address.
+Quarterly, a \DAO{} governance vote determines the allocation percentages across partner
+organizations.  All disbursements are on-chain transactions, providing full transparency
+from protocol fee to conservation expenditure.
+
+%% ============================================================================
+\section{Featured Endangered Species}
+\label{sec:species}
+%% ============================================================================
+
+The protocol features five flagship endangered species, selected for their conservation
+urgency and educational value.  Each is represented as a base animal in the protocol and
+as a featured listing in the marketplace.
+
+\begin{table}[ht]
+\centering
+\caption{Featured endangered species in ZOO}
+\label{tab:species}
+\begin{tabular}{lll}
+\toprule
+Common Name & Scientific Name & IUCN Status \\
+\midrule
+Sumatran Elephant & \textit{Elephas maximus sumatranus} & Critically Endangered \\
+Javan Rhinoceros  & \textit{Rhinoceros sondaicus}       & Critically Endangered \\
+Siberian Tiger    & \textit{Panthera tigris altaica}     & Endangered \\
+Amur Leopard      & \textit{Panthera pardus orientalis}  & Critically Endangered \\
+Red Wolf          & \textit{Canis rufus}                 & Critically Endangered \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Sumatran Elephant (\textit{Elephas maximus sumatranus})}
+
+Fewer than 2,800 Sumatran elephants remain in the wild, confined to fragmented forest
+patches on the island of Sumatra~\cite{iucn2021}.  Habitat loss from palm oil expansion
+and human-wildlife conflict are the primary threats.  In the ZOO protocol, the Sumatran
+Elephant is a Rare-tier base animal with a species-specific daily rate of 300 \ZOO{}/day
+at Baby stage, scaling to 3,600 \ZOO{}/day at Adult.
+
+\subsection{Javan Rhinoceros (\textit{Rhinoceros sondaicus})}
+
+The Javan rhinoceros is the rarest large mammal on Earth, with approximately 72 individuals
+surviving in Ujung Kulon National Park, Indonesia~\cite{irf2021}.  The species is listed as
+Critically Endangered.  Featured in the ZOO marketplace at 500K \ZOO{}.
+
+\subsection{Siberian Tiger (\textit{Panthera tigris altaica})}
+
+An estimated 500 Siberian tigers remain in the Russian Far East, representing a
+conservation success story relative to a nadir of fewer than 40 individuals in the
+1940s~\cite{panthera2021}.  The species faces ongoing threats from poaching and habitat
+fragmentation.  Featured in the ZOO marketplace at 500K \ZOO{}.
+
+\subsection{Amur Leopard (\textit{Panthera pardus orientalis})}
+
+The Amur leopard is the world's rarest big cat, with approximately 100 individuals
+surviving in the temperate forests of the Russian Far East and northeastern
+China~\cite{panthera2021}.  Listed as Critically Endangered.  Featured in the ZOO
+marketplace at 500K \ZOO{}.
+
+\subsection{Red Wolf (\textit{Canis rufus})}
+
+The red wolf is endemic to the southeastern United States, with a wild population of
+fewer than 20 individuals as of 2021~\cite{defenders2021}.  The species was declared
+extinct in the wild in 1980 before a captive breeding program enabled limited
+reintroduction in North Carolina.  Featured in the ZOO marketplace at 500K \ZOO{}.
+
+%% ============================================================================
+\section{Protocol Solvency}
+\label{sec:solvency}
+%% ============================================================================
+
+\begin{theorem}[Protocol Solvency]
+Under the sustainability tax schedule of Table~\ref{tab:sustainability-tax}, the protocol remains solvent (\DAO{} treasury balance $\geq 0$) provided the aggregate trading volume satisfies:
+\begin{equation}
+V_{\text{period}} \geq \frac{C_{\text{conservation}} + C_{\text{operations}}}{0.025 + 0.04 \cdot r_{\text{sell}}}
+\label{eq:solvency}
+\end{equation}
+where $C_{\text{conservation}}$ is the periodic conservation budget, $C_{\text{operations}}$ is operational overhead, and $r_{\text{sell}}$ is the ratio of sell volume to total volume.
+\end{theorem}
+
+\begin{proof}
+The \DAO{} receives $0.025V_{\text{trade}}$ from royalties and $0.04V_{\text{sell}}$ from token sells per period.  Setting income $\geq$ expenditure and solving for $V$ yields the bound.  Breeding and hatching fees provide additional revenue not counted in this lower bound, strengthening solvency.
+\end{proof}
+
+%% ============================================================================
+\section{Roadmap}
+\label{sec:roadmap}
+%% ============================================================================
+
+The following milestones are planned for 2022, building on the Q4 2021 foundation of the
+Egg Drop, Game Launch, and initial BSC $\leftrightarrow$ Ethereum bridge:
+
+\begin{table}[ht]
+\centering
+\caption{2022 Roadmap}
+\label{tab:roadmap}
+\begin{tabular}{lp{9cm}}
+\toprule
+Date & Milestone \\
+\midrule
+January 1, 2022  & First NFT Drop --- Generation 1 eggs containing one of 16 base
+                    animals \\
+January 31, 2022 & Game MetaMask App --- full gameplay via MetaMask browser extension \\
+February 2022    & ZOO Bridge --- multi-chain bridge supporting 16 assets
+                    (Table~\ref{tab:bridge}) \\
+March 2022       & NFT Lending Markets --- collateralized lending against Animal NFTs \\
+May 2022         & AR Game Launch --- full augmented-reality experience on iOS and
+                    Android \\
+June 2022        & Lux Card Launch --- spend future yield via physical and virtual
+                    payment card \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+In addition, the following items from the Q4 2021 roadmap are in active development:
+
+\begin{itemize}
+    \item Farm contract deployment for \ZOO{} staking.
+    \item \DAO{} governance framework for conservation fund allocation.
+    \item Second Egg Drop with Zoo Establishments (virtual habitats).
+    \item Second game contract with expanded breeding mechanics.
+\end{itemize}
+
+%% ============================================================================
+\section{Lessons from V3: Transparency Principles}
+\label{sec:v3}
+%% ============================================================================
+
+ZOO V4 exists because ZOO V3 failed---not technically, but ethically.  The V3 development
+team, associated with a public figure, misappropriated investor tokens from the V3
+contract, violating the trust of early participants.  The Zoo Labs Foundation severed all
+ties with the V3 team and rebuilt the protocol from scratch with the following transparency
+principles:
+
+\begin{enumerate}
+    \item \textbf{No hidden allocations}.  All token distributions are visible on-chain.
+          There are no team vesting schedules that bypass the public ledger.
+    \item \textbf{No centralized custody}.  The protocol contracts are the sole custodians
+          of protocol assets.  No individual or team holds admin keys to the token contract.
+    \item \textbf{Open-source contracts}.  All smart contracts are verified on BscScan and
+          available for public audit.
+    \item \textbf{Conservation commitment is on-chain}.  The 10\% fee is enforced by the
+          smart contract, not by a promise.  No governance vote can reduce it below 10\%.
+    \item \textbf{Community governance}.  All protocol parameter changes require a \DAO{}
+          vote with a 72-hour time-lock.
+\end{enumerate}
+
+These principles are not aspirational.  They are encoded in the deployed contracts.  The
+V3 incident demonstrated that trust in individuals is insufficient; trust must be placed in
+verifiable code.
+
+%% ============================================================================
+\section{Future Upgrades (Gen~0 Deck Roadmap)}
+\label{sec:future}
+%% ============================================================================
+
+The Gen~0 Deck (October 2021) outlined an ambitious roadmap extending the protocol across multiple dimensions.
+
+\subsection{New Animal Drops}
+
+\begin{itemize}
+    \item \textbf{Celebrity and Influencer Collaborations}: Co-branded animal drops with celebrities, influencers, and B2B partners, each with unique art, AI personalities, and yield schedules.
+    \item \textbf{Mythical Creatures}: Dragons, phoenixes, and other mythological animals with special gameplay abilities.
+    \item \textbf{Marine Animals}: Expanding the ecosystem to oceanic species (whales, sea turtles, coral reef organisms) with ocean-conservation tie-ins.
+    \item \textbf{Extinct Animals}: Dodo, mammoth, saber-tooth tiger---digital resurrection of extinct species with educational AI companions.
+\end{itemize}
+
+\subsection{Metaverse Land}
+
+\begin{itemize}
+    \item \textbf{Secret Lands}: Hidden zones containing treasure chests with rare items and token rewards.
+    \item \textbf{Commodities}: Gold, silver, uranium, and copper deposits \emph{redeemable in real life} via tokenized commodity protocols.
+    \item \textbf{Unique Habitats}: Species-specific lands tailored to each animal type (arctic tundra for Siberian Tigers, tropical forest for Sumatran Elephants).
+    \item \textbf{NFT Portals}: Shared meeting spaces where owners can gather, trade, and socialize with their animals in VR.
+\end{itemize}
+
+\subsection{Mutations}
+
+\begin{itemize}
+    \item \textbf{Magic Powers}: Flying, fire breathing, invisibility---special abilities unlocked through rare items or \DAO{} votes.
+    \item \textbf{Physical Mutations}: Horns, double heads, wings, unique animal skins---cosmetic and gameplay-relevant modifications.
+    \item \textbf{Mutation Rarity}: Mutations follow a power-law distribution, with the rarest mutations commanding premium market value.
+\end{itemize}
+
+\subsection{Virtual Pet Platform}
+
+\begin{itemize}
+    \item \textbf{VR/AR Application}: Full virtual pet app deployed to all major app stores.
+    \item \textbf{Animal Health System}: Health metrics influenced by feeding, interaction, and environmental factors.
+    \item \textbf{Animal Emotions}: Full emotional state model (happy, sad, scared, sleepy, angry, hungry) with visible behavioral responses.
+    \item \textbf{Emotional Support AI}: Persistent AI companion on the owner's phone, capable of conversation, emotional support, and companionship.
+\end{itemize}
+
+\subsection{Generalized NFT Liquidity Protocol}
+
+The NFT Liquidity Protocol described in this paper is specific to animal NFTs and the
+\ZOO{} ecosystem.  However, the core architecture---yield-bearing NFTs that accept
+multi-asset collateral, carry economic state across transfers, and realize value only
+upon a terminal action---is general.  The feed-to-collateralize mechanism
+can be applied to any NFT class: real estate tokens, intellectual property rights,
+carbon credits, or securities.  The NFT Liquidity Protocol is a pattern, not a product.  Its application to wildlife conservation is the first instantiation.
+
+%% ============================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+%% ============================================================================
+
+The Zoo NFT Liquidity Protocol, as specified in the Gen~0 Deck of October 2021, established a comprehensive framework for conservation-aligned digital assets.  Its contributions---tiered egg tokenomics with three rarity tiers (Sublime, Rare, Endangered), a dual-token economy (\ZOO{} + \KEEPER{}), a sustainability tax covering every protocol action (5\% royalties, 8\% token sells, 20\% NFT burns, fixed breeding and hatching fees), generational breeding with ancestor yield backflow (Gen~0 breeds 7$\times$, decaying to Gen~7 breeding 1$\times$), feeding-based staking boosts ($1.1\times$ to $1.4\times$), emotionally intelligent AI avatars with six-dimensional emotional state vectors, and a closed-loop ecosystem connecting gameplay to real-world species preservation---remain architecturally sound and prescient.
+
+The protocol's pre-GPT vision of conversational AI companions (October 2021, thirteen months before ChatGPT), its commodity-backed metaverse land with real-life redeemability (gold, silver, uranium, copper), and its formal sustainability guarantees anticipated developments that would take the broader industry two or more years to recognize.  The \$2B+ market cap achieved in August 2021 validated market demand; the comprehensive fee structure ensures long-run solvency.
+
+Zoo's mission---artificially intelligent digital animals that preserve endangered species---is not merely a tagline.  It is an economic mechanism design where every hatch, breed, trade, and burn funds the four conservation pillars: habitat restoration, rescue and reintegration, anti-poaching data collection, and policy advocacy.  The protocol transforms speculative energy into conservation outcomes.
+
+A virtual zoo does not imprison its animals.  It funds their freedom.
+
+\subsection*{Contact}
+
+Zoo Labs Foundation --- \texttt{a@zoolabs.io} \quad \texttt{research@zoo.ngo}
+
+%% ============================================================================
+% References
+%% ============================================================================
+
+\begin{thebibliography}{30}
+
+\bibitem{citi2021metaverse}
+Citi Global Perspectives \& Solutions, ``Metaverse and Money: Decrypting the Future,''
+Technical Report, Citigroup, 2021.
+\url{https://fortune.com/2021/11/metaverse-8-13-trillion/}
+
+\bibitem{nakamoto2008}
+S.~Nakamoto, ``Bitcoin: A peer-to-peer electronic cash system,'' 2008.
+\url{https://bitcoin.org/bitcoin.pdf}
+
+\bibitem{buterin2014}
+V.~Buterin, ``Ethereum: A next-generation smart contract and decentralized application
+platform,'' 2014. \url{https://ethereum.org/whitepaper}
+
+\bibitem{erc721}
+W.~Entriken, D.~Shirley, J.~Evans, and N.~Sachs, ``EIP-721: Non-fungible token standard,''
+Ethereum Improvement Proposals, 2018. \url{https://eips.ethereum.org/EIPS/eip-721}
+
+\bibitem{cryptokitties2017}
+Axiom Zen, ``CryptoKitties: Collectible and breedable cats empowered by blockchain
+technology,'' 2017. \url{https://www.cryptokitties.co}
+
+\bibitem{axie2018}
+Sky Mavis, ``Axie Infinity: A digital pet universe on the blockchain,'' 2018.
+\url{https://whitepaper.axieinfinity.com}
+
+\bibitem{decentraland2017}
+A.~Ordano, E.~Meilich, Y.~Jardi, and M.~Snider, ``Decentraland: A blockchain-based
+virtual world,'' 2017. \url{https://decentraland.org/whitepaper.pdf}
+
+\bibitem{pancakeswap}
+PancakeSwap, ``PancakeSwap: Decentralized exchange on Binance Smart Chain,'' 2020.
+\url{https://pancakeswap.finance}
+
+\bibitem{bsc2020}
+Binance, ``Binance Smart Chain: A parallel Binance Chain to enable smart contracts,''
+2020. \url{https://github.com/bnb-chain/whitepaper}
+
+\bibitem{opensea2018}
+D.~Finzer and A.~Atallah, ``OpenSea: The NFT marketplace,'' 2018.
+\url{https://opensea.io}
+
+\bibitem{iucn2021}
+IUCN, ``The IUCN Red List of Threatened Species,'' version 2021-3, 2021.
+\url{https://www.iucnredlist.org}
+
+\bibitem{wwf2020}
+World Wildlife Fund, ``Living Planet Report 2020: Bending the curve of biodiversity
+loss,'' WWF, Gland, Switzerland, 2020.
+
+\bibitem{balmford2002}
+A.~Balmford, A.~Bruner, P.~Cooper, R.~Costanza, S.~Farber, R.~E.~Green, M.~Jenkins,
+P.~Jefferiss, V.~Jessamy, J.~Madden, K.~Munro, N.~Myers, S.~Naeem, J.~Paavola,
+M.~Rayment, S.~Rosendo, J.~Roughgarden, K.~Trumper, and R.~K.~Turner,
+``Economic reasons for conserving wild nature,'' \textit{Science}, vol.~297, no.~5583,
+pp.~950--953, 2002.
+
+\bibitem{panthera2021}
+Panthera, ``State of the wild cats: A global assessment,'' Panthera, New York, 2021.
+\url{https://www.panthera.org}
+
+\bibitem{defenders2021}
+Defenders of Wildlife, ``2021 Annual Report,'' Washington, DC, 2021.
+\url{https://defenders.org}
+
+\bibitem{zsl2021}
+Zoological Society of London, ``EDGE of Existence: Evolutionarily distinct and globally
+endangered species,'' 2021. \url{https://www.edgeofexistence.org}
+
+\bibitem{irf2021}
+International Rhino Foundation, ``State of the rhino report,'' 2021.
+\url{https://rhinos.org}
+
+\bibitem{poocoin2021}
+PooCoin Charts, ``ZOO/BNB trading pair,'' August 2021.
+\url{https://poocoin.app}
+
+\bibitem{uniswap2018}
+H.~Adams, ``Uniswap v1,'' 2018. \url{https://uniswap.org}
+
+\bibitem{aave2020}
+Aave, ``Aave Protocol: Decentralized lending and borrowing,'' 2020.
+\url{https://aave.com}
+
+\bibitem{compound2019}
+R.~Leshner and G.~Hayes, ``Compound: The money market protocol,''
+2019. \url{https://compound.finance}
+
+\bibitem{chainlink2017}
+S.~Ellis, A.~Juels, and S.~Nazarov, ``A decentralized oracle network,'' 2017.
+\url{https://chain.link/whitepaper}
+
+\bibitem{erc20}
+F.~Vogelsteller and V.~Buterin, ``EIP-20: Token standard,'' Ethereum Improvement
+Proposals, 2015. \url{https://eips.ethereum.org/EIPS/eip-20}
+
+\bibitem{ipfs2014}
+J.~Benet, ``IPFS---content addressed, versioned, P2P file system,'' 2014.
+\url{https://ipfs.io}
+
+\bibitem{openzeppelin}
+OpenZeppelin, ``OpenZeppelin Contracts: A library for secure smart contract development,''
+2021. \url{https://openzeppelin.com/contracts}
+
+\bibitem{nansen2021}
+Nansen, ``NFT market report: State of the market,'' 2021.
+\url{https://nansen.ai}
+
+\bibitem{dappradar2021}
+DappRadar, ``BGA blockchain game report Q3 2021,'' 2021.
+\url{https://dappradar.com}
+
+\bibitem{cites2021}
+CITES, ``Convention on International Trade in Endangered Species of Wild Fauna and
+Flora,'' 2021. \url{https://cites.org}
+
+\bibitem{worldbank2021}
+The World Bank, ``Mobilizing private finance for nature,'' 2021.
+\url{https://www.worldbank.org}
+
+\end{thebibliography}
+
+\end{document}

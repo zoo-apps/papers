@@ -1,0 +1,71 @@
+\section{Federated Execution Graphs}
+
+\label{sec:execution}
+
+\subsection{Formal Definition}
+
+A Federated Execution Graph (FEG) decomposes an experiment into a directed acyclic graph of computational units:
+
+\begin{equation}
+    G = (V, E, \lambda, \rho, \sigma)
+\end{equation}
+
+\noindent where:
+\begin{itemize}[leftmargin=*]
+    \item $V = \{v_1, \ldots, v_n\}$ is the set of computational units (nodes).
+    \item $E \subseteq V \times V$ is the set of data dependencies (edges).
+    \item $\lambda: V \rightarrow \mathcal{P}$ maps each node to a program specification (container hash, entry point, resource requirements).
+    \item $\rho: V \rightarrow 2^{\mathcal{N}}$ maps each node to a set of eligible computation nodes.
+    \item $\sigma: E \rightarrow \mathcal{S}_{\text{schema}}$ maps each edge to a data schema specification.
+\end{itemize}
+
+Each computational unit $v_i$ produces a deterministic output given its inputs, enabling independent verification.
+We require:
+
+\begin{equation}
+    \forall v_i \in V: \lambda(v_i)(\text{inputs}(v_i)) = \text{output}(v_i)
+\end{equation}
+
+\noindent where determinism is enforced through fixed random seeds, sorted iterators, and deterministic floating-point compilation flags.
+
+\subsection{Provenance Tracking}
+
+Every edge in the execution graph carries a provenance record:
+
+\begin{equation}
+    \text{Prov}(e_{ij}) = (\text{hash}(\text{output}(v_i)), \text{hash}(\text{input}(v_j)), t, \text{pk}_{\text{node}}, \text{att})
+\end{equation}
+
+\noindent where $\text{att}$ is a hardware attestation proving the computation was executed on a node with declared capabilities.
+The complete provenance chain forms a Merkle DAG whose root hash is recorded on-chain, enabling efficient verification without storing bulk data on the ledger.
+
+\subsection{Scheduling and Execution}
+
+The FEG scheduler assigns computational units to nodes based on a multi-objective optimization:
+
+\begin{equation}
+    \min_{\pi: V \rightarrow \mathcal{N}} \left[\alpha_1 \cdot T_{\text{makespan}}(\pi) + \alpha_2 \cdot C_{\text{cost}}(\pi) - \alpha_3 \cdot R_{\text{redundancy}}(\pi)\right]
+\end{equation}
+
+\noindent subject to resource constraints, data locality preferences, and minimum redundancy requirements for critical computations.
+
+The redundancy term $R_{\text{redundancy}}$ incentivizes executing verification-critical units on multiple independent nodes:
+
+\begin{equation}
+    R_{\text{redundancy}}(\pi) = \sum_{v_i \in V_{\text{critical}}} \log\left(|\{n \in \mathcal{N} : \pi(v_i) = n\}|\right)
+\end{equation}
+
+\subsection{Cross-Site Data Federation}
+
+For experiments involving data from multiple sites (e.g., multi-site ecological surveys), ZooCoord supports federated data access through a secure multi-party computation framework:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Schema Agreement:} Participating sites agree on a common data schema through the commitment protocol.
+    \item \textbf{Local Preprocessing:} Each site executes standardization and quality control locally, producing content-addressed intermediate datasets.
+    \item \textbf{Secure Aggregation:} Cross-site computations use additive secret sharing for privacy-sensitive aggregations.
+    \item \textbf{Result Verification:} Aggregated results are verified by re-executing the aggregation on committed intermediate hashes.
+\end{enumerate}
+
+% ============================================================
+% 6. Reproducibility Verification Market
+% ============================================================

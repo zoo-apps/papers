@@ -1,0 +1,20 @@
+\section{Related Work}
+
+\label{sec:related}
+
+The \Lux{} gpu-evm-whitepaper \cite{lux-gpu-evm} first proposed GPU acceleration for EVM execution on the \Lux{} C-Chain.
+\cevm{} extends that work with precompile-aware partitioning, AI Mining scheduling, and formal verification.
+
+\textbf{Monad} \cite{monad2024} implements optimistic parallel execution targeting CPU multi-core ($\sim$10$\times$ on 16 cores).
+\textbf{Sei v2} \cite{sei2024} uses optimistic concurrency control for CPU-parallel EVM (5--12$\times$).
+Both are limited by CPU core counts; \cevm{} achieves $23.8\times$ on a single GPU.
+
+\textbf{MegaETH} \cite{megaeth2024} optimizes latency via specialized hardware sequencers with sequential execution, orthogonal to \cevm{}'s parallel throughput approach.
+
+\textbf{Solana}'s Sealevel \cite{solana2020} requires upfront state-access declarations, incompatible with EVM semantics.
+\textbf{Aptos} and \textbf{Sui} use Move-based resource ownership for compiler-verified parallelism, requiring new programming models.
+\cevm{} preserves full EVM/Solidity compatibility.
+
+The KEVM project \cite{kevm2018} provides complete EVM formal semantics in the K framework; \cevm{}'s Lean~4 proofs complement KEVM by covering the parallel execution model.
+
+%% ---------------------------------------------------------------------------

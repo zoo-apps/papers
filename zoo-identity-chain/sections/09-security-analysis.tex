@@ -1,0 +1,23 @@
+\section{Security Analysis}
+
+
+\subsection{Threat Model}
+
+We consider an adversary $\mathcal{A}$ who controls up to $f < n/3$ validators (consistent with BFT consensus) and an arbitrary number of non-validator DIDs.
+
+\begin{theorem}[Credential Forgery Resistance]
+Under the threshold signature security assumption (Definition in \cite{zoo-threshold-signatures}) and the BFT quorum requirement $t = \lfloor 2n/3 \rfloor + 1$, the adversary $\mathcal{A}$ cannot forge a validator-issued credential.
+\end{theorem}
+
+\begin{proof}
+Forging requires $t$ partial signatures. The adversary controls at most $f < n/3 < t$ validators, which is insufficient to reach the threshold $t = \lfloor 2n/3 \rfloor + 1$.
+\end{proof}
+
+\subsection{Privacy Properties}
+
+\begin{proposition}[Credential Unlinkability]
+Two ZK presentations of the same credential to different verifiers are computationally unlinkable, assuming the zero-knowledge property of Groth16 and fresh randomness per presentation.
+\end{proposition}
+
+The accumulator-based revocation system reveals only whether a credential is revoked or not---it does not reveal which other credentials exist, the total number of non-revoked credentials, or the identity of the revoker.
+

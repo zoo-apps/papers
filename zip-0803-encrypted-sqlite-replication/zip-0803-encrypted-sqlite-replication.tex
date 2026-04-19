@@ -1,0 +1,61 @@
+\documentclass[twocolumn,11pt]{article}
+\usepackage{shared/zoocover}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage[numbers]{natbib}
+\usepackage{abstract}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{listings}
+\input{shared/lstlang}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+}
+
+\title{\textbf{ZIP-0803: Encrypted SQLite Replication for Zoo Services}}
+
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{January 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We specify a sidecar-based replication protocol for Zoo Network services
+that use Hanzo Base (per-org encrypted SQLite).  The system streams
+Write-Ahead Log (WAL) frames through \texttt{hanzoai/replicate} to
+S3-compatible object storage, encrypts at-rest with \texttt{hanzoai/age}
+(X25519 + ChaCha20-Poly1305), and achieves $\leq 1$\,s Recovery Point
+Objective (RPO) with seconds-scale Recovery Time Objective (RTO).
+Each pod replicates to a distinct S3 prefix keyed by pod identity,
+enabling StatefulSet-aware restore.  The design reuses the same
+\texttt{ghcr.io/hanzoai/replicate:latest} image deployed across
+Lux and Zoo ecosystems, requiring zero Zoo-specific code.
+\end{abstract}
+
+\input{sections/01-motivation}
+\input{sections/02-architecture}
+\input{sections/03-specification}
+\input{sections/04-implementation}
+\input{sections/05-comparison-with-alternatives}
+\input{sections/06-cross-ecosystem-compatibility}
+\input{sections/07-security-considerations}
+\input{sections/08-post-quantum-security}
+\input{sections/99-references}
+
+\end{document}

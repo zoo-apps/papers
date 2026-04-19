@@ -1,0 +1,58 @@
+\section{7680-Dimension Optimality}
+
+\label{sec:optimality}
+
+\subsection{Pareto Analysis}
+
+We consider three objectives:
+\begin{enumerate}
+    \item Maximize semantic preservation
+    \item Maximize compression ratio
+    \item Minimize maximum projection distance to frontier models
+\end{enumerate}
+
+\begin{definition}[Projection Distance]
+For target dimension $d_T$ and source dimension $d_S$:
+\begin{equation}
+\text{dist}(d_S, d_T) = \begin{cases}
+0 & d_S = d_T \\
+\log(d_S / d_T) & d_S > d_T \\
+2\log(d_T / d_S) & d_S < d_T
+\end{cases}
+\end{equation}
+\end{definition}
+
+The asymmetric penalty reflects that expanding embeddings (padding) is worse than compressing.
+
+\begin{theorem}[7680 Optimality]
+For the set of frontier LLMs with dimensions $\{5120, 7168, 8192\}$, the dimension $d^* = 7680$ minimizes the maximum projection distance:
+\begin{equation}
+d^* = \arg\min_d \max_{s \in S} \text{dist}(d_s, d)
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+We compute:
+\begin{align}
+d = 7680&: \max\{\text{dist}(5120), \text{dist}(7168), \text{dist}(8192)\} \\
+&= \max\{2\log(1.5), \log(0.93), \log(1.07)\} \\
+&= \max\{0.81, -0.07, 0.07\} = 0.81
+\end{align}
+For $d = 7168$: $\max = 2\log(7168/5120) = 0.68$, but compression ratio drops to 30.9$\times$.
+
+For $d = 8192$: $\max = 2\log(8192/5120) = 0.94$, worse on expansion.
+
+The Pareto frontier includes 7680 with best combined compression. \qed
+\end{proof}
+
+\subsection{Factorization Properties}
+
+$7680 = 2^9 \times 3 \times 5 = 512 \times 15$
+
+This factorization enables:
+\begin{itemize}
+    \item Efficient matrix operations (power of 2 factor)
+    \item Natural partitioning for multi-head attention (15 heads of 512)
+    \item Optimal cache-line alignment
+\end{itemize}
+

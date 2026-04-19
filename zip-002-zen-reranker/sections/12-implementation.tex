@@ -1,0 +1,99 @@
+\section{Implementation}
+
+
+\subsection{Rust Client (Hanzo Network)}
+
+Located at: \texttt{/hanzo/node/crates/hanzo-zen-reranker/}
+
+\textbf{Features:}
+\begin{itemize}
+\item Candle-based inference (native Rust ML)
+\item Zero-copy tensor operations
+\item SIMD-optimized BitDelta compression
+\item Async multi-threaded API
+\end{itemize}
+
+\textbf{Example Usage:}
+\begin{lstlisting}[language=Rust, basicstyle=\small\ttfamily]
+use hanzo_zen_reranker::{ZenReranker, BitDelta};
+
+let zen = ZenReranker::load("zoo/zen-reranker-8b")?;
+
+// Encode experience
+let experience = "When solving geometry, validate bounds";
+let embedding = zen.encode(experience)?;  // Vec<f32>, 7680
+
+// Compress
+let compressed = BitDelta::compress(&embedding)?;  // 964 bytes
+assert_eq!(compressed.len(), 964);
+
+// Submit to network
+hanzo_network::submit_experience(compressed)?;
+\end{lstlisting}
+
+\subsection{Python Client (Zoo Network)}
+
+Located at: \texttt{/zoo/gym/src/gym/train/grpo/zen\_integration.py}
+
+\textbf{Features:}
+\begin{itemize}
+\item HuggingFace Transformers integration
+\item PyTorch-based inference
+\item FAISS vector index for fast retrieval
+\item Training-free GRPO compatibility
+\end{itemize}
+
+\textbf{Example Usage:}
+\begin{lstlisting}[language=Python, basicstyle=\small\ttfamily]
+from gym.train.grpo.zen_integration import ZenRerankerDSO
+
+zen = ZenRerankerDSO("zoo/zen-reranker-8b")
+
+# Encode experience
+experience = "When solving geometry, validate bounds"
+embedding = zen.encode_experience(experience)  # [7680]
+
+# Retrieve similar
+query = "How to avoid extraneous solutions in geometry?"
+similar = zen.retrieve_similar(query, library, k=5)
+
+# Inject into context
+context = "\n".join([exp.text for exp in similar])
+prompt = f"{context}\n\n{query}"
+\end{lstlisting}
+
+\subsection{Docker Deployment}
+
+\textbf{CPU Inference:}
+\begin{verbatim}
+docker pull zoo/zen-reranker:cpu-latest
+docker run -p 8080:8080 zoo/zen-reranker:cpu-latest
+\end{verbatim}
+
+\textbf{GPU Inference (CUDA 12.1):}
+\begin{verbatim}
+docker pull zoo/zen-reranker:gpu-latest
+docker run --gpus all -p 8080:8080 zoo/zen-reranker:gpu-latest
+\end{verbatim}
+
+\textbf{Quantized (4-bit GPTQ):}
+\begin{verbatim}
+docker pull zoo/zen-reranker:quantized-latest
+docker run -p 8080:8080 zoo/zen-reranker:quantized-latest
+\end{verbatim}
+
+\textbf{API Endpoint:}
+\begin{verbatim}
+POST /embed
+{
+  "texts": ["Experience 1", "Experience 2", ...],
+  "compress": true
+}
+
+Response:
+{
+  "embeddings": ["<964 bytes>", "<964 bytes>", ...],
+  "latency_ms": 21.5
+}
+\end{verbatim}
+

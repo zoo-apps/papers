@@ -1,0 +1,110 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{natbib}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage{abstract}
+\usepackage{multirow}
+
+% ── Page Style ────────────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Antje Worring, Zach Kelling}
+\fancyhead[R]{\small Citizen Science Platform}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Metadata ──────────────────────────────────────────────────────────────────
+\title{%
+  \textbf{Citizen Science Platform: Gamified\\Biodiversity Data Collection}\\[0.5em]
+  \large Antje Worring, Zach Kelling Paper ZOO-CSP-2026
+}
+
+\author{
+  Antje Worring, Zach Kelling\\
+  \texttt{research@zoo.ngo}\\[0.5em]
+  \small With contributions from the Zoo Open Science Network
+}
+
+\date{September 2023}
+
+% ── Macros ────────────────────────────────────────────────────────────────────
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Loss}{\mathcal{L}}
+
+\begin{document}
+
+\zoocoverpage
+
+% ── Abstract ──────────────────────────────────────────────────────────────────
+\begin{abstract}
+\noindent
+Citizen science has become indispensable for biodiversity monitoring,
+generating billions of observations annually through platforms like eBird
+and iNaturalist. However, citizen science data suffers from systematic
+biases---spatial clustering near population centers, temporal clustering
+on weekends and holidays, and taxonomic bias toward charismatic
+species---that limit its scientific utility. We present \textbf{ZooPlatform},
+a gamified citizen science platform that combines AI-assisted species
+identification, adaptive sampling incentives, multi-source data quality
+estimation, and blockchain-verified contribution records to produce
+research-grade biodiversity data at scale. ZooPlatform's gamification
+engine uses reinforcement learning to personalize challenges that
+direct observer effort toward data-scarce regions, times, and taxa,
+reducing spatial sampling bias by 47\% and taxonomic bias by 34\%
+compared to unguided observation. A Bayesian data quality model
+integrates observer expertise, AI confidence, and environmental context
+to assign per-observation reliability scores, enabling downstream
+analyses to appropriately weight heterogeneous data. ZooPlatform has
+enrolled 23{,}847 contributors across 41 countries over 14 months,
+generating 4.2 million verified observations covering 12{,}394 species.
+Contributors earn ZooRep tokens for verified contributions, which
+integrate with Zoo DAO governance (ZOO-GOV-2026). All data is released
+under CC-BY-4.0 through the Zoo Open Science Network.
+
+\medskip
+\noindent\textbf{Keywords:} citizen science, gamification, data quality,
+AI-assisted identification, sampling bias, biodiversity monitoring,
+contribution incentives
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════════════════════════
+
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-platform-architecture}
+\input{sections/04-adaptive-gamification-engine}
+\input{sections/05-ai-assisted-identification}
+\input{sections/06-bayesian-data-quality-model}
+\input{sections/07-token-incentive-system}
+\input{sections/08-evaluation}
+\input{sections/09-discussion}
+\input{sections/10-implementation}
+\input{sections/11-future-work}
+\input{sections/99-conclusion}
+
+\end{document}

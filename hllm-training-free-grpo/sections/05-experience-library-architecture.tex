@@ -1,0 +1,175 @@
+\section{Experience Library Architecture}
+
+\label{sec:architecture}
+
+To enable decentralized governance, transparent auditing, and cryptographic verification, we implement the Experience Library using content-addressable storage with Merkle tree commitments.
+
+\subsection{Storage Layer}
+
+\subsubsection{Content-Addressable Storage}
+
+Each experience is stored in IPFS (InterPlanetary File System) or Arweave, providing:
+\begin{itemize}
+    \item \textbf{Immutability}: Content cannot be changed without changing its address (hash)
+    \item \textbf{Deduplication}: Identical experiences automatically share storage
+    \item \textbf{Decentralization}: No single point of failure or control
+    \item \textbf{Permanence}: Arweave guarantees perpetual storage
+\end{itemize}
+
+\textbf{Experience Structure:}
+\begin{verbatim}
+{
+  "id": "exp_abc123",
+  "version": "1.0",
+  "domain": "math.geometry",
+  "text": "When solving geometry problems with
+           intersections, validate...",
+  "confidence": 0.87,
+  "examples": [
+    {"input": "...", "output": "..."},
+    {"input": "...", "output": "..."}
+  ],
+  "metadata": {
+    "created_at": "2025-10-17T12:00:00Z",
+    "created_by": "0x742d35Cc6634C0532925a3b844Bc9e...",
+    "votes": {"upvotes": 24, "downvotes": 2},
+    "usage_count": 156
+  },
+  "embedding": [0.123, -0.456, ...],  // 1536-dim
+  "merkle_proof": "0xabc...def"
+}
+\end{verbatim}
+
+\subsubsection{Merkle Tree Commitment}
+
+All experiences in a library version are organized into a Merkle tree, with the root hash stored on-chain (Zoo Network DSO):
+
+\begin{verbatim}
+                    Root Hash (on-chain)
+                   /                    \
+            H(E0 || E1)                H(E2 || E3)
+           /           \               /          \
+        H(E0)         H(E1)        H(E2)        H(E3)
+          |             |             |            |
+       Exp 0          Exp 1        Exp 2        Exp 3
+\end{verbatim}
+
+This structure enables:
+\begin{itemize}
+    \item \textbf{Verification}: Anyone can verify an experience is part of a library version using a logarithmic-size proof
+    \item \textbf{Auditability}: Complete history of library changes recorded on-chain
+    \item \textbf{Governance}: DAO votes on root hash updates, not individual experiences
+\end{itemize}
+
+\subsection{Retrieval Layer}
+
+\subsubsection{Embedding-Based Similarity Search}
+
+Each experience is embedded using a sentence transformer (e.g., \texttt{all-MiniLM-L6-v2}) into a 384 or 1536-dimensional vector space. Given a query $q$, we retrieve the top-$k$ most relevant experiences:
+
+\begin{equation}
+\mathcal{E}_k(q) = \text{TopK}\left( \left\{ (e, \text{cosine}(\mathbf{e}_{\text{emb}}, \mathbf{q}_{\text{emb}})) : e \in \mathcal{E} \right\}, k \right)
+\end{equation}
+
+For large libraries ($>1000$ experiences), we use approximate nearest neighbor search (FAISS, Annoy) with $\mathcal{O}(\log N)$ query time.
+
+\subsubsection{Domain Filtering}
+
+Experiences are tagged with domain labels (e.g., \texttt{math.geometry}, \texttt{coding.algorithms}, \texttt{web.navigation}). Queries can optionally filter by domain:
+
+\begin{equation}
+\mathcal{E}_k(q, d) = \text{TopK}\left( \left\{ e \in \mathcal{E} : \text{domain}(e) = d \right\}, k \right)
+\end{equation}
+
+This enables specialized inference while maintaining a unified experience library.
+
+\subsection{Update Protocol}
+
+\subsubsection{Off-Chain Curation}
+
+Training-Free GRPO runs off-chain (on Hanzo GPU nodes), producing candidate experience updates. These are submitted to the Experience Registry smart contract as proposals.
+
+\subsubsection{On-Chain Governance}
+
+The Zoo Network DAO (governed by KEEPER token holders) votes on proposed updates:
+
+\begin{enumerate}
+    \item \textbf{Proposal Submission}: Contributor submits new Merkle root $r'$ and IPFS CID
+    \item \textbf{Voting Period}: 7-day voting period with quadratic voting
+    \item \textbf{Acceptance Threshold}: 66\% approval required (2/3 supermajority)
+    \item \textbf{Update Execution}: If approved, smart contract updates canonical root hash
+    \item \textbf{Reward Distribution}: Contributor receives inference credits proportional to usage
+\end{enumerate}
+
+\textbf{Smart Contract Pseudocode:}
+\begin{verbatim}
+contract ExperienceRegistry {
+    bytes32 public currentRoot;
+    mapping(bytes32 => LibraryVersion) public versions;
+
+    struct LibraryVersion {
+        bytes32 merkleRoot;
+        string ipfsCID;
+        address proposer;
+        uint256 timestamp;
+        uint256 upvotes;
+        uint256 downvotes;
+        bool active;
+    }
+
+    function proposeUpdate(
+        bytes32 newRoot,
+        string memory ipfsCID
+    ) external {
+        require(balanceOf(msg.sender, KEEPER_TOKEN) > 0);
+        versions[newRoot] = LibraryVersion({
+            merkleRoot: newRoot,
+            ipfsCID: ipfsCID,
+            proposer: msg.sender,
+            timestamp: block.timestamp,
+            upvotes: 0,
+            downvotes: 0,
+            active: false
+        });
+        emit ProposalCreated(newRoot, msg.sender);
+    }
+
+    function vote(
+        bytes32 root,
+        bool approve
+    ) external {
+        uint256 votePower = sqrt(
+            balanceOf(msg.sender, KEEPER_TOKEN)
+        );
+        if (approve) {
+            versions[root].upvotes += votePower;
+        } else {
+            versions[root].downvotes += votePower;
+        }
+    }
+
+    function executeUpdate(bytes32 root) external {
+        LibraryVersion storage v = versions[root];
+        require(block.timestamp > v.timestamp + 7 days);
+        require(v.upvotes > 2 * v.downvotes);  // 66%
+
+        currentRoot = root;
+        v.active = true;
+        emit LibraryUpdated(root, v.ipfsCID);
+    }
+}
+\end{verbatim}
+
+\subsection{Inference Routing}
+
+When a user submits a query to Zoo Network:
+
+\begin{enumerate}
+    \item \textbf{Experience Retrieval}: Fetch current library version from IPFS using on-chain root hash
+    \item \textbf{Embedding Search}: Compute query embedding, retrieve top-$k$ relevant experiences
+    \item \textbf{Context Assembly}: Format experiences into system prompt
+    \item \textbf{GPU Routing}: Route to available Hanzo GPU node
+    \item \textbf{Inference Execution}: Frozen base model + experience context → output
+    \item \textbf{Proof of Inference} (optional): zk-SNARK proof that output matches (model, context, input)
+\end{enumerate}
+

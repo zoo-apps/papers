@@ -1,0 +1,68 @@
+\section{Token Incentive System}
+
+\label{sec:incentives}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{ZooRep Distribution}
+
+Contributors earn ZooRep tokens for verified contributions. The reward
+function incentivizes both quantity and quality:
+
+\begin{equation}
+  \text{ZooRep}(o) = R_{\text{base}} \cdot q_{obs} \cdot
+  (1 + \gamma \cdot \text{DataValue}(o))
+\end{equation}
+
+where $R_{\text{base}} = 1$ ZooRep for a standard observation, $q_{obs}$
+is the quality score, and DataValue reflects the scientific value of the
+observation (higher for undersampled regions, taxa, and times). The
+scaling factor $\gamma = 2.0$ ensures that targeted observations in
+data-sparse areas earn up to 3x the base reward.
+
+\subsection{Challenge Bonus Structure}
+
+\begin{table}[H]
+\centering
+\caption{ZooRep bonus multipliers for challenge completion.}
+\label{tab:bonuses}
+\begin{tabular}{lc}
+\toprule
+\textbf{Achievement} & \textbf{Multiplier} \\
+\midrule
+Challenge completion & 1.5x \\
+Survey mode observation & 2.0x \\
+First observation in grid cell & 3.0x \\
+Streak bonus (7 consecutive days) & 1.5x \\
+Community validation (correct ID) & 1.2x \\
+Rare species documentation & 5.0x \\
+Expert-confirmed identification & 2.0x \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Governance Integration}
+
+ZooRep tokens integrate directly with Zoo DAO governance (ZOO-GOV-2026):
+contributors with sufficient ZooRep can vote on research funding
+proposals, participate in peer review, and join domain working groups.
+This creates a direct pathway from biodiversity data collection to
+research governance, ensuring that the most active contributors have
+voice in how their data is used.
+
+\subsection{Anti-Gaming Measures}
+
+\begin{itemize}
+  \item \textbf{Duplicate detection}: Submissions with identical GPS
+    coordinates, timestamps, and images within 1 hour are flagged.
+  \item \textbf{Quality gating}: ZooRep is only distributed after
+    quality scoring; low-confidence observations earn minimal rewards.
+  \item \textbf{Photo verification}: AI checks that submitted photos
+    contain plausible biological subjects.
+  \item \textbf{GPS validation}: Observation locations are checked
+    against plausible habitat maps.
+  \item \textbf{Reviewer oversight}: Random sampling of observations
+    for expert review, with penalty for systematic inaccuracy.
+\end{itemize}
+
+
+% ══════════════════════════════════════════════════════════════════════════════

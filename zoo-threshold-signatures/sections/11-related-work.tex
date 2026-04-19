@@ -1,0 +1,15 @@
+\section{Related Work}
+
+\label{sec:related}
+
+\textbf{Lux threshold infrastructure.} Lux Network provides the foundational libraries used by \TChain{}. The \texttt{lux-universal-threshold-signatures} library \cite{lux-threshold-sigs} implements FROST and CGGMP21 at the primitive level; \texttt{lux-mchain-mpc} \cite{lux-mchain-mpc} pioneered multi-chain MPC on Lux but operated as an external service. \TChain{} embeds these primitives directly into a VM.
+
+\textbf{Fireblocks MPC.} Fireblocks \cite{fireblocks2023mpc} offers institutional MPC-CMP as a managed service. While production-proven, it introduces a trusted third party. \TChain{} achieves comparable guarantees without custodial trust assumptions.
+
+\textbf{Lit Protocol.} Lit \cite{lit2023threshold} distributes threshold signing across a dedicated node network, requiring separate infrastructure. \TChain{} reuses the validator set, reducing cost and aligning incentives.
+
+\textbf{THORChain TSS.} THORChain \cite{thorchain2023tss} uses GG20 for cross-chain swaps. \TChain{} improves on this with identifiable abort (absent in GG20) and the Composition Theorem for multi-protocol share reuse.
+
+\textbf{DFINITY threshold ECDSA.} The Internet Computer \cite{dfinity2022tecdsa} implements chain-key threshold ECDSA at the subnet level. \TChain{} follows a similar chain-native philosophy but extends it to FROST, TFHE, and BLS via the \LSS{} Composition Theorem.
+
+%% --------------------------------------------------------------------------

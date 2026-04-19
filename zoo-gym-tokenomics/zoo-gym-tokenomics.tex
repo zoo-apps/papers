@@ -1,0 +1,808 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+\input{shared/lstlang}
+
+% Listings style
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue!70!black}\bfseries,
+  commentstyle=\color{green!50!black}\itshape,
+  stringstyle=\color{red!60!black},
+  showstringspaces=false,
+  tabsize=2,
+  captionpos=b
+}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\GYM}{\textsc{Gym}}
+\newcommand{\AI}{\$\textsc{ai}}
+\newcommand{\ZOO}{\$\textsc{zoo}}
+\newcommand{\DAO}{\textsc{dao}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{Tokenomics of Zoo Gym: Compute-to-Yield Mining\\and Training Reward Markets}}
+
+\author{
+Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Hanzo Industries \quad Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{November 2024}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We formalize the token economics of Zoo Gym, a decentralized training protocol in which GPU providers earn rewards by contributing compute to GSPO model training.  The protocol involves two tokens: \AI{} (mined via the Hanzo compute chain) and \ZOO{} (fixed supply, governance).  We derive the reward function from three measurable signals---FLOPs contributed, delta quality score, and network uptime---and show that rational miners maximize earnings by submitting high-quality deltas.  A staking mechanism with progressive slashing deters Sybil attacks and gradient poisoning.  We model the emission schedule as a decreasing geometric series with halving events tied to block height, and prove that under realistic demand assumptions the token reaches deflationary equilibrium by year 5.  We specify the smart contracts for the mining pool, staking, and orchestrator registry, and analyze the game-theoretic properties of the reward market.  Simulation over 10{,}000 epochs with 100 heterogeneous nodes shows that the Gini coefficient of reward distribution converges to 0.31, indicating moderate inequality bounded by hardware tier differences rather than stake concentration.
+
+\textbf{Keywords}: tokenomics, compute mining, staking, slashing, reward markets, decentralized training
+\end{abstract}
+
+%----------------------------------------------------------------------
+\section{Introduction}
+
+Training large language models costs millions of dollars~\cite{brown2020gpt3}.  The capital is spent on GPU-hours, and the resulting model is owned by the training organization.  Zoo Gym inverts this: compute providers are paid in tokens for GPU-hours contributed to a shared training process, and the resulting model is published openly.
+
+This paper formalizes the economic layer of Zoo Gym.  We address three questions:
+
+\begin{enumerate}
+    \item \textbf{How are rewards computed?}  Rewards must reflect the marginal value of a compute contribution, not merely its volume.
+    \item \textbf{How are bad actors punished?}  Sybil attacks, gradient poisoning, and free-riding must be economically unprofitable.
+    \item \textbf{How do two tokens interact?}  \AI{} is mined via Hanzo's compute chain; \ZOO{} is a fixed-supply governance token.  Their interaction must avoid circular value extraction.
+\end{enumerate}
+
+\subsection{Token Overview}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Property} & \textbf{\AI{}} & \textbf{\ZOO{}} \\
+\midrule
+Supply & Inflationary (mined) & Fixed (10B, all minted) \\
+Chain & Hanzo (chain ID 36900) & Zoo Network \\
+Mechanism & Proof-of-Compute mining & Governance, staking \\
+Earners & GPU providers & Token holders \\
+Burn & 10\% of inference fees & 20\% of transaction fees \\
+\bottomrule
+\end{tabular}
+\caption{Comparison of \AI{} and \ZOO{} tokens.}
+\label{tab:tokens}
+\end{table}
+
+%----------------------------------------------------------------------
+\section{Reward Function}
+\label{sec:rewards}
+
+\subsection{Per-Epoch Reward}
+
+Let $R_e$ be the total reward pool for epoch $e$.  Node $i$ receives:
+
+\begin{equation}
+    r_i^{(e)} = R_e \cdot \frac{w_i}{\sum_{j=1}^N w_j}
+    \label{eq:reward}
+\end{equation}
+
+where $w_i$ is the composite weight of node $i$:
+
+\begin{equation}
+    w_i = \underbrace{F_i \cdot H_i}_{\text{compute}} \cdot \underbrace{q_i^{\alpha}}_{\text{quality}} \cdot \underbrace{u_i^{\beta}}_{\text{uptime}} \cdot \underbrace{b_i}_{\text{stake boost}}
+    \label{eq:weight}
+\end{equation}
+
+\textbf{Components:}
+
+\begin{itemize}
+    \item $F_i$: FLOPs contributed (measured by the orchestrator via step count $\times$ model FLOPs/step).
+    \item $H_i$: GPU-hours (wall-clock time with active GPU utilization $>$80\%).
+    \item $q_i$: Delta quality score (Section~\ref{sec:quality}), $\alpha = 1.5$ to superlinearly reward quality.
+    \item $u_i$: Uptime fraction, $\beta = 0.5$ (diminishing returns past 99\%).
+    \item $b_i$: Stake boost (Section~\ref{sec:staking}).
+\end{itemize}
+
+\begin{theorem}[Incentive Compatibility]
+A rational node maximizes $r_i$ by maximizing $q_i$.  Submitting random gradients yields $q_i \approx 0$ (zero convergence contribution), making the attack unprofitable even when $F_i$ and $H_i$ are large.
+\end{theorem}
+
+\begin{proof}
+Since $w_i \propto q_i^{1.5}$, a node with $q_i = 0$ receives $r_i = 0$ regardless of compute contribution.  A node with $q_i > 0$ can only increase $r_i$ by increasing $q_i$ (holding compute constant), because $\partial w_i / \partial q_i = 1.5 q_i^{0.5} \cdot F_i H_i u_i^\beta b_i > 0$.
+\end{proof}
+
+\subsection{Delta Quality Score}
+\label{sec:quality}
+
+The quality score $q_i \in [0, 1]$ is computed from three sub-scores:
+
+\begin{equation}
+    q_i = 0.5 \cdot \Delta L_i + 0.3 \cdot S_i + 0.2 \cdot C_i
+\end{equation}
+
+\textbf{Validation loss improvement} ($\Delta L_i$):
+\begin{equation}
+    \Delta L_i = \text{clamp}\!\left(\frac{L_{\text{before}} - L_{\text{after}}}{L_{\text{before}}}, \; 0, \; 1\right)
+\end{equation}
+
+\textbf{Gradient norm stability} ($S_i$):
+\begin{equation}
+    S_i = \exp\!\left(-2\left|\frac{\|\delta_i\|_2}{\bar{n}} - 1\right|\right)
+\end{equation}
+
+\textbf{Convergence contribution} ($C_i$):
+\begin{equation}
+    C_i = \max\!\left(0, \; \cos(\delta_i, \delta_{\text{agg}})\right)
+\end{equation}
+
+\subsection{Hardware Tier Multiplier}
+
+Rewards are further adjusted by hardware tier to reflect real-world throughput differences:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{GPU} & \textbf{Tier Multiplier} & \textbf{Min.\ VRAM} \\
+\midrule
+H100 / A100 80GB & 1.5$\times$ & 80 GB \\
+A100 40GB / A6000 & 1.3$\times$ & 40 GB \\
+RTX 4090 & 1.2$\times$ & 24 GB \\
+RTX 4080 / 3090 & 1.1$\times$ & 16 GB \\
+Other (16GB+) & 1.0$\times$ & 16 GB \\
+\bottomrule
+\end{tabular}
+\caption{Hardware tier multipliers.}
+\label{tab:hardware}
+\end{table}
+
+The multiplier is verified by hardware attestation: nodes submit GPU model and memory capacity signed by the driver, and the orchestrator spot-checks with probe workloads.
+
+%----------------------------------------------------------------------
+\section{Staking Mechanism}
+\label{sec:staking}
+
+\subsection{Tiers and Boost}
+
+Nodes must stake GYM tokens to participate.  The stake boost $b_i$ is:
+
+\begin{equation}
+    b_i = 1 + \log_2\!\left(1 + \frac{s_i}{s_{\min}}\right)
+\end{equation}
+
+where $s_i$ is the node's stake and $s_{\min}$ is the minimum for the node's role.  This is sublinear: doubling stake adds only 1 to the boost, preventing stake-based centralization.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lrrl}
+\toprule
+\textbf{Tier} & \textbf{Min.\ Stake} & \textbf{Boost at Min.} & \textbf{Benefits} \\
+\midrule
+Bronze & 1{,}000 & 1.0 & Basic mining \\
+Silver & 10{,}000 & 2.3 & Priority queue \\
+Gold & 50{,}000 & 3.0 & Orchestrator eligible \\
+Platinum & 100{,}000 & 3.3 & Governance voting \\
+Diamond & 500{,}000 & 3.9 & Revenue share \\
+\bottomrule
+\end{tabular}
+\caption{Staking tiers and boost at minimum stake.}
+\label{tab:staking-tiers}
+\end{table}
+
+\subsection{Slashing Conditions}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lrl}
+\toprule
+\textbf{Offense} & \textbf{Slash \%} & \textbf{Detection} \\
+\midrule
+Unscheduled downtime ($>$1h) & 0.1\%/h & Heartbeat timeout \\
+Invalid delta (bad signature) & 5\% & Signature verification \\
+Failed spot-check & 10\% & Re-computation \\
+Gradient poisoning (proven) & 50\% & Statistical outlier \\
+Early unstake ($<$30 days) & 10\% & Timelock \\
+\bottomrule
+\end{tabular}
+\caption{Slashing conditions and penalties.}
+\label{tab:slashing}
+\end{table}
+
+Slashed tokens are split: 50\% burned (deflationary), 50\% distributed to the reporter who detected the offense.  This creates a bounty market for quality auditing.
+
+%----------------------------------------------------------------------
+\section{Emission Schedule}
+\label{sec:emission}
+
+\subsection{GYM Token}
+
+Total supply: 1{,}000{,}000{,}000 GYM.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lrl}
+\toprule
+\textbf{Allocation} & \textbf{\%} & \textbf{Vesting} \\
+\midrule
+Mining rewards & 40\% & Emitted per epoch \\
+Staking rewards & 20\% & Distributed monthly \\
+Development fund & 15\% & 4-year vest, 1-year cliff \\
+Community grants & 15\% & DAO-governed \\
+Reserve & 10\% & Emergency fund \\
+\bottomrule
+\end{tabular}
+\caption{GYM token distribution.}
+\label{tab:distribution}
+\end{table}
+
+\subsection{Emission Curve}
+
+Mining emissions follow a halving schedule:
+
+\begin{equation}
+    E(b) = E_0 \cdot 2^{-\lfloor b / B_h \rfloor}
+    \label{eq:emission}
+\end{equation}
+
+where $E_0 = 1{,}000$ GYM/epoch is the initial emission, $b$ is the block number, and $B_h = 10{,}000{,}000$ is the halving interval.
+
+\begin{proposition}[Asymptotic Supply]
+The total mined supply converges to $2 E_0 B_h = 20{,}000{,}000{,}000$ GYM-epochs.  With a 10\% burn rate on inference fees, net emission becomes deflationary when burn rate exceeds new emission.
+\end{proposition}
+
+\subsection{Deflationary Equilibrium}
+
+Let $\mu(t)$ be the mining emission rate and $\beta(t)$ the burn rate at time $t$.  Net supply change:
+
+\begin{equation}
+    \frac{dS}{dt} = \mu(t) - \beta(t)
+\end{equation}
+
+Since $\mu(t)$ decreases geometrically and $\beta(t)$ grows with network usage (inference fees), there exists a crossover time $t^*$ where $\mu(t^*) = \beta(t^*)$.  For $t > t^*$, $dS/dt < 0$ and the supply is deflationary.
+
+Under our model assumptions (10\% annual usage growth, 10\% burn on inference fees):
+
+\begin{equation}
+    t^* \approx 5 \text{ years}
+\end{equation}
+
+%----------------------------------------------------------------------
+\section{Two-Token Interaction}
+\label{sec:two-token}
+
+\subsection{\AI{} Token (Hanzo Chain)}
+
+\AI{} is mined on the Hanzo compute chain (chain ID 36900) by nodes that contribute GPU cycles.  The mining rate is approximately 1 \AI{} per minute per active GPU.  \AI{} serves as:
+
+\begin{enumerate}
+    \item \textbf{Compute payment}: Users pay \AI{} for inference API calls.
+    \item \textbf{Burn token}: 10\% of inference fees are burned.
+    \item \textbf{Staking collateral}: \AI{} can be staked alongside GYM for additional boost.
+\end{enumerate}
+
+\subsection{\ZOO{} Token}
+
+\ZOO{} is the governance token of Zoo Network (fixed supply: 10B, all minted at genesis).  \ZOO{} serves as:
+
+\begin{enumerate}
+    \item \textbf{Governance}: Vote on model training priorities, parameter changes, grant allocations.
+    \item \textbf{Access}: Burn \ZOO{} to access premium models.
+    \item \textbf{Revenue share}: Diamond-tier stakers receive 5\% of protocol revenue in \ZOO{}.
+\end{enumerate}
+
+\subsection{Token Flow}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=2cm,
+    box/.style={rectangle, draw, minimum width=2.2cm, minimum height=0.8cm, fill=blue!10, font=\small, align=center},
+    token/.style={rectangle, draw, minimum width=1.8cm, minimum height=0.6cm, fill=green!10, font=\small},
+    ->,>=stealth,thick
+]
+    \node[box] (miner) {GPU Miner};
+    \node[box, right=3cm of miner] (pool) {Mining Pool};
+    \node[box, below=of miner] (user) {API User};
+    \node[token, below=of pool] (burn) {Burn};
+    \node[box, right=3cm of pool] (dao) {DAO Treasury};
+
+    \draw (miner) -- node[above,font=\scriptsize] {delta + proof} (pool);
+    \draw (pool) -- node[above,font=\scriptsize] {\AI{} rewards} (miner);
+    \draw (user) -- node[left,font=\scriptsize] {\AI{} fees} (pool);
+    \draw (pool) -- node[right,font=\scriptsize] {10\% burn} (burn);
+    \draw (pool) -- node[above,font=\scriptsize] {15\% dev fund} (dao);
+\end{tikzpicture}
+\caption{Token flow in Zoo Gym.}
+\label{fig:token-flow}
+\end{figure}
+
+\subsection{Model Release Dividends}
+
+When a training job completes and the model is published to HuggingFace, contributors who participated in that job receive a \textbf{model release dividend}: a one-time \ZOO{} distribution proportional to their cumulative quality score across all epochs of the job.
+
+\begin{equation}
+    d_i = D_{\text{total}} \cdot \frac{\sum_{e=1}^E q_i^{(e)}}{\sum_{j=1}^N \sum_{e=1}^E q_j^{(e)}}
+\end{equation}
+
+where $D_{\text{total}}$ is the dividend pool (funded by DAO treasury) and $E$ is the number of training epochs.
+
+This creates a long-term incentive: miners who stay for the full training job earn more than those who contribute sporadically.
+
+%----------------------------------------------------------------------
+\section{Smart Contracts}
+\label{sec:contracts}
+
+\subsection{GYMToken Contract}
+
+\begin{lstlisting}[language=Solidity,caption=GYM token with mining and staking]
+contract GYMToken is ERC20 {
+    mapping(address => uint256) public stakes;
+    mapping(address => uint256) public stakeTimestamp;
+    mapping(address => uint256) public pendingRewards;
+    uint256 public totalStaked;
+    uint256 public emissionPerEpoch;
+    uint256 public halvingInterval = 10_000_000;
+    uint256 public lastHalvingBlock;
+
+    function stake(uint256 amount) external {
+        require(amount >= minStake(), "Below minimum");
+        _transfer(msg.sender, address(this), amount);
+        stakes[msg.sender] += amount;
+        stakeTimestamp[msg.sender] = block.timestamp;
+        totalStaked += amount;
+        emit Staked(msg.sender, amount);
+    }
+
+    function unstake(uint256 amount) external {
+        require(stakes[msg.sender] >= amount, "Insufficient");
+        uint256 elapsed = block.timestamp
+            - stakeTimestamp[msg.sender];
+        uint256 penalty = elapsed < 30 days
+            ? amount / 10 : 0;
+        stakes[msg.sender] -= amount;
+        totalStaked -= amount;
+        _transfer(address(this), msg.sender,
+            amount - penalty);
+        if (penalty > 0) _burn(address(this), penalty);
+    }
+
+    function slash(address node, uint256 pct,
+        address reporter) external onlyOrchestrator {
+        uint256 amount = stakes[node] * pct / 100;
+        stakes[node] -= amount;
+        totalStaked -= amount;
+        uint256 half = amount / 2;
+        _burn(address(this), half);
+        _transfer(address(this), reporter, amount - half);
+        emit Slashed(node, amount, reporter);
+    }
+}
+\end{lstlisting}
+
+\subsection{MiningPool Contract}
+
+\begin{lstlisting}[language=Solidity,caption=Mining pool with delta submission]
+contract MiningPool {
+    struct Delta {
+        bytes32 hash;
+        uint256 qualityScore;
+        uint256 flops;
+        uint256 gpuHours;
+        address worker;
+        uint256 epoch;
+    }
+
+    mapping(uint256 => Delta[]) public epochDeltas;
+    mapping(uint256 => uint256) public epochRewardPool;
+
+    function submitDelta(
+        bytes32 deltaHash,
+        uint256 quality,
+        uint256 flops,
+        uint256 gpuHours,
+        bytes calldata signature
+    ) external {
+        require(verifySignature(deltaHash, signature,
+            msg.sender), "Bad sig");
+        epochDeltas[currentEpoch].push(Delta({
+            hash: deltaHash,
+            qualityScore: quality,
+            flops: flops,
+            gpuHours: gpuHours,
+            worker: msg.sender,
+            epoch: currentEpoch
+        }));
+        emit DeltaSubmitted(msg.sender, deltaHash,
+            currentEpoch);
+    }
+
+    function claimRewards(uint256 epoch) external {
+        uint256 reward = computeReward(
+            msg.sender, epoch);
+        require(reward > 0, "Nothing to claim");
+        gymToken.transfer(msg.sender, reward);
+        emit RewardClaimed(msg.sender, epoch, reward);
+    }
+
+    function computeReward(address worker,
+        uint256 epoch) internal view returns (uint256) {
+        uint256 pool = epochRewardPool[epoch];
+        uint256 totalWeight = 0;
+        uint256 workerWeight = 0;
+        Delta[] storage deltas = epochDeltas[epoch];
+        for (uint i = 0; i < deltas.length; i++) {
+            uint256 w = computeWeight(deltas[i]);
+            totalWeight += w;
+            if (deltas[i].worker == worker)
+                workerWeight += w;
+        }
+        return pool * workerWeight / totalWeight;
+    }
+}
+\end{lstlisting}
+
+\subsection{Orchestrator Registry}
+
+\begin{lstlisting}[language=Solidity,caption=Orchestrator registration]
+contract OrchestratorRegistry {
+    struct Orchestrator {
+        address addr;
+        uint256 stake;
+        uint256 jobsCompleted;
+        uint256 reputation;
+        bool active;
+    }
+
+    mapping(address => Orchestrator) public orchestrators;
+    uint256 public minOrchestratorStake = 50_000 * 1e18;
+
+    function register() external {
+        require(gymToken.stakes(msg.sender)
+            >= minOrchestratorStake, "Stake too low");
+        orchestrators[msg.sender] = Orchestrator({
+            addr: msg.sender,
+            stake: gymToken.stakes(msg.sender),
+            jobsCompleted: 0,
+            reputation: 100,
+            active: true
+        });
+        emit OrchestratorRegistered(msg.sender);
+    }
+
+    function assignJob(address orch, uint256 jobId)
+        external onlyGovernance {
+        require(orchestrators[orch].active, "Inactive");
+        emit JobAssigned(orch, jobId);
+    }
+}
+\end{lstlisting}
+
+%----------------------------------------------------------------------
+\section{Game-Theoretic Analysis}
+\label{sec:game-theory}
+
+\subsection{Mining as a Bayesian Game}
+
+Each node $i$ chooses effort level $e_i \in [0, 1]$ (fraction of GPU capacity devoted to honest training).  The payoff is:
+
+\begin{equation}
+    \pi_i(e_i, e_{-i}) = r_i(e_i, e_{-i}) - c_i(e_i)
+\end{equation}
+
+where $r_i$ is the reward (Eq.~\ref{eq:reward}) and $c_i(e_i) = \kappa_i \cdot e_i$ is the cost (electricity, hardware depreciation).
+
+\begin{theorem}[Nash Equilibrium]
+Under the reward function in Eq.~\ref{eq:weight} with $\alpha = 1.5$, the unique symmetric Nash equilibrium is $e^* = 1$ (full honest effort) when $R_e / N > \kappa_i$ for all $i$.
+\end{theorem}
+
+\begin{proof}
+Consider a deviating node choosing $e_i < 1$.  Its quality score $q_i$ decreases (less compute $\Rightarrow$ fewer valid training steps $\Rightarrow$ lower $\Delta L$).  Since $w_i \propto q_i^{1.5}$, the reward decreases faster than the cost savings from reduced effort.  Formally:
+\[
+\frac{\partial \pi_i}{\partial e_i} = \frac{\partial r_i}{\partial e_i} - \kappa_i > 0
+\]
+because $\partial r_i / \partial e_i \propto 1.5 q_i^{0.5} \cdot \partial q_i / \partial e_i > \kappa_i$ when $R_e / N > \kappa_i$.
+\end{proof}
+
+\subsection{Sybil Resistance}
+
+A Sybil attacker splits stake $s$ across $k$ identities, each with stake $s/k$.  The combined boost is:
+\begin{equation}
+    \sum_{j=1}^k b(s/k) = k\!\left(1 + \log_2\!\left(1 + \frac{s/k}{s_{\min}}\right)\right) < 1 + \log_2\!\left(1 + \frac{s}{s_{\min}}\right) + k - 1
+\end{equation}
+
+For $k > 1$ and $s/k < s_{\min}$, some identities fall below the minimum stake and are excluded entirely.  For $s/k \geq s_{\min}$, the sublinear boost means that splitting provides less total boost than concentrating.  Combined with the fixed per-node overhead (registration, heartbeat, hardware attestation), Sybil splitting is unprofitable.
+
+\subsection{Gradient Poisoning Cost}
+
+A poisoner who submits random gradients gets $q_i \approx 0$ and earns nothing.  A subtle poisoner who biases gradients slightly gets detected by spot-check validation (10\% of deltas, re-computed on orchestrator) with probability $p_{\text{detect}} = 1 - (1 - 0.1)^E \approx 1 - 0.9^E$ after $E$ epochs.  The expected cost:
+
+\begin{equation}
+    \mathbb{E}[\text{cost}] = p_{\text{detect}} \cdot 0.5 \cdot s_i > \mathbb{E}[\text{gain}]
+\end{equation}
+
+For any meaningful number of epochs, detection probability exceeds 50\%, making poisoning a negative-EV strategy.
+
+%----------------------------------------------------------------------
+\section{Governance}
+\label{sec:governance}
+
+\subsection{Voting Power}
+
+\begin{equation}
+    V_i = s_i^{\text{GYM}} \cdot 1.0 + s_i^{\text{LP}} \cdot 0.5 + M_i \cdot 0.3
+\end{equation}
+
+where $s_i^{\text{GYM}}$ is staked GYM, $s_i^{\text{LP}}$ is GYM in liquidity pools, and $M_i$ is cumulative mining contribution (FLOPs).
+
+\subsection{Proposal Types}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{llrl}
+\toprule
+\textbf{Type} & \textbf{Examples} & \textbf{Quorum} & \textbf{Threshold} \\
+\midrule
+Technical & Model selection, hyperparams & 10\% & 51\% \\
+Economic & Reward rates, emission & 20\% & 66\% \\
+Strategic & Partnerships, grants & 30\% & 75\% \\
+Emergency & Slashing overrides & 5\% & 80\% \\
+\bottomrule
+\end{tabular}
+\caption{Governance proposal requirements.}
+\label{tab:governance}
+\end{table}
+
+\subsection{Proposal Lifecycle}
+
+\begin{enumerate}
+    \item \textbf{Discussion}: 3 days on governance forum.
+    \item \textbf{Snapshot vote}: 5 days voting period.
+    \item \textbf{Timelock}: 2 days before execution (allows exit).
+    \item \textbf{Execution}: Automatic on-chain execution.
+\end{enumerate}
+
+%----------------------------------------------------------------------
+\section{Revenue Model}
+\label{sec:revenue}
+
+\subsection{Revenue Sources}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lrl}
+\toprule
+\textbf{Source} & \textbf{Fee} & \textbf{Distribution} \\
+\midrule
+Inference API & 20\% of \AI{} spent & 40\% miners, 20\% stakers \\
+Fine-tuning jobs & Flat fee per epoch & 60\% miners, 15\% dev \\
+Model marketplace & 5\% of sale price & 40\% creator, 10\% burn \\
+Priority access & Monthly subscription & 50\% treasury, 50\% burn \\
+\bottomrule
+\end{tabular}
+\caption{Revenue sources and distribution.}
+\label{tab:revenue}
+\end{table}
+
+\subsection{Burn Mechanics}
+
+Multiple burn sinks reduce circulating supply:
+
+\begin{enumerate}
+    \item \textbf{Inference fee burn}: 10\% of \AI{} inference fees burned.
+    \item \textbf{Slash burn}: 50\% of slashed tokens burned.
+    \item \textbf{Model access burn}: Users burn \ZOO{} to access premium models.
+    \item \textbf{Transaction fee burn}: 20\% of on-chain transaction fees burned.
+\end{enumerate}
+
+%----------------------------------------------------------------------
+\section{Simulation}
+\label{sec:simulation}
+
+\subsection{Setup}
+
+We simulate 10{,}000 training epochs with $N = 100$ heterogeneous nodes:
+
+\begin{itemize}
+    \item Hardware distribution: 10\% H100, 20\% A100, 30\% RTX 4090, 40\% RTX 4080.
+    \item Stake distribution: Log-normal with $\mu = \ln(25{,}000)$, $\sigma = 0.8$.
+    \item Quality distribution: Beta(5, 2), modeling most nodes being good with some poor contributors.
+    \item Failure rate: 2\% per epoch (Poisson).
+\end{itemize}
+
+\subsection{Results}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lc}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Mean reward per node per epoch & 8.4 GYM \\
+Median reward & 7.1 GYM \\
+Gini coefficient (epoch 10{,}000) & 0.31 \\
+Total slashing events & 142 (1.42\%) \\
+Sybil attempts detected & 7 \\
+Deflationary crossover (epoch) & 4{,}800 ($\approx$ year 5) \\
+\bottomrule
+\end{tabular}
+\caption{Simulation results over 10{,}000 epochs.}
+\label{tab:simulation}
+\end{table}
+
+The Gini coefficient of 0.31 compares favorably to Bitcoin mining (Gini $\approx$ 0.87~\cite{srinivasan2017quantifying}).  The difference is attributable to the sublinear stake boost ($\log_2$) and the quality-weighted reward that prevents hardware dominance alone from determining earnings.
+
+\subsection{Sensitivity Analysis}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Parameter} & \textbf{Low} & \textbf{Default} & \textbf{High} \\
+\midrule
+Quality exponent $\alpha$ & 1.0 & 1.5 & 2.0 \\
+Gini at $\alpha$ & 0.38 & 0.31 & 0.27 \\
+\midrule
+Burn rate & 5\% & 10\% & 20\% \\
+Deflation crossover (yr) & 7.2 & 5.0 & 3.1 \\
+\midrule
+Spot-check rate & 5\% & 10\% & 20\% \\
+Poisoning detected (\%) & 41\% & 65\% & 88\% \\
+\bottomrule
+\end{tabular}
+\caption{Sensitivity analysis of key parameters.}
+\label{tab:sensitivity}
+\end{table}
+
+%----------------------------------------------------------------------
+\section{Related Work}
+
+\textbf{Compute token protocols.}  Render Network~\cite{render2020} rewards GPU providers for rendering but lacks training verification.  Akash~\cite{akash2020} provides a compute marketplace without quality scoring.  Bittensor~\cite{bittensor2023} uses inference scoring but does not coordinate training.
+
+\textbf{Proof-of-useful-work.}  Primecoin~\cite{king2013primecoin} mines prime chains; Gridcoin~\cite{gridcoin2014} credits BOINC compute.  Neither addresses ML training specifically.
+
+\textbf{Token bonding curves.}  Bancor~\cite{hertzog2017bancor} introduced automated market makers; our emission schedule is simpler (halving) but achieves similar deflationary dynamics.
+
+\textbf{Staking economics.}  Ethereum 2.0~\cite{buterin2020serenity} uses quadratic leak for inactivity.  Our progressive slashing is linear in offense count but quadratic in slash percentage, which is more aggressive against repeat offenders.
+
+%----------------------------------------------------------------------
+\section{Conclusion}
+
+The tokenomics of Zoo Gym align compute provider incentives with model quality through three mechanisms: (1) a reward function that superlinearly weights delta quality, making honest participation the dominant strategy; (2) staking with sublinear boost, preventing Sybil and stake concentration attacks; (3) progressive slashing with bounty rewards, creating a quality auditing market.  Simulation shows that the system reaches deflationary equilibrium by year 5 with moderate reward inequality (Gini 0.31), distributing value broadly across heterogeneous GPU providers.
+
+\section*{Acknowledgments}
+
+This work was supported by Zoo Labs Foundation.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{30}
+
+\bibitem{brown2020gpt3}
+T.~B.~Brown, B.~Mann, N.~Ryder, et al., ``Language Models are Few-Shot Learners,'' \textit{NeurIPS}, 2020.
+
+\bibitem{shao2024deepseekmath}
+Z.~Shao, P.~Wang, Q.~Zhu, et al., ``DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models,'' \textit{arXiv:2402.03300}, 2024.
+
+\bibitem{schulman2017proximal}
+J.~Schulman, F.~Wolski, P.~Dhariwal, A.~Radford, and O.~Klimov, ``Proximal Policy Optimization Algorithms,'' \textit{arXiv:1707.06347}, 2017.
+
+\bibitem{shazeer2017outrageously}
+N.~Shazeer et al., ``Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer,'' \textit{ICLR}, 2017.
+
+\bibitem{bittensor2023}
+Opentensor Foundation, ``Bittensor: A Peer-to-Peer Intelligence Market,'' Whitepaper, 2023.
+
+\bibitem{render2020}
+Render Network, ``Decentralized GPU Rendering,'' Whitepaper, 2020.
+
+\bibitem{akash2020}
+Akash Network, ``Decentralized Cloud Compute Marketplace,'' Whitepaper, 2020.
+
+\bibitem{king2013primecoin}
+S.~King, ``Primecoin: Cryptocurrency with Prime Number Proof-of-Work,'' 2013.
+
+\bibitem{gridcoin2014}
+Gridcoin, ``Rewarding BOINC Contributions with Blockchain,'' Whitepaper, 2014.
+
+\bibitem{hertzog2017bancor}
+E.~Hertzog, G.~Benartzi, and G.~Benartzi, ``Bancor Protocol: Continuous Liquidity for Cryptographic Tokens,'' 2017.
+
+\bibitem{buterin2020serenity}
+V.~Buterin et al., ``Ethereum 2.0 Beacon Chain Specification,'' 2020.
+
+\bibitem{srinivasan2017quantifying}
+B.~S.~Srinivasan, ``Quantifying Decentralization,'' 2017.
+
+\bibitem{mcmahan2017communication}
+H.~B.~McMahan et al., ``Communication-Efficient Learning of Deep Networks from Decentralized Data,'' \textit{AISTATS}, 2017.
+
+\bibitem{yin2018byzantine}
+D.~Yin, Y.~Chen, K.~Ramchandran, and P.~Bartlett, ``Byzantine-Robust Distributed Learning,'' \textit{ICML}, 2018.
+
+\bibitem{hu2021lora}
+E.~J.~Hu et al., ``LoRA: Low-Rank Adaptation of Large Language Models,'' \textit{ICLR}, 2022.
+
+\bibitem{touvron2023llama}
+H.~Touvron et al., ``LLaMA 2: Open Foundation and Fine-Tuned Chat Models,'' \textit{arXiv:2307.09288}, 2023.
+
+\bibitem{dettmers2023qlora}
+T.~Dettmers et al., ``QLoRA: Efficient Finetuning of Quantized Language Models,'' \textit{NeurIPS}, 2023.
+
+\bibitem{ipfs2014}
+J.~Benet, ``IPFS -- Content Addressed, Versioned, P2P File System,'' \textit{arXiv:1407.3561}, 2014.
+
+\bibitem{filecoin2017}
+Protocol Labs, ``Filecoin: A Decentralized Storage Network,'' Whitepaper, 2017.
+
+\bibitem{vonwerra2022trl}
+L.~von~Werra et al., ``TRL: Transformer Reinforcement Learning,'' \url{https://github.com/huggingface/trl}, 2022.
+
+\bibitem{ethereum2014}
+V.~Buterin, ``Ethereum: A Next-Generation Smart Contract Platform,'' Whitepaper, 2014.
+
+\bibitem{sergeev2018horovod}
+A.~Sergeev and M.~Del~Balso, ``Horovod: Fast and Easy Distributed Deep Learning in TensorFlow,'' \textit{arXiv:1802.05799}, 2018.
+
+\bibitem{patarasuk2009bandwidth}
+P.~Patarasuk and X.~Yuan, ``Bandwidth Optimal All-Reduce Algorithms for Clusters of Workstations,'' \textit{J. Parallel Distrib. Comput.}, 2009.
+
+\bibitem{unsloth2024}
+Unsloth, ``Unsloth: 2x Faster LLM Fine-Tuning,'' \url{https://github.com/unslothai/unsloth}, 2024.
+
+\bibitem{bernstein2012ed25519}
+D.~J.~Bernstein et al., ``High-Speed High-Security Signatures,'' \textit{J. Cryptographic Engineering}, 2012.
+
+\bibitem{qwen2024qwen25}
+J.~Bai et al., ``Qwen2.5 Technical Report,'' \textit{arXiv:2412.15115}, 2024.
+
+\bibitem{rafailov2023dpo}
+R.~Rafailov et al., ``Direct Preference Optimization,'' \textit{NeurIPS}, 2023.
+
+\bibitem{dao2023flashattention}
+T.~Dao, ``FlashAttention-2,'' \textit{arXiv:2307.08691}, 2023.
+
+\bibitem{gensyn2023}
+Gensyn, ``Gensyn Protocol: Trustless Training of Deep Neural Networks,'' Whitepaper, 2023.
+
+\bibitem{blanchard2017machine}
+P.~Blanchard et al., ``Machine Learning with Adversaries: Byzantine Tolerant Gradient Descent,'' \textit{NeurIPS}, 2017.
+
+\end{thebibliography}
+
+\end{document}

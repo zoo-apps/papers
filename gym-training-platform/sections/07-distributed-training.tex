@@ -1,0 +1,83 @@
+\section{Distributed Training}
+
+
+\subsection{Data Distributed Parallel (DDP)}
+
+DDP replicates model across GPUs, sharding data:
+
+\begin{verbatim}
+# Each GPU processes different batch
+for gpu_i in range(num_gpus):
+    batch_i = dataset[i * batch_size:(i+1) * batch_size]
+    loss_i = model(batch_i)
+    loss_i.backward()
+
+# Gradients synchronized via all-reduce
+all_reduce(gradients)
+optimizer.step()
+\end{verbatim}
+
+\textbf{Scaling Efficiency}:
+\begin{itemize}
+\item 2 GPUs: 1.9x throughput
+\item 4 GPUs: 3.7x throughput
+\item 8 GPUs: 7.2x throughput
+\end{itemize}
+
+\subsection{Fully Sharded Data Parallel (FSDP)}
+
+FSDP~\citep{zhao2023pytorch} shards model parameters, gradients, and optimizer states:
+
+\begin{verbatim}
+# Each GPU holds 1/N of model parameters
+model_shard = model.parameters()[rank::world_size]
+
+# Forward: gather parameters, compute, discard
+for layer in model:
+    all_gather(layer.parameters())
+    output = layer(input)
+    discard(layer.parameters())
+
+# Backward: gather, compute gradients, reduce, discard
+for layer in reversed(model):
+    all_gather(layer.parameters())
+    gradients = backward(layer)
+    reduce_scatter(gradients)
+    discard(layer.parameters())
+\end{verbatim}
+
+\textbf{Memory Savings}:
+\begin{equation}
+\text{Memory per GPU} = \frac{\text{Model Size}}{\text{Num GPUs}} + \text{Activations} + \text{Temp Buffers}
+\end{equation}
+
+Enables training 70B models on 8x 24GB GPUs.
+
+\subsection{DeepSpeed ZeRO}
+
+DeepSpeed~\citep{rasley2020deepspeed} offers three optimization stages:
+
+\begin{itemize}
+\item \textbf{ZeRO-1}: Shard optimizer states only (4x memory reduction)
+\item \textbf{ZeRO-2}: Shard optimizer + gradients (8x reduction)
+\item \textbf{ZeRO-3}: Shard optimizer + gradients + parameters (up to 64x reduction)
+\end{itemize}
+
+Additional features:
+\begin{itemize}
+\item CPU offloading (ZeRO-Infinity)
+\item NVMe offloading for 1T+ models
+\item Gradient compression
+\item Smart gradient accumulation
+\end{itemize}
+
+\textbf{Gym Integration}:
+\begin{verbatim}
+# Automatic DeepSpeed configuration
+gym train \
+  --model_name_or_path Qwen/Qwen3-72B \
+  --deepspeed ds_config_zero3.json \
+  --per_device_train_batch_size 1 \
+  --gradient_accumulation_steps 16
+\end{verbatim}
+

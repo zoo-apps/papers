@@ -1,0 +1,109 @@
+\section{Evaluation}
+
+
+\subsection{Datasets}
+
+We evaluate on GPS tracking data sourced from Movebank under data sharing agreements:
+
+\begin{table}[htbp]
+\centering
+\caption{Evaluation datasets.}
+\label{tab:eval_datasets}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Taxon} & \textbf{Individuals} & \textbf{Species} & \textbf{Locations} & \textbf{Duration} \\
+\midrule
+Large mammals & 842 & 38 & 12.4M & 2015--2025 \\
+Birds (migratory) & 1,247 & 64 & 28.7M & 2012--2025 \\
+Marine mammals & 418 & 22 & 8.9M & 2016--2025 \\
+Reptiles & 340 & 18 & 3.2M & 2018--2025 \\
+\midrule
+\textbf{Total} & \textbf{2,847} & \textbf{142} & \textbf{53.2M} & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Privacy-Utility Tradeoff}
+
+\begin{table}[htbp]
+\centering
+\caption{Movement metric accuracy (\% error) under different privacy tiers.}
+\label{tab:privacy_utility}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Tier} & \textbf{Step Length} & \textbf{Turn Angle} & \textbf{Home Range} & \textbf{Migration} & \textbf{Mean} \\
+\midrule
+Open ($k$=3, 1km) & 1.2 & 0.8 & 2.1 & 0.9 & 1.3 \\
+Standard ($k$=10, 5km) & 3.4 & 2.1 & 5.8 & 2.7 & 3.5 \\
+High ($k$=20, 20km) & 7.8 & 4.6 & 12.4 & 5.1 & 7.5 \\
+Critical ($k$=50, 50km) & 14.2 & 9.3 & 23.7 & 8.6 & 14.0 \\
+\midrule
+\WildTrack{} (adaptive) & 3.8 & 2.4 & 6.9 & 3.1 & \textbf{4.1} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The adaptive mode dynamically selects the minimum cloaking level needed to achieve the required $k$-anonymity given local habitat heterogeneity, achieving better metric preservation than fixed-radius approaches.
+
+\subsection{Poaching Risk Reduction}
+
+We simulate poaching risk by measuring the probability that an adversary with access to cloaked data can predict an animal's location within a lethal encounter radius $r_{\text{kill}}$ (defined as 500m for rifle-based poaching):
+
+\begin{table}[htbp]
+\centering
+\caption{Poaching risk: probability of locating target within 500m.}
+\label{tab:poach_risk}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Data Access} & \textbf{Rhino} & \textbf{Elephant} & \textbf{Tiger} \\
+\midrule
+Full (no protection) & 0.87 & 0.82 & 0.79 \\
+Temporal delay only & 0.31 & 0.28 & 0.35 \\
+Spatial cloaking only & 0.09 & 0.11 & 0.08 \\
+\WildTrack{} (full) & 0.04 & 0.06 & 0.05 \\
+\midrule
+Risk reduction & 95.4\% & 92.7\% & 93.7\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\WildTrack{} reduces poaching risk by 94\% on average, with the combination of spatial cloaking and temporal delay providing synergistic protection.
+
+\subsection{Zero-Knowledge Proof Performance}
+
+\begin{table}[htbp]
+\centering
+\caption{ZK proof generation and verification times.}
+\label{tab:zk_perf}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Statistic} & \textbf{Circuit Size} & \textbf{Prove (s)} & \textbf{Verify (ms)} & \textbf{Proof Size (KB)} \\
+\midrule
+Mean step length & 12,400 & 2.8 & 4.2 & 0.3 \\
+Home range area & 48,200 & 11.4 & 4.8 & 0.3 \\
+Migration distance & 8,600 & 1.9 & 3.9 & 0.3 \\
+Spatial overlap & 92,100 & 24.7 & 5.1 & 0.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All proofs verify in under 6ms, enabling efficient on-chain verification. Proof generation is the bottleneck but occurs off-chain and is a one-time cost per statistic.
+
+\subsection{Network Performance}
+
+\begin{table}[htbp]
+\centering
+\caption{Decentralized network performance metrics.}
+\label{tab:network}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Metric} & \textbf{10 Nodes} & \textbf{50 Nodes} & \textbf{100 Nodes} & \textbf{200 Nodes} \\
+\midrule
+Registration latency (ms) & 120 & 180 & 240 & 310 \\
+Access grant latency (ms) & 85 & 140 & 190 & 260 \\
+Query throughput (q/s) & 420 & 380 & 340 & 290 \\
+Storage overhead (\%) & 2.1 & 3.4 & 4.8 & 6.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+

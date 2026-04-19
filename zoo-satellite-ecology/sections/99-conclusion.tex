@@ -1,0 +1,172 @@
+\section{Conclusion}
+
+\label{sec:conclusion}
+
+We have presented ZooSat, a deep learning pipeline for continuous satellite-based ecological monitoring.
+The Temporal Siamese Network achieves 94.2\% change detection accuracy and 87.8\% change type classification by leveraging temporal sequence modeling to suppress phenological and atmospheric confounders.
+The Habitat Fragmentation Index provides a real-time, field-validated measure of habitat connectivity degradation ($r = 0.87$ with species richness change).
+The Conservation Alert System delivers priority-ranked alerts 11.2 days faster than existing global monitoring systems.
+
+An 18-month operational deployment across 47 protected areas in 14 countries generated 12,847 alerts (89.3\% true positive rate), supported 47 enforcement actions, and contributed to an estimated 4,200 hectares of prevented forest loss.
+ZooSat demonstrates that deep learning applied to freely available Sentinel-2 imagery can provide conservation-grade ecological monitoring at a cost of \$0.003 per km$^2$ per month.
+
+The system is deployed as open infrastructure on the Zoo Network and specified as Zoo Improvement Proposal ZIP-010.
+Future work will extend the pipeline to incorporate radar imagery (Sentinel-1) for all-weather detection, integrate species distribution models for species-specific fragmentation assessment, and develop predictive models that forecast future deforestation fronts based on spatial and temporal patterns.
+
+% ============================================================
+% References
+% ============================================================
+\begin{thebibliography}{30}
+
+\bibitem[Bandara and Patel(2022)]{bandara2022transformer}
+Bandara, W.~G.~C. and Patel, V.~M. (2022).
+\newblock A transformer-based Siamese network for change detection.
+\newblock {\em Proceedings of IGARSS}, pages 207--210.
+
+\bibitem[Brancalion et~al.(2020)]{brancalion2020global}
+Brancalion, P.~H.~S., Niamir, A., Broadbent, E., et~al. (2020).
+\newblock Global restoration opportunities in tropical rainforest landscapes.
+\newblock {\em Science Advances}, 5(7):eaav3223.
+
+\bibitem[Chen et~al.(2022)]{chen2022remote}
+Chen, H., Qi, Z., and Shi, Z. (2022).
+\newblock Remote sensing image change detection with transformers.
+\newblock {\em IEEE Transactions on Geoscience and Remote Sensing}, 60:1--14.
+
+\bibitem[Chen et~al.(2020)]{chen2020spatial}
+Chen, H., Wu, C., Du, B., et~al. (2020).
+\newblock Spatial-temporal attention-based method and a new dataset for remote sensing image change detection.
+\newblock {\em Remote Sensing}, 12(10):1662.
+
+\bibitem[Daudt et~al.(2018)]{daudt2018fully}
+Daudt, R.~C., Le~Saux, B., and Boulch, A. (2018).
+\newblock Fully convolutional Siamese networks for change detection.
+\newblock {\em Proceedings of ICIP}, pages 4063--4067.
+
+\bibitem[Drusch et~al.(2012)]{drusch2012sentinel}
+Drusch, M., Del~Bello, U., Carlier, S., et~al. (2012).
+\newblock Sentinel-2: ESA's optical high-resolution mission for GMES operational services.
+\newblock {\em Remote Sensing of Environment}, 120:25--36.
+
+\bibitem[Fahrig(2017)]{fahrig2017ecological}
+Fahrig, L. (2017).
+\newblock Ecological responses to habitat fragmentation per se.
+\newblock {\em Annual Review of Ecology, Evolution, and Systematics}, 48:1--23.
+
+\bibitem[FAO(2020)]{fao2020global}
+FAO (2020).
+\newblock {\em Global Forest Resources Assessment 2020: Main Report}.
+\newblock Food and Agriculture Organization of the United Nations, Rome.
+
+\bibitem[Finer et~al.(2018)]{finer2018combating}
+Finer, M., Novoa, S., Weisse, M.~J., et~al. (2018).
+\newblock Combating deforestation: From satellite to intervention.
+\newblock {\em Science}, 360(6395):1303--1305.
+
+\bibitem[Giglio et~al.(2016)]{giglio2016active}
+Giglio, L., Schroeder, W., and Justice, C.~O. (2016).
+\newblock The collection 6 MODIS active fire detection algorithm and fire products.
+\newblock {\em Remote Sensing of Environment}, 178:31--41.
+
+\bibitem[Haddad et~al.(2015)]{haddad2015habitat}
+Haddad, N.~M., Brudvig, L.~A., Clobert, J., et~al. (2015).
+\newblock Habitat fragmentation and its lasting impact on Earth's ecosystems.
+\newblock {\em Science Advances}, 1(2):e1500052.
+
+\bibitem[Hansen et~al.(2013)]{hansen2013high}
+Hansen, M.~C., Potapov, P.~V., Moore, R., et~al. (2013).
+\newblock High-resolution global maps of 21st-century forest cover change.
+\newblock {\em Science}, 342(6160):850--853.
+
+\bibitem[Hansen et~al.(2016)]{hansen2016humid}
+Hansen, M.~C., Krylov, A., Tyukavina, A., et~al. (2016).
+\newblock Humid tropical forest disturbance alerts using Landsat data.
+\newblock {\em Environmental Research Letters}, 11(3):034008.
+
+\bibitem[Maretto et~al.(2020)]{maretto2020spatio}
+Maretto, R.~V., Fonseca, L.~M.~G., and Jacobs, N. (2020).
+\newblock Spatio-temporal deep learning approach for land use change detection.
+\newblock {\em IEEE Journal of Selected Topics in Applied Earth Observations}, 14:7297--7309.
+
+\bibitem[Maxwell et~al.(2016)]{maxwell2016biodiversity}
+Maxwell, S.~L., Fuller, R.~A., Brooks, T.~M., and Watson, J.~E.~M. (2016).
+\newblock Biodiversity: The ravages of guns, nets and bulldozers.
+\newblock {\em Nature}, 536(7615):143--145.
+
+\bibitem[McGarigal(2012)]{mcgarigal2012fragstats}
+McGarigal, K. (2012).
+\newblock FRAGSTATS v4: Spatial pattern analysis program for categorical and continuous maps.
+\newblock {\em University of Massachusetts, Amherst}.
+
+\bibitem[Ortega et~al.(2021)]{ortega2021near}
+Ortega~Adarme, M., Queiroz~Feitosa, R., and Achanccaray, P. (2021).
+\newblock Near real-time deforestation detection using SAR.
+\newblock {\em Remote Sensing}, 13(13):2587.
+
+\bibitem[Planet(2020)]{planet2020nicfi}
+Planet (2020).
+\newblock NICFI Satellite Data Program: Planet basemaps for tropical forest monitoring.
+\newblock {\em Norway's International Climate and Forests Initiative}.
+
+\bibitem[Redford(2003)]{redford2003empty}
+Redford, K.~H. (2003).
+\newblock The empty forest.
+\newblock {\em BioScience}, 42(6):412--422.
+
+\bibitem[Saura and Pascual-Hortal(2007)]{saura2007new}
+Saura, S. and Pascual-Hortal, L. (2007).
+\newblock A new habitat availability index to integrate connectivity in landscape conservation planning.
+\newblock {\em Landscape Ecology}, 22:1215--1229.
+
+\bibitem[Singh(1989)]{singh1989review}
+Singh, A. (1989).
+\newblock Review article: Digital change detection techniques using remotely-sensed data.
+\newblock {\em International Journal of Remote Sensing}, 10(6):989--1003.
+
+\bibitem[Vogt et~al.(2007)]{vogt2007mapping}
+Vogt, P., Riitters, K.~H., Estreguil, C., et~al. (2007).
+\newblock Mapping spatial patterns with morphological image processing.
+\newblock {\em Landscape Ecology}, 22:171--177.
+
+\bibitem[Watson et~al.(2018)]{watson2018decline}
+Watson, J.~E.~M., Evans, T., Venter, O., et~al. (2018).
+\newblock The exceptional value of intact forest ecosystems.
+\newblock {\em Nature Ecology \& Evolution}, 2:599--610.
+
+\bibitem[Wulder et~al.(2019)]{wulder2019current}
+Wulder, M.~A., Loveland, T.~R., and Roy, D.~P. (2019).
+\newblock Current status of Landsat program, science, and applications.
+\newblock {\em Remote Sensing of Environment}, 225:127--147.
+
+\bibitem[Yuan et~al.(2021)]{yuan2021deep}
+Yuan, X., Shi, J., and Gu, L. (2021).
+\newblock A review of deep learning methods for semantic segmentation of remote sensing imagery.
+\newblock {\em Expert Systems with Applications}, 169:114417.
+
+\bibitem[Zheng et~al.(2021)]{zheng2021change}
+Zheng, Z., Ma, A., Zhang, L., and Zhong, Y. (2021).
+\newblock Change is everywhere: Single-temporal supervised object change detection in remote sensing imagery.
+\newblock {\em Proceedings of ICCV}, pages 15193--15202.
+
+\bibitem[Zhu(2017)]{zhu2017change}
+Zhu, Z. (2017).
+\newblock Change detection using Landsat time series: A review of frequencies, preprocessing, algorithms, and applications.
+\newblock {\em ISPRS Journal of Photogrammetry and Remote Sensing}, 130:370--384.
+
+\bibitem[Antje Worring, Zach Kelling(2025)]{zoo2025network}
+Antje Worring, Zach Kelling (2025).
+\newblock Zoo Network Architecture: A decentralized infrastructure for open science.
+\newblock {\em Zoo Technical Report ZTR-001}.
+
+\bibitem[Antje Worring, Zach Kelling(2026a)]{zoo2026datacommons}
+Antje Worring, Zach Kelling (2026a).
+\newblock Zoo Data Commons: A decentralized repository for open biodiversity datasets.
+\newblock {\em Zoo Improvement Proposal ZIP-009}.
+
+\bibitem[Antje Worring, Zach Kelling(2026b)]{zoo2026coord}
+Antje Worring, Zach Kelling (2026b).
+\newblock Decentralized Research Coordination: Federated experiment management for DeSci.
+\newblock {\em Zoo Improvement Proposal ZIP-008}.
+
+\end{thebibliography}
+

@@ -1,0 +1,47 @@
+\section{Migration Path}
+\label{sec:migration}
+%% ============================================================
+
+\Beluga{} follows a phased deployment from smart contracts on \Zoo{} to a sovereign L3.
+
+\subsection{Phase 1: Contracts on Zoo (Months 1--3)}
+
+Deploy \texttt{ModelRegistry.sol}, \texttt{TrainingBounty.sol}, and \texttt{InferenceRewards.sol} as standard EVM contracts on Zoo Network (chain ID 200200). In this phase:
+
+\begin{itemize}[nosep]
+    \item \BLG{} is an ERC-20 token on Zoo, not a native gas token.
+    \item Inference pricing is computed off-chain and submitted as oracle updates.
+    \item Training verification uses a trusted committee multisig.
+    \item All gas is paid in ZOO.
+\end{itemize}
+
+This phase validates the contract logic, builds initial user base, and establishes token distribution.
+
+\subsection{Phase 2: Subnet Registration (Month 4)}
+
+Register \Beluga{} as a Zoo subnet via the P-Chain:
+
+\begin{enumerate}[nosep]
+    \item Create subnet with the Zoo validator set as the initial validators.
+    \item Deploy \Beluga{} genesis block with chain ID 420420 and \BLG{} as native token.
+    \item Migrate ERC-20 \BLG{} holders to native \BLG{} via a one-way bridge contract.
+    \item Activate the \texttt{0x03xx} precompiles in the genesis configuration.
+\end{enumerate}
+
+\subsection{Phase 3: Sovereign L3 (Month 5+)}
+
+Full L3 operation with:
+
+\begin{itemize}[nosep]
+    \item Native \BLG{} gas token for all transactions.
+    \item Precompile-accelerated inference pricing and attestation verification.
+    \item Independent block production with Zoo-checkpointed finality.
+    \item Teleport bridge for BLG/ZOO transfers.
+    \item \PoAI{} verification committee for training and inference validation.
+\end{itemize}
+
+\subsection{Backwards Compatibility}
+
+The Phase 1 contracts on Zoo remain operational as a ``light client'' interface. Users who prefer to interact with \Beluga{} through Zoo can do so via cross-chain calls, paying a small relay fee. The \texttt{ModelRegistry} on Zoo acts as a read-only mirror of the \Beluga{} state, updated via Warp messages every 100 blocks.
+
+%% ============================================================

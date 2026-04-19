@@ -1,0 +1,33 @@
+\section{Background and Motivation}
+
+
+\subsection{The Accessibility Crisis in AI}
+
+Modern LLMs achieve remarkable capabilities but require enormous resources. GPT-3's 175B parameters cost an estimated \$4.6M to train~\citep{brown2020gpt3}. While parameter-efficient methods like LoRA reduce costs, fine-tuning a 7B model still requires \$500-2000 depending on dataset size and hardware access~\citep{hu2021lora}. For researchers in developing countries where GPU hours cost 2-5x more due to limited infrastructure, or students without institutional clusters, these costs are prohibitive.
+
+Beyond monetary barriers, technical complexity compounds inaccessibility. Training LLMs requires expertise in distributed systems, mixed-precision training, gradient accumulation, learning rate scheduling, and architecture-specific optimizations. Documentation is often scattered across research papers, GitHub issues, and tribal knowledge. This complexity tax disproportionately affects newcomers and resource-constrained teams.
+
+\subsection{Existing Solutions and Limitations}
+
+Several projects address AI training accessibility:
+
+\begin{itemize}
+\item \textbf{Axolotl}~\citep{axolotl2024}: YAML-configured training with broad model support. Strong community but limited GUI, complex debugging.
+\item \textbf{llama-recipes}~\citep{meta2024llamarecipes}: Official Meta scripts for LLaMA models. Excellent for LLaMA family but not extensible to other architectures.
+\item \textbf{Hugging Face TRL}~\citep{vonwerra2022trl}: Low-level library for RLHF. Requires substantial coding, steep learning curve.
+\item \textbf{Ludwig}~\citep{molino2019ludwig}: Declarative ML framework. General-purpose but less optimized for LLMs specifically.
+\end{itemize}
+
+These tools excel in their domains but lack comprehensive coverage of the full training lifecycle: data preprocessing, multi-modal handling, quantization, distributed training, evaluation, and deployment. Gym unifies these components into a cohesive platform.
+
+\subsection{Philosophical Foundation}
+
+As a 501(c)(3) non-profit project under Zoo Labs Foundation, Gym operates on principles distinct from commercial offerings:
+
+\begin{enumerate}
+\item \textbf{Zero Vendor Lock-In}: All code Apache 2.0 licensed, models stored in standard Hugging Face format.
+\item \textbf{Education First}: Documentation prioritizes learning over marketing, includes pedagogical explanations.
+\item \textbf{Radical Transparency}: All development happens publicly on GitHub with open RFC process for major features.
+\item \textbf{Global Accessibility}: Interface translations in 10+ languages, optimized for low-bandwidth environments.
+\end{enumerate}
+

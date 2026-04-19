@@ -1,0 +1,55 @@
+\section{Platform Economics}
+
+\label{sec:economics}
+%----------------------------------------------------------------------
+
+\subsection{Revenue Flows}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Activity} & \textbf{Revenue} & \textbf{Recipient} \\
+\midrule
+Data contribution (per usage receipt) & 100 $\KEEPER$ & Data contributor \\
+Peer review (per review) & 500K $\KEEPER$ & Reviewer \\
+AI inference (per query) & 500 $\KEEPER$ & Validator network \\
+Capsule storage (per GB/month) & 10K $\KEEPER$ & Validator network \\
+Formal verification bounty & Variable & Formalizer \\
+\bottomrule
+\end{tabular}
+\caption{DeSci platform revenue flows}
+\label{tab:revenue}
+\end{table}
+
+\subsection{Sustainability Model}
+
+The DeSci platform is funded by the \DAO{} treasury (1T $\KEEPER$ allocated at genesis \cite{zoo-tokenomics}). Sustainability depends on:
+
+\begin{enumerate}
+    \item \textbf{Network Effects.} More data in the Commons attracts more researchers, who contribute more data.
+    \item \textbf{Usage Fees.} AI inference and storage fees generate ongoing revenue for validators.
+    \item \textbf{External Funding.} Institutional partners (universities, governments, NGOs) contribute $\KEEPER$ to fund research in their domains.
+    \item \textbf{Impact Bonds.} Conservation outcomes trigger bond payouts, recycling capital back into the research pipeline.
+\end{enumerate}
+
+\subsection{Cost Comparison}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Activity} & \textbf{Traditional Cost} & \textbf{Zoo Cost} \\
+\midrule
+Grant application & 200+ person-hours & 10 person-hours \\
+Peer review cycle & 6--12 months & 21 days \\
+Data hosting (per TB/year) & \$500--2,000 & 120M $\KEEPER$ ($\sim$\$240) \\
+Reproducibility verification & Weeks (manual) & Minutes (automated) \\
+Cross-institution collaboration & Legal agreements & \DID{} capability tokens \\
+\bottomrule
+\end{tabular}
+\caption{Cost comparison: traditional vs.\ \Zoo{} DeSci infrastructure}
+\label{tab:cost_comparison}
+\end{table}
+
+%----------------------------------------------------------------------

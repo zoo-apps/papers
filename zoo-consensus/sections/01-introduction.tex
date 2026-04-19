@@ -1,0 +1,19 @@
+\section{Introduction}
+
+
+\subsection{Consensus in the Post-Quantum Era}
+
+Modern blockchain consensus protocols rely on elliptic curve cryptography for validator authentication and vote aggregation. The advent of cryptographically relevant quantum computers threatens these foundations: Shor's algorithm breaks ECDSA and BLS in polynomial time \cite{shor1997polynomial}. Networks that rely exclusively on classical signatures face existential risk.
+
+The standard mitigation---replacing classical signatures with post-quantum alternatives---introduces significant performance penalties. Lattice-based signatures are 10--100x larger than their classical counterparts, and verification is 3--10x slower per operation \cite{nist2024pqc}. A naive replacement would degrade consensus throughput below usable thresholds.
+
+\subsection{The Quasar Approach}
+
+\Quasar{} resolves this tension through \textbf{hybrid dual-path consensus}: classical BLS12-381 signatures handle the performance-critical fast path, while \Ringtail{} post-quantum threshold signatures provide quantum-resistant finality on a parallel path. A block is finalized only when both paths agree, ensuring security against both classical and quantum adversaries simultaneously.
+
+This design was first implemented in the \Lux{} L0 blockchain \cite{lux-quasar-consensus} and inherited by Zoo Network as its L2 consensus layer. Zoo extends \Quasar{} with GPU-accelerated batch verification optimized for AI workloads that already require GPU infrastructure.
+
+\subsection{Contributions}
+
+We contribute: (1)~formal \Quasar{} dual-path specification with parallel BLS and \Ringtail{} verification; (2)~GPU batch BLS12-381 verification achieving 10x speedup; (3)~memory-efficient validator state at 1.3\,MB per 1,000 validators; (4)~Lean~4 formal proofs of safety, liveness, and batch correctness; (5)~empirical evaluation on Zoo testnet with up to 2,000 validators.
+

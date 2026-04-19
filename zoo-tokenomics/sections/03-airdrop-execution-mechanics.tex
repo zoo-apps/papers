@@ -1,0 +1,122 @@
+\section{Airdrop Execution Mechanics}
+
+
+\subsection{Pre-Airdrop Preparation}
+
+Zoo Labs Foundation spent 18 months (March 2024 - September 2025) preparing for fair distribution:
+
+\begin{enumerate}
+\item \textbf{Contribution Tracking System}: Built transparent on-chain record of:
+    \begin{itemize}
+    \item GitHub commits (code contributions)
+    \item Dataset uploads (data contributions)
+    \item Feedback submissions (UX improvements)
+    \item Community forum participation (engagement)
+    \item Referrals (growth contributions)
+    \end{itemize}
+
+\item \textbf{Sybil Resistance Mechanisms}:
+    \begin{itemize}
+    \item Multi-factor identity verification (GitHub, Ethereum address, email, Discord)
+    \item Minimum contribution thresholds (1 dataset upload OR 5 commits OR 50 forum posts)
+    \item Anti-bot CAPTCHAs for critical actions
+    \item Social graph analysis (isolated accounts flagged for manual review)
+    \end{itemize}
+
+\item \textbf{Community Education Campaign}:
+    \begin{itemize}
+    \item 20+ educational webinars on tokenomics
+    \item Documentation in 15 languages
+    \item "How to Contribute" guides and tutorials
+    \item Transparent scoring dashboard (users saw allocation estimates pre-airdrop)
+    \end{itemize}
+
+\item \textbf{Legal Compliance}:
+    \begin{itemize}
+    \item 501(c)(3) legal review ensuring airdrop = educational/charitable distribution
+    \item OFAC sanctions compliance (blocked regions excluded)
+    \item Anti-money laundering checks
+    \item No sale characterization (tokens distributed for free)
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Snapshot and Scoring Algorithm}
+
+On August 15, 2025 (00:00 UTC), Zoo took a snapshot of all contribution data. The scoring algorithm proceeded in four stages:
+
+\subsubsection{Stage 1: Raw Contribution Scores}
+
+For each participant $i$:
+
+\begin{align}
+E_i^{\text{raw}} &= \log(1 + \text{days\_active}_i) \times \text{activity\_frequency}_i \\
+D_i^{\text{raw}} &= \sum_{j} q_j \times v_j \quad \text{(dataset quality $q$ × volume $v$)} \\
+C_i^{\text{raw}} &= \sum_{k} l_k \times r_k \quad \text{(lines of code $l$ × review score $r$)} \\
+R_i^{\text{raw}} &= \sqrt{\text{valid\_referrals}_i} \quad \text{(sub-linear to discourage spam)}
+\end{align}
+
+\subsubsection{Stage 2: Normalization}
+
+Normalize each category to [0, 1]:
+
+\begin{equation}
+E_i = \frac{E_i^{\text{raw}} - \min(E^{\text{raw}})}{\max(E^{\text{raw}}) - \min(E^{\text{raw}})}
+\end{equation}
+
+(Similarly for $D_i$, $C_i$, $R_i$)
+
+\subsubsection{Stage 3: Weighted Composite Score}
+
+\begin{equation}
+S_i = 0.30 E_i + 0.40 D_i + 0.20 C_i + 0.10 R_i
+\end{equation}
+
+\subsubsection{Stage 4: Token Allocation}
+
+Apply power-law curve to prevent extreme concentration:
+
+\begin{equation}
+A_i = \left( \frac{S_i}{\sum_{j} S_j} \right)^{0.7} \times 10^{12}
+\end{equation}
+
+The exponent 0.7 < 1 compresses the distribution, ensuring even low-scoring participants receive meaningful allocations.
+
+\subsection{Airdrop Claim Process}
+
+Zoo implemented a \textbf{pull-based claim system} rather than push distribution:
+
+\begin{enumerate}
+\item \textbf{Merkle Tree Publication} (Sept 1, 2025): Root hash published on-chain with IPFS backup
+\item \textbf{Claim Portal Launch} (Sept 7, 2025): Web interface + CLI tool for claiming
+\item \textbf{Claim Period}: 90 days (Sept 7 - Dec 5, 2025)
+\item \textbf{Unclaimed Tokens}: Returned to DAO treasury after deadline
+\end{enumerate}
+
+\textbf{Rationale:} Pull-based claiming:
+\begin{itemize}
+\item Reduces gas costs (users pay own fees)
+\item Proves ownership (claims require signature)
+\item Filters disengaged recipients (unclaimed tokens recycled)
+\item Enables gradual network load (avoids day-1 congestion)
+\end{itemize}
+
+As of October 28, 2025:
+\begin{itemize}
+\item 72\% of eligible tokens claimed (720B $\KEEPER$)
+\item 87,341 total eligible → 62,885 claimed (72\% claim rate)
+\item Remaining: 28 days until deadline
+\item Expected final claim rate: 85-90\%
+\end{itemize}
+
+\subsection{Anti-Sybil Effectiveness}
+
+Post-airdrop analysis revealed:
+\begin{itemize}
+\item 2,847 accounts flagged as potential Sybils (3.3\%)
+\item Manual review: 412 confirmed Sybils (0.5\% of total)
+\item Tokens reallocated: 4.2B $\KEEPER$ returned to treasury
+\item False positive rate: 0.1\% (independent appeals board)
+\end{itemize}
+
+This demonstrates that multi-factor verification successfully prevented large-scale gaming while maintaining fairness.
+

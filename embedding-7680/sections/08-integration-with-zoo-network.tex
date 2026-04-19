@@ -1,0 +1,31 @@
+\section{Integration with Zoo Network}
+
+
+\subsection{DSO Experience Retrieval}
+
+Zen Reranker serves as the canonical embedding model for Zoo Network's \DSO{} infrastructure:
+
+\begin{lstlisting}[language=Python,basicstyle=\ttfamily\small]
+from zen_reranker import ZenReranker
+
+model = ZenReranker.from_pretrained("zenlm/zen-reranker-8b")
+
+# Embed experience for storage
+experience = "When debugging memory leaks in Python..."
+embedding = model.encode(experience)  # 7680-dim
+compressed = bitdelta_compress(embedding)  # 964 bytes
+
+# Retrieve similar experiences
+query = "How to find memory issues?"
+query_emb = model.encode(query)
+similar = index.search(query_emb, k=5)
+\end{lstlisting}
+
+\subsection{Byzantine-Robust Aggregation}
+
+The 7680-dim space enables efficient median computation for Byzantine-robust experience selection:
+
+\begin{equation}
+e_{\text{selected}} = \arg\min_{e \in E} \sum_{i} \|\phi(e) - \phi(e_i)\|_2
+\end{equation}
+

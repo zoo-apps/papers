@@ -1,0 +1,59 @@
+\section{AI-Assisted Research}
+
+\label{sec:ai}
+%----------------------------------------------------------------------
+
+\subsection{A-Chain Inference for Research}
+
+\Zoo{} \AChain{} provides AI inference as a network service. For DeSci, this enables:
+
+\subsubsection{Automated Literature Review}
+
+A researcher submits a topic query to \AChain{}. The inference engine:
+
+\begin{enumerate}
+    \item Searches the Data Commons for relevant capsules (using embeddings stored on-chain).
+    \item Retrieves and summarizes relevant findings from public Research Capsules.
+    \item Generates a structured literature review with proper citations (linked to on-chain capsule IDs).
+    \item Identifies gaps: topics with high query volume but few capsules.
+\end{enumerate}
+
+Cost: 500 $\KEEPER$ per literature review (inference credits).
+
+\subsubsection{Hypothesis Generation}
+
+Given a dataset and a research question, \AChain{} inference can:
+
+\begin{enumerate}
+    \item Analyze the dataset's statistical properties.
+    \item Cross-reference with existing findings in the Data Commons.
+    \item Propose testable hypotheses ranked by novelty and feasibility.
+    \item Pre-register proposed hypotheses on \IChain{} (timestamped before experimentation).
+\end{enumerate}
+
+\subsubsection{Automated Statistical Analysis}
+
+\AChain{} provides standardized statistical analysis pipelines:
+
+\begin{itemize}
+    \item Power analysis for sample size determination.
+    \item Appropriate test selection based on data distribution and research design.
+    \item Multiple comparison correction (Bonferroni, FDR).
+    \item Effect size estimation with confidence intervals.
+    \item Automated reporting in standardized format.
+\end{itemize}
+
+\subsection{Privacy-Preserving AI Analysis}
+
+For sensitive data (medical records, endangered species locations), AI analysis runs on encrypted data via \CKKS{} on \AChain{} \cite{zoo-fhe}:
+
+\begin{enumerate}
+    \item The researcher encrypts the dataset under the collective \FHE{} key.
+    \item \AChain{} runs the analysis model on encrypted inputs.
+    \item Results are returned encrypted; only the researcher can decrypt.
+    \item The analysis trace (encrypted) is anchored on \IChain{} for reproducibility.
+\end{enumerate}
+
+This enables AI-assisted analysis of sensitive data without the AI model (or its operators) ever observing the plaintext.
+
+%----------------------------------------------------------------------

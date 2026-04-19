@@ -1,0 +1,92 @@
+\section{Introduction}
+
+\label{sec:introduction}
+% ══════════════════════════════════════════════════════════════════════════════
+
+Biodiversity monitoring at global scales requires automated species
+identification systems capable of operating across the full breadth of
+taxonomic diversity \citep{christin2019applications}. Camera traps,
+acoustic sensors, citizen science platforms, and environmental DNA (eDNA)
+sampling generate petabytes of observational data annually, far exceeding
+manual identification capacity \citep{steenweg2017scaling}.
+
+Deep learning has revolutionized image-based species identification, with
+convolutional neural networks achieving expert-level performance on
+well-studied taxa such as birds \citep{van2015building}, plants
+\citep{goeau2022overview}, and mammals \citep{norouzzadeh2018automatically}.
+However, these successes depend on large labeled training datasets---a
+critical limitation given that:
+
+\begin{enumerate}[label=(\roman*)]
+  \item The majority of species have fewer than 50 available images in
+    public databases \citep{lorieul2022overview}.
+  \item Newly discovered species (approximately 18{,}000 per year
+    \citep{costello2013can}) have no training data at all.
+  \item Rare and cryptic species---often those of greatest conservation
+    concern---are systematically underrepresented in image databases.
+  \item Intraspecific visual variation (sexual dimorphism, juvenile
+    plumage, seasonal morphs) multiplies the effective number of
+    required examples.
+\end{enumerate}
+
+Few-shot learning addresses this data scarcity by training models to
+recognize novel classes from very few examples
+\citep{wang2020generalizing}. While few-shot methods have advanced
+rapidly in computer vision, their application to ecological species
+identification introduces unique challenges:
+
+\begin{itemize}
+  \item \textbf{Fine-grained discrimination}: Species within the same
+    genus can differ by subtle visual features (wing venation, petal
+    shape, scale patterns) that require high-resolution feature
+    extraction.
+  \item \textbf{High inter-class similarity}: Closely related species
+    form dense clusters in feature space, making prototype-based
+    methods fragile.
+  \item \textbf{Domain shift}: Training images from curated databases
+    differ substantially from field photos taken by citizen scientists
+    under variable conditions.
+  \item \textbf{Hierarchical structure}: Biological taxonomy provides a
+    natural hierarchy that standard few-shot methods ignore.
+\end{itemize}
+
+\subsection{Contributions}
+
+We introduce \textbf{TaxoNet}, a few-shot species recognition system
+with the following contributions:
+
+\begin{enumerate}
+  \item A \textbf{taxonomy-aware prototypical network} that constructs
+    multi-rank prototypes (family, genus, species) and fuses them
+    through learned attention, enabling few-shot identification to
+    leverage phylogenetic structure.
+
+  \item A \textbf{hierarchical meta-learning} training strategy with
+    taxonomic episode sampling that ensures the model learns
+    discriminative features at every rank.
+
+  \item A \textbf{domain-adaptive pre-training} pipeline using 28
+    million ecological images from iNaturalist, GBIF, and museum
+    collections.
+
+  \item Integration with \textbf{geographic and phenological priors}
+    that improve practical field identification accuracy by
+    constraining the candidate species set.
+
+  \item Comprehensive evaluation across \textbf{four major taxonomic
+    groups} (birds, insects, plants, marine organisms) with separate
+    validation on \textbf{citizen science field data}.
+\end{enumerate}
+
+\subsection{Antje Worring, Zach Kelling Context}
+
+This work supports Antje Worring, Zach Kelling's mission of open, decentralized
+science infrastructure. TaxoNet is designed for deployment on the Zoo
+citizen science platform and integrates with the Foundation's
+decentralized data pipelines. Model weights and training code are
+released under the Apache 2.0 license, and the evaluation benchmark
+is maintained as a community resource through the Zoo Open Science
+Network at \texttt{zips.zoo.ngo}.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

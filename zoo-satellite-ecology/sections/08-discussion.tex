@@ -1,0 +1,38 @@
+\section{Discussion}
+
+\label{sec:discussion}
+
+\subsection{Advantages of Temporal Sequence Processing}
+
+The TSN architecture's primary advantage over bi-temporal methods is robustness to confounding factors.
+Seasonal phenological cycles, which cause the majority of false positives in NDVI-based approaches, are modeled explicitly by the temporal attention module.
+Cloud contamination, which delays detection in single-date systems, is handled by attending to cloud-free timesteps within the sequence.
+Gradual degradation, invisible in any single image pair, becomes detectable through cumulative temporal signal analysis.
+
+\subsection{Limitations}
+
+Several limitations constrain the current system.
+First, the 10-meter spatial resolution of Sentinel-2 limits detection of narrow linear features (roads, trails) and small-scale selective logging.
+Integration with high-resolution commercial imagery (Planet, Maxar) for targeted areas would address this.
+Second, the TSN model is trained on labeled change events, which are biased toward conspicuous changes; subtle degradation may be underrepresented.
+Third, the HFI is species-agnostic; extending it to species-specific connectivity metrics requires integration with species distribution models.
+
+\subsection{Scalability}
+
+The current deployment covers 2.4 million km$^2$.
+Scaling to global coverage (approximately 50 million km$^2$ of non-ice terrestrial surface) would require approximately 20x the current computational resources, bringing the cost to approximately \$135,000/month.
+This is within the budget range of major conservation organizations and could be supported through the Zoo Network's decentralized compute infrastructure.
+
+\subsection{Integration with Zoo Ecosystem}
+
+ZooSat integrates with the broader Zoo ecosystem:
+\begin{itemize}[leftmargin=*]
+    \item Change detection outputs are stored in the Zoo Data Commons (ZIP-009) with full provenance tracking.
+    \item HFI trajectories are published through the ZooCoord research coordination protocol (ZIP-008).
+    \item Alert delivery uses the Zoo Network's decentralized messaging infrastructure.
+    \item Model training leverages ZooFed's federated learning framework for cross-site improvement.
+\end{itemize}
+
+% ============================================================
+% 9. Conclusion
+% ============================================================

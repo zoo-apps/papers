@@ -1,0 +1,24 @@
+\section{Quality Scoring Functions}
+
+
+\begin{lstlisting}[language=python,caption=Quality Scoring Implementation]
+def score_inference(attestation, samples):
+    correct = sum(1 for s in samples
+                  if verify_output(s))
+    accuracy = correct / len(samples)
+    latency_penalty = max(0,
+        (attestation.latency - TARGET) / TARGET)
+    return accuracy * (1 - 0.1 * latency_penalty)
+
+def score_training(attestation, val_before, val_after):
+    improvement = val_after - val_before
+    cost = attestation.flops / 1e15
+    return improvement * math.exp(-0.1 * cost)
+
+def score_extraction(experience, library):
+    novelty = 1 - max_similarity(experience, library)
+    applicability = test_on_benchmarks(experience)
+    correctness = verify_experience(experience)
+    return novelty * applicability * correctness
+\end{lstlisting}
+

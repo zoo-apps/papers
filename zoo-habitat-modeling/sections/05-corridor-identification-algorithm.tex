@@ -1,0 +1,62 @@
+\section{Corridor Identification Algorithm}
+
+\label{sec:corridors}
+% ══════════════════════════════════════════════════════════════════════════════
+
+Given the predicted habitat suitability map $\mathbf{p}^{(k)} \in
+[0,1]^N$ and learned edge weights $\{w_{ij}\}$, we identify migration
+corridors through the following procedure.
+
+\subsection{Habitat Patch Detection}
+
+We threshold the suitability map at $\tau = 0.5$ and extract connected
+components as habitat patches $\{P_1, \ldots, P_M\}$. Patches smaller
+than a species-specific minimum area requirement are removed.
+
+\subsection{Inter-Patch Connectivity}
+
+For each pair of patches $(P_a, P_b)$, we compute the effective
+resistance $R_{ab}$ using the learned edge weights as conductances:
+\begin{equation}
+  R_{ab} = (\mathbf{e}_a - \mathbf{e}_b)^\top \mathbf{L}^{+}
+  (\mathbf{e}_a - \mathbf{e}_b)
+\end{equation}
+where $\mathbf{L}^{+}$ is the pseudoinverse of the graph Laplacian and
+$\mathbf{e}_a, \mathbf{e}_b$ are indicator vectors for representative
+nodes in each patch.
+
+\subsection{Optimal Corridor Placement}
+
+We formulate corridor design as a minimum-cost flow problem on the
+spatial graph. Given a budget of $B$ cells that can be restored to
+suitable habitat, we solve:
+\begin{equation}
+  \min_{\mathbf{z} \in \{0,1\}^N} \sum_{(a,b)} R_{ab}(\mathbf{z})
+  \quad \text{s.t.} \quad \sum_i z_i \leq B, \quad z_i = 0 \;
+  \forall\, i \in \bigcup_m P_m
+\end{equation}
+where $z_i = 1$ indicates cell $i$ is selected for restoration. We
+approximate this NP-hard problem using a greedy algorithm with
+submodular optimization guarantees \citep{nemhauser1978analysis}.
+
+\begin{algorithm}[H]
+\caption{Greedy Corridor Placement}
+\label{alg:corridor}
+\begin{algorithmic}[1]
+\REQUIRE Spatial graph $G$, patches $\{P_m\}$, budget $B$
+\ENSURE Corridor cells $C \subseteq V$
+\STATE $C \leftarrow \emptyset$
+\FOR{$b = 1$ to $B$}
+  \STATE $v^* \leftarrow \arg\max_{v \notin C \cup \bigcup P_m}
+    \Delta R(v \mid C)$
+  \STATE $C \leftarrow C \cup \{v^*\}$
+\ENDFOR
+\RETURN $C$
+\end{algorithmic}
+\end{algorithm}
+
+Here $\Delta R(v \mid C)$ is the marginal reduction in total effective
+resistance from adding cell $v$ to the current corridor set $C$.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

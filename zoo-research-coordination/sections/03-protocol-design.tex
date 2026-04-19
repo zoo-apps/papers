@@ -1,0 +1,31 @@
+\section{Protocol Design}
+
+\label{sec:protocol}
+
+\subsection{Design Principles}
+
+ZooCoord adheres to five design principles derived from the Zoo Network's DeSci framework:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Researcher Sovereignty:} Researchers retain full control over their data and methods; sharing is always explicit and revocable.
+    \item \textbf{Verifiable Without Trust:} Any protocol participant can independently verify claims without trusting the claimant, the platform operator, or any third party.
+    \item \textbf{Incentive Compatibility:} Honest behavior (rigorous methodology, transparent reporting, thorough verification) is more profitable than dishonest behavior (fabrication, selective reporting, superficial review).
+    \item \textbf{Graceful Degradation:} The protocol functions under partial connectivity, node failures, and adversarial participants, with guarantees degrading smoothly rather than catastrophically.
+    \item \textbf{Minimal On-Chain Footprint:} Only commitments, proofs, and economic transactions are recorded on-chain; all bulk data resides in decentralized storage (IPFS/Filecoin) with content-addressed references.
+\end{enumerate}
+
+\subsection{System Model}
+
+We define the system as a tuple $\mathcal{S} = (\mathcal{R}, \mathcal{N}, \mathcal{E}, \mathcal{V}, \mathcal{T})$ where:
+
+\begin{itemize}[leftmargin=*]
+    \item $\mathcal{R}$ is the set of researchers, each identified by a public key $\text{pk}_r$.
+    \item $\mathcal{N}$ is the set of computation nodes, each with attested capabilities (CPU, GPU, memory, storage, installed software).
+    \item $\mathcal{E}$ is the set of experiment instances, each comprising a commitment, execution graph, and results.
+    \item $\mathcal{V}$ is the set of verifiers who independently reproduce experiments for reward.
+    \item $\mathcal{T}$ is the token ledger tracking ZOO balances and experiment-related transactions.
+\end{itemize}
+
+% ============================================================
+% 4. Experiment Commitments
+% ============================================================

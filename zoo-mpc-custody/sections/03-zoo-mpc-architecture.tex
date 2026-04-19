@@ -1,0 +1,100 @@
+\section{Zoo MPC Architecture}
+
+\label{sec:architecture}
+
+\subsection{Role-Based Threshold}
+
+Zoo MPC uses a $(2, 3)$-threshold with three distinct roles:
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=2.5cm,
+    role/.style={rectangle, draw, rounded corners, minimum width=2.5cm, minimum height=1.2cm, align=center, fill=blue!10},
+    arrow/.style={->, thick, dashed}
+]
+    \node[role] (researcher) {Researcher\\(Share 1)};
+    \node[role, right=of researcher] (dao) {DAO\\(Share 2)};
+    \node[role, right=of dao] (escrow) {Escrow\\(Share 3)};
+
+    \node[rectangle, draw, thick, minimum width=2cm, minimum height=1cm, align=center, below=2cm of dao] (sign) {Threshold\\Signature};
+
+    \draw[arrow] (researcher) -- (sign) node[midway, left, font=\small] {any 2};
+    \draw[arrow] (dao) -- (sign);
+    \draw[arrow] (escrow) -- (sign) node[midway, right, font=\small] {of 3};
+\end{tikzpicture}
+\caption{Zoo MPC $(2, 3)$-threshold roles. Any two of three parties can authorize an operation.}
+\label{fig:roles}
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{Researcher}: The individual or team that created the asset. Key share stored in a hardware security module (HSM) or TEE-backed mobile app.
+
+    \item \textbf{DAO}: The Zoo conservation DAO, represented by a governance multisig. DAO share is activated by on-chain vote (ZOO token-weighted).
+
+    \item \textbf{Escrow}: An automated time-lock escrow node. The escrow share becomes available after a configurable delay (default: 48 hours), providing a recovery mechanism if either the researcher or DAO is unavailable.
+\end{enumerate}
+
+\subsection{Key Generation}
+
+Key generation is performed via the Lux M-Chain DKG protocol:
+
+\begin{algorithm}[t]
+\caption{Zoo MPC Key Generation}
+\label{alg:keygen}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Parties $P = \{P_1, P_2, P_3\}$, threshold $t = 2$
+\STATE \textbf{Output}: Public key $pk$, shares $\{sk_i\}_{i=1}^3$
+\STATE Each $P_i$ generates random polynomial $f_i(x)$ of degree $t - 1$
+\STATE Each $P_i$ broadcasts commitment $C_i = g^{f_i(0)} \cdot h^{r_i}$
+\STATE Each $P_i$ sends $f_i(j)$ to $P_j$ via encrypted channel
+\STATE Each $P_j$ verifies: $g^{f_i(j)} = \prod_{k=0}^{t-1} C_{i,k}^{j^k}$
+\STATE $sk_i \leftarrow \sum_{j} f_j(i)$
+\STATE $pk \leftarrow \prod_{i} g^{f_i(0)}$
+\STATE Register $(pk, t, n)$ on Zoo Network via M-Chain
+\RETURN $pk, \{sk_i\}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Signing Protocol}
+
+For ECDSA signing (EVM transactions), Zoo MPC uses CGGMP21:
+
+\begin{algorithm}[t]
+\caption{CGGMP21 Threshold Signing on Zoo}
+\label{alg:sign}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Message $m$, signers $S \subseteq P$ with $|S| = t$
+\STATE \textbf{Output}: ECDSA signature $\sigma = (r, s)$
+\STATE \textbf{Pre-signing (offline):}
+\STATE Each signer $i \in S$ generates nonce share $k_i$
+\STATE Run multiplicative-to-additive conversion for $k_i \cdot sk_i$
+\STATE Compute $R = \prod_{i \in S} g^{k_i}$, set $r = R_x \bmod q$
+\STATE \textbf{Online signing:}
+\STATE Each signer computes $s_i = k_i^{-1}(H(m) + r \cdot sk_i) \bmod q$
+\STATE $s = \sum_{i \in S} s_i \bmod q$
+\STATE Verify: $\text{ECDSA.Verify}(pk, m, (r, s)) = \text{true}$
+\RETURN $(r, s)$
+\end{algorithmic}
+\end{algorithm}
+
+For Schnorr signing (Lux P-Chain, cross-chain bridges), Zoo MPC uses FROST:
+
+\begin{algorithm}[t]
+\caption{FROST Threshold Signing on Zoo}
+\label{alg:frost}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Message $m$, signers $S \subseteq P$ with $|S| = t$
+\STATE \textbf{Output}: Schnorr signature $\sigma = (R, s)$
+\STATE \textbf{Round 1 (Commitment):}
+\STATE Each $i \in S$: generate $(d_i, e_i)$, broadcast $(D_i = g^{d_i}, E_i = g^{e_i})$
+\STATE \textbf{Round 2 (Signing):}
+\STATE $\rho_i = H(\text{msg}, i, D_i, E_i, \ldots)$
+\STATE $R = \prod_{i \in S} D_i \cdot E_i^{\rho_i}$
+\STATE $c = H(R, pk, m)$
+\STATE $z_i = d_i + e_i \cdot \rho_i + \lambda_i \cdot sk_i \cdot c$
+\STATE $s = \sum_{i \in S} z_i$
+\RETURN $(R, s)$
+\end{algorithmic}
+\end{algorithm}
+

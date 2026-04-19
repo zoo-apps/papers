@@ -1,0 +1,81 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{xcolor}
+
+\pgfplotsset{compat=1.18}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\TChain}{\textsc{T-Chain}}
+\newcommand{\ThresholdVM}{\textsc{ThresholdVM}}
+\newcommand{\FROST}{\textsc{FROST}}
+\newcommand{\CGGMP}{\textsc{CGGMP21}}
+\newcommand{\LSS}{\textsc{LSS}}
+
+% Title information
+\title{\textbf{Chain-Native Threshold Signatures:\\FROST and CGGMP21 on Zoo Network's T-Chain}\\
+\large Replacing External MPC with Consensus-Secured Threshold Cryptography}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{December 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \TChain{} (\ThresholdVM{}), a chain-native threshold signature subsystem for Zoo Network that eliminates the need for external multi-party computation (MPC) services. \TChain{} embeds \FROST{} (Flexible Round-Optimized Schnorr Threshold signatures), \CGGMP{} (threshold ECDSA with identifiable abort), and Linear Secret Sharing (\LSS{}) directly into the validator set, so that validators \emph{are} the MPC parties. All keygen, signing, and reshare operations execute as on-chain transactions secured by consensus, removing the operational burden of sidecar MPC deployments. We describe the architecture of \ThresholdVM{}, the RPC surface (\texttt{threshold\_keygen}, \texttt{threshold\_sign}, \texttt{threshold\_reshare}), the session management layer, and the security guarantees that follow from coupling threshold cryptography with stake-weighted consensus. We prove $t$-of-$n$ unforgeability under the Discrete Logarithm assumption for \FROST{} and under the Strong RSA and DDH assumptions for \CGGMP{}, and show how the \LSS{} Composition Theorem allows \FROST{}, CMP, TFHE, Ringtail, and BLS protocols to share a single access structure. Formal verification of all protocols is carried out in Lean~4 (see \texttt{Crypto/FROST.lean}, \texttt{Crypto/Threshold/CGGMP21.lean}, \texttt{Crypto/Threshold/LSS.lean}, \texttt{Crypto/Threshold/Composition.lean}). We report on the migration path from external MPC StatefulSets to \TChain{}, including an HTTP compatibility layer for existing bridge integrations, and benchmark GPU-accelerated FHE operations within the threshold decryption pipeline.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%% --------------------------------------------------------------------------
+
+\input{sections/01-introduction}
+\input{sections/02-t-chain-architecture}
+\input{sections/03-frost-protocol}
+\input{sections/04-cggmp21-protocol}
+\input{sections/05-lss-foundation}
+\input{sections/06-mpc-wallet-creation}
+\input{sections/07-security-analysis}
+\input{sections/08-gpu-acceleration}
+\input{sections/09-formal-verification}
+\input{sections/10-migration-from-external-mpc}
+\input{sections/11-related-work}
+\input{sections/99-conclusion}
+
+\end{document}

@@ -1,0 +1,63 @@
+\section{Model Pricing Oracle}
+
+\label{sec:oracle}
+
+\subsection{Demand-Driven Pricing}
+
+AI model NFTs do not have a fixed price; their value depends on inference demand, model accuracy, and market competition. Zoo DEX introduces a model pricing oracle that computes a fair value:
+
+\begin{equation}
+P_{\text{model}} = \alpha \cdot \text{InferenceDemand} + \beta \cdot \text{Accuracy} + \gamma \cdot \frac{1}{\text{CompetitorCount}}
+\end{equation}
+
+where:
+\begin{itemize}
+    \item \textbf{InferenceDemand}: Rolling 7-day inference call count (from PoAI attestations)
+    \item \textbf{Accuracy}: Model's benchmark accuracy on standard test sets
+    \item \textbf{CompetitorCount}: Number of models serving the same task category
+\end{itemize}
+
+\subsection{Oracle Implementation}
+
+The oracle is implemented as a hook on the PoolManager (LP-9013 HooksRegistry):
+
+\begin{lstlisting}[basicstyle=\ttfamily\small,caption=Model Pricing Oracle Hook]
+contract ModelPricingHook {
+    function beforeSwap(
+        PoolKey calldata key,
+        SwapParams calldata params
+    ) external returns (bytes4) {
+        if (isModelNFTPair(key)) {
+            uint256 fairPrice = computeFairPrice(
+                key.currency1  // model NFT
+            );
+            require(
+                priceWithinBounds(params, fairPrice, 5),
+                "Price deviation > 5%"
+            );
+        }
+        return this.beforeSwap.selector;
+    }
+}
+\end{lstlisting}
+
+The hook prevents model NFTs from being traded at prices deviating more than 5\% from the oracle's fair value, protecting against manipulation of illiquid model markets.
+
+\subsection{Oracle Data Sources}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Data Source} & \textbf{Update Frequency} & \textbf{Weight} \\
+\midrule
+PoAI inference attestations & Per block & 0.50 \\
+On-chain benchmark results & Daily & 0.30 \\
+CLOB order book depth & Real-time & 0.15 \\
+Cross-chain price feeds & Per block & 0.05 \\
+\bottomrule
+\end{tabular}
+\caption{Model pricing oracle data sources and weights.}
+\label{tab:oracle}
+\end{table}
+

@@ -1,0 +1,80 @@
+\section{Introduction}
+
+\label{sec:introduction}
+% ══════════════════════════════════════════════════════════════════════════════
+
+The global biodiversity crisis demands financial mobilization at a scale
+that current mechanisms cannot deliver. The Convention on Biological
+Diversity's Kunming-Montreal Global Biodiversity Framework calls for
+\$200 billion per year in conservation finance by 2030
+\citep{cbd2022kunming}, yet current flows reach only \$130--143 billion
+\citep{paulson2020financing}. Private capital, which represents the
+largest potential source of conservation funding, remains largely
+unengaged due to three structural barriers:
+
+\begin{enumerate}[label=(\roman*)]
+  \item \textbf{Measurement opacity}: Conservation outcomes are
+    difficult to measure, report, and verify at scale, making
+    performance-based investment impractical \citep{zu2022biodiversity}.
+  \item \textbf{Liquidity constraints}: Conservation investments
+    typically have 10--30 year horizons with no secondary market,
+    deterring institutional investors \citep{huwyler2014making}.
+  \item \textbf{Transaction costs}: Legal, administrative, and
+    monitoring costs consume 15--40\% of conservation project budgets,
+    reducing capital efficiency \citep{deutz2020financing}.
+\end{enumerate}
+
+Impact bonds---originally developed for social outcomes
+\citep{liebman2011social}---offer a promising template. In a social
+impact bond, private investors fund social programs; returns are paid by
+governments only if predetermined outcomes are achieved. The model has
+been adapted for environmental outcomes through Environmental Impact
+Bonds (EIBs) \citep{nicola2013quantifying} and pilot Rhino Impact Bonds
+\citep{uct2020rhino}, but these instruments remain bespoke, illiquid,
+and expensive to administer.
+
+\subsection{The Case for Tokenization}
+
+Blockchain tokenization addresses the structural barriers above:
+
+\begin{itemize}
+  \item \textbf{Programmable outcomes}: Smart contracts encode
+    conservation targets as machine-verifiable conditions, enabling
+    automated payment on outcome achievement.
+  \item \textbf{Fractional ownership}: Tokens enable small-denomination
+    participation (\$10 minimum), broadening the investor base from
+    institutional investors to retail participants.
+  \item \textbf{Secondary markets}: Token transferability creates
+    liquidity, allowing investors to exit positions before maturity.
+  \item \textbf{Transparent verification}: On-chain oracle networks
+    provide tamper-evident records of monitoring data.
+  \item \textbf{Reduced intermediation}: Smart contracts automate
+    payment distribution, escrow, and compliance.
+\end{itemize}
+
+\subsection{Contributions}
+
+We present the following contributions:
+
+\begin{enumerate}
+  \item A \textbf{formal mechanism design} for Biodiversity Impact Bonds
+    that specifies outcome metrics, verification protocols, payment
+    schedules, and risk allocation across stakeholders.
+
+  \item An \textbf{incentive compatibility proof} showing that rational
+    conservation implementers maximize their payoff by achieving genuine
+    conservation outcomes rather than gaming verification metrics.
+
+  \item A \textbf{smart contract architecture} implementing BIBs on the
+    Zoo Network, with modular oracle integration for multiple
+    monitoring data streams.
+
+  \item \textbf{Quantitative analysis} of risk-return profiles across 12
+    conservation project archetypes, demonstrating financial viability.
+
+  \item A \textbf{transaction cost analysis} comparing tokenized BIBs to
+    traditional conservation trust funds, showing 62\% cost reduction.
+\end{enumerate}
+
+
+% ══════════════════════════════════════════════════════════════════════════════

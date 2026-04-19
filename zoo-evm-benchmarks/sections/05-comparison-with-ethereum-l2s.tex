@@ -1,0 +1,43 @@
+\section{Comparison with Ethereum L2s}
+
+\label{sec:comparison}
+
+\subsection{Throughput Comparison}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Metric} & \textbf{Zoo} & \textbf{Arbitrum} & \textbf{Optimism} & \textbf{Base} \\
+\midrule
+Max TPS (transfers) & 4,760,000 & 4,500 & 2,000 & 3,800 \\
+Block gas limit & 1B & 32M & 30M & 60M \\
+Finality & 10ms & 7 days* & 7 days* & 7 days* \\
+Soft confirmation & 10ms & 250ms & 2s & 2s \\
+GPU execution & \checkmark & $\times$ & $\times$ & $\times$ \\
+AI precompiles & \checkmark & $\times$ & $\times$ & $\times$ \\
+\bottomrule
+\end{tabular}
+\caption{Zoo Network vs Ethereum L2s. *Optimistic rollups require 7-day fraud proof window for full finality.}
+\label{tab:l2-comparison}
+\end{table}
+
+\subsection{Cost Comparison}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Operation} & \textbf{Zoo (USD)} & \textbf{Arbitrum (USD)} & \textbf{Base (USD)} \\
+\midrule
+Token transfer & \$0.00021 & \$0.012 & \$0.008 \\
+AMM swap & \$0.00085 & \$0.045 & \$0.032 \\
+AI inference call & \$0.005 & N/A & N/A \\
+\bottomrule
+\end{tabular}
+\caption{Transaction cost comparison at median gas prices (February 2026).}
+\label{tab:cost}
+\end{table}
+
+Zoo Network's costs are 40--60$\times$ lower than Ethereum L2s for equivalent operations, attributable to the higher block gas limit amortizing fixed costs and the absence of L1 data availability fees (Zoo settles to Lux, not Ethereum).
+

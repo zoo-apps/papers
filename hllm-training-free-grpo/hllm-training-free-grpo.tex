@@ -1,0 +1,54 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{booktabs}
+\usepackage{multirow}
+% geometry loaded by zoocover
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+
+\title{\textbf{HLLM: Hamiltonian Large Language Models with \\ Training-Free Group Relative Policy Optimization}}
+
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Hanzo Industries \quad Lux Industries \quad Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{October 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We introduce \textbf{Hamiltonian Large Language Models (HLLM)}, a framework that achieves strong benchmark performance through context optimization rather than parameter updates. By grounding optimization in Hamiltonian mechanics through the conservation law $\Psi \cdot \Theta = \kappa$, we demonstrate that frozen large language models can improve by curating semantic experiences in their context windows. Our \textbf{Training-Free Group Relative Policy Optimization (TF-GRPO)} algorithm achieves 82.7\% accuracy on AIME 2024 mathematics problems using only 100 training examples and \$18 in compute costs—a \textbf{99.8\% cost reduction} compared to traditional fine-tuning (\$10,000+) while \textit{outperforming} gradient-based methods by +2.7\%. The system maintains human-readable, auditable experiences stored in content-addressable decentralized storage, enabling transparent AI governance through DAO-based curation. We demonstrate superior cross-domain transfer (82.7\% math, 67.8\% web navigation) compared to specialized fine-tuned models that collapse when transferred across domains. Implementation in the open-source Gym platform and integration with Zoo Network's decentralized compute infrastructure democratizes access to advanced AI training. This shift from opaque parameter space to transparent context space represents a fundamental rethinking of how large language models learn and improve.
+
+\textbf{Keywords:} Hamiltonian mechanics, reinforcement learning, training-free optimization, semantic advantages, large language models, decentralized AI, experience-based learning
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-theoretical-foundation}
+\input{sections/04-training-free-grpo-algorithm}
+\input{sections/05-experience-library-architecture}
+\input{sections/06-experimental-setup}
+\input{sections/07-results}
+\input{sections/08-implementation-in-gym-platform}
+\input{sections/09-integration-with-zoo-network}
+\input{sections/10-discussion}
+\input{sections/11-related-paradigms-and-future-directions}
+\input{sections/12-conclusion}
+\input{sections/99-acknowledgments}
+
+\end{document}

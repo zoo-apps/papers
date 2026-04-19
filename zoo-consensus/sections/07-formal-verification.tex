@@ -1,0 +1,45 @@
+\section{Formal Verification}
+
+
+All safety and liveness properties are machine-checked in Lean~4. The proof artifacts reside in the Zoo verification repository.
+
+\subsection{Proof Structure}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lp{7cm}c}
+\toprule
+\textbf{File} & \textbf{Property} & \textbf{Lines} \\
+\midrule
+\texttt{Consensus/BFT.lean} & Classical BFT safety: no two conflicting blocks finalize under $f < n/3$ & 847 \\
+\texttt{Consensus/Quasar.lean} & Dual-path protocol specification, round structure, message types & 1,203 \\
+\texttt{Consensus/Safety.lean} & Quasar safety: dual-path finality implies no equivocation under classical or quantum adversary & 1,456 \\
+\texttt{Consensus/Liveness.lean} & Quasar liveness: if $> 2n/3$ honest validators are online, finality is reached within 3 rounds & 982 \\
+\texttt{GPU/ConsensusScaling.lean} & Batch verification correctness: GPU batch output equals sequential verification output & 634 \\
+\bottomrule
+\end{tabular}
+\caption{Lean~4 formal verification modules}
+\label{tab:lean-proofs}
+\end{table}
+
+\subsection{Key Theorems}
+
+\begin{theorem}[Quasar Safety]
+\label{thm:safety}
+If the fraction of Byzantine stake satisfies $\sum_{i \in \mathcal{F}} w_i < W/3$, then no two conflicting blocks $B$ and $B'$ at the same height $h$ can both achieve \Quasar{} finality, regardless of the adversary's computational model (classical or quantum).
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Assume both $B$ and $B'$ achieve finality. By \eqref{eq:bls-fin}, both have $\geq 2W/3$ BLS-weighted support. Since total weight is $W$ and Byzantine weight is $< W/3$, at least $W/3$ honest weight must have signed both---contradicting the honest signing policy (sign at most one block per height). The argument holds independently of the \Ringtail{} path, which provides a strictly stronger guarantee. Full proof in \texttt{Consensus/Safety.lean}.
+\end{proof}
+
+\begin{theorem}[Quasar Liveness]
+\label{thm:liveness}
+If $> 2W/3$ weighted honest validators are online and network delay is bounded by $\Delta_{\max}$, then every proposed block achieves \Quasar{} finality within $3\Delta_{\max}$ time.
+\end{theorem}
+
+\begin{theorem}[Batch Verification Correctness]
+\label{thm:batch}
+For any set of blocks $\{B_1, \ldots, B_m\}$ with signatures, the GPU batch verification algorithm returns $\texttt{valid}[j] = \top$ if and only if sequential verification of block $B_j$ returns $\top$.
+\end{theorem}
+

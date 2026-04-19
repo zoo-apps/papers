@@ -1,0 +1,31 @@
+\section{Motivation}
+
+
+Zoo Network services are migrating from PostgreSQL to Hanzo Base
+(per-org encrypted SQLite) following the Web5 local-first architecture
+described in the Zoo research program~\cite{web5}.  SQLite provides
+sub-microsecond read latency, per-tenant data isolation via
+deterministic key derivation, and offline-first operation.
+
+However, SQLite's single-writer model means each service instance
+owns its database file.  Without replication:
+
+\begin{enumerate}
+\item A pod restart loses all data accumulated since the last
+  PersistentVolumeClaim (PVC) snapshot.
+\item Disaster recovery requires manual PVC restoration from
+  cloud provider snapshots (minutes to hours).
+\item Cross-region failover is impossible without an external
+  replication mechanism.
+\end{enumerate}
+
+This proposal introduces continuous WAL streaming to S3 as the
+replication primitive, providing:
+
+\begin{itemize}
+\item $\leq 1$\,s RPO via 1-second sync intervals
+\item Seconds-scale RTO via init-container restore
+\item At-rest encryption via \texttt{hanzoai/age}
+\item Zero application code changes (sidecar pattern)
+\end{itemize}
+

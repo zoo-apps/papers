@@ -1,0 +1,44 @@
+\section{Introduction}
+
+\label{sec:introduction}
+
+Wildlife monitoring has entered the era of pervasive sensing.
+Camera trap networks capture billions of images annually \citep{ahumada2020wildlife}.
+Passive acoustic monitors record continuous soundscapes across terrestrial and marine environments \citep{gibb2019emerging}.
+GPS and satellite telemetry tracks thousands of individual animals \citep{kays2015terrestrial}.
+Environmental DNA sampling detects species presence from water and soil samples \citep{deiner2017environmental}.
+Collectively, these sensor systems generate an unprecedented volume of ecological data distributed across hundreds of independent institutions.
+
+The potential of this data for biodiversity science and conservation is immense: unified models trained on multi-site data could detect species more accurately, identify population trends earlier, and predict conservation threats more reliably than any single-site model.
+Yet realizing this potential is blocked by three barriers.
+
+First, \emph{legal and regulatory constraints}.
+Location data for endangered species is often legally protected; sharing precise coordinates of critically endangered species nesting sites could enable poaching \citep{lindenmayer2017do}.
+Data sovereignty regulations increasingly restrict cross-border transfer of environmental data \citep{fritz2019citizen}.
+
+Second, \emph{institutional incentives}.
+Research groups invest substantial resources in data collection and are understandably reluctant to share raw data before publishing their analyses \citep{tenopir2011data}.
+Competitive funding structures further discourage open sharing.
+
+Third, \emph{technical heterogeneity}.
+Different sites deploy different sensor types, configurations, and schedules.
+A camera trap network in the Serengeti produces high-resolution daytime images, while one in Borneo produces primarily infrared night images.
+Acoustic sensors in marine environments capture very different frequency ranges than those deployed in tropical forests.
+Training a unified model requires handling this heterogeneity without centralizing the raw data.
+
+Federated learning (FL) \citep{mcmahan2017communication} offers a promising paradigm: models are trained locally at each site, and only model updates (gradients or parameters) are shared with a central coordinator.
+Raw data never leaves the originating institution.
+However, standard FL algorithms face challenges in the wildlife monitoring setting: extreme non-IID data distributions across ecologically diverse sites, heterogeneous sensor modalities, and the need for species-specific privacy guarantees.
+
+We present ZooFed, a federated learning framework designed for the specific challenges of cross-institutional wildlife monitoring.
+Our contributions are:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Heterogeneous Sensor Adapter (HSA):} A modality-agnostic feature extraction architecture that maps camera trap images, acoustic spectrograms, GPS trajectories, and eDNA reads into a shared embedding space for federated aggregation (\Cref{sec:hsa}).
+    \item \textbf{Conservation-Calibrated Differential Privacy (CCDP):} A privacy mechanism that allocates noise budgets proportional to species conservation sensitivity, providing stronger protection for endangered species (\Cref{sec:privacy}).
+    \item \textbf{Non-IID Robust Aggregation (NIRA):} A federated aggregation algorithm that handles extreme distribution heterogeneity across ecological sites through clustered multi-task learning (\Cref{sec:aggregation}).
+\end{enumerate}
+
+% ============================================================
+% 2. Related Work
+% ============================================================

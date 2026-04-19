@@ -1,0 +1,77 @@
+\section{Discussion}
+
+\label{sec:discussion}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Advantages of Graph-Based Modeling}
+
+HabitatNet's spatial graph representation provides three key advantages
+over traditional SDMs:
+
+\paragraph{Spatial context.} Message passing aggregates information from
+neighboring cells, allowing the model to recognize habitat edges,
+ecotones, and the spatial configuration of suitable patches---information
+invisible to point-based models.
+
+\paragraph{Learned connectivity.} By learning edge weights from
+occurrence data, HabitatNet discovers dispersal barriers and corridors
+that may not be apparent from land cover alone. Analysis of learned edge
+weights reveals that the model assigns high resistance to agricultural
+land (mean conductance 0.12), moderate resistance to secondary forest
+(0.47), and low resistance to primary forest (0.91).
+
+\paragraph{Scale-aware predictions.} Multi-hop message passing allows
+the model to incorporate information at multiple spatial scales without
+explicit multi-scale feature engineering.
+
+\subsection{Limitations}
+
+Several limitations warrant consideration:
+
+\begin{enumerate}
+  \item \textbf{Biotic interactions}: HabitatNet models abiotic habitat
+    suitability and does not explicitly account for species interactions
+    such as competition, predation, or mutualism.
+  \item \textbf{Adaptive capacity}: The model does not represent genetic
+    adaptation or phenotypic plasticity, potentially overestimating range
+    loss for adaptable species.
+  \item \textbf{Land-use change}: Our base projections use static land
+    cover. Integration with land-use change scenarios (LUH2) is
+    straightforward but introduces additional uncertainty.
+  \item \textbf{Computational cost}: Graph construction and GNN training
+    on continental-scale grids require significant computational
+    resources (approximately 48 GPU-hours for a full training run on
+    the Neotropical realm).
+  \item \textbf{Data bias}: GBIF occurrence records are spatially biased
+    toward accessible areas and wealthy nations
+    \citep{beck2014spatial}. While spatial thinning and bias correction
+    mitigate this, residual effects may persist.
+\end{enumerate}
+
+\subsection{Conservation Implications}
+
+Our results have direct implications for conservation planning:
+
+\begin{enumerate}
+  \item \textbf{Protected area expansion}: Current protected area
+    networks cover only 34\% of projected future habitat, suggesting
+    significant gaps in anticipatory conservation planning.
+  \item \textbf{Corridor investment}: Targeted corridor restoration
+    offers high returns---recovering 72\% of lost connectivity with only
+    5\% additional area---supporting investment in landscape-scale
+    conservation.
+  \item \textbf{Climate refugia}: HabitatNet identifies climate
+    refugia---areas of persistent suitability across scenarios---that
+    merit highest protection priority.
+\end{enumerate}
+
+\subsection{Open Science and Reproducibility}
+
+All code, trained models, and processed datasets are released through the
+Zoo Open Science Network under Apache 2.0 and CC-BY-4.0 licenses,
+respectively. The framework is available as a Python package
+(\texttt{habitatnet}) with documentation and tutorials. Model training is
+fully reproducible through provided configuration files and random seeds.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,35 @@
+\section{GPU Acceleration}
+
+\label{sec:gpu}
+
+\subsection{FHE Operations in T-Chain}
+
+Threshold FHE decryption is the most computationally intensive operation in \TChain{}. Each validator holds a share of the FHE decryption key and must perform partial decryption on ciphertexts that may encode vectors of thousands of elements. \TChain{} offloads these operations to GPU:
+
+\begin{itemize}
+\item \textbf{NTT (Number Theoretic Transform)}: Polynomial multiplication in RLWE-based FHE uses NTT, which parallelizes across GPU cores. We observe $47\times$ speedup over CPU for degree-$2^{16}$ polynomials.
+\item \textbf{Batch partial decryption}: Multiple ciphertexts are decrypted in a single GPU kernel launch, amortizing launch overhead.
+\item \textbf{ZK proof generation}: Range proofs and commitment verification for CGGMP21 presignatures leverage GPU-parallel multi-scalar multiplication (MSM).
+\end{itemize}
+
+\subsection{Performance}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Operation} & \textbf{CPU (ms)} & \textbf{GPU (ms)} & \textbf{Speedup} \\
+\midrule
+FROST 2-round sign ($t{=}10, n{=}15$) & 12 & 3 & $4\times$ \\
+CGGMP21 presignature ($t{=}10, n{=}15$) & 840 & 58 & $14.5\times$ \\
+TFHE partial decrypt (degree $2^{16}$) & 2,350 & 50 & $47\times$ \\
+ZK range proof (Bulletproofs) & 180 & 22 & $8.2\times$ \\
+\bottomrule
+\end{tabular}
+\caption{GPU acceleration benchmarks (NVIDIA A100, single GPU)}
+\label{tab:gpu}
+\end{table}
+
+These benchmarks demonstrate that GPU acceleration makes threshold FHE decryption practical at consensus timescales. See \cite{zoo-fhe} for the full FHE architecture.
+
+%% --------------------------------------------------------------------------

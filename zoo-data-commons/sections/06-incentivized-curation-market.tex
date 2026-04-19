@@ -1,0 +1,59 @@
+\section{Incentivized Curation Market}
+
+\label{sec:curation}
+
+\subsection{Market Design}
+
+The curation market rewards participants for improving data quality through a bonding curve mechanism:
+
+\begin{equation}
+    \text{Reward}(\text{action}, \text{ZDO}) = R_{\text{base}}(\text{action}) \cdot \Delta Q(\text{ZDO}) \cdot B(\text{ZDO})
+\end{equation}
+
+\noindent where $R_{\text{base}}$ is the base reward for the action type, $\Delta Q$ is the quality improvement, and $B$ is a bonding curve that increases rewards for curating underserved taxonomic groups and geographic regions.
+
+\begin{table}[H]
+\centering
+\caption{Curation actions and base reward ranges.}
+\label{tab:curation_rewards}
+\begin{tabularx}{\textwidth}{@{}lcX@{}}
+\toprule
+\textbf{Action} & \textbf{Base Reward (ZOO)} & \textbf{Description} \\
+\midrule
+Contribution & 10--500 & New dataset ingestion with metadata \\
+Validation & 5--50 & Independent quality verification \\
+Annotation & 2--20 & Taxonomic or geographic annotation refinement \\
+Translation & 5--30 & Metadata translation to additional languages \\
+Integration & 20--200 & Cross-dataset linkage and harmonization \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Underserved Region Bonding Curve}
+
+To combat geographic and taxonomic bias, the bonding curve $B$ provides multiplied rewards for data from underrepresented areas:
+
+\begin{equation}
+    B(\text{ZDO}) = 1 + \beta_{\text{geo}} \cdot \left(1 - \frac{|\mathcal{D}_{\text{cell}}|}{|\mathcal{D}_{\text{median}}|}\right)^+ + \beta_{\text{taxon}} \cdot \left(1 - \frac{|\mathcal{D}_{\text{taxon}}|}{|\mathcal{D}_{\text{median\_taxon}}|}\right)^+
+\end{equation}
+
+\noindent where $|\mathcal{D}_{\text{cell}}|$ is the number of existing records in the geographic grid cell containing the ZDO, $|\mathcal{D}_{\text{median}}|$ is the median records per cell globally, and analogous terms apply for taxonomic coverage.
+The $(\cdot)^+$ operator ensures the bonus is non-negative.
+
+\subsection{Validation Protocol}
+
+Data validation follows a stake-weighted consensus mechanism:
+
+\begin{enumerate}[leftmargin=*]
+    \item A contributor submits a ZDO with metadata and stakes $s_c$ tokens.
+    \item The ZDO is assigned to $k$ randomly selected validators (minimum 3).
+    \item Each validator independently assesses quality scores and stakes $s_v$ tokens on their assessment.
+    \item Quality scores are aggregated using weighted median (weights proportional to validator reputation).
+    \item Validators whose scores are within one standard deviation of the consensus receive rewards; outliers lose stakes.
+\end{enumerate}
+
+This mechanism is incentive-compatible: honest assessment maximizes expected payoff for validators with accurate domain knowledge.
+
+% ============================================================
+% 7. Implementation
+% ============================================================

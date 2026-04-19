@@ -1,0 +1,53 @@
+\section{Post-Quantum Security}
+
+
+The Zoo ecosystem has achieved comprehensive post-quantum (PQ) coverage
+across all cryptographic layers, consistent with LP-102 (Lux) and
+HIP-0302 (Hanzo).  All previously planned mitigations are now deployed.
+
+\subsection{PQ Scorecard}
+
+\begin{table}[h]
+\centering
+\caption{Complete post-quantum scorecard.  All layers PQ-safe except EVM chain signing.}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Layer} & \textbf{Algorithm} & \textbf{PQ Status} & \textbf{Status} \\
+\midrule
+Disk encryption     & AES-256 (sqlcipher)          & Safe (128-bit PQ)    & Deployed \\
+HKDF derivation     & HKDF-SHA-256                 & Safe (128-bit PQ)    & Deployed \\
+Field encryption    & AES-256-GCM                  & Safe (128-bit PQ)    & Deployed \\
+S3 backup           & age ML-KEM-768+X25519 (\texttt{age1pq}) & Safe (FIPS 203) & Deployed \\
+TLS                 & X25519MLKEM768 (first curve) & Safe (hybrid PQ)     & Deployed \\
+JWT signing         & ML-DSA-65 (FIPS 204)         & Safe (Module-LWE+SIS)& Deployed \\
+JWKS validation     & ML-DSA-65                    & Safe                 & Deployed \\
+MPC transport       & Hybrid KEM (X25519+ML-KEM-768) & Safe              & Deployed \\
+MPC key shares      & PQ KEM encryption            & Safe                 & Deployed \\
+Master keys         & Cloud HSM (FIPS 140-2 L3)    & Hardware isolation   & Deployed \\
+Chain signing       & secp256k1 ECDSA              & \textbf{Not PQ-safe} & EVM constraint \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Deployed PQ Components}
+
+\begin{description}
+\item[S3 backup:] All age encryption uses ML-KEM-768 + X25519 hybrid
+  recipients (\texttt{age1pq} prefix).  Label enforcement prevents
+  downgrade to classical-only recipients.
+\item[TLS:] X25519MLKEM768 as first curve in TLS 1.3 supported groups.
+\item[JWT signing:] ML-DSA-65 (FIPS~204) for IAM token issuance.
+  JWKS validation uses ML-DSA-65 public keys.
+\item[MPC:] Hybrid KEM for transport; PQ KEM encryption for key shares.
+\item[HSM:] Cloud HSM (FIPS 140-2 L3) for master keys.  Key material
+  never leaves HSM boundary.  Three keyrings per ecosystem.
+\end{description}
+
+\subsection{Harvest-Now-Decrypt-Later: Closed}
+
+The combination of ML-KEM-768 hybrid encryption (S3), X25519MLKEM768
+TLS (transit), ML-DSA-65 JWT signing (auth), PQ KEM for MPC, and
+Cloud HSM for master keys closes the harvest-now-decrypt-later attack
+vector completely.  An adversary who captures data today cannot decrypt
+it with a future quantum computer.
+

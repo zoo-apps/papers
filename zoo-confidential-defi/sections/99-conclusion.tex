@@ -1,0 +1,75 @@
+\section{Conclusion}
+
+\label{sec:conclusion}
+%----------------------------------------------------------------------
+
+DeFi's transparency is both its strength and its fatal flaw. The same public mempool that enables permissionless participation also enables systematic value extraction. \MEV{} is not a bug in DeFi---it is a consequence of plaintext orderflow on a public ledger.
+
+Confidential DeFi on \Zoo{} Network eliminates this problem at the cryptographic level. Orders are encrypted before they enter the mempool. Matching happens on ciphertexts. Only matched pairs are decrypted. The result is a trading system where the fastest extractor has no advantage because there is nothing to extract.
+
+The overhead is real: 490$\times$ for a single encrypted match compared to plaintext. But this comparison misses the point. The relevant comparison is not against a platonic frictionless market; it is against the actual DeFi market where users lose \$1.5 billion annually to \MEV{}. Against that baseline, a 2.8-second settlement with zero \MEV{} is an improvement.
+
+Three open problems remain:
+
+\begin{enumerate}
+    \item \textbf{Cross-Chain Confidential DeFi.} Extending encrypted orderflow to atomic swaps across chains, where each chain holds a different \FHE{} key.
+    \item \textbf{Encrypted Derivatives.} Applying \FHE{} to options and futures, where payoff calculations are more complex than spot matching.
+    \item \textbf{Recursive FHE.} Using recursive bootstrapping to support unbounded-depth circuits, enabling complex matching algorithms (e.g., pro-rata allocation) without noise budget exhaustion.
+\end{enumerate}
+
+Front-running dies when there is nothing to see.
+
+\begin{thebibliography}{20}
+
+\bibitem{flashbots2024mev}
+Flashbots,
+``MEV-Explore: Quantifying Maximal Extractable Value,''
+\url{https://explore.flashbots.net}, 2024.
+
+\bibitem{chillotti2020tfhe}
+I.~Chillotti, N.~Gama, M.~Georgieva, and M.~Izabach\`{e}ne,
+``TFHE: Fast Fully Homomorphic Encryption over the Torus,''
+\textit{J.\ Cryptology}, vol.~33, pp.~34--91, 2020.
+
+\bibitem{cheon2017ckks}
+J.~H.~Cheon, A.~Kim, M.~Kim, and Y.~Song,
+``Homomorphic Encryption for Arithmetic of Approximate Numbers,''
+\textit{Proc.\ ASIACRYPT}, Springer, 2017.
+
+\bibitem{daian2020flash}
+P.~Daian, S.~Goldfeder, T.~Kell, Y.~Li, X.~Zhao, I.~Bentov, L.~Breidenbach, and A.~Juels,
+``Flash Boys 2.0: Frontrunning in Decentralized Exchanges, Miner Extractable Value, and Consensus Instability,''
+\textit{Proc.\ IEEE S\&P}, 2020.
+
+\bibitem{zoo-dex}
+Z.~Kelling,
+``Zoo DEX: Decentralized Exchange on Zoo Network,''
+Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-fhe}
+Z.~Kelling,
+``Threshold Fully Homomorphic Encryption on Zoo Network: GPU-Accelerated Confidential Computation,''
+Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-threshold-signatures}
+Z.~Kelling,
+``Threshold Signatures on Zoo T-Chain,''
+Zoo Labs Foundation, 2026.
+
+\bibitem{penumbra2023}
+Penumbra Labs,
+``Penumbra Protocol Specification,''
+\url{https://protocol.penumbra.zone}, 2023.
+
+\bibitem{renegade2023}
+Renegade,
+``Renegade: On-Chain Dark Pool Protocol,''
+\url{https://renegade.fi/whitepaper.pdf}, 2023.
+
+\bibitem{vickrey1961}
+W.~Vickrey,
+``Counterspeculation, Auctions, and Competitive Sealed Tenders,''
+\textit{J.\ Finance}, vol.~16, no.~1, pp.~8--37, 1961.
+
+\end{thebibliography}
+
