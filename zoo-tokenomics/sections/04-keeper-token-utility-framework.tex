@@ -1,0 +1,160 @@
+\section{KEEPER Token Utility Framework}
+
+
+The $\KEEPER$ token serves six distinct utilities, creating multi-dimensional value beyond speculation:
+
+\subsection{Governance Rights}
+
+$\KEEPER$ holders participate in DAO governance via quadratic voting:
+
+\begin{equation}
+\text{Voting Power}_i = \sqrt{\text{Staked}\_\KEEPER_i}
+\end{equation}
+
+Quadratic formula ensures large holders cannot dominate votes. A participant with 100× more tokens gets only 10× voting power.
+
+\textbf{Governance Scope:}
+\begin{itemize}
+\item Treasury expenditure approvals (>1B $\KEEPER$ requires vote)
+\item Protocol parameter changes (inference pricing, staking rates, etc.)
+\item Experience library curation (accept/reject semantic advantages)
+\item Validator selection criteria
+\item Cross-chain bridge deployments
+\end{itemize}
+
+\textbf{Proposal Requirements:}
+\begin{itemize}
+\item Minimum stake: 10M $\KEEPER$ (prevents spam)
+\item Voting period: 7 days
+\item Quorum: 5\% of staked supply must participate
+\item Passage threshold: 66\% supermajority (major changes), 51\% (minor changes)
+\end{itemize}
+
+\subsection{Validator Staking}
+
+Zoo Network employs Proof-of-Stake consensus. Validators must stake $\KEEPER$ to participate:
+
+\begin{itemize}
+\item \textbf{Minimum Stake}: 1,000 $\KEEPER$ (democratically low barrier)
+\item \textbf{Slashing Conditions}:
+    \begin{itemize}
+    \item Double-signing: 50\% stake slashed
+    \item Prolonged downtime (>24h): 5\% stake slashed
+    \item Invalid state transition: 100\% stake slashed
+    \end{itemize}
+\item \textbf{Staking Rewards}: 3-8\% APY (varies with participation rate)
+\item \textbf{Delegation}: Non-validators can delegate to validators (earn 80\% of validator's rate)
+\end{itemize}
+
+\textbf{Staking APY Calculation:}
+
+\begin{equation}
+\text{APY} = \frac{I + F}{S} \times \frac{365}{1} \times 100\%
+\end{equation}
+
+where:
+\begin{itemize}
+\item $I$: Inflation rewards (0 in Zoo - no inflation)
+\item $F$: Transaction fees collected
+\item $S$: Total staked $\KEEPER$
+\end{itemize}
+
+Since Zoo has no inflation ($I = 0$), staking rewards derive \textbf{entirely from transaction fees}:
+
+\begin{equation}
+\text{APY} = \frac{F_{\text{annual}}}{S} \times 100\%
+\end{equation}
+
+With estimated annual fee revenue of \$20M (at mature scale) and target staking rate of 50\%:
+
+\begin{equation}
+\text{APY} \approx \frac{\$20\text{M}}{0.5 \times 2\text{T} \times P_{\KEEPER}} \times 100\%
+\end{equation}
+
+Assuming $P_{\KEEPER} = \$0.02$ (example price):
+
+\begin{equation}
+\text{APY} \approx \frac{\$20\text{M}}{\$20\text{M}} \times 100\% = 5\%
+\end{equation}
+
+This creates sustainable yields without inflation-based dilution.
+
+\subsection{Inference Credit Exchange}
+
+$\KEEPER$ tokens exchange for \textbf{Inference Credits} (IC) used to query Zoo Network models:
+
+\begin{equation}
+1 \text{ IC} = 1,000,000 \text{ input tokens} + 100,000 \text{ output tokens}
+\end{equation}
+
+Exchange rate floats based on supply/demand:
+
+\begin{equation}
+\text{IC Price} = f(\text{GPU Utilization}, \text{Model Size}, \text{Demand})
+\end{equation}
+
+Typical pricing (October 2025):
+\begin{itemize}
+\item 1 IC $\approx$ 10,000 $\KEEPER$ for Qwen3-4B
+\item 1 IC $\approx$ 50,000 $\KEEPER$ for Qwen3-32B
+\item 1 IC $\approx$ 200,000 $\KEEPER$ for DeepSeek-V3-671B
+\end{itemize}
+
+\textbf{Alternative Acquisition}: Users can \textbf{earn} IC without spending $\KEEPER$ by contributing data/experiences (Section 5).
+
+\subsection{Experience Marketplace}
+
+Semantic experiences (extracted via training-free GRPO) can be \textbf{monetized} by creators:
+
+\begin{itemize}
+\item \textbf{Listing}: Experience author sets price (e.g., 1M $\KEEPER$ per use)
+\item \textbf{Usage Tracking}: Smart contract records each inference using the experience
+\item \textbf{Automatic Royalties}: Creator receives payment per use
+\item \textbf{DAO Cut}: 10\% platform fee to DAO treasury
+\end{itemize}
+
+\textbf{Experience Pricing Models:}
+\begin{enumerate}
+\item \textbf{Pay-per-use}: 100-1M $\KEEPER$ per inference (depends on experience quality/specificity)
+\item \textbf{Subscription}: Monthly unlimited access (e.g., 10M $\KEEPER$/month)
+\item \textbf{Free + Tips}: Open access with optional creator tips
+\item \textbf{DAO-Funded}: Treasury sponsors high-value public experiences
+\end{enumerate}
+
+\textbf{Example Experience Economics:}
+
+High-quality mathematical reasoning experience (AIME-level problems):
+\begin{itemize}
+\item Creation cost: 10 hours researcher time + \$20 LLM API costs
+\item Listed price: 500K $\KEEPER$ per use
+\item Usage: 1,000 inferences/month
+\item Monthly revenue: 500M $\KEEPER$ (\$10K at \$0.02/token)
+\item ROI: 500× within first month
+\end{itemize}
+
+This creates \textbf{direct monetization} for AI researchers/educators, bypassing traditional academic publishing or consulting.
+
+\subsection{Cross-Chain Bridge Collateral}
+
+Zoo Network bridges to Ethereum, BSC, and other chains for liquidity. $\KEEPER$ serves as bridge collateral:
+
+\begin{itemize}
+\item \textbf{Wrapped KEEPER (wKEEPER)}: ERC-20 on Ethereum, BEP-20 on BSC
+\item \textbf{Collateralization}: 150\% over-collateralized (1.5 $\KEEPER$ locked per 1 wKEEPER minted)
+\item \textbf{Bridge Validators}: Stake $\KEEPER$ to operate bridge nodes
+\item \textbf{Security}: Multi-signature + ZK-proof validation
+\end{itemize}
+
+\subsection{Priority Access}
+
+$\KEEPER$ stakers receive priority access during high-demand periods:
+
+\begin{itemize}
+\item \textbf{Queue Priority}: Stakers skip to front of inference queue
+\item \textbf{New Model Access}: Early access to newly deployed models (7-day head start)
+\item \textbf{Premium Features}: Advanced reasoning modes, extended context windows
+\item \textbf{Rate Limits}: Higher request limits (100 req/hour vs 10 req/hour)
+\end{itemize}
+
+This creates \textbf{non-monetary value} for long-term holders beyond speculation.
+

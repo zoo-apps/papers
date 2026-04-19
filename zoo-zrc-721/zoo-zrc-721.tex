@@ -1,0 +1,463 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+\input{shared/lstlang}
+
+% Listing style
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  captionpos=b,
+  xleftmargin=2em,
+  framexleftmargin=1.5em,
+}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\NFT}{\textsc{nft}}
+\newcommand{\ERC}{\textsc{erc}}
+\newcommand{\ZOO}{\$\textsc{zoo}}
+\newcommand{\ZRC}{\textsc{zrc}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{ZRC-721: Zoo Non-Fungible Token Standard with Yield Transferability and Conservation Semantics}}
+
+\author{
+Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{April 2026}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \textbf{ZRC-721}, the canonical non-fungible token standard for the Zoo L2 chain (Chain~ID: 200200). ZRC-721 is fully ERC-721 compatible and extends the interface with three Zoo-specific mechanisms rooted in the project's 2021--2022 origins: (1)~\textbf{yield transferability until burn}, where NFT yield and collateral transfer to new owners upon sale and are realized (claimed) when the animal is ``freed'' (burned)---a pattern from the January 2022 \$ZOO deck that predates ERC-6551 token-bound accounts by over a year; (2)~\textbf{generation-based rarity}, preserving the original 16 generation-one base animals from the October 2021 collection (later expanded to 20); and (3)~\textbf{conservation impact attribution}, where each NFT tracks cumulative conservation contributions as non-transferable metadata. The standard also supports cross-chain bridging via Lux Warp messaging with yield state preservation, continuing the ``play on any chain'' philosophy established by the February 2022 ZOO Bridge.
+
+\textbf{Keywords}: non-fungible token, ERC-721, yield transferability, conservation, token-bound accounts, Zoo Network
+\end{abstract}
+
+\section{Introduction}
+
+Zoo NFTs predate the current Zoo L2 chain. The original collection launched on BSC in Q4 2021, integrated with PancakeSwap for \$ZOO token liquidity and egg purchases~\cite{zoo-oct-2021-deck}. The October 2021 deck described the collection:
+
+\begin{quote}
+``Contains 1 of 16 Generation one Base Animals.''
+\end{quote}
+
+These 16 generation-one base animals formed the initial collection, later expanded to 20 in subsequent materials. Each NFT was an ERC-721 token on BSC with a distinctive property: \textbf{yield was transferable via NFT ownership}. The January 2022 deck stated~\cite{zoo-jan-2022-deck}:
+
+\begin{quote}
+``NFT yield and collateral is transferable to new owners until the Animal is freed from ZOO.''
+\end{quote}
+
+Here, ``freeing'' an animal from Zoo corresponds to burning the NFT, which realizes all accumulated yield and collateral. This yield-transferability-until-burn pattern was a significant innovation: it meant that Zoo NFTs were not merely collectibles but yield-bearing instruments whose economic value transferred with ownership. This is precisely the semantic pattern later formalized by ERC-6551 token-bound accounts (May 2023)~\cite{erc-6551}, making Zoo's 2022 implementation a functional predecessor by more than a year.
+
+ZRC-721 formalizes this pattern as a standard for the Zoo L2 chain, preserving backward compatibility with ERC-721 while encoding yield transferability, generation-based rarity, and conservation semantics directly in the token interface.
+
+\subsection{Historical Context}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Date} & \textbf{Milestone} & \textbf{Source} \\
+\midrule
+Oct 2021 & 16 generation-one base animals on BSC & \cite{zoo-oct-2021-deck} \\
+Oct 2021 & PancakeSwap integration for \$ZOO + eggs & \cite{zoo-oct-2021-deck} \\
+Oct 2021 & ``Bridge between ETH and Binance'' roadmapped & \cite{zoo-oct-2021-deck} \\
+Jan 2022 & ``NFT yield transferable to new owners until freed'' & \cite{zoo-jan-2022-deck} \\
+Feb 2022 & ZOO Bridge live: NFTs bridgeable across chains & \cite{zoo-jan-2022-deck} \\
+May 2023 & ERC-6551 proposed (Zoo pattern predates by 16 months) & \cite{erc-6551} \\
+2025 & Migration to Zoo L2 (chain ID 200200) & This paper \\
+2026 & ZRC-721 standard formalized & This paper \\
+\bottomrule
+\end{tabular}
+\caption{Zoo NFT chronology. The yield-transferability-until-burn pattern (January 2022) predates ERC-6551 by 16 months.}
+\label{tab:chronology}
+\end{table}
+
+\subsection{Contributions}
+
+\begin{enumerate}
+    \item \textbf{Yield Transferability}: Formalization of the 2022 yield-transferability-until-burn pattern as a standard interface (Section~\ref{sec:yield}).
+
+    \item \textbf{Generation System}: Encoding the original 16 generation-one base animals and the expansion mechanism (Section~\ref{sec:generation}).
+
+    \item \textbf{Conservation Hooks}: Per-NFT impact attribution tracking (Section~\ref{sec:conservation}).
+
+    \item \textbf{Bridge Compatibility}: Yield-preserving cross-chain transfers via Lux Warp (Section~\ref{sec:bridge}).
+
+    \item \textbf{Formal Specification}: Complete Solidity interface and invariant analysis (Section~\ref{sec:spec}).
+\end{enumerate}
+
+\section{Yield Transferability Until Burn}
+\label{sec:yield}
+
+\subsection{The 2022 Pattern}
+
+The original Zoo NFT mechanism on BSC implemented the following:
+
+\begin{enumerate}
+    \item Each NFT $N$ accrues yield $Y_N(t)$ from Zoo staking pools over time $t$.
+    \item On transfer of $N$ from owner $A$ to owner $B$, the accumulated yield $Y_N(t)$ transfers with the NFT. Owner $B$ inherits all rights to the accumulated yield.
+    \item Collateral locked against $N$ also transfers with ownership.
+    \item When the animal is ``freed'' (burned), the owner at burn time receives all accumulated yield $Y_N(t)$ and all collateral.
+    \item A freed animal cannot be transferred, bridged, or yield further.
+\end{enumerate}
+
+This is precisely a token-bound account: the NFT ``owns'' yield and collateral, which transfer with the token.
+
+\subsection{ZRC-721 Yield Interface}
+
+\begin{lstlisting}[language=Solidity,caption=ZRC-721 Yield Interface]
+interface IZRC721Yield {
+    /// @notice Returns accumulated yield for token
+    /// @param tokenId The NFT to query
+    /// @return amount Accumulated yield in ZOO wei
+    function accumulatedYield(uint256 tokenId)
+        external view returns (uint256 amount);
+
+    /// @notice Returns collateral locked against token
+    /// @param tokenId The NFT to query
+    /// @return amount Locked collateral in ZOO wei
+    function lockedCollateral(uint256 tokenId)
+        external view returns (uint256 amount);
+
+    /// @notice Free the animal: burn NFT, realize yield + collateral
+    /// @param tokenId The NFT to free
+    /// @dev Transfers accumulatedYield + lockedCollateral to msg.sender
+    /// @dev Burns the NFT permanently
+    function free(uint256 tokenId) external;
+
+    /// @notice Check if animal has been freed
+    /// @param tokenId The NFT to query
+    /// @return True if freed (burned with yield realized)
+    function isFreed(uint256 tokenId)
+        external view returns (bool);
+
+    /// @notice Emitted when yield is accumulated
+    event YieldAccumulated(
+        uint256 indexed tokenId,
+        uint256 amount,
+        uint256 totalAccumulated
+    );
+
+    /// @notice Emitted when animal is freed
+    event AnimalFreed(
+        uint256 indexed tokenId,
+        address indexed owner,
+        uint256 yieldRealized,
+        uint256 collateralReleased
+    );
+}
+\end{lstlisting}
+
+\subsection{Yield Transfer on Sale}
+
+When an ERC-721 \texttt{transferFrom} or \texttt{safeTransferFrom} is executed, the yield state is \emph{not reset}. The new owner inherits the full accumulated yield:
+
+\begin{definition}[Yield Transfer Invariant]
+For any ZRC-721 token $N$ with accumulated yield $Y_N$ and collateral $C_N$, a transfer from owner $A$ to owner $B$ preserves:
+\begin{align}
+Y_N^{\text{after}} &= Y_N^{\text{before}} \\
+C_N^{\text{after}} &= C_N^{\text{before}}
+\end{align}
+The new owner $B$ has exclusive rights to $Y_N$ and $C_N$.
+\end{definition}
+
+\begin{theorem}[Yield Conservation]
+For any sequence of transfers and yield accumulations, the yield realized on burn equals the total yield accumulated over the NFT's lifetime:
+\[
+Y_{\text{realized}} = \sum_{i=0}^{T} \Delta Y_i
+\]
+where $\Delta Y_i$ is yield accumulated in epoch $i$ and $T$ is the burn epoch.
+\end{theorem}
+
+\begin{proof}
+Yield is monotonically non-decreasing (only accumulation, no withdrawal before burn) and transfer-invariant (no yield is lost or gained on transfer). The burn operation (``free'') is the only yield realization event. Therefore, realized yield equals cumulative accumulation.
+\end{proof}
+
+\section{Generation System}
+\label{sec:generation}
+
+\subsection{Original 16 Base Animals}
+
+The October 2021 collection comprised 16 generation-one base animals:
+
+\begin{lstlisting}[language=Solidity,caption=ZRC-721 Generation Interface]
+interface IZRC721Generation {
+    /// @notice Returns the generation of the token
+    /// @param tokenId The NFT to query
+    /// @return gen Generation number (1 = original base animals)
+    function generation(uint256 tokenId)
+        external view returns (uint256 gen);
+
+    /// @notice Returns the species identifier
+    /// @param tokenId The NFT to query
+    /// @return species Species string (e.g., "base_animal_01")
+    function species(uint256 tokenId)
+        external view returns (string memory species);
+
+    /// @notice Returns total species count for a generation
+    /// @param gen Generation number
+    /// @return count Number of species in generation
+    function speciesCount(uint256 gen)
+        external view returns (uint256 count);
+}
+\end{lstlisting}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Generation} & \textbf{Base Animals} & \textbf{Source} \\
+\midrule
+Gen 1 (Oct 2021) & 16 & Original collection \\
+Gen 1 expanded & 20 & Later materials \\
+Gen 2+ & Variable & Governance-approved \\
+\bottomrule
+\end{tabular}
+\caption{Zoo NFT generations. The original 16 base animals form the canonical Gen 1 collection.}
+\label{tab:generations}
+\end{table}
+
+\subsection{Egg Mechanism}
+
+The original BSC deployment used an egg mechanism integrated with PancakeSwap:
+
+\begin{enumerate}
+    \item User purchases eggs using \$ZOO via PancakeSwap
+    \item Each egg hatches into one of the 16 generation-one base animals
+    \item Hatching is random with equal probability across species
+    \item The hatched NFT immediately begins accruing yield
+\end{enumerate}
+
+ZRC-721 preserves the egg mechanism as an optional minter extension.
+
+\section{Conservation Impact Attribution}
+\label{sec:conservation}
+
+Each ZRC-721 NFT tracks cumulative conservation contributions:
+
+\begin{lstlisting}[language=Solidity,caption=ZRC-721 Conservation Interface]
+interface IZRC721Conservation {
+    /// @notice Returns cumulative conservation impact
+    /// @param tokenId The NFT to query
+    /// @return amount Total conservation contribution in ZOO wei
+    function conservationImpact(uint256 tokenId)
+        external view returns (uint256 amount);
+
+    /// @notice Record a conservation contribution
+    /// @param tokenId The NFT crediting the contribution
+    /// @param amount Contribution amount in ZOO wei
+    /// @dev Only callable by verified conservation fund
+    function recordImpact(uint256 tokenId, uint256 amount)
+        external;
+
+    /// @notice Emitted on conservation contribution
+    event ConservationContribution(
+        uint256 indexed tokenId,
+        uint256 amount,
+        uint256 totalImpact
+    );
+}
+\end{lstlisting}
+
+Conservation impact is \textbf{non-transferable}: it remains bound to the NFT (not the owner) and survives transfers. This creates a provenance record of the NFT's conservation history.
+
+\section{Cross-Chain Bridge Compatibility}
+\label{sec:bridge}
+
+\subsection{Historical: ZOO Bridge (2022)}
+
+The February 2022 ZOO Bridge~\cite{zoo-jan-2022-deck} was one of the earliest cross-chain NFT bridges, described as allowing ``each users to play ZOO on any chain.'' It listed 16 supported asset types spanning EVM and non-EVM chains. ZRC-721 is designed for bridge compatibility from the start, continuing this tradition.
+
+\subsection{Warp Bridge Interface}
+
+ZRC-721 tokens are bridgeable via Lux Warp messaging with yield state preservation:
+
+\begin{lstlisting}[language=Solidity,caption=ZRC-721 Bridge Interface]
+interface IZRC721Bridge {
+    /// @notice Encode token for bridge transfer
+    /// @param tokenId The NFT to bridge
+    /// @return payload Warp-compatible payload including yield state
+    function encodeBridgePayload(uint256 tokenId)
+        external view returns (bytes memory payload);
+
+    /// @notice Decode and mint bridged token
+    /// @param payload Warp message payload
+    /// @param recipient Destination owner
+    /// @return tokenId Minted wrapped token ID
+    function decodeBridgeMint(
+        bytes calldata payload,
+        address recipient
+    ) external returns (uint256 tokenId);
+
+    /// @notice Emitted on bridge lock
+    event BridgeLocked(
+        uint256 indexed tokenId,
+        uint256 destChainId,
+        bytes payload
+    );
+
+    /// @notice Emitted on bridge mint
+    event BridgeMinted(
+        uint256 indexed tokenId,
+        uint256 srcChainId,
+        address indexed recipient
+    );
+}
+\end{lstlisting}
+
+The bridge payload includes the full yield state, generation, species, and conservation impact, ensuring that bridged NFTs retain all ZRC-721 semantics on the destination chain.
+
+\subsection{Yield Preservation Across Chains}
+
+\begin{definition}[Bridge Yield Invariant]
+For a ZRC-721 token $N$ bridged from chain $A$ to chain $B$:
+\begin{enumerate}
+    \item $N$ is locked in escrow on chain $A$; wrapped $N'$ minted on chain $B$
+    \item $Y_{N'} = Y_N$ at time of bridge (yield state preserved)
+    \item $N'$ continues accruing yield on chain $B$
+    \item Freeing $N'$ on chain $B$ (burn) triggers yield realization and releases $N$ on chain $A$
+    \item Total yield: $Y_N + \Delta Y_{N'}$ (no yield lost)
+\end{enumerate}
+\end{definition}
+
+This directly implements the 2022 deck's guarantee: yield is transferable (including across chains) until the animal is freed.
+
+\section{Formal Specification}
+\label{sec:spec}
+
+\subsection{Complete Interface}
+
+\begin{lstlisting}[language=Solidity,caption=ZRC-721 Complete Interface]
+interface IZRC721 is
+    IERC721,
+    IERC721Metadata,
+    IERC721Enumerable,
+    IZRC721Yield,
+    IZRC721Generation,
+    IZRC721Conservation,
+    IZRC721Bridge
+{
+    /// @notice Returns the ZRC-721 standard version
+    function zrcVersion() external pure returns (string memory);
+}
+\end{lstlisting}
+
+\subsection{Invariants}
+
+\begin{enumerate}
+    \item \textbf{Yield monotonicity}: $Y_N(t+1) \geq Y_N(t)$ for all tokens $N$ and times $t < t_{\text{burn}}$.
+    \item \textbf{Transfer preservation}: $Y_N$ and $C_N$ are unchanged by \texttt{transferFrom}.
+    \item \textbf{Burn finality}: After \texttt{free(tokenId)}, the token cannot be transferred, bridged, or yield further.
+    \item \textbf{Conservation permanence}: Conservation impact is non-transferable and monotonically non-decreasing.
+    \item \textbf{Generation immutability}: A token's generation and species cannot be changed after minting.
+\end{enumerate}
+
+\section{Relation to ERC-6551}
+
+ERC-6551~\cite{erc-6551} (proposed May 2023) creates token-bound accounts: smart contract accounts owned by NFTs. Zoo's yield-transferability-until-burn pattern (January 2022) achieves equivalent semantics through a different mechanism:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Property} & \textbf{Zoo NFTs (Jan 2022)} & \textbf{ERC-6551 (May 2023)} \\
+\midrule
+NFT owns assets & Yield + collateral & Arbitrary tokens \\
+Transfer semantics & Assets move with NFT & Account moves with NFT \\
+Realization & Burn (``free the animal'') & Direct withdrawal \\
+Composability & Yield-specific & General-purpose \\
+Timeline & January 2022 & May 2023 \\
+\bottomrule
+\end{tabular}
+\caption{Zoo's yield-transferability pattern vs. ERC-6551. Zoo's implementation predates ERC-6551 by 16 months.}
+\label{tab:erc6551}
+\end{table}
+
+ZRC-721 acknowledges this lineage by making yield transferability a first-class interface rather than an add-on extension.
+
+\section{Related Work}
+
+\textbf{Zoo Oct 2021 Deck}: Original collection of 16 generation-one base animals on BSC with PancakeSwap integration~\cite{zoo-oct-2021-deck}. The Q4 roadmap included ``Bridge between ETH and Binance.''
+
+\textbf{Zoo Jan 2022 Deck}: Defined yield transferability: ``NFT yield and collateral is transferable to new owners until the Animal is freed from ZOO''~\cite{zoo-jan-2022-deck}. Confirmed February 2022 ZOO Bridge launch.
+
+\textbf{ERC-721}: The base non-fungible token standard~\cite{erc-721}. ZRC-721 is fully compatible.
+
+\textbf{ERC-6551}: Token-bound accounts~\cite{erc-6551}. Zoo's yield-transferability-until-burn pattern is a functional predecessor.
+
+\textbf{ERC-4907}: Rental NFTs with time-limited usage rights. ZRC-721's yield mechanism is orthogonal: yield accrues to the owner (not a renter), and realization requires burn.
+
+\section{Conclusion}
+
+ZRC-721 formalizes the non-fungible token standard for Zoo L2, encoding three mechanisms with roots in Zoo's 2021--2022 origins: yield transferability until burn (from the January 2022 \$ZOO deck, predating ERC-6551 by 16 months), generation-based rarity (preserving the original 16 generation-one base animals from October 2021), and conservation impact attribution. The standard is fully ERC-721 compatible, bridge-ready via Lux Warp messaging (continuing the ``play on any chain'' philosophy of the February 2022 ZOO Bridge), and designed to preserve the yield-transferability-until-burn pattern that made Zoo NFTs yield-bearing instruments before the concept was standardized.
+
+\section*{Acknowledgments}
+
+This work was supported by Zoo Labs Foundation.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{99}
+
+\bibitem{zoo-oct-2021-deck}
+Zoo Labs, ``\$ZOO Token and NFT Ecosystem,'' Pitch Deck, October 2021. ``Contains 1 of 16 Generation one Base Animals.'' Q4 roadmap: ``Bridge between ETH and Binance.''
+
+\bibitem{zoo-jan-2022-deck}
+Zoo Labs, ``\$ZOO Ecosystem Update,'' Pitch Deck, January 2022. ``NFT yield and collateral is transferable to new owners until the Animal is freed from ZOO.'' ZOO Bridge: ``Our bridge allows each users to play ZOO on any chain.''
+
+\bibitem{erc-721}
+W. Entriken et al., ``EIP-721: Non-Fungible Token Standard,'' Ethereum Improvement Proposal, January 2018.
+
+\bibitem{erc-6551}
+J. Chung et al., ``ERC-6551: Non-fungible Token Bound Accounts,'' Ethereum Improvement Proposal, May 2023.
+
+\bibitem{lux-warp-messaging}
+Lux Industries, ``Warp Messaging: Verified Cross-Chain Communication on Lux Network,'' Technical Report, 2025.
+
+\end{thebibliography}
+
+\end{document}

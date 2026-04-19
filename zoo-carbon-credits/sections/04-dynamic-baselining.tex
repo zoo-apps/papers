@@ -1,0 +1,57 @@
+\section{Dynamic Baselining}
+
+\label{sec:baselines}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{The Baseline Problem}
+
+Carbon credits quantify the difference between actual outcomes and a
+counterfactual baseline---what would have happened without the
+intervention. Traditional approaches allow project developers to
+construct their own baselines, creating a fundamental conflict of
+interest. Higher baseline deforestation projections yield more credits,
+incentivizing inflated baselines \citep{west2023action}.
+
+\subsection{Synthetic Control Approach}
+
+We adopt the synthetic control method \citep{abadie2010synthetic} for
+baseline construction. For each project area $P$, we identify a set of
+$J$ control areas $\{C_1, \ldots, C_J\}$ that matched the project area's
+pre-intervention characteristics but were not subject to conservation
+intervention.
+
+The synthetic control baseline is:
+\begin{equation}
+  \hat{B}_t^{\text{baseline}}(P) = \sum_{j=1}^{J} w_j \cdot B_t(C_j)
+\end{equation}
+where weights $w_j \geq 0$, $\sum w_j = 1$ are chosen to minimize
+pre-intervention prediction error:
+\begin{equation}
+  \mathbf{w}^* = \arg\min_{\mathbf{w}} \sum_{t < t_0}
+  \left| B_t(P) - \sum_j w_j B_t(C_j) \right|^2
+\end{equation}
+
+\subsection{Control Area Selection}
+
+Control areas are selected from a candidate pool using the following
+matching criteria:
+\begin{itemize}
+  \item Same biome and eco-region (WWF classification).
+  \item Similar deforestation pressure (road density, population growth,
+    commodity prices).
+  \item Similar forest type and initial biomass ($\pm$20\%).
+  \item No conservation intervention during the study period.
+  \item Minimum 50\,km buffer from the project boundary.
+\end{itemize}
+
+\subsection{Baseline Validation}
+
+We validate dynamic baselines against actual deforestation in 23
+projects where the true counterfactual is observable (projects that
+lost funding and were abandoned). Dynamic baselines predict actual
+deforestation with $R^2 = 0.87$, compared to $R^2 = 0.41$ for
+project-developer baselines and $R^2 = 0.72$ for jurisdictional
+averages.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

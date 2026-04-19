@@ -1,0 +1,90 @@
+\section{Zoo FHE Architecture}
+
+\label{sec:architecture}
+
+\subsection{Dual-Scheme Design}
+
+Zoo FHE uses both \TFHE{} and \CKKS{} within a unified framework:
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=1.5cm,
+    box/.style={rectangle, draw, minimum width=3cm, minimum height=0.9cm, align=center, fill=blue!10},
+    arrow/.style={->, thick}
+]
+    \node[box] (input) {Encrypted Input\\(\CKKS{} packed)};
+    \node[box, right=2cm of input] (conv) {Convolution\\(\CKKS{} SIMD)};
+    \node[box, right=2cm of conv] (relu) {ReLU\\(\TFHE{} bootstrap)};
+    \node[box, below=of relu] (pool) {Pooling\\(\CKKS{} rotation)};
+    \node[box, left=2cm of pool] (fc) {Dense Layer\\(\CKKS{} matmul)};
+    \node[box, left=2cm of fc] (output) {Encrypted Output\\(Threshold Dec)};
+
+    \draw[arrow] (input) -- (conv);
+    \draw[arrow] (conv) -- (relu);
+    \draw[arrow] (relu) -- (pool);
+    \draw[arrow] (pool) -- (fc);
+    \draw[arrow] (fc) -- (output);
+\end{tikzpicture}
+\caption{Dual-scheme neural network inference. Linear layers use \CKKS{} SIMD; nonlinear activations use \TFHE{} bootstrapping.}
+\label{fig:dual-scheme}
+\end{figure}
+
+The key insight is that neural networks alternate between linear operations (matrix multiplications, convolutions) and nonlinear activations (ReLU, sigmoid). \CKKS{} efficiently handles linear operations via SIMD packing, while \TFHE{} handles nonlinear operations via programmable bootstrapping.
+
+\subsection{Scheme Switching}
+
+Transitioning between \CKKS{} and \TFHE{} ciphertexts requires a bridging protocol:
+
+\begin{algorithm}[t]
+\caption{CKKS-to-TFHE Bridge}
+\label{alg:bridge}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: \CKKS{} ciphertext $c_{\text{ckks}}$ encoding value $x \in [-1, 1]$
+\STATE \textbf{Output}: \TFHE{} ciphertext $c_{\text{tfhe}}$ encoding $\lfloor x \cdot 2^p \rfloor$
+\STATE Scale: $c' \leftarrow c_{\text{ckks}} \cdot 2^p$
+\STATE Extract coefficients from $c'$
+\STATE Construct LWE ciphertext from coefficients
+\STATE $c_{\text{tfhe}} \leftarrow \text{KeySwitch}(c_{\text{lwe}}, \text{ksk}_{\text{ckks} \to \text{tfhe}})$
+\RETURN $c_{\text{tfhe}}$
+\end{algorithmic}
+\end{algorithm}
+
+The key-switching key $\text{ksk}_{\text{ckks} \to \text{tfhe}}$ is generated during setup and stored encrypted on-chain.
+
+\subsection{Precompile Interface}
+
+The Zoo FHE precompile at \texttt{0x0700} exposes:
+
+\begin{lstlisting}[basicstyle=\ttfamily\small,caption=Zoo FHE Precompile Interface]
+interface IFHE {
+    // CKKS operations (packed vectors)
+    function ckksAdd(bytes ct1, bytes ct2)
+        returns (bytes);
+    function ckksMul(bytes ct1, bytes ct2)
+        returns (bytes);
+    function ckksRotate(bytes ct, int steps)
+        returns (bytes);
+    function ckksMatMul(bytes ct, bytes ptMatrix)
+        returns (bytes);
+
+    // TFHE operations (scalar integers)
+    function tfheAdd(uint256 ct1, uint256 ct2)
+        returns (uint256);
+    function tfheLt(uint256 ct1, uint256 ct2)
+        returns (uint256);
+    function tfheMax(uint256 ct1, uint256 ct2)
+        returns (uint256);
+
+    // Scheme switching
+    function ckksToTfhe(bytes ckksCt)
+        returns (uint256);
+    function tfheToCkks(uint256 tfheCt)
+        returns (bytes);
+
+    // Threshold decryption
+    function requestDecrypt(uint256 ct)
+        returns (bytes32 requestId);
+}
+\end{lstlisting}
+

@@ -1,0 +1,51 @@
+\section{Related Work}
+
+
+\subsection{Semantic Embeddings}
+
+Text embedding models have evolved from Word2Vec~\cite{mikolov2013word2vec} to transformer-based architectures achieving state-of-the-art performance on MTEB~\cite{muennighoff2023mteb}. Notable models include:
+
+\begin{itemize}
+\item \textbf{BGE-Large}~\cite{xiao2024bge}: 1024-dim, 63.5 MTEB average
+\item \textbf{E5-Large}~\cite{wang2024e5}: 1024-dim, 64.1 MTEB average
+\item \textbf{Qwen3-Embedding-8B}~\cite{qwen2024embedding}: 4096-dim, 67.8 MTEB average
+\end{itemize}
+
+However, these models optimize for general-purpose retrieval, not decentralized cross-model experience sharing.
+
+\subsection{Decentralized AI Training}
+
+Federated Learning~\cite{mcmahan2017federated} enables distributed training but requires gradient aggregation, introducing privacy risks and communication overhead. Recent work explores alternative paradigms:
+
+\begin{itemize}
+\item \textbf{Split Learning}~\cite{gupta2018split}: Model partitioning across nodes
+\item \textbf{Swarm Learning}~\cite{warnat2021swarm}: Blockchain-based coordination
+\item \textbf{Training-Free GRPO}~\cite{tencent2025grpo}: Context-based improvement without weight updates
+\end{itemize}
+
+Our work builds on training-free GRPO, adding native high-dimensional embeddings for semantic experience storage.
+
+\subsection{Vector Compression}
+
+High-dimensional vector compression enables efficient network transmission:
+
+\begin{itemize}
+\item \textbf{Product Quantization}~\cite{jegou2011pq}: 8-16$\times$ compression with 5-10\% loss
+\item \textbf{Binary Embeddings}~\cite{shen2015binary}: 32$\times$ compression, significant semantic loss
+\item \textbf{BitDelta}~\cite{hanzo2025bitdelta}: Delta encoding + run-length compression, 30$\times$ with <1\% loss
+\end{itemize}
+
+Zen-Reranker optimizes for BitDelta compression through training-time co-design.
+
+\subsection{Byzantine Fault Tolerance}
+
+Decentralized systems require robustness to adversarial nodes:
+
+\begin{itemize}
+\item \textbf{Krum}~\cite{blanchard2017krum}: Geometric median-based selection
+\item \textbf{Median Aggregation}~\cite{yin2018median}: Dimension-wise median, tolerates up to 49\% Byzantine
+\item \textbf{Trimmed Mean}~\cite{yin2018trimmed}: Removes outliers before averaging
+\end{itemize}
+
+We adopt median aggregation for its simplicity and provable $\frac{n-1}{2}$ Byzantine tolerance.
+

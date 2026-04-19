@@ -1,0 +1,20 @@
+\section{Slashing Conditions}
+
+
+\begin{enumerate}
+    \item \textbf{Invalid Attestation}: Signature does not verify
+    \item \textbf{Output Mismatch}: Re-execution produces different result
+    \item \textbf{Quality Manipulation}: Score differs from consensus by $> 3\sigma$
+    \item \textbf{Double Signing}: Same attestation submitted to multiple blocks
+    \item \textbf{Unavailability}: Validator offline for $> 24$ hours
+\end{enumerate}
+
+Slashing amounts:
+\begin{itemize}
+    \item Invalid attestation: 100\% of bond
+    \item Output mismatch: 50\% of bond
+    \item Quality manipulation: 25\% of bond
+    \item Double signing: 100\% of bond
+    \item Unavailability: 1\% of bond per day
+\end{itemize}
+

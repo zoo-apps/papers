@@ -1,0 +1,81 @@
+\section{Governance Architecture}
+
+\label{sec:architecture}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Token Structure}
+
+Zoo DAO uses a dual-token system:
+
+\begin{enumerate}
+  \item \textbf{\ZOO{} token} (fungible, transferable): Governance token
+    for voting credits, staking, and economic coordination. Maximum
+    supply: 1 billion.
+
+  \item \textbf{ZooRep} (non-transferable, soulbound): Reputation tokens
+    earned through verified contributions. Determines eligibility for
+    governance roles and review assignments.
+\end{enumerate}
+
+\paragraph{ZooRep earning mechanisms.}
+\begin{table}[H]
+\centering
+\caption{ZooRep earning rates by contribution type.}
+\label{tab:rep}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Contribution} & \textbf{ZooRep earned} & \textbf{Decay rate} \\
+\midrule
+Published research (open access) & 100--500 & 10\%/year \\
+Peer review completion & 20--50 & 15\%/year \\
+Data contribution (verified) & 10--100 & 10\%/year \\
+Successful grant project & 200--1000 & 5\%/year \\
+Citizen science observations & 1--5 & 20\%/year \\
+Code contribution (merged) & 10--50 & 15\%/year \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Decay ensures reputation reflects recent activity.
+
+\subsection{Governance Bodies}
+
+\begin{enumerate}
+  \item \textbf{General Assembly}: All \ZOO{} holders. Votes on
+    constitutional changes and treasury allocation ceilings. 10\% quorum.
+
+  \item \textbf{Research Council}: Members with $\geq$500 ZooRep.
+    Reviews grants and sets research priorities. 7-member elected body,
+    staggered 2-year terms.
+
+  \item \textbf{Review Board}: Members with $\geq$200 ZooRep in
+    relevant domains. Conducts peer review.
+
+  \item \textbf{Treasury Committee}: 5 multi-sig holders (3-of-5)
+    managing DAO treasury. Elected annually.
+
+  \item \textbf{Domain Working Groups}: Self-organizing groups focused
+    on specific research areas. Minimum 5 members with $\geq$100 ZooRep.
+\end{enumerate}
+
+\subsection{Proposal Types}
+
+\begin{table}[H]
+\centering
+\caption{Proposal types and governance requirements.}
+\label{tab:proposals}
+\begin{tabular}{p{3cm}p{2.5cm}p{2cm}p{2.5cm}p{2cm}}
+\toprule
+\textbf{Type} & \textbf{Proposer req.} & \textbf{Quorum} &
+  \textbf{Voting method} & \textbf{Duration} \\
+\midrule
+Research grant & 50 ZooRep & 5\% & Quadratic & 14 days \\
+Parameter change & 200 ZooRep & 10\% & Token-weighted & 7 days \\
+Constitutional & 500 ZooRep & 20\% & Supermajority & 21 days \\
+Emergency & Research Council & 33\% & Simple majority & 48 hours \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,119 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes,arrows,positioning,calc,decorations.pathreplacing}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+% geometry loaded by zoocover
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\Beluga}{\textsc{Beluga}}
+\newcommand{\BLG}{\textsc{blg}}
+\newcommand{\PoAI}{\textsc{PoAI}}
+\newcommand{\DAO}{\textsc{dao}}
+\newcommand{\LLM}{\textsc{llm}}
+\newcommand{\TEE}{\textsc{tee}}
+\newcommand{\LoRA}{\textsc{LoRA}}
+\newcommand{\QLoRA}{\textsc{QLoRA}}
+\newcommand{\GRPO}{\textsc{grpo}}
+\newcommand{\DSO}{\textsc{dso}}
+
+% Solidity language definition (listings does not include it by default)
+\lstdefinelanguage{Solidity}{
+    morekeywords={contract,function,returns,return,if,else,for,while,do,
+        mapping,address,uint256,uint,int,bool,string,bytes,bytes32,
+        public,private,internal,external,view,pure,payable,memory,storage,
+        calldata,event,emit,modifier,require,struct,enum,interface,
+        abstract,override,virtual,is,new,delete,import,pragma,solidity,
+        library,using,constructor,msg,sender,block,timestamp,this,super},
+    sensitive=true,
+    comment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    morestring=[b]",
+}
+
+% Listings style
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    tabsize=2,
+    captionpos=b,
+    aboveskip=10pt,
+    belowskip=10pt
+}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{BELUGA}\\
+\large L3 App-Chain for AI Model Economics}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{January 2026}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \Beluga{}, a Layer 3 application-specific blockchain for AI model economics, built on \Zoo{} Network (L2) which itself runs on \Lux{} Network (L0). \Beluga{} introduces a dedicated execution environment where every operation---model registration, inference requests, training bounties, data contribution---is a native transaction priced in the \BLG{} gas token. The chain implements custom EVM precompiles for inference pricing (address \texttt{0x0300}), a model marketplace, and training bounty escrow, enabling sub-millisecond settlement of AI compute transactions without leaving the chain. With a fixed supply of 100M \BLG{} allocated across a \DAO{} treasury (60M), inference pool (20M), training bounties (10M), and DEX liquidity (10M), \Beluga{} creates a self-sustaining economy where participants earn by training models, curating datasets, hosting inference, evaluating outputs, and governing the network. The chain runs on existing \Zoo{} validators via the \texttt{zood} node binary, requiring no new infrastructure. We describe the architecture, token economics, earning mechanisms, smart contract design, precompile specification, Proof of AI consensus adaptation, security model, and a concrete migration path from smart contracts on \Zoo{} to a sovereign L3. Experimental results from testnet deployment demonstrate 2,400 inference transactions per second with 1.1-second finality.
+
+\textbf{Keywords}: Layer 3 blockchain, AI model economics, inference marketplace, training bounties, application-specific chain
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%% ============================================================
+
+\input{sections/01-introduction}
+\input{sections/02-architecture}
+\input{sections/03-blg-token-economics}
+\input{sections/04-earning-mechanisms}
+\input{sections/05-smart-contracts}
+\input{sections/06-precompiles}
+\input{sections/07-consensus-poai-on-beluga}
+\input{sections/08-security-model}
+\input{sections/09-migration-path}
+\input{sections/10-related-work}
+\input{sections/99-conclusion}
+
+\end{document}

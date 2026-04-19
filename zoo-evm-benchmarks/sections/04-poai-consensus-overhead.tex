@@ -1,0 +1,46 @@
+\section{PoAI Consensus Overhead}
+
+\label{sec:poai}
+
+Zoo Network runs Proof of AI~\cite{zoo-poai-consensus} as a consensus overlay on Quasar~\cite{lux-quasar-consensus}. PoAI adds verification of AI compute contributions, introducing overhead beyond pure Quasar finality.
+
+\subsection{Overhead Measurement}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Component} & \textbf{Latency (ms)} & \textbf{Overhead} \\
+\midrule
+Quasar consensus (baseline) & 10.0 & --- \\
+TEE attestation verification & 0.3 & 3.0\% \\
+Quality scoring (inference) & 0.5 & 5.0\% \\
+BLS aggregation & 0.1 & 1.0\% \\
+\midrule
+\textbf{Total with PoAI} & \textbf{10.9} & \textbf{9.0\%} \\
+\bottomrule
+\end{tabular}
+\caption{PoAI consensus overhead breakdown. TEE attestation is the dominant cost.}
+\label{tab:poai}
+\end{table}
+
+The 9\% overhead is a worst case when every block contains AI compute attestations. For blocks with only financial transactions (no AI workload), the PoAI overhead drops to 1\% (BLS aggregation only).
+
+\subsection{Throughput Under PoAI}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Workload Mix} & \textbf{TPS (Quasar only)} & \textbf{TPS (Quasar + PoAI)} \\
+\midrule
+100\% transfers & 4,760,000 & 4,712,000 \\
+70\% transfers / 30\% AI & 3,200,000 & 2,944,000 \\
+50\% transfers / 50\% AI & 2,380,000 & 2,190,000 \\
+100\% AI inference & 200,000 & 184,000 \\
+\bottomrule
+\end{tabular}
+\caption{Throughput impact of PoAI verification for mixed workloads.}
+\label{tab:poai-throughput}
+\end{table}
+

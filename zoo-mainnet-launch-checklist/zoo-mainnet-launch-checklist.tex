@@ -1,0 +1,46 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{tabularx}
+
+% Status markers
+\newcommand{\pending}{\texttt{[ ]}}
+\newcommand{\done}{\texttt{[x]}}
+\newcommand{\blocked}{\texttt{[!]}}
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+
+\title{\textbf{Zoo Network Mainnet Launch:\\Technical Checklist and Rehearsal Plan}}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{ops@zoo.ngo}
+}
+
+\date{January 2026}
+
+\begin{document}
+
+\zoocoverpage
+
+\tableofcontents
+\newpage
+
+%% ---------------------------------------------------------------------------
+
+\input{sections/01-overview}
+\input{sections/02-pre-launch-testnet-validation}
+\input{sections/03-rehearsal-testnet-to-staging}
+\input{sections/04-launch-day}
+\input{sections/05-post-launch}
+\input{sections/06-rollback-plan}
+\input{sections/07-appendix-chain-reference}
+
+\end{document}

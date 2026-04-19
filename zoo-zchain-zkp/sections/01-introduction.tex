@@ -1,0 +1,15 @@
+\section{Introduction}
+
+
+Zero-knowledge proofs enable a prover to convince a verifier of a statement's truth without revealing the underlying witness. In blockchain systems, ZKPs serve three critical roles: scaling (rollup compression), privacy (confidential transactions), and verifiable computation (off-chain execution with on-chain verification). However, existing ZK infrastructure suffers from three limitations:
+
+\begin{enumerate}
+\item \textbf{Quantum vulnerability.} Groth16 and PLONK rely on elliptic curve pairings (BN254, BLS12-381) that are broken by Shor's algorithm on a sufficiently large quantum computer. As NIST has standardized post-quantum algorithms (ML-KEM, ML-DSA, SLH-DSA), ZK systems must migrate to quantum-resistant primitives.
+
+\item \textbf{Fragmentation.} Each proof system (Groth16, PLONK, STARK, Nova, Halo2) produces incompatible proof formats. Cross-system composition requires manual bridging. No standard receipt format exists for proof-of-proof attestation.
+
+\item \textbf{Centralized infrastructure.} Proof generation is computationally intensive, concentrating proving power in well-funded operators. Decentralized proving markets exist (=nil;, Gevulot) but lack native blockchain integration.
+\end{enumerate}
+
+Z-Chain addresses all three through a chain-native ZK substrate that is post-quantum by default, universally composable via receipts, and decentralized through Zoo Network's Proof of AI validator set.
+

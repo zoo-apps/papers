@@ -1,0 +1,46 @@
+\section{Background}
+
+
+\subsection{Threshold Signatures}
+
+\begin{definition}[$(t, n)$-Threshold Signature Scheme]
+A \TSS{} distributes a signing key $sk$ among $n$ parties such that any $t$ parties can collaboratively produce a valid signature, but fewer than $t$ parties learn nothing about $sk$.
+\end{definition}
+
+\subsection{CGGMP21}
+
+The Canetti-Gennaro-Goldfeder-Makriyannis-Peled protocol~\cite{cggmp2021} provides threshold ECDSA signing with:
+
+\begin{itemize}
+    \item \textbf{UC security}: Composably secure in the universal composability framework
+    \item \textbf{Identifiable abort}: If signing fails, the malicious party is identified
+    \item \textbf{Pre-signing}: Expensive operations done offline; online signing is fast
+\end{itemize}
+
+Signing complexity: $O(t^2)$ messages in the online phase, $O(n \cdot t)$ in pre-signing.
+
+\subsection{FROST}
+
+Flexible Round-Optimized Schnorr Threshold~\cite{komlo2020frost} provides threshold Schnorr/EdDSA signing with:
+
+\begin{itemize}
+    \item \textbf{Two rounds}: Commitment round + signing round
+    \item \textbf{No trusted dealer}: Distributed key generation via Pedersen DKG
+    \item \textbf{Robustness}: Optional identifiable abort extension
+\end{itemize}
+
+FROST is 3--5$\times$ faster than CGGMP21 for equivalent threshold parameters because Schnorr signatures have simpler algebraic structure than ECDSA.
+
+\subsection{Lux M-Chain}
+
+The Lux Network's M-Chain~\cite{lux-mchain-mpc} provides native MPC infrastructure:
+
+\begin{itemize}
+    \item Key generation ceremonies coordinated on-chain
+    \item Threshold signing requests submitted as transactions
+    \item Key shares stored in TEE-protected enclaves on validator nodes
+    \item Cross-chain signing: M-Chain key shares can sign for any Lux chain
+\end{itemize}
+
+Zoo Network inherits M-Chain access as an L2, enabling threshold signing without running separate MPC infrastructure.
+

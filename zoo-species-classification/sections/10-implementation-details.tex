@@ -1,0 +1,26 @@
+\section{Implementation Details}
+
+\label{sec:implementation}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Software and Hardware}
+
+TaxoNet is implemented in PyTorch 2.2 with the \texttt{timm} library for
+ViT models. Training was conducted on 8 NVIDIA A100 GPUs for
+approximately 72 hours. Inference is deployed on NVIDIA T4 GPUs behind a
+Kubernetes load balancer.
+
+\subsection{Data Augmentation}
+
+Training episodes apply random resized crop (scale 0.4--1.0), horizontal
+flip, color jitter, random Gaussian blur, random grayscale (probability
+0.1), and cutout with one $64 \times 64$ hole.
+
+\subsection{Confidence Calibration}
+
+We calibrate prediction confidence using temperature scaling
+\citep{guo2017calibration}. Post-calibration, expected calibration error
+(ECE) drops from 8.3\% to 2.1\%.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

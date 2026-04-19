@@ -1,0 +1,120 @@
+\section{Experience Marketplace Dynamics}
+
+
+The experience marketplace represents Zoo's most novel economic primitive. Unlike token staking or governance (common in DeFi), monetizing semantic knowledge is unprecedented.
+
+\subsection{Experience Lifecycle}
+
+\begin{enumerate}
+\item \textbf{Creation}: Researcher extracts semantic advantage via training-free GRPO
+\item \textbf{Validation}: DAO validators assess quality (minimum 3 approvals required)
+\item \textbf{Listing}: Creator sets pricing model (pay-per-use, subscription, free+tip)
+\item \textbf{Discovery}: Users search marketplace by domain, effectiveness score, price
+\item \textbf{Usage}: Smart contract tracks each inference using the experience
+\item \textbf{Royalties}: Automatic payment to creator (90\%) and DAO (10\%)
+\item \textbf{Evolution}: Experiences can be updated/improved (version history tracked)
+\end{enumerate}
+
+\subsection{Pricing Dynamics}
+
+Experience prices emerge from supply-demand equilibrium:
+
+\begin{equation}
+P_i = f(E_i, R_i, S_i, D_i)
+\end{equation}
+
+where:
+\begin{itemize}
+\item $P_i$: Price of experience $i$
+\item $E_i$: Effectiveness (measured performance improvement)
+\item $R_i$: Rarity (few alternatives available)
+\item $S_i$: Specificity (narrow domain = higher price)
+\item $D_i$: Demand (usage volume)
+\end{itemize}
+
+\textbf{Empirical Price Ranges (October 2025):}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Experience Type} & \textbf{Effectiveness} & \textbf{Avg Price/Use} & \textbf{Monthly Revenue} \\
+\midrule
+General reasoning & +3-5\% & 50K $\KEEPER$ & 5M $\KEEPER$ \\
+Domain-specific (math) & +10-15\% & 500K $\KEEPER$ & 80M $\KEEPER$ \\
+Expert (medical) & +20-30\% & 2M $\KEEPER$ & 300M $\KEEPER$ \\
+Proprietary (trading) & +50\%+ & 50M $\KEEPER$ & 5B $\KEEPER$ \\
+\bottomrule
+\end{tabular}
+\caption{Experience marketplace pricing tiers (October 2025)}
+\label{tab:experience_pricing}
+\end{table}
+
+\subsection{Network Effects}
+
+The experience marketplace exhibits strong network effects:
+
+\begin{enumerate}
+\item \textbf{Quality Flywheel}: Better experiences attract more users → more usage data → enables creation of even better experiences
+\item \textbf{Specialization}: Experts focus on narrow domains where they can extract maximum value
+\item \textbf{Composability}: Experiences can reference/build upon other experiences (with attribution)
+\item \textbf{Community Curation}: DAO voting promotes high-quality experiences to featured sections
+\end{enumerate}
+
+\subsection{Experience Copyright and Attribution}
+
+Zoo implements on-chain intellectual property tracking:
+
+\begin{itemize}
+\item \textbf{Authorship}: Cryptographically signed by creator's wallet
+\item \textbf{Version History}: All updates timestamped and attributed
+\item \textbf{Derivative Works}: If experience B builds on experience A, smart contract enforces revenue sharing:
+    \begin{equation}
+    R_A = 0.20 \times R_B \quad \text{(A's author gets 20\% of B's revenue)}
+    \end{equation}
+\item \textbf{Licensing}: Creators choose license (MIT, CC-BY, proprietary)
+\end{itemize}
+
+This creates \textbf{sustainable attribution} - unlike academic citations (no economic value), Zoo's system ensures derivative work benefits original creators.
+
+\subsection{DAO Quality Curation}
+
+To prevent marketplace pollution (low-quality experiences), DAO implements curation:
+
+\begin{itemize}
+\item \textbf{Minimum Standards}: Experiences must demonstrate ≥+3\% improvement in blind tests
+\item \textbf{Flagging System}: Users can flag misleading/ineffective experiences
+\item \textbf{Voting Removal}: If experience receives 100+ flags, DAO vote determines removal (51\% threshold)
+\item \textbf{Creator Reputation}: Track record visible (average effectiveness, user ratings)
+\end{itemize}
+
+\subsection{Economic Impact on AI Research}
+
+The experience marketplace creates \textbf{direct monetization for AI researchers}, competing with traditional academic funding:
+
+\textbf{Traditional Academic Path:}
+\begin{itemize}
+\item Research insight → Write paper → Submit to conference → 6-12 month review → Publication
+\item Monetization: Prestige only (maybe \$500 best-paper award)
+\item Time to value: 1-2 years
+\end{itemize}
+
+\textbf{Zoo Experience Path:}
+\begin{itemize}
+\item Research insight → Extract as semantic experience → Submit to DAO → 3-7 day review → List on marketplace
+\item Monetization: Immediate royalties from usage
+\item Time to value: 1-2 weeks
+\end{itemize}
+
+\textbf{Case Study: University Researcher}
+
+Dr. A (theoretical CS professor) discovers novel mathematical reasoning pattern:
+\begin{enumerate}
+\item Extracts as experience: "For combinatorial counting problems, identify symmetries before enumerating cases"
+\item Lists at 300K $\KEEPER$ per use
+\item First month: 2,400 uses = 720M $\KEEPER$ (\$14,400 at \$0.02/token)
+\item Annual projection: 28,800 uses = 8.64B $\KEEPER$ (\$172,800/year)
+\end{enumerate}
+
+This exceeds typical postdoc salary (\$50-70K) and provides \textbf{direct incentive for open research sharing} versus hoarding insights for traditional publication.
+

@@ -1,0 +1,75 @@
+\section{Precompile Architecture}
+
+
+Zoo EVM activates 20 precompiles at genesis. These execute at native speed within the EVM, avoiding the 100--1000x overhead of implementing equivalent operations in Solidity bytecode.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{llll}
+\toprule
+\textbf{Category} & \textbf{Precompile} & \textbf{Address} & \textbf{Standard} \\
+\midrule
+\multirow{5}{*}{Post-Quantum} & ML-DSA & \texttt{0x0200...06} & FIPS 204 \\
+ & SLH-DSA & \texttt{0x0600...01} & FIPS 205 \\
+ & ML-KEM & \texttt{0x0200...07} & FIPS 203 \\
+ & PQCrypto & \texttt{0x...9003} & Composite \\
+ & Blake3 & \texttt{0x0500...04} & BLAKE3 \\
+\midrule
+\multirow{3}{*}{Threshold Sig} & FROST & \texttt{0x0800...02} & RFC 9591 \\
+ & CGGMP21 & \texttt{0x0800...03} & CGGMP21 \\
+ & Corona & \texttt{0x0200...0B} & Ring-CT \\
+\midrule
+\multirow{3}{*}{Curves} & Ed25519 & \texttt{native} & RFC 8032 \\
+ & secp256r1 & \texttt{native} & NIST P-256 \\
+ & SR25519 & \texttt{native} & Ristretto \\
+\midrule
+\multirow{4}{*}{Privacy} & FHE & \texttt{0x0700...00} & CKKS/BGV \\
+ & ZK & \texttt{0x0900...00} & Groth16 \\
+ & HPKE & \texttt{0x...9200} & RFC 9180 \\
+ & ECIES & \texttt{0x...9201} & IEEE 1363a \\
+\midrule
+Privacy & Ring & \texttt{0x...9202} & Borromean \\
+\midrule
+\multirow{2}{*}{DeFi} & DEX Pool & \texttt{0x...9010} & Uniswap v4 \\
+ & Router & \texttt{0x...9012} & Swap Router \\
+\midrule
+\textbf{AI} & \textbf{AI Mining} & \texttt{0x0300...00} & \textbf{PoUC} \\
+\midrule
+Compute & Graph & \texttt{0x0500...10} & On-chain GNN \\
+\bottomrule
+\end{tabular}
+\caption{Zoo EVM precompile suite. AI Mining (bold) is unique to Zoo---not present on Liquid EVM.}
+\end{table}
+
+\subsection{Post-Quantum Cryptography}
+
+Zoo EVM implements all three NIST PQC standards finalized in 2024:
+
+\textbf{ML-DSA} (FIPS 204): Module-Lattice Digital Signature Algorithm. Provides quantum-resistant digital signatures based on the hardness of Module Learning With Errors (MLWE). Zoo uses ML-DSA-65 (Level 3, 3.3 KB signatures) for validator attestations and governance votes.
+
+\textbf{SLH-DSA} (FIPS 205): Stateless Hash-Based Digital Signature Algorithm. Provides signatures with minimal cryptographic assumptions (only hash function security). Larger signatures (17 KB for SLH-DSA-SHAKE-256f) but maximum conservative security. Used for long-term key certification.
+
+\textbf{ML-KEM} (FIPS 203): Module-Lattice Key Encapsulation Mechanism. Provides quantum-resistant key exchange. Used in MPC keygen ceremonies and secure channel establishment between validators.
+
+\subsection{AI Mining Precompile}
+
+The AI Mining precompile at \texttt{0x0300...00} enables proof-of-useful-computation (PoUC):
+
+\begin{enumerate}[nosep]
+  \item \textbf{Task submission}: Research tasks (inference, training batches, evaluation) are posted on-chain with compute requirements and reward allocation.
+  \item \textbf{Compute commitment}: Validators commit to executing tasks, staking ZOO as collateral.
+  \item \textbf{Result verification}: Completed results are submitted with cryptographic proofs. For deterministic tasks (inference), bit-exact reproducibility is verified. For stochastic tasks (training), statistical validation against held-out test sets is used.
+  \item \textbf{Reward distribution}: Verified compute earns ZOO rewards plus governance rights (ZIPs voting weight).
+\end{enumerate}
+
+This mechanism transforms idle validator compute into productive AI research capacity, aligning economic incentives with scientific output.
+
+\subsection{Privacy Precompiles for ML}
+
+Two precompiles enable privacy-preserving machine learning:
+
+\textbf{FHE} (Fully Homomorphic Encryption): The CKKS/BGV precompile at \texttt{0x0700...00} enables computation on encrypted data. Applications include private model inference (user data never decrypted on-chain) and encrypted model parameter aggregation in federated learning.
+
+\textbf{ZK} (Zero-Knowledge Proofs): The Groth16 precompile at \texttt{0x0900...00} enables succinct verification of computation. Applications include proving model accuracy without revealing model weights, verifying training data provenance, and privacy-preserving credential verification for DeSci access control.
+

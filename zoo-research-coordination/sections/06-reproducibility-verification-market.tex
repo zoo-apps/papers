@@ -1,0 +1,82 @@
+\section{Reproducibility Verification Market}
+
+\label{sec:market}
+
+\subsection{Market Design}
+
+The verification market creates economic incentives for independent reproducibility testing.
+The market operates through a three-phase mechanism:
+
+\textbf{Phase 1: Bounty Posting.}
+When an experiment reaches the \texttt{completed} status, a verification bounty is automatically created.
+The bounty amount $B$ is determined by:
+
+\begin{equation}
+    B = B_{\text{base}} + B_{\text{complexity}} \cdot \log(|V|) + B_{\text{impact}} \cdot I(E)
+\end{equation}
+
+\noindent where $B_{\text{base}}$ is a minimum bounty funded by the experiment's staking deposit, $|V|$ is the number of computational units in the execution graph, and $I(E)$ is an impact score based on citations, downloads, and dependent experiments.
+
+\textbf{Phase 2: Verification Execution.}
+Verifiers claim bounties by re-executing the experiment's execution graph on independent infrastructure.
+The verification is structured as:
+
+\begin{equation}
+    V_{\text{result}} = \begin{cases}
+        \text{REPRODUCED} & \text{if } d(\text{output}_{\text{original}}, \text{output}_{\text{verified}}) \leq \epsilon \\
+        \text{PARTIAL} & \text{if } \frac{|\{v_i : d_i \leq \epsilon_i\}|}{|V|} \geq 0.8 \\
+        \text{FAILED} & \text{otherwise}
+    \end{cases}
+\end{equation}
+
+\textbf{Phase 3: Dispute Resolution.}
+When verification fails, a dispute resolution process convenes a panel of domain-qualified verifiers who independently assess whether the failure stems from the original experiment, the verification attempt, or environmental non-determinism.
+
+\subsection{Incentive Analysis}
+
+We analyze the incentive structure using mechanism design theory.
+Let $c_v$ be the cost of verification and $B$ be the bounty.
+A rational verifier participates when:
+
+\begin{equation}
+    \mathbb{E}[B \cdot P(\text{accept})] > c_v + c_{\text{opportunity}}
+\end{equation}
+
+The protocol ensures incentive compatibility through three mechanisms:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Staking:} Both experimenters and verifiers stake tokens that are slashed for dishonest behavior.
+    \item \textbf{Reputation:} Successful verifications increase a verifier's reputation score, granting access to higher-value bounties.
+    \item \textbf{Insurance:} A protocol-level insurance pool compensates verifiers whose honest work is challenged through frivolous disputes.
+\end{enumerate}
+
+\subsection{Semantic Reproducibility Proofs}
+
+We introduce Semantic Reproducibility Proofs (SRP) that go beyond bitwise output comparison to assess whether results are scientifically equivalent:
+
+\begin{equation}
+    \text{SRP}(E_1, E_2) = \bigwedge_{j=1}^{m} \text{Consistent}(\text{conclusion}_j(E_1), \text{conclusion}_j(E_2))
+\end{equation}
+
+\noindent where $\text{conclusion}_j$ extracts the $j$-th scientific conclusion (e.g., hypothesis test outcome, effect size direction, confidence interval overlap) and $\text{Consistent}$ evaluates agreement accounting for expected stochastic variation.
+
+The SRP framework handles three common sources of acceptable variation:
+
+\begin{table}[H]
+\centering
+\caption{Sources of acceptable variation in reproducibility assessment.}
+\label{tab:variation}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Source} & \textbf{Detection} & \textbf{Resolution} \\
+\midrule
+Floating-point non-determinism & Bitwise output diff & Statistical equivalence test on aggregated metrics \\
+Stochastic algorithms & Seed-dependent paths & Multi-seed execution with distribution comparison \\
+Platform differences & Hardware attestation diff & Cross-platform tolerance bounds from calibration runs \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ============================================================
+% 7. Implementation
+% ============================================================

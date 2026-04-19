@@ -1,0 +1,59 @@
+\section{TEE Attestation for GPU Providers}
+
+\label{sec:tee}
+
+\subsection{GPU TEE Landscape}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Platform} & \textbf{GPU TEE} & \textbf{Attestation} & \textbf{Overhead} \\
+\midrule
+NVIDIA H100 & CC Mode & Remote attestation & 2--5\% \\
+NVIDIA A100 & MIG isolation & Partial attestation & 5--8\% \\
+AMD MI300X & SEV-SNP & Full attestation & 3--6\% \\
+Intel Gaudi 3 & TDX & Remote attestation & 4--7\% \\
+\bottomrule
+\end{tabular}
+\caption{GPU TEE support across hardware platforms deployed on Zoo Network.}
+\label{tab:tee}
+\end{table}
+
+\subsection{Attestation Flow}
+
+\begin{algorithm}[t]
+\caption{GPU TEE Attestation on Zoo}
+\label{alg:tee}
+\begin{algorithmic}[1]
+\STATE GPU worker initializes TEE enclave
+\STATE Load AI model into enclave (hash verified)
+\STATE Execute inference/training within enclave
+\STATE Generate attestation report:
+\STATE \quad $A = (\text{measurement}, h_{\text{in}}, h_{\text{out}}, \tau, \text{sig}_{\text{hw}})$
+\STATE Submit $A$ as part of \Quasar{} block transaction
+\STATE \PoAI{} validators verify $A$ at epoch boundary
+\STATE On success: worker earns compute reward
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Attestation Verification Cost}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Operation} & \textbf{Gas} & \textbf{Latency (ms)} \\
+\midrule
+TEE report parsing & 5,000 & 0.05 \\
+Signature verification & 15,000 & 0.20 \\
+Measurement check & 3,000 & 0.03 \\
+Certificate chain validation & 25,000 & 0.30 \\
+\midrule
+\textbf{Total} & \textbf{48,000} & \textbf{0.58} \\
+\bottomrule
+\end{tabular}
+\caption{TEE attestation verification cost on Zoo EVM.}
+\label{tab:attest-cost}
+\end{table}
+

@@ -1,0 +1,75 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{mathtools}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% Custom commands
+\newcommand{\cevm}{\textsc{cevm}}
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\KEEPER}{\textsc{Keeper}}
+\newcommand{\DAO}{\textsc{DAO}}
+
+% Title information
+\title{\textbf{GPU-Accelerated EVM Execution: Parallel Smart Contract Processing on Zoo Network}\\
+\large Deterministic High-Throughput Transaction Processing via \cevm{}}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{November 2024}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \cevm{}, a C++ GPU-accelerated Ethereum Virtual Machine achieving \textbf{2.3 billion gas operations per second} (Gops/sec) on a single data-center GPU.
+\cevm{} partitions each block into a maximal independent set executed in parallel on GPU streaming multiprocessors and a residual conflict set executed sequentially.
+Post-execution conflict detection triggers deterministic re-execution, guaranteeing identical state roots across all validators regardless of hardware or scheduling order.
+On Zoo Network's L2 workloads, empirical conflict rates average 4.7\%, yielding $23.8\times$ speedup over single-threaded CPU EVM execution.
+Multi-GPU configurations scale linearly, sustaining 8.9~Gops/sec on four GPUs.
+All results are mechanically verified in Lean~4 (\texttt{GPU/EVMScaling.lean}), with proofs of linear scaling, Amdahl's bound, and deterministic re-execution correctness.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%% ---------------------------------------------------------------------------
+
+\input{sections/01-introduction}
+\input{sections/02-architecture}
+\input{sections/03-gpu-execution-model}
+\input{sections/04-performance-characteristics}
+\input{sections/05-formal-verification}
+\input{sections/06-integration-with-zoo-l2}
+\input{sections/07-benchmarks}
+\input{sections/08-related-work}
+\input{sections/99-conclusion}
+
+\end{document}

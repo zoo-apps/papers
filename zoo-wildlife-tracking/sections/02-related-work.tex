@@ -1,0 +1,17 @@
+\section{Related Work}
+
+
+\subsection{Wildlife Tracking Platforms}
+
+Movebank~\cite{movebank2024} is the largest wildlife tracking database, providing centralized storage and analysis tools with basic access control (public, registered, or embargoed). The Animal Tracking Data Collection (Eurotrack)~\cite{eurotrack2020} provides a European federated approach but still relies on trusted institutions. ICARUS~\cite{wikelski2007} enables satellite-based tracking through the International Space Station but centralizes data management. None of these platforms provide cryptographic privacy guarantees.
+
+\subsection{Location Privacy}
+
+The location privacy literature distinguishes several protection mechanisms: spatial cloaking~\cite{gruteser2003}, which replaces precise locations with bounding regions; $k$-anonymity~\cite{sweeney2002}, which ensures each record is indistinguishable from at least $k-1$ others; differential privacy~\cite{dwork2006}, which adds calibrated noise to query results; and geo-indistinguishability~\cite{andres2013}, which provides a metric privacy notion for location data.
+
+However, these techniques were developed for human mobility data and do not directly account for the unique characteristics of animal movement: non-stationary home ranges, seasonal migration, species-specific movement kernels, and the ecological validity of movement metrics.
+
+\subsection{Blockchain for Conservation}
+
+Prior work has explored blockchain for supply chain transparency in wildlife trade~\cite{maxwell2021}, conservation payment verification~\cite{kshetri2021}, and carbon credit certification~\cite{howson2019}. WildChain~\cite{wildchain2023} proposed a general blockchain framework for conservation data but did not address the specific privacy requirements of tracking data or provide formal privacy guarantees.
+

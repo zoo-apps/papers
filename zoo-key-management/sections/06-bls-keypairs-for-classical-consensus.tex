@@ -1,0 +1,37 @@
+\section{BLS Keypairs for Classical Consensus}
+
+
+\subsection{Dual-Key Architecture}
+
+Post-quantum operations (ML-KEM, ML-DSA) have higher computational and bandwidth costs than classical schemes. For time-critical consensus signing where quantum threats are not immediate, \KChain{} maintains parallel BLS12-381 keypairs.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Operation} & \textbf{Classical (BLS)} & \textbf{Post-Quantum (ML-DSA-65)} \\
+\midrule
+Sign & 0.4 ms & 2.8 ms \\
+Verify & 1.2 ms & 0.9 ms \\
+Aggregate (100 sigs) & 1.5 ms & N/A (no native aggregation) \\
+Public key size & 48 bytes & 1,952 bytes \\
+Signature size & 96 bytes & 3,293 bytes \\
+\bottomrule
+\end{tabular}
+\caption{BLS vs ML-DSA performance comparison}
+\label{tab:bls-vs-mldsa}
+\end{table}
+
+\subsection{Migration Strategy}
+
+\KChain{} implements a phased migration from classical to post-quantum:
+
+\begin{enumerate}
+\item \textbf{Phase 1 (Current)}: BLS for consensus, ML-DSA for long-term credentials and key archival.
+\item \textbf{Phase 2}: Hybrid signatures (BLS $\|$ ML-DSA) for consensus. Valid if either signature verifies.
+\item \textbf{Phase 3}: ML-DSA primary for consensus. BLS retained as fallback.
+\item \textbf{Phase 4}: ML-DSA only. BLS deprecated.
+\end{enumerate}
+
+Phase transitions are governed by DAO vote and triggered by quantum computing milestones.
+

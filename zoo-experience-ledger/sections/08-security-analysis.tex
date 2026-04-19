@@ -1,0 +1,27 @@
+\section{Security Analysis}
+
+
+\subsection{Threat Model}
+
+We consider adversaries who may:
+\begin{enumerate}
+    \item Tamper with stored experiences
+    \item Return incorrect retrieval results
+    \item Attempt Sybil attacks on the network
+    \item Perform denial-of-service attacks
+\end{enumerate}
+
+\subsection{Security Properties}
+
+\begin{theorem}[Tamper Evidence]
+Any modification to an experience $e$ produces a different CID with probability $1 - 2^{-256}$.
+\end{theorem}
+
+\begin{theorem}[Retrieval Integrity]
+With Merkle proofs, a client can detect server-returned experiences not in the committed library with probability $1 - 2^{-256}$.
+\end{theorem}
+
+\begin{theorem}[Availability]
+With $n$ nodes pinning the library and at most $f < n/2$ Byzantine failures, the library remains available.
+\end{theorem}
+

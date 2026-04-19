@@ -1,0 +1,45 @@
+\section{CKKS on Zoo}
+
+\label{sec:ckks}
+%----------------------------------------------------------------------
+
+\subsection{Approximate Arithmetic}
+
+\CKKS{}~\cite{cheon2017ckks} encodes a vector $\mathbf{z} \in \mathbb{C}^{N/2}$ into a polynomial ring $R_q = \mathbb{Z}_q[X]/(X^N+1)$ via the canonical embedding inverse, scaled by $\Delta$:
+
+\begin{equation}
+  m(X) = \lfloor \Delta \cdot \sigma^{-1}(\mathbf{z}) \rceil \in R_q
+\end{equation}
+
+\noindent where $\Delta = 2^{40}$ is the scaling factor and $\sigma^{-1}$ is the inverse canonical embedding. Encryption produces $\mathsf{ct} = (\mathsf{ct}_0, \mathsf{ct}_1) \in R_q^2$ under \RLWE{}.
+
+\subsection{Homomorphic Operations}
+
+Addition of two \CKKS{} ciphertexts at the same level is component-wise. Multiplication produces a degree-2 ciphertext that must be relinearized:
+
+\begin{align}
+  \mathsf{ct}_{\mathrm{mult}} &= (\mathsf{ct}_0^{(a)} \cdot \mathsf{ct}_0^{(b)},\; \mathsf{ct}_0^{(a)} \cdot \mathsf{ct}_1^{(b)} + \mathsf{ct}_1^{(a)} \cdot \mathsf{ct}_0^{(b)},\; \mathsf{ct}_1^{(a)} \cdot \mathsf{ct}_1^{(b)}) \\
+  \mathsf{ct}_{\mathrm{relin}} &= \mathsf{Relin}(\mathsf{ct}_{\mathrm{mult}}, \mathsf{evk})
+\end{align}
+
+\subsection{Rescaling and Level Management}
+
+After multiplication, the scaling factor doubles to $\Delta^2$. Rescaling divides by $\Delta$ and drops one prime from the ciphertext modulus chain:
+
+\begin{equation}
+  \mathsf{Rescale}(\mathsf{ct}, q_\ell) \to \mathsf{ct}' \text{ at level } \ell - 1, \quad q_{\ell-1} = q_\ell / p_\ell
+\end{equation}
+
+\Zoo{} provisions a modulus chain of $L = 15$ levels by default, supporting up to 14 sequential multiplications---sufficient for a 4-layer neural network with ReLU approximations. The VM tracks levels alongside gas, rejecting operations that would exhaust the chain.
+
+\subsection{ML Inference on Encrypted Data}
+
+A neural-network forward pass on encrypted inputs uses \CKKS{} slot packing. For a weight matrix $W \in \mathbb{R}^{m \times n}$ and encrypted input $\mathsf{Enc}(\mathbf{x})$:
+
+\begin{equation}
+  \mathsf{Enc}(W\mathbf{x} + \mathbf{b}) = W \otimes \mathsf{Enc}(\mathbf{x}) \oplus \mathsf{Enc}(\mathbf{b})
+\end{equation}
+
+\noindent where $\otimes$ denotes plaintext--ciphertext multiplication and $\oplus$ denotes ciphertext addition. Activation functions are approximated by low-degree polynomials (degree-3 Chebyshev for ReLU) consuming one multiplicative level each.
+
+%----------------------------------------------------------------------

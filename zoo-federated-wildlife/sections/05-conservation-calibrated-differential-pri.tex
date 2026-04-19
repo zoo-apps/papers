@@ -1,0 +1,97 @@
+\section{Conservation-Calibrated Differential Privacy}
+
+\label{sec:privacy}
+
+\subsection{Motivation}
+
+Standard DP-SGD \citep{abadi2016deep} applies uniform noise calibrated to a global privacy budget $\epsilon$.
+In conservation, this is suboptimal: adding heavy noise to protect rhinoceros locations also degrades the model's ability to classify common species, while light noise for overall utility leaves endangered species insufficiently protected.
+
+\subsection{Species-Specific Privacy Budgets}
+
+We assign privacy budgets $\epsilon_s$ based on species conservation status:
+
+\begin{equation}
+    \epsilon_s = \epsilon_{\max} \cdot \left(\frac{\text{rank}(s)}{\max_s \text{rank}(s)}\right)^\gamma
+\end{equation}
+
+\noindent where $\text{rank}(s)$ maps IUCN Red List categories to ordinal values:
+
+\begin{table}[H]
+\centering
+\caption{Privacy budget allocation by IUCN category.}
+\label{tab:privacy_budgets}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{IUCN Category} & \textbf{Rank} & $\epsilon_s$ ($\gamma=1$) & $\epsilon_s$ ($\gamma=2$) \\
+\midrule
+Critically Endangered (CR) & 1 & 0.33 & 0.11 \\
+Endangered (EN) & 2 & 0.67 & 0.44 \\
+Vulnerable (VU) & 3 & 1.00 & 1.00 \\
+Near Threatened (NT) & 4 & 1.33 & 1.78 \\
+Least Concern (LC) & 5 & 1.67 & 2.78 \\
+Not Evaluated (NE) & 6 & 2.00 & 4.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{CCDP Mechanism}
+
+The CCDP mechanism operates during gradient computation at each site:
+
+\begin{algorithm}[H]
+\caption{Conservation-Calibrated DP-SGD (per-site, per-round)}
+\label{alg:ccdp}
+\begin{algorithmic}[1]
+\REQUIRE Local dataset $\mathcal{D}_k$, model $\theta$, clipping bound $C$, species budgets $\{\epsilon_s\}$
+\FOR{each minibatch $B \subseteq \mathcal{D}_k$}
+    \FOR{each example $(\mathbf{x}_i, y_i) \in B$}
+        \STATE Compute per-example gradient $\mathbf{g}_i = \nabla_\theta \ell(f_\theta(\mathbf{x}_i), y_i)$
+        \STATE Clip: $\bar{\mathbf{g}}_i = \mathbf{g}_i \cdot \min(1, C / \|\mathbf{g}_i\|_2)$
+        \STATE Compute noise scale: $\sigma_i = \frac{C \sqrt{2 \ln(1.25/\delta)}}{\epsilon_{y_i}}$
+        \STATE Add noise: $\tilde{\mathbf{g}}_i = \bar{\mathbf{g}}_i + \mathcal{N}(0, \sigma_i^2 \mathbf{I})$
+    \ENDFOR
+    \STATE Aggregate: $\tilde{\mathbf{g}} = \frac{1}{|B|} \sum_i \tilde{\mathbf{g}}_i$
+    \STATE Update: $\theta \leftarrow \theta - \eta \tilde{\mathbf{g}}$
+\ENDFOR
+\RETURN Updated model $\theta$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Privacy Accounting}
+
+The per-species privacy guarantee follows from the composition theorem for Gaussian mechanisms.
+After $T$ rounds of training with sampling rate $q$:
+
+\begin{equation}
+    \epsilon_s^{\text{total}} \leq q \sqrt{2T \ln(1/\delta)} \cdot \frac{C}{\sigma_s}
+\end{equation}
+
+We use the moments accountant \citep{abadi2016deep} for tighter composition bounds, tracking privacy expenditure separately for each species category and halting training for any species category that exhausts its budget.
+
+\subsection{Privacy-Utility Analysis}
+
+We analyze the impact of CCDP compared to uniform DP:
+
+\begin{table}[H]
+\centering
+\caption{Privacy-utility comparison: CCDP vs.\ uniform DP.}
+\label{tab:privacy_utility}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Method} & \textbf{CR/EN Acc. (\%)} & \textbf{LC Acc. (\%)} & \textbf{Overall Acc. (\%)} & \textbf{CR/EN $\epsilon$} \\
+\midrule
+No privacy & 84.2 & 93.1 & 91.5 & $\infty$ \\
+Uniform DP ($\epsilon=1.0$) & 71.3 & 82.4 & 80.7 & 1.0 \\
+Uniform DP ($\epsilon=2.0$) & 78.1 & 88.7 & 87.2 & 2.0 \\
+CCDP ($\gamma=1$) & 79.8 & 90.1 & 88.6 & 0.5 \\
+CCDP ($\gamma=2$) & 76.4 & 91.7 & 89.4 & 0.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+CCDP with $\gamma=1$ achieves higher overall accuracy than uniform DP at $\epsilon=2.0$ while providing 4x stronger privacy for CR/EN species ($\epsilon=0.5$ vs.\ $\epsilon=2.0$).
+
+% ============================================================
+% 6. Non-IID Robust Aggregation
+% ============================================================

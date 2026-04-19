@@ -1,0 +1,79 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\input{shared/lstlang}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\IPFS}{\textsc{ipfs}}
+\newcommand{\LLM}{\textsc{llm}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{Zoo Experience Ledger: A Content-Addressable Semantic Memory System for Decentralized AI}}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Hanzo Industries \quad Lux Industries \quad Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{October 2021}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present the \textbf{Zoo Experience Ledger}, a content-addressable semantic memory system designed for decentralized AI agents. Unlike traditional knowledge bases that rely on centralized storage and proprietary retrieval mechanisms, the Experience Ledger stores AI reasoning patterns as cryptographically-verified semantic objects distributed across \IPFS{} and permanent storage networks. Each experience---a natural language encoding of a successful problem-solving strategy---is uniquely identified by its content hash, enabling tamper-evident storage and peer-to-peer distribution. We introduce a novel Merkle-DAG structure optimized for semantic similarity queries, achieving $O(\log n)$ retrieval complexity while maintaining cryptographic integrity proofs. Our system enables AI agents to share learned experiences across organizational boundaries without trust assumptions, creating the foundation for a global semantic commons. Experimental evaluation demonstrates 94.7\% retrieval accuracy with sub-second latency on libraries of 10,000+ experiences, while reducing storage costs by 89\% compared to traditional vector databases through content deduplication.
+
+\textbf{Keywords}: content-addressable storage, semantic memory, IPFS, Merkle trees, AI knowledge sharing
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-background}
+\input{sections/03-experience-format-specification}
+\input{sections/04-merkle-dag-architecture}
+\input{sections/05-retrieval-protocol}
+\input{sections/06-storage-architecture}
+\input{sections/07-experimental-evaluation}
+\input{sections/08-security-analysis}
+\input{sections/09-related-work}
+\input{sections/10-conclusion}
+\input{sections/12-experience-format-json-schema}
+\input{sections/13-ipld-schema}
+\input{sections/99-acknowledgments}
+
+\end{document}

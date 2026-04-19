@@ -1,0 +1,88 @@
+\section{Motivation}
+
+
+\subsection{DSO Protocol Overview}
+
+Decentralized Semantic Optimization enables LLMs to improve via shared experiences without parameter synchronization. The protocol operates in three phases:
+
+\textbf{Phase 1: Experience Generation}
+\begin{enumerate}
+\item LLM generates $G$ rollouts for query $q$: $\{o_1, \ldots, o_G\}$
+\item Compute rewards: $\{r_1, \ldots, r_G\}$ via reward model or ground truth
+\item Extract semantic advantage via LLM introspection:
+\end{enumerate}
+
+\begin{algorithm}[H]
+\caption{Semantic Advantage Extraction}
+\begin{algorithmic}[1]
+\STATE $\text{best} \gets \arg\max_i r_i$
+\STATE $\text{worst} \gets \arg\min_i r_i$
+\STATE $\text{prompt} \gets \text{``Compare best vs worst, extract strategic insight''}$
+\STATE $\text{experience} \gets \text{LLM.generate}(\text{prompt})$
+\RETURN $\text{experience}$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Phase 2: Embedding \& Submission}
+\begin{enumerate}
+\item Encode experience: $\mathbf{e} = \text{ZenReranker.encode}(\text{experience})$
+\item Compress: $\mathbf{c} = \text{BitDelta}(\mathbf{e})$ (964 bytes)
+\item Submit to network: $\text{Network.submit}(\mathbf{c})$
+\end{enumerate}
+
+\textbf{Phase 3: Retrieval \& Application}
+\begin{enumerate}
+\item Encode query: $\mathbf{q} = \text{ZenReranker.encode}(\text{query})$
+\item Retrieve: $\{\mathbf{e}_1, \ldots, \mathbf{e}_k\} = \text{Network.retrieve}(\mathbf{q}, k)$
+\item Inject into context: $\text{prompt} = \text{experiences} + \text{query}$
+\item Generate: $\text{output} = \text{LLM.generate}(\text{prompt})$
+\end{enumerate}
+
+\subsection{The Alignment Bottleneck}
+
+Without native canonical embeddings, each model requires alignment:
+
+\begin{equation}
+\text{Latency}_{\text{total}} = \underbrace{t_{\text{encode}}}_{\text{Model-specific}} + \underbrace{t_{\text{align}}}_{\text{Overhead}} + \underbrace{t_{\text{compress}}}_{\text{BitDelta}}
+\end{equation}
+
+Measurements on A100 GPU:
+\begin{itemize}
+\item $t_{\text{encode}}(\text{Qwen3-8B, 4096-dim}) = 18.3$ms
+\item $t_{\text{align}}(4096 \to 7680) = 9.7$ms (53\% overhead!)
+\item $t_{\text{compress}}(7680 \to 964\text{ bytes}) = 3.2$ms
+\item \textbf{Total:} 31.2ms
+\end{itemize}
+
+With Zen-Reranker:
+\begin{itemize}
+\item $t_{\text{encode}}(\text{Zen-Reranker, 7680-dim}) = 18.3$ms
+\item $t_{\text{align}} = 0$ms (eliminated!)
+\item $t_{\text{compress}}(7680 \to 964\text{ bytes}) = 3.2$ms
+\item \textbf{Total:} 21.5ms (\textbf{31\% reduction})
+\end{itemize}
+
+\subsection{Compression Inefficiency}
+
+Aligned embeddings exhibit higher entropy, degrading BitDelta compression:
+
+\begin{equation}
+\text{Compression Ratio} = \frac{\text{Original Size}}{\text{Compressed Size}} = \frac{7680 \times 4\text{ bytes}}{\text{|BitDelta|}(\mathbf{e})}
+\end{equation}
+
+\begin{table}[h]
+\centering
+\caption{Compression performance comparison}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Approach} & \textbf{Original (bytes)} & \textbf{Compressed (bytes)} & \textbf{Ratio} \\
+\midrule
+BGE-Large (1024) & 4,096 & 152 & 26.9$\times$ \\
+Qwen3-8B Aligned (7680) & 30,720 & 1,027 & 29.9$\times$ \\
+\textbf{Zen-Reranker (7680)} & \textbf{30,720} & \textbf{964} & \textbf{31.87$\times$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Why does native 7680-dim compress better?} Alignment introduces noise from projection error. Zen-Reranker learns smooth manifold structure optimized for delta encoding.
+

@@ -1,0 +1,36 @@
+\section{Deployment Architecture}
+
+
+\subsection{Kubernetes Infrastructure}
+
+Zoo EVM runs on a dedicated DigitalOcean Kubernetes cluster:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Property} & \textbf{Value} \\
+\midrule
+Cluster & \texttt{do-sfo3-zoo-k8s} (DigitalOcean SFO3) \\
+Nodes & 5 $\times$ s-4vcpu-8gb-amd \\
+Kubernetes & v1.35.1 \\
+Namespaces & zoo-system, zoo-devnet, zoo-testnet, zoo-mainnet \\
+Image Registry & DOCR (\texttt{registry.digitalocean.com/hanzo/}) \\
+\bottomrule
+\end{tabular}
+\caption{Zoo K8s cluster configuration.}
+\end{table}
+
+\subsection{Zoo Operator}
+
+The Zoo Operator is a Rust-based Kubernetes operator managing four Custom Resource Definitions:
+
+\begin{description}[nosep]
+  \item[ZooNetwork] (\texttt{zoo.network/v1alpha1}): Primary CRD for deploying validator node clusters. Creates StatefulSets, headless Services, and manages rolling upgrades.
+  \item[ZooChain] Tracks EVM chain deployments (chain ID, blockchain ID, VM ID).
+  \item[ZooExplorer] Manages Blockscout instances for each chain.
+  \item[ZooGateway] Manages RPC gateway/ingress for Zoo EVM endpoints.
+\end{description}
+
+The operator implements leader election via Kubernetes Lease objects and exposes Prometheus metrics for reconciliation monitoring.
+

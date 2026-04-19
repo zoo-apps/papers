@@ -1,0 +1,56 @@
+\section{Experience Marketplace Smart Contract (Pseudocode)}
+
+
+\begin{verbatim}
+contract ExperienceMarketplace {
+    struct Experience {
+        address creator;
+        string ipfs_hash;
+        uint256 price_per_use;
+        uint256 effectiveness_score;
+        uint256 total_uses;
+        uint256 total_revenue;
+        mapping(address => uint256) user_uses;
+    }
+
+    mapping(bytes32 => Experience) experiences;
+
+    function list_experience(
+        string ipfs_hash,
+        uint256 price
+    ) public {
+        require(dao.validate_experience(ipfs_hash));
+        bytes32 exp_id = keccak256(abi.encodePacked(msg.sender, ipfs_hash));
+        experiences[exp_id] = Experience({
+            creator: msg.sender,
+            ipfs_hash: ipfs_hash,
+            price_per_use: price,
+            effectiveness_score: 0,
+            total_uses: 0,
+            total_revenue: 0
+        });
+    }
+
+    function use_experience(bytes32 exp_id) public {
+        Experience storage exp = experiences[exp_id];
+        require(keeper.balanceOf(msg.sender) >= exp.price_per_use);
+
+        keeper.transferFrom(msg.sender, exp.creator, exp.price_per_use * 0.9);
+        keeper.transferFrom(msg.sender, dao_treasury, exp.price_per_use * 0.1);
+
+        exp.total_uses += 1;
+        exp.total_revenue += exp.price_per_use;
+        exp.user_uses[msg.sender] += 1;
+
+        emit ExperienceUsed(exp_id, msg.sender, exp.price_per_use);
+    }
+
+    function update_effectiveness(
+        bytes32 exp_id,
+        uint256 new_score
+    ) public onlyDAO {
+        experiences[exp_id].effectiveness_score = new_score;
+    }
+}
+\end{verbatim}
+

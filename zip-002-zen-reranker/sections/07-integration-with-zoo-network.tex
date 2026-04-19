@@ -1,0 +1,158 @@
+\section{Integration with Zoo Network}
+
+
+\subsection{System Architecture}
+
+Zoo Network implements training-free GRPO~\cite{tencent2025grpo} with Zen-Reranker for semantic experience management:
+
+\begin{figure}[h]
+\centering
+\begin{verbatim}
+┌─────────────────────────────────────────────────────┐
+│            Zoo Network (Layer 2)                    │
+│  ┌───────────────────────────────────────────────┐ │
+│  │  Training-Free GRPO (LLM frozen)              │ │
+│  │  - Experience extraction via introspection    │ │
+│  │  - Semantic advantages (not gradients)        │ │
+│  └───────────────────────────────────────────────┘ │
+│                        ↓                            │
+│  ┌───────────────────────────────────────────────┐ │
+│  │  Zen-Reranker (7680-dim embedding)            │ │
+│  │  - Encode experiences                         │ │
+│  │  - Retrieve similar contexts                  │ │
+│  └───────────────────────────────────────────────┘ │
+│                        ↓                            │
+│  ┌───────────────────────────────────────────────┐ │
+│  │  Experience Ledger (IPFS + On-chain)          │ │
+│  │  - BitDelta compression (964 bytes/exp)       │ │
+│  │  - Merkle root on-chain                       │ │
+│  │  - Byzantine-robust aggregation               │ │
+│  └───────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────┐
+│         Hanzo Network (Base Layer L1)               │
+│  - Consensus engine (Lux-based)                     │
+│  - P2P networking (libp2p)                          │
+│  - GPU compute orchestration                        │
+└─────────────────────────────────────────────────────┘
+\end{verbatim}
+\caption{Zen-Reranker integration in Zoo Network architecture}
+\end{figure}
+
+\subsection{Smart Contract Specification}
+
+Experiences are stored on-chain via compact Merkle commitments:
+
+\begin{lstlisting}[language=Solidity, caption=ExperienceRegistry smart contract]
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.20;
+
+contract ExperienceRegistry {
+    struct Experience {
+        bytes32 merkleRoot;      // Root of BitDelta + metadata
+        address contributor;      // Submitter address
+        uint256 timestamp;        // Submission time
+        uint256 votes;           // DAO governance votes
+        bool approved;           // Governance approval
+    }
+    
+    mapping(bytes32 => Experience) public experiences;
+    bytes32[] public experienceHashes;
+    
+    event ExperienceSubmitted(
+        bytes32 indexed hash,
+        address indexed contributor,
+        bytes32 merkleRoot
+    );
+    
+    function submitExperience(
+        bytes32 hash,
+        bytes32 merkleRoot
+    ) external {
+        require(
+            experiences[hash].contributor == address(0),
+            "Experience already exists"
+        );
+        
+        experiences[hash] = Experience({
+            merkleRoot: merkleRoot,
+            contributor: msg.sender,
+            timestamp: block.timestamp,
+            votes: 0,
+            approved: false
+        });
+        
+        experienceHashes.push(hash);
+        emit ExperienceSubmitted(hash, msg.sender, merkleRoot);
+    }
+    
+    function voteExperience(bytes32 hash, uint256 weight) 
+        external 
+    {
+        require(
+            experiences[hash].contributor != address(0),
+            "Experience not found"
+        );
+        
+        experiences[hash].votes += weight;
+        
+        // Auto-approve at 66% quorum
+        if (experiences[hash].votes >= APPROVAL_THRESHOLD) {
+            experiences[hash].approved = true;
+        }
+    }
+}
+\end{lstlisting}
+
+\subsection{Off-Chain Storage}
+
+Full experience embeddings (964 bytes each) reside on IPFS/Arweave:
+
+\textbf{Storage Format:}
+\begin{verbatim}
+{
+  "version": "1.0",
+  "experience_text": "When solving geometry, validate...",
+  "embedding_compressed": "<964 bytes BitDelta>",
+  "metadata": {
+    "domain": "math.geometry",
+    "model": "Qwen3-32B",
+    "timestamp": 1730073600,
+    "confidence": 0.87
+  },
+  "merkle_proof": [...]
+}
+\end{verbatim}
+
+\textbf{IPFS CID:} Content-addressable, tamper-proof retrieval
+
+\textbf{Arweave Transaction ID:} Permanent archival (pay-once, store-forever)
+
+\subsection{DAO Governance}
+
+Experience curation via ZOO token holders:
+
+\textbf{Governance Actions:}
+\begin{itemize}
+\item \textbf{Approve:} Add experience to canonical library
+\item \textbf{Reject:} Flag as low-quality or malicious
+\item \textbf{Modify:} Edit text (with re-embedding)
+\item \textbf{Archive:} Remove outdated experiences
+\end{itemize}
+
+\textbf{Voting Mechanism:}
+\begin{equation}
+\text{Vote Weight} = \text{ZOO Balance} \times \text{Lock Duration Multiplier}
+\end{equation}
+
+Lock duration multipliers:
+\begin{itemize}
+\item No lock: 1$\times$
+\item 6 months: 1.5$\times$
+\item 1 year: 2$\times$
+\item 2 years: 3$\times$
+\end{itemize}
+
+\textbf{Approval Threshold:} 66\% of participating votes (2/3 supermajority)
+

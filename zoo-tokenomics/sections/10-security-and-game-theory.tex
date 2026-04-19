@@ -1,0 +1,122 @@
+\section{Security and Game Theory}
+
+
+\subsection{Validator Incentive Alignment}
+
+Zoo's staking mechanism aligns validator incentives with network health:
+
+\textbf{Reward Structure:}
+\begin{itemize}
+\item \textbf{Base Rewards}: 60\% of transaction fees (proportional to stake)
+\item \textbf{Performance Bonus}: +10\% for 99.9\%+ uptime
+\item \textbf{Correctness Bonus}: +5\% for zero invalid state transitions
+\end{itemize}
+
+\textbf{Slashing Conditions:}
+\begin{itemize}
+\item \textbf{Double-signing}: 50\% stake slashed + ejection
+\item \textbf{Prolonged downtime} (>24h): 5\% stake slashed
+\item \textbf{Invalid state transition}: 100\% stake slashed + ejection
+\item \textbf{Censorship} (ignoring valid transactions): 10\% stake slashed
+\end{itemize}
+
+\textbf{Game Theory Analysis:}
+
+Expected value of honest vs dishonest behavior:
+
+\begin{align}
+EV_{\text{honest}} &= R \times (1 + 0.10 + 0.05) = 1.15R \\
+EV_{\text{dishonest}} &= R \times P_{\text{undetected}} - S \times P_{\text{detected}}
+\end{align}
+
+where:
+\begin{itemize}
+\item $R$: Base reward
+\item $S$: Slashing penalty (0.5-1.0× stake)
+\item $P_{\text{detected}}$: Probability of detection (>99\% for double-signing)
+\end{itemize}
+
+For double-signing attack:
+\begin{align}
+EV_{\text{attack}} &= R \times 0.01 - 0.5 \times \text{Stake} \times 0.99 \\
+&\approx -0.495 \times \text{Stake}
+\end{align}
+
+Since $EV_{\text{attack}} < 0$ for any reasonable stake amount, rational validators choose honesty.
+
+\subsection{Sybil Resistance}
+
+Zoo implements multi-layered Sybil resistance:
+
+\begin{enumerate}
+\item \textbf{Stake Requirements}: Minimum 100M $\KEEPER$ to validate (0.01\% of supply)
+\item \textbf{Identity Verification}: Validators must KYC (comply with AML/CFT)
+\item \textbf{Reputation System}: Track record visible (uptime, accuracy, community votes)
+\item \textbf{DAO Ejection}: Community can vote to remove malicious validators (66\% threshold)
+\end{enumerate}
+
+\subsection{Experience Marketplace Attacks}
+
+Potential attack vectors and mitigations:
+
+\subsubsection{Attack: Low-Quality Experience Spam}
+
+\textbf{Vector:} Attacker submits hundreds of useless experiences to pollute marketplace
+
+\textbf{Mitigation:}
+\begin{itemize}
+\item Minimum effectiveness threshold: +3\% vs baseline
+\item Blind testing: DAO validators assess without seeing author identity
+\item Deposit requirement: 1M $\KEEPER$ per submission (returned if approved)
+\item Reputation penalty: Rejected submissions decrease author's future success rate
+\end{itemize}
+
+\subsubsection{Attack: Experience Plagiarism}
+
+\textbf{Vector:} Attacker copies existing experience, submits as their own
+
+\textbf{Mitigation:}
+\begin{itemize}
+\item Similarity detection: Compare embedding vectors against existing experiences
+\item Timestamp priority: First submission wins in disputes
+\item Attribution enforcement: Derivative works must credit originals (smart contract enforced)
+\item DAO adjudication: Plagiarism claims reviewed by Experience Curation Board
+\end{itemize}
+
+\subsubsection{Attack: Wash Trading Experiences}
+
+\textbf{Vector:} Attacker creates experience, uses Sybil accounts to inflate usage statistics
+
+\textbf{Mitigation:}
+\begin{itemize}
+\item Payment requirement: All inferences cost IC or $\KEEPER$ (Sybil becomes expensive)
+\item Usage pattern analysis: Flag accounts with unusual patterns (same experience repeatedly)
+\item Effectiveness verification: Independent DAO testing confirms claimed improvements
+\end{itemize}
+
+\subsection{DAO Governance Attacks}
+
+\subsubsection{Attack: Whale Voting Domination}
+
+\textbf{Vector:} Large holder acquires >50\% of supply, controls all votes
+
+\textbf{Mitigation:}
+\begin{itemize}
+\item Quadratic voting: 51\% of supply = only 71\% of votes (not enough for 75\% constitution amendments)
+\item Delegation: Small holders can pool votes via delegation
+\item Executive Director veto: Can override votes that violate 501(c)(3) mission
+\item Market liquidity: Acquiring 51\% requires buying from existing holders (price impact prohibitive)
+\end{itemize}
+
+\textbf{Cost Analysis:}
+
+To acquire 51\% (1.02T $\KEEPER$):
+\begin{itemize}
+\item At \$0.02/token: \$20.4B initial cost
+\item Price impact: 51\% acquisition likely drives price to \$0.10+ (10× slippage)
+\item Total cost: \$50-100B (exceeds market cap of most crypto projects)
+\item Voting power: $\sqrt{1.02T} / (\sqrt{1.02T} + \sqrt{0.98T}) \approx 51.02\%$ (marginally above threshold)
+\end{itemize}
+
+This makes governance takeover \textbf{economically infeasible}.
+

@@ -1,0 +1,277 @@
+\section{Training Methods}
+
+
+\subsection{Supervised Fine-Tuning (SFT)}
+
+\subsubsection{Full Fine-Tuning}
+
+Full fine-tuning updates all model parameters via standard next-token prediction:
+
+\begin{equation}
+\mathcal{L}_{\text{SFT}} = -\sum_{i=1}^{T} \log P_\theta(y_i | y_{<i}, x)
+\end{equation}
+
+where $x$ is the input, $y$ is the target sequence, and $\theta$ represents all trainable parameters.
+
+\textbf{Advantages}: Maximum flexibility, can adapt to very different distributions.
+
+\textbf{Disadvantages}: Memory-intensive (requires optimizer states for all parameters), risk of catastrophic forgetting.
+
+\subsubsection{Low-Rank Adaptation (LoRA)}
+
+LoRA~\citep{hu2021lora} freezes pre-trained weights and injects trainable low-rank matrices:
+
+\begin{equation}
+h = W_0 x + \frac{\alpha}{r} BA x
+\end{equation}
+
+where $W_0 \in \mathbb{R}^{d \times k}$ is frozen, $B \in \mathbb{R}^{d \times r}$ and $A \in \mathbb{R}^{r \times k}$ with $r \ll \min(d, k)$.
+
+Gym implements several LoRA variants:
+
+\begin{itemize}
+\item \textbf{Standard LoRA}: Rank $r = 8-64$, $\alpha = 16-32$.
+\item \textbf{rsLoRA}~\citep{kalajdzievski2023rslora}: Rank-stabilized scaling $\alpha/\sqrt{r}$.
+\item \textbf{DoRA}~\citep{liu2024dora}: Weight-decomposed adaptation improving magnitude/direction optimization.
+\item \textbf{PiSSA}~\citep{meng2024pissa}: Principal singular value/vector initialization for faster convergence.
+\item \textbf{LongLoRA}~\citep{chen2023longlora}: Shifted sparse attention for context extension.
+\end{itemize}
+
+\subsubsection{Quantized LoRA (QLoRA)}
+
+QLoRA~\citep{dettmers2023qlora} combines 4-bit quantization with LoRA:
+
+\begin{equation}
+W_{\text{quant}} = \text{Quantize}(W_0, \text{NF4}) + BA
+\end{equation}
+
+Using NormalFloat4 (NF4) quantization and double quantization for quantization constants, QLoRA achieves:
+\begin{itemize}
+\item 4x memory reduction vs FP16 base model
+\item Minimal quality degradation (< 1\% on MMLU)
+\item Enables 65B training on single 48GB GPU
+\end{itemize}
+
+Gym's QLoRA implementation includes:
+\begin{itemize}
+\item Automatic bit-width selection (4/8-bit)
+\item Double quantization for constants
+\item Paged AdamW optimizer for memory spikes
+\item Gradient checkpointing integration
+\end{itemize}
+
+\subsection{Preference-Based Methods}
+
+\subsubsection{Direct Preference Optimization (DPO)}
+
+DPO~\citep{rafailov2023dpo} eliminates the reward model by directly optimizing policy from preference data:
+
+\begin{equation}
+\mathcal{L}_{\text{DPO}} = -\mathbb{E}_{(x, y_w, y_l)} \left[ \log \sigma \left( \beta \log \frac{\pi_\theta(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \beta \log \frac{\pi_\theta(y_l|x)}{\pi_{\text{ref}}(y_l|x)} \right) \right]
+\end{equation}
+
+where $y_w$ is the preferred output, $y_l$ is the dispreferred output, $\pi_{\text{ref}}$ is the reference policy, and $\beta$ controls deviation.
+
+Gym supports:
+\begin{itemize}
+\item Standard DPO with frozen reference model
+\item Identity Preference Optimization (IPO) variant
+\item Conservative DPO (cDPO) for distribution shift
+\end{itemize}
+
+\subsubsection{Kahneman-Tversky Optimization (KTO)}
+
+KTO~\citep{ethayarajh2024kto} optimizes from binary feedback without paired comparisons:
+
+\begin{equation}
+\mathcal{L}_{\text{KTO}} = \mathbb{E}_{(x,y,z)} \left[ z \cdot v(x,y) - (1-z) \cdot v(x,y) \right]
+\end{equation}
+
+where $z \in \{0, 1\}$ indicates thumbs-up/down and $v(x,y)$ is the value function.
+
+\textbf{Advantage}: Requires only binary labels, not ranked pairs, reducing annotation cost by 50-75\%.
+
+\subsubsection{Odds Ratio Preference Optimization (ORPO)}
+
+ORPO~\citep{hong2024orpo} combines SFT and preference learning in a single stage:
+
+\begin{equation}
+\mathcal{L}_{\text{ORPO}} = \mathcal{L}_{\text{SFT}} + \lambda \mathbb{E} \left[ \log \sigma \left( \log \frac{P(y_w|x)}{P(y_l|x)} \right) \right]
+\end{equation}
+
+\textbf{Advantage}: Removes need for separate SFT stage, reducing total training time by 30-40\%.
+
+\subsection{Reinforcement Learning Methods}
+
+\subsubsection{Proximal Policy Optimization (PPO)}
+
+PPO~\citep{schulman2017ppo} is the classical RLHF method requiring separate reward model:
+
+\begin{equation}
+\mathcal{L}_{\text{PPO}} = \mathbb{E}_t \left[ \min(r_t(\theta) A_t, \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon) A_t) \right]
+\end{equation}
+
+where $r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\text{old}}(a_t|s_t)}$ is the importance ratio, $A_t$ is the advantage, and $\epsilon$ is the clipping parameter.
+
+Gym's PPO implementation includes:
+\begin{itemize}
+\item Value head for advantage estimation
+\item Generalized Advantage Estimation (GAE)
+\item KL penalty term for stability
+\item Support for external reward models
+\end{itemize}
+
+\subsubsection{Group Relative Policy Optimization (GRPO)}
+
+GRPO~\citep{shao2024deepseekmath} eliminates the value network by computing advantages from group statistics:
+
+\begin{equation}
+A_i^g = r_i - \frac{1}{G} \sum_{j=1}^G r_j
+\end{equation}
+
+where group $g$ contains $G$ rollouts for the same query, and advantages are relative to group mean.
+
+\textbf{Algorithm}:
+\begin{enumerate}
+\item Generate $G$ responses per query (typically $G=8$)
+\item Compute reward $r_i$ for each response
+\item Calculate group-relative advantages
+\item Apply PPO-style clipped objective
+\end{enumerate}
+
+\textbf{Advantages over PPO}:
+\begin{itemize}
+\item No value network required (reduces memory 30-40\%)
+\item More stable advantages (invariant to reward scale)
+\item Better sample efficiency (DeepSeek-Math achieved 52.4\% on MATH benchmark)
+\end{itemize}
+
+Gym's GRPO trainer supports:
+\begin{itemize}
+\item Configurable group size $G = 1-16$
+\item Optional advantage normalization
+\item Ground truth filtering for homogeneous groups
+\item Multi-turn dialogue rollouts
+\end{itemize}
+
+\subsubsection{Training-Free GRPO}
+
+Our most significant contribution is Training-Free GRPO~\citep{tencent2025trainingfree}, which operates entirely in context space:
+
+\textbf{Core Idea}: Instead of updating model parameters via gradients, maintain a library of semantic experiences (natural language insights) injected into context.
+
+\textbf{Three-Stage Process}:
+
+\textbf{Stage 1 - Trajectory Summarization}: For each rollout $(q, o_i, r_i)$:
+\begin{verbatim}
+Prompt: "Summarize this trajectory step-by-step:
+1. Which experiences were used?
+2. Where did errors occur?
+3. What was the outcome?"
+\end{verbatim}
+
+\textbf{Stage 2 - Group Advantage Extraction}: For group of $G$ summaries:
+\begin{verbatim}
+Prompt: "Compare successful vs failed trajectories.
+Suggest updates: Add/Modify/Delete experiences.
+Focus on strategic patterns, max 32 words each."
+\end{verbatim}
+
+\textbf{Stage 3 - Batch Consolidation}: Across all groups in batch:
+\begin{verbatim}
+Prompt: "Consolidate suggested updates.
+Merge similar experiences, ensure no duplication.
+Output: JSON operations [{"option": "merge", ...}]"
+\end{verbatim}
+
+\textbf{Algorithm}:
+\begin{verbatim}
+E = {}  # Experience library
+for epoch in [1..3]:
+    for batch in dataset:
+        for query in batch:
+            # Generate G rollouts with experiences injected
+            outputs = [π(o|q, E.format_for_prompt())
+                      for _ in range(G)]
+            rewards = [R(q, o) for o in outputs]
+
+            # Skip homogeneous groups
+            if std(rewards) < threshold:
+                continue
+
+            # Extract semantic advantages
+            summaries = [LLM.summarize(q, o, r)
+                        for o, r in zip(outputs, rewards)]
+            operations = LLM.extract_insights(summaries, E)
+
+        # Batch consolidation
+        final_ops = LLM.consolidate(all_operations, E)
+        E.apply_operations(final_ops)
+
+    # Model parameters θ unchanged!
+\end{verbatim}
+
+\textbf{Experience Format Example}:
+\begin{verbatim}
+[G0]. When solving geometry problems with intersections,
+      validate solutions lie within bounded regions, not
+      extensions, to avoid extraneous answers.
+
+[G10]. When using mathematical invariants to prove
+       impossibility, validate against known achievable
+       states or small test cases.
+\end{verbatim}
+
+\textbf{Results on AIME Benchmarks}:
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+Method & AIME24 & AIME25 \\
+\midrule
+Vanilla GRPO & 80.0\% & 67.9\% \\
+Training-Free GRPO & \textbf{82.7\%} & \textbf{73.3\%} \\
+\midrule
+Training Cost & \$10,000+ & \$18 \\
+Training Samples & 10,000+ & 100 \\
+Training Time & 20 GPU-days & 6 hours \\
+\bottomrule
+\end{tabular}
+\caption{Training-Free GRPO achieves superior performance at 99.8\% cost reduction.}
+\label{tab:grpo-results}
+\end{table}
+
+\textbf{Key Insights}:
+\begin{enumerate}
+\item \textbf{Ground truth helps but optional}: Performance drops 2-4\% without ground truth labels, but self-discrimination via majority voting still improves over baseline.
+\item \textbf{Multi-epoch essential}: Single pass insufficient; 3 epochs yields best results.
+\item \textbf{Strong base model required}: Works excellently on DeepSeek-V3.1 (671B) and Qwen3-32B, degrades on weaker models.
+\item \textbf{Cross-domain transfer}: Frozen model + domain experiences outperforms specialized fine-tuned models:
+   \begin{itemize}
+   \item ReTool (math-tuned): 67\% AIME, 18\% web tasks
+   \item MiroThinker (web-tuned): 43.5\% AIME, 53.6\% web tasks
+   \item Training-Free GRPO: 82.7\% AIME, 67.8\% web tasks
+   \end{itemize}
+\end{enumerate}
+
+\subsection{Generalized Sequential Policy Optimization (GSPO)}
+
+GSPO extends GRPO to sequence-level optimization with policy regularization:
+
+\begin{equation}
+\mathcal{L}_{\text{GSPO}} = \mathcal{L}_{\text{GRPO}} + \lambda \text{KL}(\pi_\theta || \pi_{\text{ref}}) + \alpha \mathcal{R}_{\text{stability}}
+\end{equation}
+
+Additional terms:
+\begin{itemize}
+\item KL divergence from reference policy prevents distribution collapse
+\item Stability regularizer for Mixture-of-Experts (MoE) models
+\end{itemize}
+
+GSPO is particularly effective for:
+\begin{itemize}
+\item Very large models (30B+ parameters)
+\item MoE architectures (Mixtral, DeepSeek-MoE)
+\item Long sequences (1K+ tokens)
+\end{itemize}
+

@@ -1,0 +1,75 @@
+\section{Bayesian Data Quality Model}
+
+\label{sec:quality}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Observation Reliability}
+
+Not all observations are equally reliable. We model the reliability
+$q_{obs}$ of an observation $o$ as:
+
+\begin{equation}
+  q_{obs} = p(\text{correct ID} \mid \text{observer}, \text{AI},
+  \text{evidence}, \text{context})
+\end{equation}
+
+\subsection{Generative Model}
+
+We define a Bayesian generative model:
+
+\begin{enumerate}
+  \item True species identity $z \sim p(z \mid \text{location}, \text{date})$
+    drawn from the local species pool.
+  \item Observer identification $y_h \sim p(y_h \mid z, \text{skill}_h)$
+    dependent on true identity and observer skill.
+  \item AI identification $y_{ai} \sim p(y_{ai} \mid z, \text{image})$
+    dependent on true identity and image quality.
+  \item Community votes $\{v_1, \ldots, v_C\}$ where
+    $v_c \sim p(v_c \mid z, \text{skill}_c)$.
+\end{enumerate}
+
+The posterior over true identity is:
+\begin{equation}
+  p(z \mid y_h, y_{ai}, \{v_c\}) \propto
+  p(z) \cdot p(y_h \mid z) \cdot p(y_{ai} \mid z) \cdot
+  \prod_c p(v_c \mid z)
+\end{equation}
+
+\subsection{Observer Skill Estimation}
+
+Observer skill $\text{skill}_h$ is modeled as a latent variable updated
+through the observation history. We use a beta-binomial model:
+\begin{equation}
+  \text{skill}_h \sim \text{Beta}(\alpha_h, \beta_h)
+\end{equation}
+where $\alpha_h$ and $\beta_h$ are updated with each confirmed
+correct or incorrect identification, respectively. Species-group-specific
+skill parameters allow for differential expertise (e.g., expert birder,
+novice botanist).
+
+\subsection{Quality Scores in Practice}
+
+\begin{table}[H]
+\centering
+\caption{Distribution of observation quality scores across the
+ZooPlatform dataset.}
+\label{tab:quality}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Quality tier} & \textbf{$q_{obs}$ range} & \textbf{Percentage} \\
+\midrule
+Research grade & $\geq 0.95$ & 61.3\% \\
+Needs review & $0.80$--$0.95$ & 23.7\% \\
+Casual & $0.60$--$0.80$ & 11.4\% \\
+Low confidence & $< 0.60$ & 3.6\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+61.3\% of observations achieve research-grade quality scores ($q_{obs}
+\geq 0.95$), comparable to professional survey data. The quality model
+enables downstream analyses to appropriately weight observations rather
+than applying binary include/exclude filters.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

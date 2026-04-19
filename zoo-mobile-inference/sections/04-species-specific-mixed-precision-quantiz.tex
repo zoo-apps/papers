@@ -1,0 +1,60 @@
+\section{Species-Specific Mixed-Precision Quantization}
+
+\label{sec:quantization}
+
+\subsection{Quantization Framework}
+
+Post-training quantization reduces model size and inference latency by representing weights and activations with fewer bits.
+Standard approaches apply uniform quantization across all layers, but species recognition models exhibit non-uniform sensitivity: layers responsible for distinguishing morphologically similar species require higher precision than those encoding coarse visual features.
+
+We formulate mixed-precision quantization as an optimization problem:
+
+\begin{equation}
+    \min_{\mathbf{b}} \sum_{i=1}^{L} b_i \cdot s_i \quad \text{s.t.} \quad \Delta\text{Acc}(\mathbf{b}) \leq \epsilon, \quad b_i \in \{4, 8, 16\}
+\end{equation}
+
+\noindent where $\mathbf{b} = [b_1, \ldots, b_L]$ is the bit-width assignment for each layer, $s_i$ is the size of layer $i$ in bits, $\Delta\text{Acc}(\mathbf{b})$ is the accuracy degradation under quantization configuration $\mathbf{b}$, and $\epsilon$ is the maximum tolerable accuracy loss.
+
+\subsection{Species-Specific Sensitivity Analysis}
+
+We measure quantization sensitivity at the species level rather than globally:
+
+\begin{equation}
+    \text{Sens}(l, s) = \frac{1}{|\mathcal{X}_s|} \sum_{\mathbf{x} \in \mathcal{X}_s} |p_s^{\text{FP32}}(\mathbf{x}) - p_s^{Q_l}(\mathbf{x})|
+\end{equation}
+
+\noindent where $\text{Sens}(l, s)$ is the sensitivity of layer $l$ to quantization for species $s$, $\mathcal{X}_s$ is the calibration set for species $s$, and $p_s^{Q_l}$ is the predicted probability for species $s$ when only layer $l$ is quantized.
+
+The aggregated sensitivity for layer $l$ incorporates conservation priority weighting:
+
+\begin{equation}
+    \text{Sens}(l) = \sum_{s \in \mathcal{S}} w_s \cdot \text{Sens}(l, s) \quad \text{where } w_s \propto \text{IUCN\_priority}(s)
+\end{equation}
+
+This ensures that endangered and critically endangered species receive higher quantization protection, as misidentification of these species carries greater conservation consequences.
+
+\subsection{Quantization Results}
+
+\begin{table}[H]
+\centering
+\caption{Quantization impact on accuracy and latency (Snapdragon 7 Gen 1).}
+\label{tab:quantization}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Configuration} & \textbf{Size (MB)} & \textbf{Latency (ms)} & \textbf{Top-1 (\%)} & \textbf{Top-5 (\%)} \\
+\midrule
+FP32 (baseline) & 12.1 & 142 & 87.3 & 96.1 \\
+INT8 (uniform) & 3.1 & 52 & 85.4 & 95.2 \\
+INT4 (uniform) & 1.6 & 38 & 79.8 & 91.7 \\
+Mixed (ours) & 3.4 & 47 & 86.8 & 95.9 \\
+Mixed + IUCN priority & 3.6 & 49 & 86.5 (global) & 95.7 \\
+ & & & 89.1 (CR/EN) & 97.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The IUCN-priority quantization trades 0.3\% global accuracy for 2.6\% improved accuracy on critically endangered and endangered species---a worthwhile trade for conservation applications.
+
+% ============================================================
+% 5. Condition-Aware Inference
+% ============================================================

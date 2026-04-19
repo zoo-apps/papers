@@ -1,0 +1,66 @@
+\section{Smart Contract Access Control}
+
+
+\subsection{Contract Architecture}
+
+The \WildTrack{} access control system is implemented as a set of composable smart contracts on the \Zoo{} network:
+
+\begin{lstlisting}[basicstyle=\footnotesize\ttfamily, frame=single, caption={WildTrack access control interface (Solidity-like pseudocode).}]
+interface IWildTrackAccess {
+  // Data registration
+  function registerTrajectory(
+    bytes32 commitment,
+    uint8 privacyTier,
+    uint256 embargoEnd
+  ) external returns (uint256 trajectoryId);
+
+  // Access requests
+  function requestAccess(
+    uint256 trajectoryId,
+    bytes32 purposeHash,
+    uint8 requestedResolution
+  ) external returns (uint256 requestId);
+
+  // Access grants (by data owner)
+  function grantAccess(
+    uint256 requestId,
+    bytes calldata encryptedKey
+  ) external;
+
+  // Time-delayed release
+  function claimDelayedAccess(
+    uint256 trajectoryId
+  ) external view returns (bytes memory cloakedData);
+}
+\end{lstlisting}
+
+\subsection{Role-Based Access}
+
+The contract enforces four access levels:
+
+\begin{table}[htbp]
+\centering
+\caption{Access levels and permissions.}
+\label{tab:access}
+\begin{tabular}{lllp{5cm}}
+\toprule
+\textbf{Role} & \textbf{Resolution} & \textbf{Delay} & \textbf{Use Case} \\
+\midrule
+Owner & Full & None & Data contributor \\
+Collaborator & Full & Configurable & Research partners \\
+Researcher & Cloaked & Tier-specific & General scientific use \\
+Public & Aggregated & Maximum & Education, outreach \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Anti-Poaching Emergency Protocol}
+
+When a poaching event is detected (via anti-poaching sensor networks or ranger reports), the smart contract can trigger an emergency data lockdown:
+
+\begin{equation}
+\text{if}\; E_{\text{poach}}(r, t) \;\text{then}\; \forall \tau \in \mathcal{B}(r, R_{\text{lock}}) : \text{tier}(\tau) \leftarrow \text{Critical}
+\end{equation}
+
+This automatically elevates the privacy tier of all trajectories within radius $R_{\text{lock}}$ of the reported incident to Critical, increasing cloaking, delay, and access restrictions until the threat is resolved.
+

@@ -1,0 +1,32 @@
+\section{Integration with T-Chain}
+
+
+\subsection{Threshold Credential Signing}
+
+\IChain{} delegates cryptographic signing to \TChain{} (Zoo's threshold signature chain) \cite{zoo-threshold-signatures}. This separation ensures that \IdentityVM{} handles identity semantics while \TChain{} handles key material.
+
+The integration follows a request-response pattern:
+
+\begin{enumerate}
+\item \IdentityVM{} constructs the credential body and submits a signing request to \TChain{}.
+\item \TChain{} coordinates $t$-of-$n$ partial signature generation across the validator committee.
+\item \TChain{} returns the aggregated signature to \IdentityVM{}.
+\item \IdentityVM{} attaches the signature and finalizes the credential.
+\end{enumerate}
+
+\subsection{Key Rotation via K-Chain}
+
+When validator keys are rotated (managed by \KChain{} \cite{zoo-key-management}), \IChain{} must update its committee configuration. This is handled through cross-chain events:
+
+\begin{enumerate}
+\item \KChain{} emits a \texttt{KeyRotated} event with the new public key share.
+\item \IdentityVM{} updates the committee member's verification key.
+\item Outstanding signing requests using the old key are voided and resubmitted.
+\end{enumerate}
+
+The formal relationship between chains is:
+
+\begin{equation}
+\text{I-Chain} \xrightarrow{\text{signing requests}} \text{T-Chain} \xrightarrow{\text{key material}} \text{K-Chain}
+\end{equation}
+

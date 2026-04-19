@@ -1,0 +1,39 @@
+\section{BLS12-381 Fast Path}
+
+
+\subsection{Signature Scheme}
+
+Each validator $v_i$ holds a BLS12-381 key pair $(sk_i, pk_i)$ where $pk_i = sk_i \cdot G_1$ for generator $G_1 \in \mathbb{G}_1$. To sign block $B$, validator $v_i$ computes:
+
+\begin{equation}
+\sigma_i = sk_i \cdot H(B)
+\end{equation}
+
+where $H: \{0,1\}^* \rightarrow \mathbb{G}_2$ is a hash-to-curve function per RFC~9380.
+
+\subsection{Aggregate Verification}
+
+Given a set of signatures $\{\sigma_i\}_{i \in \mathcal{S}}$ on the same message $B$, the aggregated signature is:
+
+\begin{equation}
+\sigma_{\text{agg}} = \sum_{i \in \mathcal{S}} \sigma_i
+\end{equation}
+
+Verification checks:
+
+\begin{equation}
+e\!\left(\sum_{i \in \mathcal{S}} pk_i,\; H(B)\right) = e(G_1,\; \sigma_{\text{agg}})
+\end{equation}
+
+where $e: \mathbb{G}_1 \times \mathbb{G}_2 \rightarrow \mathbb{G}_T$ is the optimal Ate pairing. This reduces $|\mathcal{S}|$ pairing operations to 2, regardless of signer count.
+
+\subsection{Multi-Block Batch Verification}
+
+For consensus throughput, we batch-verify signatures across multiple blocks. Given $m$ blocks $\{B_1, \ldots, B_m\}$ with aggregate signatures $\{\sigma_{\text{agg},j}\}_{j=1}^{m}$ and signer sets $\{\mathcal{S}_j\}_{j=1}^{m}$, batch verification uses random linear combination:
+
+\begin{equation}
+e\!\left(\sum_{j=1}^{m} r_j \sum_{i \in \mathcal{S}_j} pk_i,\; \sum_{j=1}^{m} r_j H(B_j)\right) \stackrel{?}{=} e\!\left(G_1,\; \sum_{j=1}^{m} r_j \sigma_{\text{agg},j}\right)
+\end{equation}
+
+where $r_j \xleftarrow{\$} \{1, \ldots, 2^{128}\}$ are random scalars preventing rogue-key attacks across batches.
+

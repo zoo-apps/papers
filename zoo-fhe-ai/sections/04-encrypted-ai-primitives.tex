@@ -1,0 +1,58 @@
+\section{Encrypted AI Primitives}
+
+\label{sec:primitives}
+
+\subsection{Encrypted Model Weights}
+
+Model weights are encrypted under a collective public key $pk_{\text{model}}$ derived from the threshold key generation:
+
+\begin{equation}
+W_{\text{enc}} = \text{CKKS.Enc}(pk_{\text{model}}, W)
+\end{equation}
+
+where $W \in \mathbb{R}^{m \times n}$ is packed into $\lceil mn / (N/2) \rceil$ \CKKS{} ciphertexts. The packing strategy uses diagonal encoding for efficient matrix-vector multiplication:
+
+\begin{equation}
+\text{MatVec}(W_{\text{enc}}, \mathbf{x}_{\text{enc}}) = \sum_{i=0}^{n-1} \text{Rotate}(W_{\text{enc}}^{(i)}, i) \otimes \mathbf{x}_{\text{enc}}
+\end{equation}
+
+requiring $n$ rotations and multiplications, all performed homomorphically.
+
+\subsection{Encrypted Inference}
+
+Given encrypted input $\mathbf{x}_{\text{enc}}$ and encrypted weights $W_{\text{enc}}$:
+
+\begin{algorithm}[t]
+\caption{Encrypted Neural Network Inference}
+\label{alg:inference}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: $\mathbf{x}_{\text{enc}}$ (CKKS), $\{W_l, b_l\}$ (encrypted weights per layer)
+\STATE \textbf{Output}: $\mathbf{y}_{\text{enc}}$ (encrypted prediction)
+\FOR{each layer $l = 1, \ldots, L$}
+    \STATE $\mathbf{h}_l \leftarrow \text{ckksMatMul}(W_l, \mathbf{h}_{l-1}) + b_l$ \COMMENT{CKKS}
+    \IF{$l < L$}
+        \STATE $\mathbf{h}_l^{\text{tfhe}} \leftarrow \text{ckksToTfhe}(\mathbf{h}_l)$ \COMMENT{Bridge}
+        \STATE $\mathbf{h}_l^{\text{relu}} \leftarrow \text{tfheMax}(\mathbf{h}_l^{\text{tfhe}}, 0)$ \COMMENT{TFHE ReLU}
+        \STATE $\mathbf{h}_l \leftarrow \text{tfheToCkks}(\mathbf{h}_l^{\text{relu}})$ \COMMENT{Bridge back}
+    \ENDIF
+\ENDFOR
+\RETURN $\mathbf{h}_L$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Encrypted Training Gradients}
+
+For federated learning with privacy, each participant computes gradients locally and encrypts them before aggregation:
+
+\begin{equation}
+g_i = \text{TFHE.Enc}(pk, \nabla_W \mathcal{L}(W; D_i))
+\end{equation}
+
+The aggregator computes the encrypted average gradient without seeing individual contributions:
+
+\begin{equation}
+\bar{g}_{\text{enc}} = \frac{1}{n} \sum_{i=1}^n g_i = \text{Enc}\left(\frac{1}{n} \sum_{i=1}^n \nabla_W \mathcal{L}(W; D_i)\right)
+\end{equation}
+
+Only after threshold decryption is the aggregate gradient revealed for the model update step.
+

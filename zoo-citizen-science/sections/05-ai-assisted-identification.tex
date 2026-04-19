@@ -1,0 +1,60 @@
+\section{AI-Assisted Identification}
+
+\label{sec:ai}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Integration with TaxoNet}
+
+ZooPlatform integrates the TaxoNet few-shot species identification
+system (ZOO-CLS-2026). When a user submits a photograph:
+
+\begin{enumerate}
+  \item TaxoNet extracts visual features and matches against species
+    prototypes restricted by geographic and temporal priors.
+  \item Top-5 suggestions with calibrated confidence scores are
+    presented to the user.
+  \item The user selects or overrides the AI suggestion.
+  \item The observation is submitted with both AI and human
+    identifications recorded.
+\end{enumerate}
+
+\subsection{AI Anchoring Mitigation}
+
+AI suggestions can anchor observer decisions, reducing identification
+diversity \citep{terry2020think}. We mitigate this through:
+
+\begin{itemize}
+  \item \textbf{Delayed display}: AI suggestions are shown only after
+    the user enters their own initial identification (or explicitly
+    requests help).
+  \item \textbf{Confidence calibration}: Low-confidence suggestions
+    ($<$0.5) are displayed as ``uncertain---please verify'' rather than
+    as firm identifications.
+  \item \textbf{Disagreement incentives}: Users earn bonus ZooRep for
+    providing correct identifications that disagree with AI suggestions,
+    incentivizing independent judgment.
+\end{itemize}
+
+\subsection{Identification Accuracy}
+
+\begin{table}[H]
+\centering
+\caption{Species identification accuracy by method.}
+\label{tab:id_accuracy}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Method} & \textbf{Accuracy} & \textbf{Coverage} \\
+\midrule
+Human only (unassisted) & 78.4\% & 100\% \\
+AI only (TaxoNet) & 84.7\% & 94.2\% \\
+Human + AI (assisted) & 91.3\% & 100\% \\
+Human + AI + community & 96.1\% & 100\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The combination of AI assistance and community validation achieves
+96.1\% identification accuracy, exceeding either humans or AI alone.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

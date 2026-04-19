@@ -1,0 +1,42 @@
+\section{Corona Post-Quantum Path}
+
+
+\subsection{Ring-LWE Foundation}
+
+\Corona{} is a threshold signature scheme built on the Ring Learning With Errors (Ring-LWE) problem \cite{lyubashevsky2010ideal, lux-corona-pq}. The security reduction is:
+
+\begin{theorem}[Corona Security]
+Breaking the \Corona{} $(t, n)$-threshold signature scheme with advantage $\epsilon$ implies solving Ring-LWE with dimension $d = 1024$ and modulus $q = 2^{32} - 5$ with advantage $\geq \epsilon / \text{poly}(n)$.
+\end{theorem}
+
+\subsection{Threshold Signing Protocol}
+
+The $(t, n)$-threshold scheme requires $t = \lceil 2n/3 \rceil + 1$ shares to reconstruct a valid signature. The protocol proceeds in three rounds:
+
+\begin{enumerate}
+\item \textbf{Commitment}: Each signer $v_i$ samples noise $e_i \leftarrow \chi_\sigma$ from the discrete Gaussian distribution and broadcasts commitment $c_i = \text{Com}(e_i)$.
+\item \textbf{Share}: Upon receiving $\geq t$ commitments, each signer broadcasts their partial signature $\sigma_i = s_i \cdot H_{\text{lat}}(B) + e_i$ where $s_i$ is their secret key share.
+\item \textbf{Combine}: The aggregator collects $t$ valid shares and reconstructs $\sigma_{\text{thresh}} = \sum_{i \in \mathcal{T}} \lambda_i \sigma_i$ using Lagrange coefficients $\lambda_i$.
+\end{enumerate}
+
+\subsection{Signature and Key Sizes}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Component} & \textbf{Size (bytes)} & \textbf{Comparison to BLS} \\
+\midrule
+Public key & 1,952 & 40.7x larger \\
+Secret key share & 3,904 & 121.9x larger \\
+Signature share & 3,904 & 81.3x larger \\
+Threshold signature & 3,904 & 81.3x larger \\
+Commitment & 32 & 0.67x (smaller) \\
+\bottomrule
+\end{tabular}
+\caption{Corona cryptographic sizes ($d = 1024$, $q = 2^{32} - 5$)}
+\label{tab:corona-sizes}
+\end{table}
+
+The larger sizes motivate GPU acceleration: without batching, \Corona{} verification dominates consensus latency.
+

@@ -1,0 +1,52 @@
+\section{Integration with Zoo L2}
+
+\label{sec:integration}
+
+\subsection{VM Architecture}
+
+Zoo L2 runs three specialized VMs alongside \cevm{}:
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{DEX VM}: Order matching, AMM swaps, liquidity provision. Highest conflict rates due to shared pool state.
+\item \textbf{FHE VM}: Homomorphic encryption on ciphertext. Near-zero conflicts (isolated encrypted state).
+\item \textbf{AI Mining VM}: Proof-of-useful-computation. Independent result slots per miner.
+\end{enumerate}
+
+Specialized VMs are implemented as EVM precompiles (\texttt{0x0300}--\texttt{0x0320}) dispatched to dedicated GPU kernels.
+
+\subsection{Validator Requirements}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Tier} & \textbf{Minimum GPU} & \textbf{Stake} \\
+\midrule
+Full Validator & NVIDIA A100 (40GB) & 100M $\KEEPER$ \\
+Light Validator & NVIDIA L4 (24GB) & 50M $\KEEPER$ \\
+Archive Node & NVIDIA A100 (80GB) & --- \\
+\bottomrule
+\end{tabular}
+\caption{Validator GPU and stake requirements}
+\label{tab:validator-gpu}
+\end{table}
+
+Light validators execute only $C$ on GPU and verify $I$ via state-root comparison.
+
+\subsection{Precompile Dispatch}
+
+Precompile transactions are always placed in the conflict set to ensure execution against fully resolved base state:
+
+\begin{algorithm}
+\caption{Precompile-Aware Partitioning}
+\label{alg:precompile}
+\begin{algorithmic}[1]
+\REQUIRE Transaction set $T$, precompile address set $P$
+\STATE $T_{\text{pre}} \gets \{t \in T : \text{target}(t) \in P\}$
+\STATE $I, C_{\text{evm}} \gets \text{Partition}(T \setminus T_{\text{pre}})$
+\STATE $C \gets C_{\text{evm}} \cup T_{\text{pre}}$
+\RETURN $I, C$
+\end{algorithmic}
+\end{algorithm}
+
+%% ---------------------------------------------------------------------------

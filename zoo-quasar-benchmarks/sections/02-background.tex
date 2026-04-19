@@ -1,0 +1,48 @@
+\section{Background}
+
+
+\subsection{Quasar Consensus}
+
+\Quasar{}~\cite{lux-quasar-consensus} is the Lux Network's consensus protocol, descended from the HotStuff family of BFT protocols. Key properties:
+
+\begin{definition}[\Quasar{} Consensus]
+\Quasar{} is a leader-based BFT protocol with:
+\begin{enumerate}
+    \item \textbf{Deterministic finality}: Once a block is committed, it cannot be reverted
+    \item \textbf{$O(n)$ message complexity}: Linear in the number of validators per round
+    \item \textbf{Pipelining}: Multiple blocks in flight simultaneously
+    \item \textbf{Responsive}: Advances at network speed, not at a fixed timer
+\end{enumerate}
+\end{definition}
+
+\Quasar{} achieves finality in two rounds of voting:
+
+\begin{equation}
+\text{Finality} = 2 \cdot \text{RTT} + \text{verification} \approx 2 \cdot 3\text{ms} + 4\text{ms} = 10\text{ms}
+\end{equation}
+
+where RTT is the round-trip time between validators in a co-located deployment.
+
+\subsection{Proof of AI}
+
+\PoAI{}~\cite{zoo-poai-consensus} is Zoo Network's compute verification mechanism:
+
+\begin{definition}[Proof of AI]
+\PoAI{} verifies that claimed AI computation was performed correctly and assesses its quality:
+\begin{enumerate}
+    \item \textbf{Compute Verification}: \TEE{} attestation proves execution
+    \item \textbf{Quality Scoring}: Multi-party evaluation assesses output value
+    \item \textbf{Reward Distribution}: Proportional to verified compute quality
+\end{enumerate}
+\end{definition}
+
+\subsection{HotStuff Lineage}
+
+\Quasar{} extends HotStuff with three innovations:
+
+\begin{itemize}
+    \item \textbf{Optimistic fast path}: When all validators are honest and responsive, finality is achieved in a single round (5ms)
+    \item \textbf{Stake-weighted voting}: Votes are weighted by validator stake, not uniform
+    \item \textbf{Compute-aware leader selection}: Leaders are selected based on both stake and compute capacity, ensuring AI-capable validators produce blocks
+\end{itemize}
+

@@ -1,0 +1,51 @@
+\section{System Architecture}
+
+\label{sec:architecture}
+
+\subsection{Processing Pipeline}
+
+ZooSat operates as a continuous processing pipeline on the Zoo Network:
+
+\begin{table}[H]
+\centering
+\caption{ZooSat processing pipeline stages.}
+\label{tab:pipeline}
+\begin{tabularx}{\textwidth}{@{}lccX@{}}
+\toprule
+\textbf{Stage} & \textbf{Frequency} & \textbf{Latency} & \textbf{Description} \\
+\midrule
+Ingest & Continuous & < 6 hours & Download Sentinel-2 L2A products from Copernicus \\
+Preprocess & Daily & 2 hours & Cloud masking, atmospheric correction, mosaicing \\
+Detect & Weekly & 4 hours & Run TSN on updated temporal sequences \\
+Analyze & Weekly & 1 hour & Compute HFI, classify changes, priority ranking \\
+Alert & Weekly & < 1 hour & Generate and distribute alerts \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Computational Requirements}
+
+\begin{table}[H]
+\centering
+\caption{Computational resource requirements.}
+\label{tab:compute}
+\begin{tabular}{@{}lcr@{}}
+\toprule
+\textbf{Stage} & \textbf{Hardware} & \textbf{Cost/Month} \\
+\midrule
+Ingest + Preprocess & 8-core CPU, 64 GB RAM & \$240 \\
+TSN Inference & 4x NVIDIA A100 & \$4,800 \\
+HFI Computation & 16-core CPU, 128 GB RAM & \$480 \\
+Alert System & 4-core CPU, 16 GB RAM & \$60 \\
+Storage (1 PB/year) & IPFS + Filecoin & \$1,200 \\
+\midrule
+\textbf{Total} & & \textbf{\$6,780/month} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At \$6,780/month for monitoring 2.4 million km$^2$, ZooSat costs approximately \$0.003 per km$^2$ per month, an order of magnitude less than manual monitoring through ranger patrols (\$0.05--0.50 per km$^2$ per month depending on terrain).
+
+% ============================================================
+% 8. Discussion
+% ============================================================

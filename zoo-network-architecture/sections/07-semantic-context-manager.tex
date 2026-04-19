@@ -1,0 +1,51 @@
+\section{Semantic Context Manager}
+
+
+The Semantic Context Manager maintains experience embeddings and performs retrieval.
+
+\subsection{Embedding Generation}
+
+Each experience $e$ is converted to a dense vector $\mathbf{v}_e \in \mathbb{R}^d$ (typically $d = 768$ or $d = 1536$) via a pretrained encoder:
+\[
+\mathbf{v}_e = \text{Encoder}(e.\text{text})
+\]
+
+Common encoders:
+\begin{itemize}
+\item \textbf{OpenAI \texttt{text-embedding-ada-002}}: 1536-dim, high quality, proprietary.
+\item \textbf{BGE-large-en-v1.5} \cite{xiao2023bge}: 1024-dim, open-source, competitive.
+\item \textbf{Sentence-BERT} \cite{reimers2019sentencebert}: 768-dim, efficient.
+\end{itemize}
+
+Embeddings are stored alongside experiences in the IPFS library.
+
+\subsection{Similarity Search}
+
+Given query embedding $\mathbf{v}_q$, compute cosine similarity with all experience embeddings:
+\[
+\text{sim}(\mathbf{v}_q, \mathbf{v}_e) = \frac{\mathbf{v}_q \cdot \mathbf{v}_e}{\|\mathbf{v}_q\| \|\mathbf{v}_e\|}
+\]
+
+For large libraries ($|E| > 10^6$), use approximate nearest neighbor (ANN) search:
+\begin{itemize}
+\item \textbf{FAISS} \cite{johnson2019faiss}: Facebook's library for billion-scale vector search.
+\item \textbf{HNSW} \cite{malkov2018hnsw}: Hierarchical Navigable Small World graphs.
+\item \textbf{ScaNN} \cite{guo2020scann}: Google's optimized ANN.
+\end{itemize}
+
+\subsection{Caching and Optimization}
+
+\begin{itemize}
+\item \textbf{Precomputed Embeddings}: All experiences have embeddings computed offline; no real-time encoding during inference.
+\item \textbf{Experience Deduplication}: Before adding new experiences, check for $\text{sim}(\mathbf{v}_{\text{new}}, \mathbf{v}_e) > 0.9$. If found, merge instead of adding duplicate.
+\item \textbf{LRU Cache}: Frequently retrieved experiences cached in GPU memory for zero-latency access.
+\end{itemize}
+
+\subsection{Quality Scoring}
+
+Each experience has a quality score:
+\[
+Q(e) = \alpha \cdot \frac{\text{upvotes}}{\text{upvotes} + \text{downvotes}} + \beta \cdot \frac{\text{usage\_count}}{\max(\text{usage\_counts})} + \gamma \cdot e.\text{confidence}
+\]
+where $\alpha, \beta, \gamma$ are tunable weights. Low-quality experiences are pruned when the library exceeds maximum size.
+

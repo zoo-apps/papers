@@ -1,0 +1,55 @@
+\section{Introduction}
+
+
+The emergence of Large Language Models (LLMs) has catalyzed unprecedented advances in natural language understanding and generation~\cite{brown2020language,touvron2023llama,qwen2024qwen3}. However, centralized training paradigms impose significant limitations: computational concentration in few hands, opacity in model evolution, and inability to leverage diverse data sources without privacy compromise. \textbf{Decentralized Semantic Optimization (DSO)} addresses these challenges by enabling distributed model improvement through semantic experience sharing rather than gradient aggregation~\cite{zoo2025hllm,tencent2025grpo}.
+
+\subsection{The Alignment Problem}
+
+Current DSO implementations face a fundamental challenge: heterogeneous embedding spaces. Consider a network with DeepSeek-V3 (7168-dim), Qwen2.5-72B (8192-dim), and Llama-3.3-70B (8192-dim) models collaboratively learning. Each model's experiences must be projected into a shared canonical space for cross-model retrieval:
+
+\begin{equation}
+\mathbf{e}_{\text{canonical}} = \mathcal{P}(\mathbf{e}_{\text{model}}), \quad \mathbf{e}_{\text{model}} \in \mathbb{R}^{d_{\text{model}}}, \mathbf{e}_{\text{canonical}} \in \mathbb{R}^{7680}
+\end{equation}
+
+This projection introduces three critical inefficiencies:
+
+\begin{enumerate}
+\item \textbf{Information Loss:} Projection $\mathcal{P}$ loses 8\% semantic information (92\% vs 98\% preservation)
+\item \textbf{Latency Overhead:} Extra forward pass adds 9.7ms (31\% increase from 21.5ms to 31.2ms)
+\item \textbf{Compression Degradation:} Aligned embeddings compress worse under BitDelta (29.9$\times$ vs 31.87$\times$)
+\end{enumerate}
+
+\subsection{Our Contribution}
+
+We introduce \textbf{Zen-Reranker-8B}, the first embedding model with \textbf{native 7680-dimensional output}, designed specifically for DSO applications. Our key contributions include:
+
+\begin{itemize}
+\item \textbf{Architecture:} Novel projection head mapping Qwen3-8B's 8192-dim hidden states to 7680-dim canonical space with 98\% semantic preservation
+\item \textbf{Training Protocol:} Three-stage optimization (projection expansion, reranking fine-tuning, DSO optimization) achieving 68.4 MTEB score at \$10,800 total cost
+\item \textbf{Compression:} BitDelta algorithm tailored for 7680-dim embeddings, achieving 31.87$\times$ compression (30,720 bytes $\to$ 964 bytes) with <0.5\% RMSE
+\item \textbf{Byzantine Robustness:} Median-based aggregation maintaining 92\% accuracy under 30\% adversarial nodes
+\item \textbf{Integration:} Production-ready implementations in Rust (Hanzo Network) and Python (Zoo Network) with Docker deployment
+\end{itemize}
+
+\subsection{Why 7680 Dimensions?}
+
+The canonical dimension choice balances frontier model compatibility. Table~\ref{tab:dimension-choice} analyzes 2025-2030 frontier models:
+
+\begin{table}[h]
+\centering
+\caption{Canonical dimension compatibility with frontier LLMs}
+\label{tab:dimension-choice}
+\begin{tabular}{lrrc}
+\toprule
+\textbf{Model} & \textbf{Native Dim} & \textbf{7680-dim Mapping} & \textbf{Semantic Loss} \\
+\midrule
+DeepSeek-V3 & 7,168 & Expand 7\% & <2\% \\
+Qwen2.5-72B & 8,192 & Compress 6\% & <6\% \\
+Llama-3.3-70B & 8,192 & Compress 6\% & <6\% \\
+Qwen3-32B & 5,120 & Expand 50\% & <12\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{7680-dim is Pareto-optimal}: minimizes maximum semantic loss across frontier models while enabling efficient BitDelta compression.
+

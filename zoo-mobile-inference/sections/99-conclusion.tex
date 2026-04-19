@@ -1,0 +1,146 @@
+\section{Conclusion}
+
+\label{sec:conclusion}
+
+We have presented ZooMobile, a framework for deploying species recognition on mobile devices in conservation field settings.
+Taxonomic Knowledge Distillation compresses models by 94\% while preserving 95\% of accuracy.
+Species-specific mixed-precision quantization achieves sub-50ms inference on mid-range smartphones.
+Condition-Aware Inference adapts to degraded field conditions, recovering up to 5.3 percentage points of accuracy under low-light conditions.
+
+A 6-month field deployment across 8 national parks with 142 rangers demonstrated 84.7\% field-verified accuracy, enabling 23,400 real-time species identifications and directly supporting 47 anti-poaching decisions and 12 human-wildlife conflict interventions.
+ZooMobile closes the deployment gap between laboratory-grade species recognition and the realities of conservation fieldwork.
+
+Future work will extend ZooMobile to acoustic identification, develop continual learning mechanisms for adapting to new species encountered in the field, and integrate with ZooEd for in-field conservation training.
+
+% ============================================================
+% References
+% ============================================================
+\begin{thebibliography}{30}
+
+\bibitem[Ahumada et~al.(2020)]{ahumada2020wildlife}
+Ahumada, J.~A., Fegraus, E., Birch, T., et~al. (2020).
+\newblock Wildlife Insights: A platform to maximize the potential of camera trap and other passive sensor wildlife data for the planet.
+\newblock {\em Environmental Conservation}, 47(1):1--6.
+
+\bibitem[Beery et~al.(2018)]{beery2018recognition}
+Beery, S., Van~Horn, G., and Perona, P. (2018).
+\newblock Recognition in Terra Incognita.
+\newblock {\em Proceedings of ECCV}, pages 456--473.
+
+\bibitem[Berger-Wolf et~al.(2017)]{bergerwolf2017wildbook}
+Berger-Wolf, T.~Y., Rubenstein, D.~I., and Stewart, C.~V. (2017).
+\newblock Wildbook: Crowdsourcing, computer vision, and data science for conservation.
+\newblock {\em arXiv preprint arXiv:1710.08880}.
+
+\bibitem[Dosovitskiy et~al.(2021)]{dosovitskiy2021image}
+Dosovitskiy, A., Beyer, L., and Kolesnikov, A. (2021).
+\newblock An image is worth 16x16 words: Transformers for image recognition at scale.
+\newblock {\em Proceedings of ICLR}.
+
+\bibitem[Han et~al.(2015)]{han2015learning}
+Han, S., Pool, J., Tran, J., and Dally, W.~J. (2015).
+\newblock Learning both weights and connections for efficient neural networks.
+\newblock {\em Advances in Neural Information Processing Systems}, 28.
+
+\bibitem[Hinton et~al.(2015)]{hinton2015distilling}
+Hinton, G., Vinyals, O., and Dean, J. (2015).
+\newblock Distilling the knowledge in a neural network.
+\newblock {\em arXiv preprint arXiv:1503.02531}.
+
+\bibitem[Howard et~al.(2019)]{howard2019searching}
+Howard, A., Sandler, M., and Chen, B. (2019).
+\newblock Searching for MobileNetV3.
+\newblock {\em Proceedings of ICCV}, pages 1314--1324.
+
+\bibitem[Jacob et~al.(2018)]{jacob2018quantization}
+Jacob, B., Kligys, S., and Chen, B. (2018).
+\newblock Quantization and training of neural networks for efficient integer-arithmetic-only inference.
+\newblock {\em Proceedings of CVPR}, pages 2704--2713.
+
+\bibitem[Liu et~al.(2022)]{liu2022convnet}
+Liu, Z., Mao, H., Wu, C.~Y., et~al. (2022).
+\newblock A ConvNet for the 2020s.
+\newblock {\em Proceedings of CVPR}, pages 11976--11986.
+
+\bibitem[Picek et~al.(2022)]{picek2022overcoming}
+Picek, L., Sulc, M., Matas, J., et~al. (2022).
+\newblock Overcoming practical issues of deep active learning with species identification.
+\newblock {\em Ecological Informatics}, 70:101714.
+
+\bibitem[Schneider et~al.(2020)]{schneider2020three}
+Schneider, S., Taylor, G.~W., and Kremer, S.~C. (2020).
+\newblock Three critical factors affecting automated image species recognition.
+\newblock {\em Ecology and Evolution}, 10(7):3503--3517.
+
+\bibitem[Stevens et~al.(2024)]{stevens2024bioclip}
+Stevens, S., Wu, J., and Thompson, M.~J. (2024).
+\newblock BioCLIP: A vision foundation model for the tree of life.
+\newblock {\em Proceedings of CVPR}, pages 19412--19424.
+
+\bibitem[Tan and Le(2019)]{tan2019efficientnet}
+Tan, M. and Le, Q.~V. (2019).
+\newblock EfficientNet: Rethinking model scaling for convolutional neural networks.
+\newblock {\em Proceedings of ICML}, pages 6105--6114.
+
+\bibitem[Terry et~al.(2020)]{terry2020automated}
+Terry, J.~C.~D., Roy, H.~E., and August, T.~A. (2020).
+\newblock Thinking like a naturalist: Enhancing computer vision of fine-grained classification.
+\newblock {\em Methods in Ecology and Evolution}, 11(11):1360--1374.
+
+\bibitem[Touvron et~al.(2021)]{touvron2021training}
+Touvron, H., Cord, M., Douze, M., et~al. (2021).
+\newblock Training data-efficient image transformers and distillation through attention.
+\newblock {\em Proceedings of ICML}, pages 10347--10357.
+
+\bibitem[Tuia et~al.(2022)]{tuia2022perspectives}
+Tuia, D., Kellenberger, B., Beery, S., et~al. (2022).
+\newblock Perspectives in machine learning for wildlife conservation.
+\newblock {\em Nature Communications}, 13:792.
+
+\bibitem[Van~Horn et~al.(2018)]{vanhorn2018inaturalist}
+Van~Horn, G., Mac~Aodha, O., Song, Y., et~al. (2018).
+\newblock The iNaturalist species classification and detection dataset.
+\newblock {\em Proceedings of CVPR}, pages 8769--8778.
+
+\bibitem[Van~Horn et~al.(2021)]{vanhorn2021benchmarking}
+Van~Horn, G., Cole, E., and Beery, S. (2021).
+\newblock Benchmarking representation learning for natural world image collections.
+\newblock {\em Proceedings of CVPR}, pages 12884--12893.
+
+\bibitem[Wang et~al.(2022)]{wang2022continual}
+Wang, Q., Fink, O., Van~Gool, L., and Dai, D. (2022).
+\newblock Continual test-time domain adaptation.
+\newblock {\em Proceedings of CVPR}, pages 7201--7211.
+
+\bibitem[Wood et~al.(2011)]{wood2011ebird}
+Wood, C., Sullivan, B., Iliff, M., et~al. (2011).
+\newblock eBird: Engaging birders in science and conservation.
+\newblock {\em PLOS Biology}, 9(12):e1001220.
+
+\bibitem[Yu et~al.(2022)]{yu2022metaformer}
+Yu, W., Luo, M., Zhou, P., et~al. (2022).
+\newblock MetaFormer is actually what you need for vision.
+\newblock {\em Proceedings of CVPR}, pages 10819--10829.
+
+\bibitem[Zhou et~al.(2022)]{zhou2022domain}
+Zhou, K., Liu, Z., Qiao, Y., et~al. (2022).
+\newblock Domain generalization: A survey.
+\newblock {\em IEEE Transactions on Pattern Analysis and Machine Intelligence}, 45(4):4396--4415.
+
+\bibitem[Antje Worring, Zach Kelling(2025a)]{zoo2025dso}
+Antje Worring, Zach Kelling (2025a).
+\newblock Decentralized Semantic Optimization: Collaborative knowledge curation on distributed networks.
+\newblock {\em Zoo Improvement Proposal ZIP-001}.
+
+\bibitem[Antje Worring, Zach Kelling(2025b)]{zoo2025network}
+Antje Worring, Zach Kelling (2025b).
+\newblock Zoo Network Architecture: A decentralized infrastructure for open science.
+\newblock {\em Zoo Technical Report ZTR-001}.
+
+\bibitem[Antje Worring, Zach Kelling(2026)]{zoo2026datacommons}
+Antje Worring, Zach Kelling (2026).
+\newblock Zoo Data Commons: A decentralized repository for open biodiversity datasets.
+\newblock {\em Zoo Improvement Proposal ZIP-009}.
+
+\end{thebibliography}
+

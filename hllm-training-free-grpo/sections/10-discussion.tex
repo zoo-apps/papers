@@ -1,0 +1,91 @@
+\section{Discussion}
+
+
+\subsection{Why Training-Free GRPO Works}
+
+The success of Training-Free GRPO rests on three pillars:
+
+\begin{enumerate}
+    \item \textbf{Sufficiently Capable Foundation Models}: Modern LLMs (671B DeepSeek-V3.1, 32B Qwen3) possess vast latent knowledge. The bottleneck is not \textit{knowing} how to solve problems, but \textit{activating} the right knowledge at inference time. Strategic experiences serve as activation triggers.
+
+    \item \textbf{Group Relative Comparison}: By comparing multiple rollouts for the same query, we isolate \textit{what matters} for success without needing explicit reward models. The relative advantage signal is cleaner than absolute rewards.
+
+    \item \textbf{LLM Introspection}: Large language models can analyze their own reasoning, identify mistakes, and distill generalizable insights—a form of "meta-cognition" unavailable to smaller models or traditional RL agents.
+\end{enumerate}
+
+\subsection{When Does It Fail?}
+
+Training-Free GRPO has limitations:
+
+\begin{itemize}
+    \item \textbf{Weak Base Models}: Models below ~30B parameters struggle to extract meaningful semantic advantages (see QwQ-32B results).
+
+    \item \textbf{Long-Horizon Tasks}: Problems requiring dozens of sequential steps may exceed context window limits even with compression.
+
+    \item \textbf{Novel Capabilities}: If the base model fundamentally lacks a skill (e.g., symbolic math without training), experiences cannot magically add it—they only refine existing capabilities.
+
+    \item \textbf{Adversarial Robustness}: Malicious experiences could be proposed to degrade performance; requires strong governance and adversarial testing.
+\end{itemize}
+
+\subsection{Comparison with Traditional RL}
+
+\begin{table}[h]
+\centering
+\caption{Comparison of Training-Free GRPO vs. traditional RLHF methods.}
+\label{tab:comparison}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Aspect} & \textbf{Traditional RLHF} & \textbf{TF-GRPO} \\
+\midrule
+Parameter Updates & Yes (gradients) & \textbf{No (frozen model)} \\
+Computational Cost & \$10,000+ & \textbf{\$18} \\
+Data Required & 1,000-10,000+ & \textbf{50-100} \\
+Training Time & Hours to days & \textbf{Minutes to hours} \\
+Interpretability & Black box & \textbf{Human-readable} \\
+Modularity & Monolithic & \textbf{Composable} \\
+Cross-Domain Transfer & Poor (forgetting) & \textbf{Excellent (swap libs)} \\
+Governance & Centralized & \textbf{Decentralized (DAO)} \\
+Auditability & None & \textbf{Full (Merkle proofs)} \\
+Verification & Impossible & \textbf{Cryptographic} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Broader Implications}
+
+\subsubsection{Democratization of AI}
+Reducing training costs by 556× makes advanced AI accessible to:
+\begin{itemize}
+    \item Academic researchers with limited budgets
+    \item Non-profit organizations (education, healthcare)
+    \item Small businesses and startups
+    \item Developing countries with less compute infrastructure
+\end{itemize}
+
+\subsubsection{Transparent AI Governance}
+Human-readable experiences enable:
+\begin{itemize}
+    \item Stakeholder oversight of model behavior
+    \item Democratic decision-making via DAO voting
+    \item Rapid identification and removal of harmful patterns
+    \item Educational insights into what makes AI successful
+\end{itemize}
+
+\subsubsection{Modular Knowledge Systems}
+Experiences as composable units enable:
+\begin{itemize}
+    \item Domain-specific "skill packs" (math, coding, medical)
+    \item Community-curated knowledge repositories
+    \item Marketplace for high-value experiences
+    \item Version control and A/B testing of strategies
+\end{itemize}
+
+\subsubsection{AI Safety and Alignment}
+Context-based learning offers safety advantages:
+\begin{itemize}
+    \item Harmful behaviors can be removed by deleting experiences (vs. impossible with fine-tuned weights)
+    \item Audit trails reveal \textit{why} model behavior changed
+    \item Frozen base model guarantees core capabilities remain intact
+    \item Community moderation scales better than centralized control
+\end{itemize}
+

@@ -1,0 +1,73 @@
+\section{System Architecture}
+
+\label{sec:architecture}
+
+\subsection{Decentralized Infrastructure}
+
+ZooEd is deployed on the Zoo Network with a hybrid architecture optimized for the connectivity constraints of conservation field sites:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.5cm,
+    box/.style={rectangle, draw, rounded corners, minimum width=3cm, minimum height=0.8cm, text centered, font=\small},
+    edge/.style={->, thick}
+]
+    \node[box, fill=blue!10] (client) {Mobile Client};
+    \node[box, fill=green!10, right=2.5cm of client] (edge) {Edge Node};
+    \node[box, fill=orange!10, right=2.5cm of edge] (network) {Zoo Network};
+    \node[box, fill=red!10, below=1cm of client] (offline) {Offline Cache};
+    \node[box, fill=purple!10, below=1cm of edge] (sensor) {Sensor Gateway};
+    \node[box, fill=yellow!10, below=1cm of network] (ipfs) {IPFS Content};
+
+    \draw[edge] (client) -- (edge);
+    \draw[edge] (edge) -- (network);
+    \draw[edge] (client) -- (offline);
+    \draw[edge] (sensor) -- (edge);
+    \draw[edge] (network) -- (ipfs);
+    \draw[edge, dashed] (offline) -- (edge);
+\end{tikzpicture}
+\caption{ZooEd system architecture showing the three-tier deployment model.}
+\label{fig:architecture}
+\end{figure}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Mobile Client:} Progressive web application with offline-first design, capable of running the learner model and basic assessments without connectivity.
+    \item \textbf{Edge Node:} Solar-powered computing units deployed at conservation sites, running the adaptive engine and caching content. Each edge node serves up to 200 concurrent learners.
+    \item \textbf{Zoo Network:} Provides decentralized storage for content (IPFS), on-chain consent management, and coordination between edge nodes.
+\end{itemize}
+
+\subsection{Data Governance}
+
+Learner data governance follows the Zoo Network's consent framework:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{On-Chain Consent:} Each learner registers a consent profile specifying data sharing preferences, stored as an immutable on-chain record.
+    \item \textbf{Differential Privacy:} All aggregate analytics apply $(\epsilon, \delta)$-differential privacy with $\epsilon = 1.0$, $\delta = 10^{-5}$.
+    \item \textbf{Data Minimization:} The learner model operates on feature vectors derived from interaction patterns; raw content of free-response answers is discarded after assessment scoring.
+    \item \textbf{Right to Deletion:} Learners can trigger cryptographic erasure of their interaction history while preserving aggregate model parameters.
+\end{enumerate}
+
+\subsection{Incentive Mechanisms}
+
+ZooEd integrates with the Zoo token economy to incentivize ecosystem participation:
+
+\begin{table}[H]
+\centering
+\caption{Token incentive structure for ZooEd participants.}
+\label{tab:incentives}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Role} & \textbf{Reward} & \textbf{Mechanism} \\
+\midrule
+Content Author & 50--500 ZOO & Per accepted learning module, scaled by language scarcity and domain demand \\
+Translator & 10--100 ZOO & Per verified translation, with quality multiplier from back-translation score \\
+Peer Instructor & 5--50 ZOO & Per tutoring session, scaled by learner improvement \\
+Learner & 1--10 ZOO & Per mastered objective, claimable after demonstrated retention at 30 days \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ============================================================
+% 7. Experimental Evaluation
+% ============================================================

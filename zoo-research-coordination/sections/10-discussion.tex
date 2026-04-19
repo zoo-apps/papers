@@ -1,0 +1,24 @@
+\section{Discussion}
+
+\label{sec:discussion}
+
+\subsection{Implications for DeSci}
+
+ZooCoord demonstrates that decentralized infrastructure can address concrete scientific workflow challenges, not merely provide alternative funding or credentialing mechanisms.
+The key insight is that experiment management benefits from decentralization because trust requirements are fundamentally distributed: no single party should be trusted to verify its own work, yet centralized verification services introduce new trust dependencies.
+
+\subsection{Limitations}
+
+Several limitations qualify our findings.
+First, the deployment population consists of researchers already engaged with the Zoo Network, introducing selection bias toward technology-comfortable participants.
+Second, the 9-month deployment period is insufficient to assess long-term economic sustainability of the verification market.
+Third, wet-lab experiments (e.g., conservation genetics) have inherently lower reproducibility than purely computational work, and our protocol can only verify the computational components.
+
+\subsection{Scalability}
+
+The current implementation processes approximately 100 experiment commitments per day with 14 active computation nodes.
+Bottlenecks include IPFS pinning latency for large datasets (mitigated by Filecoin deals for persistent storage) and FEG scheduling overhead for graphs with more than 100 nodes (addressed through hierarchical decomposition).
+
+% ============================================================
+% 11. Conclusion
+% ============================================================

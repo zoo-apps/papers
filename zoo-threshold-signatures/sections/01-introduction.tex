@@ -1,0 +1,26 @@
+\section{Introduction}
+
+\label{sec:introduction}
+
+Threshold signature schemes distribute signing authority across $n$ parties such that any $t$ can jointly produce a valid signature while fewer than $t$ learn nothing about the secret key. Existing blockchain deployments rely on \emph{external} MPC clusters---separate StatefulSets, dedicated key management services, or third-party custodians (Fireblocks, Lit Protocol)---to perform keygen and signing. This introduces three risks: (1)~\textbf{operational risk}---MPC nodes must be deployed and rotated independently, with no consensus penalties for downtime; (2)~\textbf{trust asymmetry}---the MPC quorum may differ from the validator quorum; (3)~\textbf{latency overhead}---cross-service RPC adds round-trips to every signing request.
+
+\TChain{} eliminates all three by making validators the MPC parties. Consensus secures the MPC transcript: if a validator equivocates during a signing round, the same slashing conditions that penalize double-signing apply. The result is a chain-native threshold signature service with no additional trust assumptions beyond the consensus threshold.
+
+\subsection{Contributions}
+
+This paper makes the following contributions:
+
+\begin{itemize}
+\item A complete specification of \ThresholdVM{}, a virtual machine that executes \FROST{}, \CGGMP{}, and \LSS{} protocols as first-class chain operations.
+\item An RPC API for threshold key management: \texttt{threshold\_keygen}, \texttt{threshold\_sign}, \texttt{threshold\_reshare}, \texttt{threshold\_status}.
+\item Security proofs showing that chain-native MPC inherits consensus-level safety: an adversary must corrupt $\geq t$ validators \emph{and} break consensus to forge a signature.
+\item The \LSS{} Composition Theorem, demonstrating that FROST, CMP, TFHE, Corona, and BLS can share a single $t$-of-$n$ access structure over the same secret shares.
+\item A migration guide from external MPC StatefulSets to \TChain{}, including an HTTP compatibility layer for bridge contracts.
+\item Benchmarks of GPU-accelerated FHE operations within the threshold decryption pipeline.
+\end{itemize}
+
+\subsection{Relation to Other Zoo Papers}
+
+\TChain{} integrates with several components described in companion papers: the network topology and consensus layer \cite{zoo-network-architecture}, the staking and economic model \cite{zoo-tokenomics}, homomorphic encryption infrastructure \cite{zoo-fhe}, decentralized identity and DID management \cite{zoo-identity-chain}, and hierarchical key derivation \cite{zoo-key-management}. For the underlying Lux-layer threshold primitives, see \cite{lux-threshold-sigs} and \cite{lux-mchain-mpc}.
+
+%% --------------------------------------------------------------------------

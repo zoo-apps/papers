@@ -1,0 +1,32 @@
+\section{DAO Governance Parameters}
+
+
+Complete list of governable parameters:
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lcp{5cm}}
+\toprule
+\textbf{Parameter} & \textbf{Current Value} & \textbf{Description} \\
+\midrule
+\texttt{inference\_fee} & 0.005 $\KEEPER$ & Base fee per inference request \\
+\texttt{experience\_commission} & 10\% & DAO cut of experience marketplace \\
+\texttt{min\_validator\_stake} & 100M $\KEEPER$ & Minimum stake to become validator \\
+\texttt{slashing\_double\_sign} & 50\% & Stake slashed for double-signing \\
+\texttt{slashing\_downtime} & 5\% & Stake slashed for >24h downtime \\
+\texttt{staking\_reward\_rate} & Variable & Percentage of fees to stakers \\
+\texttt{treasury\_spend\_threshold} & 1B $\KEEPER$ & Requires DAO vote if exceeded \\
+\texttt{proposal\_deposit} & 10M $\KEEPER$ & Deposit to submit proposal \\
+\texttt{proposal\_voting\_period} & 7 days & Standard voting duration \\
+\texttt{quorum\_standard} & 5\% & Minimum participation for standard proposals \\
+\texttt{quorum\_major} & 10\% & Minimum participation for major changes \\
+\texttt{threshold\_standard} & 51\% & Majority for standard proposals \\
+\texttt{threshold\_major} & 66\% & Supermajority for major changes \\
+\texttt{threshold\_constitution} & 75\% & Amendment threshold for constitution \\
+\bottomrule
+\end{tabular}
+\caption{DAO governable parameters}
+\label{tab:dao_params}
+\end{table}
+

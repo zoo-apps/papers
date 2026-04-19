@@ -1,0 +1,48 @@
+\section{Background}
+
+
+\subsection{Fully Homomorphic Encryption}
+
+\begin{definition}[Fully Homomorphic Encryption]
+An \FHE{} scheme $\mathcal{E} = (\text{KeyGen}, \text{Enc}, \text{Dec}, \text{Eval})$ satisfies:
+\begin{enumerate}
+    \item \textbf{Correctness}: $\text{Dec}(sk, \text{Eval}(pk, f, \text{Enc}(pk, x))) = f(x)$
+    \item \textbf{Compactness}: $|\text{Eval}(pk, f, c)| = \text{poly}(\lambda)$ independent of $|f|$
+    \item \textbf{Semantic Security}: $\text{Enc}(pk, x_0) \approx_c \text{Enc}(pk, x_1)$
+\end{enumerate}
+\end{definition}
+
+\subsection{TFHE}
+
+\TFHE{}~\cite{chillotti2020tfhe} operates on the torus $\mathbb{T} = \mathbb{R}/\mathbb{Z}$ and supports fast bootstrapping for boolean and small-integer operations:
+
+\begin{equation}
+\text{Bootstrap}(\text{ct}) : O(n \cdot \log n) \quad \text{in } \approx 10\text{ms}
+\end{equation}
+
+\TFHE{} is ideal for comparison operations, relu activations, and control flow in neural networks.
+
+\subsection{CKKS}
+
+\CKKS{}~\cite{cheon2017ckks} supports approximate fixed-point arithmetic on packed vectors:
+
+\begin{equation}
+\text{Enc}(\mathbf{x}) \otimes \text{Enc}(\mathbf{y}) = \text{Enc}(\mathbf{x} \cdot \mathbf{y} + e), \quad |e| < \epsilon
+\end{equation}
+
+where $\mathbf{x}, \mathbf{y} \in \mathbb{R}^{N/2}$ are packed into $N$-slot ciphertexts. \CKKS{} is ideal for matrix multiplications and convolutions in neural networks.
+
+\subsection{Lux FHE Infrastructure}
+
+The Lux Network provides a native \FHE{} precompile at address \texttt{0x0700}~\cite{lux-tfhe,lux-fhevm} supporting:
+
+\begin{itemize}
+    \item \texttt{fheAdd}, \texttt{fheSub}, \texttt{fheMul}: Arithmetic on encrypted integers
+    \item \texttt{fheLt}, \texttt{fheGt}, \texttt{fheEq}: Comparison operations
+    \item \texttt{fheMax}, \texttt{fheMin}: Conditional selection
+    \item \texttt{fheRand}: Encrypted random number generation
+    \item \texttt{decrypt}: Threshold decryption request
+\end{itemize}
+
+Zoo Network inherits this precompile identically, enabling \FHE{} operations within Zoo EVM smart contracts.
+

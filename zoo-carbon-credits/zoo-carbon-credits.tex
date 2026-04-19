@@ -1,0 +1,111 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{natbib}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage{abstract}
+\usepackage{multirow}
+
+% ── Page Style ────────────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Antje Worring, Zach Kelling}
+\fancyhead[R]{\small Verifiable Carbon Credits}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Metadata ──────────────────────────────────────────────────────────────────
+\title{%
+  \textbf{Verifiable Carbon Credits: MRV Infrastructure\\
+  for Nature-Based Solutions}\\[0.5em]
+  \large Antje Worring, Zach Kelling Paper ZOO-MRV-2026
+}
+
+\author{
+  Antje Worring, Zach Kelling\\
+  \texttt{research@zoo.ngo}\\[0.5em]
+  \small With contributions from the Zoo Open Science Network
+}
+
+\date{June 2025}
+
+% ── Macros ────────────────────────────────────────────────────────────────────
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Loss}{\mathcal{L}}
+\newcommand{\tCO}{tCO$_2$e}
+
+\begin{document}
+
+\zoocoverpage
+
+% ── Abstract ──────────────────────────────────────────────────────────────────
+\begin{abstract}
+\noindent
+Nature-based carbon credits suffer a crisis of credibility. Recent
+analyses reveal that 70--90\% of certified forest carbon offsets may
+represent phantom emissions reductions, undermining market integrity and
+climate goals. The root cause is inadequate Measurement, Reporting, and
+Verification (MRV) infrastructure that relies on infrequent manual
+audits, self-reported baselines, and opaque methodologies. We present
+\textbf{ZooMRV}, an open-source digital MRV platform that combines
+multi-spectral satellite imagery, LiDAR-derived biomass estimation,
+eddy covariance flux networks, and on-chain attestation to produce
+continuously verified carbon credit certificates. ZooMRV processes
+Sentinel-2, Landsat-9, and GEDI LiDAR data through a deep learning
+pipeline (CarbonNet) that estimates above-ground biomass with a root
+mean square error of 18.4~Mg/ha---a 34\% improvement over the current
+operational standard. Credits are issued as non-fungible tokens on the
+Zoo Network with immutable provenance chains linking each credit to
+specific monitoring data, spatial boundaries, and verification reports.
+We demonstrate the system on 47 nature-based solution (NBS) projects
+across tropical forests, mangroves, peatlands, and grasslands, totaling
+2.3 million hectares. ZooMRV detects 23\% more reversals (biomass loss
+events) than traditional audit cycles and reduces the mean time between
+event and detection from 14 months to 12 days. The platform is governed
+through Zoo DAO processes and released under open licenses.
+
+\medskip
+\noindent\textbf{Keywords:} carbon credits, MRV, satellite monitoring,
+biomass estimation, nature-based solutions, blockchain verification,
+remote sensing
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════════════════════════
+
+\input{sections/01-introduction}
+\input{sections/02-background}
+\input{sections/03-carbonnet-biomass-estimation-model}
+\input{sections/04-dynamic-baselining}
+\input{sections/05-continuous-monitoring-pipeline}
+\input{sections/06-on-chain-credit-registry}
+\input{sections/07-evaluation-on-nbs-projects}
+\input{sections/08-discussion}
+\input{sections/09-implementation}
+\input{sections/10-future-work}
+\input{sections/99-conclusion}
+
+\end{document}

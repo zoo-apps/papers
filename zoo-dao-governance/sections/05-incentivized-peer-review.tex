@@ -1,0 +1,43 @@
+\section{Incentivized Peer Review}
+
+\label{sec:review}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Review Assignment}
+
+Reviewers are assigned based on domain expertise (ZooRep in relevant
+groups), conflict of interest checks (no co-authorship within 3 years),
+workload balancing (maximum 3 concurrent reviews), and geographic
+diversity (at least one reviewer from a different continent).
+
+\subsection{Reviewer Staking}
+
+Reviewers stake \ZOO{} tokens to signal commitment:
+\begin{equation}
+  \text{Stake}_r = \min(s_{\text{base}} + s_{\text{rep}} \cdot
+  \text{ZooRep}_r,\; s_{\max})
+\end{equation}
+where $s_{\text{base}} = 50$ \ZOO{}, $s_{\text{rep}} = 0.1$ \ZOO{} per
+ZooRep, and $s_{\max} = 500$ \ZOO{}.
+
+\subsection{Review Quality Assessment}
+
+Quality is assessed through author feedback (helpfulness rating),
+inter-reviewer consistency, and post-publication calibration (retracted
+positives or high-impact negatives adjust scores).
+
+\subsection{Rewards and Penalties}
+
+\begin{equation}
+  \text{Reward}_r = \begin{cases}
+    \text{Stake}_r \times (1 + 0.15 \times Q_r) & \text{if } Q_r \geq 0.6 \\
+    \text{Stake}_r \times (0.5 + 0.5 \times Q_r) & \text{if } 0.3 \leq Q_r < 0.6 \\
+    \text{Stake}_r \times 0.3 & \text{if } Q_r < 0.3
+  \end{cases}
+\end{equation}
+
+where $Q_r \in [0,1]$ is composite quality. High-quality reviews earn
+up to 15\% return; low-quality reviews lose up to 70\% of stake.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

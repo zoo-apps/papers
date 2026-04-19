@@ -1,0 +1,35 @@
+\section{Movement Pattern Analysis Algorithms}
+
+
+\subsection{Hidden Markov Model for Behavioral States}
+
+We implement a privacy-preserving hidden Markov model (HMM) that classifies movement into behavioral states (foraging, resting, transiting, migrating) using cloaked trajectories:
+
+\begin{equation}
+P(S_t = j | S_{t-1} = i) = a_{ij}, \qquad P(\tilde{\mathbf{x}}_t | S_t = j) = \mathcal{N}(\tilde{\mathbf{x}}_t; \boldsymbol{\mu}_j(t), \boldsymbol{\Sigma}_j + \sigma_{\text{cloak}}^2 \mathbf{I})
+\end{equation}
+
+The emission distribution explicitly models the cloaking noise $\sigma_{\text{cloak}}^2$ as an additive component of the observation variance, allowing the Baum-Welch algorithm to correctly estimate behavioral state parameters from cloaked data.
+
+\begin{proposition}[Behavioral State Recovery]
+Under habitat-aware cloaking with noise scale $\sigma$ and true behavioral state velocities $v_1 < v_2 < \ldots < v_K$, the HMM correctly identifies behavioral states with probability $\geq 1 - \epsilon$ when:
+\begin{equation}
+\min_{i \neq j} |v_i - v_j| \geq 2\sigma\sqrt{2(1-\rho)} / \Delta t + \Phi^{-1}(1-\epsilon) \cdot \sigma_v
+\end{equation}
+where $\Delta t$ is the fix interval and $\sigma_v$ is the within-state velocity standard deviation.
+\end{proposition}
+
+\subsection{Resource Selection Functions}
+
+Privacy-preserving resource selection functions (RSF) compare used locations with available locations within the cloaked home range:
+
+\begin{equation}
+w(\mathbf{x}) = \exp\left(\sum_{j=1}^{p} \beta_j z_j(\mathbf{x})\right)
+\end{equation}
+
+where $z_j(\mathbf{x})$ are habitat covariates at location $\mathbf{x}$. Since cloaking shifts locations to adjacent habitat cells, RSF coefficients estimated from cloaked data exhibit attenuation bias. We correct for this using a measurement error model:
+
+\begin{equation}
+\hat{\beta}_{\text{corrected}} = (\mathbf{Z}^T \mathbf{Z} - n\boldsymbol{\Sigma}_{\text{cloak}})^{-1} \mathbf{Z}^T \mathbf{y}
+\end{equation}
+

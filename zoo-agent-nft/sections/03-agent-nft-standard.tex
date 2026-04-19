@@ -1,0 +1,102 @@
+\section{Agent NFT Standard}
+
+\label{sec:standard}
+
+\subsection{Interface Definition}
+
+\begin{lstlisting}[language=Solidity,caption=IAgentNFT Interface]
+interface IAgentNFT is IERC721 {
+    // Agent wallet
+    function agentWallet(uint256 tokenId)
+        external view returns (address);
+
+    // Agent capabilities
+    function capabilities(uint256 tokenId)
+        external view returns (bytes32);
+
+    // Autonomy bounds
+    function autonomyParams(uint256 tokenId)
+        external view returns (AutonomyParams memory);
+
+    // Agent actions
+    function executeAction(uint256 tokenId,
+        bytes calldata action) external;
+
+    // Yield claims
+    function claimYield(uint256 tokenId)
+        external returns (uint256);
+
+    // Events
+    event ActionExecuted(uint256 indexed tokenId,
+        bytes32 actionHash, bool success);
+    event YieldClaimed(uint256 indexed tokenId,
+        uint256 amount);
+    event AutonomyUpdated(uint256 indexed tokenId,
+        AutonomyParams params);
+}
+\end{lstlisting}
+
+\subsection{Agent Structure}
+
+Each Agent NFT encapsulates:
+
+\begin{lstlisting}[language=Solidity,caption=Agent Data Structure]
+struct Agent {
+    // Identity
+    uint256 tokenId;
+    bytes32 modelHash;       // Hash of AI model
+    string metadataURI;      // IPFS link to config
+
+    // Wallet
+    address wallet;          // Agent's wallet address
+    uint256 nonce;           // Transaction nonce
+
+    // Autonomy
+    AutonomyParams autonomy;
+
+    // Economics
+    uint256 totalYield;      // Accumulated yield
+    uint256 stakedCompute;   // Compute contribution
+
+    // Reputation
+    uint256 reputation;      // Quality score
+    uint256 tasksCompleted;  // Task count
+}
+
+struct AutonomyParams {
+    uint256 maxTransactionValue;  // Max single tx
+    uint256 dailySpendLimit;      // 24h limit
+    uint256 allowedActions;       // Bitmap of actions
+    address[] whitelist;          // Approved contracts
+    uint256 cooldownPeriod;       // Min time between tx
+}
+\end{lstlisting}
+
+\subsection{Capability System}
+
+Agent capabilities are encoded as a 256-bit bitmap:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Capability} & \textbf{Bit} & \textbf{Description} \\
+\midrule
+TRADE & 0 & Execute DEX swaps \\
+LEND & 1 & Provide liquidity \\
+BORROW & 2 & Take collateralized loans \\
+STAKE & 3 & Stake tokens \\
+VOTE & 4 & Participate in governance \\
+BRIDGE & 5 & Cross-chain transfers \\
+MINT & 6 & Create new tokens \\
+BURN & 7 & Destroy tokens \\
+COMPUTE & 8 & Contribute AI compute \\
+DELEGATE & 9 & Delegate to sub-agents \\
+\bottomrule
+\end{tabular}
+\caption{Agent capability bitmap.}
+\label{tab:capabilities}
+\end{table}
+
+Capabilities are set at minting and can only be \emph{reduced} by the owner (never expanded without upgrade).
+

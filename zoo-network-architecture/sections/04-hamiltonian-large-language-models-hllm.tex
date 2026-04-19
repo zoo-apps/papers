@@ -1,0 +1,95 @@
+\section{Hamiltonian Large Language Models (HLLM)}
+
+
+\subsection{Core Concept}
+
+Traditional fine-tuning modifies model parameters $\theta$ via gradient descent:
+\[
+\theta \leftarrow \theta - \alpha \nabla_\theta \mathcal{L}(\theta, \mathcal{D})
+\]
+This is expensive (requires backpropagation through billions of parameters) and opaque (weight changes are inscrutable).
+
+\textbf{HLLM} \cite{zoo2025hllm} proposes an alternative: keep $\theta$ frozen and optimize the \textit{context} $\Psi$ instead. The system obeys a \textbf{Hamiltonian invariant}:
+\[
+\Psi \cdot \Theta = \kappa
+\]
+where:
+\begin{itemize}
+\item $\Psi$ = Policy mass (semantic context / experiences)
+\item $\Theta$ = Inference cost (model entropy / uncertainty)
+\item $\kappa$ = Conserved constant (system equilibrium)
+\end{itemize}
+
+As context expands ($\Psi \uparrow$), model uncertainty decreases ($\Theta \downarrow$) while preserving total system cost $\kappa$.
+
+\subsection{Training-Free GRPO}
+
+\textbf{Group Relative Policy Optimization (GRPO)} \cite{shao2024deepseekmath} computes advantages relative to group means instead of baselines:
+\[
+A_i = \frac{R_i - \mu_G}{\sigma_G}
+\]
+where $R_i$ is the reward for output $i$, $\mu_G$ is the group mean, and $\sigma_G$ is group standard deviation.
+
+\textbf{Training-Free GRPO} \cite{tencent2025grpo} replaces numerical advantages with \textit{semantic advantages}—natural language insights extracted via LLM introspection. The algorithm proceeds in three stages:
+
+\subsubsection{Stage 1: Trajectory Summarization}
+
+For each generated output $o_i$, an LLM summarizes:
+\begin{itemize}
+\item What actions were taken
+\item Which experiences were used
+\item Where errors or detours occurred
+\end{itemize}
+
+\begin{algorithm}[H]
+\caption{Trajectory Summarization}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} Trajectory $\tau_i$, correctness label $c_i$, ground truth $y^*$
+\STATE \textbf{Output:} Natural language summary $s_i$
+\STATE $s_i \leftarrow \text{LLM.summarize}(\tau_i, c_i, y^*)$
+\RETURN $s_i$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Stage 2: Group Advantage Extraction}
+
+Given $G$ trajectory summaries for a query, the LLM identifies patterns distinguishing successes from failures. It outputs up to 3 operations per group: \texttt{add}, \texttt{modify}, or \texttt{delete} experiences.
+
+\begin{algorithm}[H]
+\caption{Group Advantage Extraction}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} Summaries $\{s_1, \ldots, s_G\}$, current experiences $E$, ground truth $y^*$
+\STATE \textbf{Output:} Experience operations $\mathcal{O}_G$
+\STATE $\mathcal{O}_G \leftarrow \text{LLM.extract\_advantages}(\{s_i\}, E, y^*)$
+\STATE Filter to max 3 operations: $|\mathcal{O}_G| \leq 3$
+\RETURN $\mathcal{O}_G$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Stage 3: Batch Consolidation}
+
+All group operations from a batch are consolidated to avoid duplication and ensure experiences are $\leq 32$ words.
+
+\begin{algorithm}[H]
+\caption{Batch Consolidation}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} All group operations $\{\mathcal{O}_1, \ldots, \mathcal{O}_B\}$, current experiences $E$
+\STATE \textbf{Output:} Final consolidated operations $\mathcal{O}_{\text{final}}$
+\STATE $\mathcal{O}_{\text{final}} \leftarrow \text{LLM.consolidate}(\{\mathcal{O}_j\}, E)$
+\STATE Apply operations: $E \leftarrow E \oplus \mathcal{O}_{\text{final}}$
+\RETURN Updated experience library $E$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Performance}
+
+On the AIME mathematical reasoning benchmark \cite{hendrycks2021math}, Training-Free GRPO achieves:
+\begin{itemize}
+\item \textbf{AIME24}: 82.7\% (vs. 80.0\% vanilla GRPO, +2.7\%)
+\item \textbf{AIME25}: 73.3\% (vs. 67.9\% vanilla GRPO, +5.4\%)
+\item \textbf{Training Cost}: \$18 (vs. \$10,000+ for fine-tuning)
+\item \textbf{Training Samples}: 100 (vs. 10,000+ for fine-tuning)
+\end{itemize}
+
+Crucially, base model weights remain \textit{frozen}—all improvement comes from context optimization.
+

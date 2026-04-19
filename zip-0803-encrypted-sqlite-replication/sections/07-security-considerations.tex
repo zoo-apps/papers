@@ -1,0 +1,28 @@
+\section{Security Considerations}
+
+
+\begin{enumerate}
+\item \textbf{S3 credentials}: Stored in Kubernetes secrets,
+  never in ConfigMaps or container images.  Accessed via
+  \texttt{LITESTREAM\_ACCESS\_KEY\_ID} and
+  \texttt{LITESTREAM\_SECRET\_ACCESS\_KEY} environment variables.
+
+\item \textbf{At-rest encryption}: WAL segments encrypted with
+  \texttt{hanzoai/age} (X25519 + ChaCha20-Poly1305).  Even if
+  the S3 bucket is compromised, data is unreadable without the
+  age secret key.
+
+\item \textbf{Per-org isolation}: Base already encrypts each
+  org's SQLite shard with a unique DEK derived via HKDF.
+  Replicate streams the encrypted bytes --- it never sees
+  plaintext org data.
+
+\item \textbf{Network policy}: The replicate sidecar only needs
+  egress to the S3 service (\texttt{s3.zoo.svc.cluster.local:9000}).
+  A NetworkPolicy can restrict this.
+
+\item \textbf{Key rotation}: Age key rotation requires a
+  re-snapshot.  The apply script can trigger this via
+  \texttt{replicate snapshots create}.
+\end{enumerate}
+

@@ -1,0 +1,63 @@
+\section{Heterogeneous Sensor Adapter}
+
+\label{sec:hsa}
+
+\subsection{Architecture}
+
+The HSA architecture decomposes the model into modality-specific encoders and a shared classification head:
+
+\begin{equation}
+    f_\theta(\mathbf{x}) = h_\phi(g_{\psi_m}(\mathbf{x}))
+\end{equation}
+
+\noindent where $g_{\psi_m}$ is the modality-specific encoder for modality $m$ (visual, acoustic, trajectory, genomic) with parameters $\psi_m$, and $h_\phi$ is the shared species classification head with parameters $\phi$.
+
+Each encoder maps its input to a common embedding space $\mathbb{R}^d$:
+
+\begin{equation}
+    g_{\psi_m}: \mathcal{X}_m \rightarrow \mathbb{R}^d \quad \forall m \in \mathcal{M}
+\end{equation}
+
+\begin{table}[H]
+\centering
+\caption{Modality-specific encoder architectures.}
+\label{tab:encoders}
+\begin{tabularx}{\textwidth}{@{}lllX@{}}
+\toprule
+\textbf{Modality} & \textbf{Input} & \textbf{Architecture} & \textbf{Output} \\
+\midrule
+Visual & RGB/IR images & EfficientNet-B0 & 256-d embedding \\
+Acoustic & Mel spectrograms & ResNet-18 & 256-d embedding \\
+Trajectory & GPS sequences & Temporal Transformer & 256-d embedding \\
+Genomic & eDNA barcodes & 1D-CNN + Attention & 256-d embedding \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Cross-Modal Alignment}
+
+To ensure that embeddings from different modalities are compatible for the shared classifier, we introduce a cross-modal alignment loss during training.
+For sites with multiple sensor types, we minimize the embedding distance for co-occurring observations:
+
+\begin{equation}
+    \mathcal{L}_{\text{align}} = \sum_{(m_1, m_2) \in \mathcal{M}^2} \sum_{(\mathbf{x}_{m_1}, \mathbf{x}_{m_2}) \in \mathcal{C}_{m_1, m_2}} \|g_{\psi_{m_1}}(\mathbf{x}_{m_1}) - g_{\psi_{m_2}}(\mathbf{x}_{m_2})\|^2
+\end{equation}
+
+\noindent where $\mathcal{C}_{m_1, m_2}$ is the set of co-occurring observations from modalities $m_1$ and $m_2$ (e.g., a camera trap image and an acoustic recording from the same spatiotemporal window containing the same species).
+
+\subsection{Federated Training with HSA}
+
+In the federated training protocol, each site trains its local modality encoders and the shared classifier:
+
+\begin{enumerate}[leftmargin=*]
+    \item The coordinator distributes the shared classifier parameters $\phi$ and the relevant modality encoder parameters $\psi_m$ for each site's sensor types.
+    \item Each site performs local training on its data, updating both encoder and classifier parameters.
+    \item Sites send back only the shared classifier gradient $\nabla_\phi \mathcal{L}_k$ to the coordinator.
+    \item Modality encoder updates $\nabla_{\psi_m} \mathcal{L}_k$ are aggregated only among sites sharing the same modality.
+\end{enumerate}
+
+This split allows the classifier to learn from all sites regardless of sensor type, while encoders specialize through modality-specific aggregation.
+
+% ============================================================
+% 5. Conservation-Calibrated Differential Privacy
+% ============================================================

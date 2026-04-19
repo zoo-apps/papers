@@ -1,0 +1,136 @@
+\section{Mathematical Formalization}
+
+
+\subsection{Token Velocity Model}
+
+Token velocity measures how often $\KEEPER$ changes hands:
+
+\begin{equation}
+V = \frac{T}{M}
+\end{equation}
+
+where:
+\begin{itemize}
+\item $V$: Velocity (transactions per token per year)
+\item $T$: Total transaction volume (annual)
+\item $M$: Money supply (circulating $\KEEPER$)
+\end{itemize}
+
+\textbf{Zoo Velocity Analysis:}
+
+Transaction volume sources:
+\begin{align}
+T_{\text{inference}} &= N_{\text{daily}} \times F_{\text{avg}} \times 365 \\
+T_{\text{experience}} &= U_{\text{exp}} \times P_{\text{exp}} \\
+T_{\text{bridge}} &= B_{\text{volume}} \times 0.001 \\
+T_{\text{total}} &= T_{\text{inference}} + T_{\text{experience}} + T_{\text{bridge}}
+\end{align}
+
+Base case (2025):
+\begin{align}
+T_{\text{inference}} &= 5M \times 0.005 \times 365 = 9.1B \text{ } \KEEPER \\
+T_{\text{experience}} &= 100K \times 500K = 50B \text{ } \KEEPER \\
+T_{\text{bridge}} &= 200B \times 0.001 = 0.2B \text{ } \KEEPER \\
+T_{\text{total}} &= 59.3B \text{ } \KEEPER
+\end{align}
+
+Circulating supply (excluding staked):
+\begin{equation}
+M_{\text{circ}} = 1T \times (1 - s) = 1T \times 0.5 = 500B \text{ } \KEEPER
+\end{equation}
+
+(Assuming 50\% staking rate $s = 0.5$)
+
+Velocity:
+\begin{equation}
+V = \frac{59.3B}{500B} = 0.119 \text{ (11.9\% annual turnover)}
+\end{equation}
+
+\textbf{Comparison to Other Cryptos:}
+\begin{itemize}
+\item Bitcoin: $V \approx 1.1$ (110\% annual turnover - high speculation)
+\item Ethereum: $V \approx 5.2$ (520\% - DeFi usage drives velocity)
+\item Stablecoins: $V \approx 12-20$ (high payment velocity)
+\item Zoo: $V \approx 0.12$ (\textbf{very low - indicates hodling/staking})
+\end{itemize}
+
+Low velocity suggests $\KEEPER$ is \textbf{stored value} (staking, long-term holding) rather than transactional currency. This is ideal for governance token economics.
+
+\subsection{Staking Equilibrium}
+
+Optimal staking rate balances security (more staking) and liquidity (less staking):
+
+\begin{equation}
+s^* = \arg\max_{s} \left[ U_{\text{security}}(s) + U_{\text{liquidity}}(1-s) \right]
+\end{equation}
+
+where:
+\begin{align}
+U_{\text{security}}(s) &= \log(1 + s) \quad \text{(diminishing returns to security)} \\
+U_{\text{liquidity}}(1-s) &= \log(1 + (1-s)) \quad \text{(diminishing returns to liquidity)}
+\end{align}
+
+Taking first-order condition:
+\begin{equation}
+\frac{dU}{ds} = \frac{1}{1+s} - \frac{1}{1+(1-s)} = 0
+\end{equation}
+
+Solving:
+\begin{equation}
+1 + s = 1 + (1 - s) \implies s^* = 0.5 \text{ (50\% optimal staking rate)}
+\end{equation}
+
+Zoo's design targets 40-60\% staking via APY adjustments:
+\begin{itemize}
+\item If $s < 0.4$: APY increases (more rewards per staked token) → incentivizes staking
+\item If $s > 0.6$: APY decreases (rewards spread across more stakers) → incentivizes unstaking
+\end{itemize}
+
+\subsection{Experience Pricing Optimization}
+
+Experience creators optimize price to maximize revenue:
+
+\begin{equation}
+\max_{p} R(p) = p \times D(p)
+\end{equation}
+
+where:
+\begin{itemize}
+\item $R(p)$: Revenue at price $p$
+\item $D(p)$: Demand (usage count) as function of price
+\end{itemize}
+
+Assume demand follows power-law:
+\begin{equation}
+D(p) = D_0 \times p^{-\beta}
+\end{equation}
+
+where $\beta > 1$ is price elasticity.
+
+Revenue:
+\begin{equation}
+R(p) = D_0 \times p^{1-\beta}
+\end{equation}
+
+Optimal price:
+\begin{equation}
+\frac{dR}{dp} = D_0 \times (1-\beta) \times p^{-\beta} = 0
+\end{equation}
+
+Since $(1-\beta) < 0$ for $\beta > 1$, revenue is \textbf{monotonically decreasing} in price. This suggests optimal strategy is \textbf{lowest viable price} to maximize volume.
+
+However, this ignores quality signaling. Higher prices can signal higher quality:
+
+\begin{equation}
+D(p, q) = D_0 \times p^{-\beta} \times q^{\gamma}
+\end{equation}
+
+where $q$ = quality (effectiveness score), $\gamma > 0$.
+
+Optimal price becomes:
+\begin{equation}
+p^* = \frac{\gamma}{\beta - 1} \times \frac{q}{1}
+\end{equation}
+
+Higher quality experiences can sustain higher prices proportional to $q^{\gamma}$.
+

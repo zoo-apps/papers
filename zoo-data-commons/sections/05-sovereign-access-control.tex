@@ -1,0 +1,82 @@
+\section{Sovereign Access Control}
+
+\label{sec:access}
+
+\subsection{Three-Tier Governance Model}
+
+ZDC implements three access governance tiers reflecting the diversity of data sensitivity in biodiversity research:
+
+\begin{table}[H]
+\centering
+\caption{Access governance tiers.}
+\label{tab:access_tiers}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Tier} & \textbf{Default Access} & \textbf{Use Cases} \\
+\midrule
+Open & Unrestricted & Published occurrence records, aggregated statistics, metadata \\
+Permissioned & Request-based & Sensitive location data (endangered species), pre-publication data \\
+Sovereign & Community-governed & Traditional ecological knowledge, indigenous land observations \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Permissioned Access}
+
+Permissioned data uses attribute-based encryption (ABE) where the decryption key is conditioned on verifiable attributes of the requester:
+
+\begin{equation}
+    \text{Enc}(\mathcal{D}, \text{policy}) \rightarrow \text{CT}
+\end{equation}
+
+\begin{equation}
+    \text{Dec}(\text{CT}, \text{key}_{\text{attributes}}) \rightarrow \begin{cases} \mathcal{D} & \text{if attributes satisfy policy} \\ \perp & \text{otherwise} \end{cases}
+\end{equation}
+
+Policies are expressed as Boolean formulas over attributes, such as:
+
+\begin{verbatim}
+    (role:researcher AND affiliation:university)
+    OR (role:government AND jurisdiction:national)
+    OR (approved-by:data-owner)
+\end{verbatim}
+
+\subsection{Sovereign Data Governance}
+
+The sovereign tier implements the CARE Principles for Indigenous Data Governance \citep{carroll2020care}.
+Each sovereign dataset is governed by a \emph{Data Governance Council} (DGC), a multisignature authority comprising community-designated representatives:
+
+\begin{equation}
+    \text{Access}(\text{ZDO}_{\text{sovereign}}) \leftarrow \text{Vote}_{\text{DGC}}(\text{request}) \geq \text{threshold}
+\end{equation}
+
+The DGC can:
+\begin{itemize}[leftmargin=*]
+    \item Set access policies with cultural context annotations (e.g., seasonal restrictions on sacred site data).
+    \item Require benefit-sharing agreements as a condition of access.
+    \item Attach Traditional Knowledge (TK) labels specifying culturally appropriate use.
+    \item Revoke access retroactively if terms are violated.
+    \item Delegate decision-making to subcommittees for specific data categories.
+\end{itemize}
+
+\subsection{Spatial Obfuscation}
+
+For sensitive species (e.g., those vulnerable to poaching), ZDC supports spatial obfuscation that degrades location precision while preserving analytical utility:
+
+\begin{equation}
+    (x', y') = \text{Obfuscate}(x, y, r) = (x + \eta_x, y + \eta_y) \quad \text{where } \|\boldsymbol{\eta}\| \leq r
+\end{equation}
+
+The obfuscation radius $r$ is species-specific, determined by threat level (IUCN Red List status) and local poaching risk assessment.
+We implement a Geo-Indistinguishability mechanism based on the Laplace distribution:
+
+\begin{equation}
+    \Pr[(x', y') \mid (x, y)] \propto e^{-\epsilon \cdot d((x', y'), (x, y))}
+\end{equation}
+
+\noindent where $\epsilon$ controls the privacy-utility tradeoff.
+Researchers needing precise locations can request permissioned access through the standard mechanism.
+
+% ============================================================
+% 6. Curation Market
+% ============================================================

@@ -1,0 +1,25 @@
+\section{GPU NTT Acceleration}
+
+
+All lattice primitives use polynomial multiplication in $R_q = \mathbb{Z}_q[X]/(X^n + 1)$ via NTT:
+\begin{equation}
+\mathbf{a} \cdot \mathbf{b} \bmod (X^n + 1) = \text{NTT}^{-1}(\text{NTT}(\mathbf{a}) \circ \text{NTT}(\mathbf{b}))
+\end{equation}
+
+The NTT's $\log_2(n)$ butterfly stages are fully parallelizable. For $n = 1024$: 10 stages, $n/2 = 512$ independent butterflies per stage, fitting in one GPU block (512 threads). Twiddle factors stored in constant memory.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Primitive} & \textbf{$n$} & \textbf{CPU ($\mu$s)} & \textbf{GPU ($\mu$s)} & \textbf{Speedup} \\
+\midrule
+\MLKEM{} / \MLDSA{} NTT & 256 & 4.2 & 0.6 & 7.0x \\
+\Corona{} NTT & 1024 & 18.4 & 2.1 & 8.8x \\
+Batch 1000 \Corona{} NTTs & 1024 & 18,400 & 2,100 & 8.8x \\
+\bottomrule
+\end{tabular}
+\caption{NTT performance: Intel Xeon 8380 vs NVIDIA A100}
+\label{tab:ntt-perf}
+\end{table}
+

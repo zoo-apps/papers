@@ -1,0 +1,109 @@
+\section{TaxoNet Architecture}
+
+\label{sec:architecture}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Overview}
+
+TaxoNet consists of four components: (1) a vision transformer feature
+extractor, (2) a taxonomic prototype constructor, (3) a rank-attention
+fusion module, and (4) optional geographic/phenological prior
+integration.
+
+\subsection{Feature Extractor}
+
+We use a Vision Transformer (ViT-L/14) pre-trained through our
+domain-adaptive pipeline (Section~\ref{sec:pretraining}). Input images
+are resized to $518 \times 518$ pixels and split into $14 \times 14$
+patches. The transformer produces a sequence of patch embeddings, from
+which we extract both the \texttt{[CLS]} token embedding $\mathbf{h}
+\in \R^{1024}$ and the full patch embedding matrix $\mathbf{H} \in
+\R^{1369 \times 1024}$.
+
+For fine-grained discrimination, we apply a learned spatial attention
+module that identifies discriminative image regions:
+\begin{equation}
+  \mathbf{a} = \text{softmax}(\mathbf{W}_a \mathbf{H}^\top) \in
+  \R^{M \times 1369}
+\end{equation}
+where $M = 4$ attention heads focus on different discriminative parts.
+The attended feature is:
+\begin{equation}
+  \mathbf{f} = [\mathbf{h} \| \text{vec}(\mathbf{a} \mathbf{H})]
+  \in \R^{1024 + 4 \times 1024} = \R^{5120}
+\end{equation}
+projected to a 512-dimensional embedding via a linear layer.
+
+\subsection{Taxonomic Prototypical Network}
+
+Given the support set $\Support$ for an $N$-way $K$-shot episode, we
+construct prototypes at three taxonomic ranks: family ($r_F$), genus
+($r_G$), and species ($r_S$).
+
+\paragraph{Species prototype.} The standard prototypical network
+prototype:
+\begin{equation}
+  \mathbf{c}_{r_S}^{(s)} = \frac{1}{K} \sum_{(x_i, y_i) \in
+  \Support : y_i = s} \phi(x_i)
+  \label{eq:species_proto}
+\end{equation}
+where $\phi(\cdot)$ is the feature extractor.
+
+\paragraph{Genus prototype.} Aggregating all species in the same genus:
+\begin{equation}
+  \mathbf{c}_{r_G}^{(g)} = \frac{1}{|\{s : t_{r_G}(s) = g\}|}
+  \sum_{s : t_{r_G}(s) = g} \mathbf{c}_{r_S}^{(s)}
+\end{equation}
+
+\paragraph{Family prototype.} Similarly aggregating across genera in
+the same family:
+\begin{equation}
+  \mathbf{c}_{r_F}^{(f)} = \frac{1}{|\{g : t_{r_F}(g) = f\}|}
+  \sum_{g : t_{r_F}(g) = f} \mathbf{c}_{r_G}^{(g)}
+\end{equation}
+
+\subsection{Rank-Attention Fusion}
+
+For a query embedding $\mathbf{q} = \phi(x)$, we compute distances to
+each prototype at each rank. The rank-attention module learns to weight
+these distances adaptively:
+
+\begin{equation}
+  d_r(x, s) = \|\mathbf{q} - \mathbf{c}_r^{(t_r(s))}\|^2
+\end{equation}
+
+The attention weights depend on the query itself:
+\begin{equation}
+  \boldsymbol{\alpha}(\mathbf{q}) = \text{softmax}(\mathbf{W}_r
+  \mathbf{q}) \in \R^3
+\end{equation}
+
+The fused distance is:
+\begin{equation}
+  d_{\text{fused}}(x, s) = \sum_{r \in \{r_F, r_G, r_S\}}
+  \alpha_r(\mathbf{q}) \cdot d_r(x, s)
+\end{equation}
+
+The predicted class probability is:
+\begin{equation}
+  p(y = s \mid x) = \frac{\exp(-d_{\text{fused}}(x, s))}
+  {\sum_{s'} \exp(-d_{\text{fused}}(x, s'))}
+  \label{eq:prediction}
+\end{equation}
+
+\subsection{Geographic and Phenological Priors}
+
+When location and date metadata are available, we compute a prior
+probability $p_{\text{geo}}(s \mid \text{lat}, \text{lon}, d)$ from
+species range maps and phenological data. This prior is combined with
+the visual prediction via:
+\begin{equation}
+  p_{\text{final}}(s \mid x, \text{lat}, \text{lon}, d) \propto
+  p(y = s \mid x)^{1-\beta} \cdot
+  p_{\text{geo}}(s \mid \text{lat}, \text{lon}, d)^{\beta}
+\end{equation}
+where $\beta = 0.3$ balances visual and geographic evidence. This
+effectively re-ranks predictions by geographic plausibility.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

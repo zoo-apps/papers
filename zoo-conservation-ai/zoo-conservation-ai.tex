@@ -1,0 +1,81 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+\usepackage{multirow}
+\usepackage{enumitem}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\ConservAI}{\textsc{ConservAI}}
+\newcommand{\mAP}{\text{mAP}}
+\newcommand{\IoU}{\text{IoU}}
+\newcommand{\FPR}{\text{FPR}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title
+\title{\textbf{Conservation AI: Deep Learning for Wildlife Population\\Monitoring and Habitat Assessment}\\
+\large Antje Worring, Zach Kelling Paper ZOO-2026-001}
+
+\author{
+Antje Worring, Zach Kelling\\
+\texttt{research@zoo.ngo}\\[6pt]
+\textit{Antje Worring, Zach Kelling (501c3)}\\
+\url{https://zoo.ngo}
+}
+
+\date{November 2022}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+Camera trap networks produce millions of images annually across global conservation sites, yet the vast majority remain unprocessed due to the labor-intensive nature of manual species identification. We present \ConservAI{}, an integrated deep learning pipeline for automated wildlife population monitoring and habitat quality assessment built on the \Zoo{} decentralized science infrastructure. Our system combines a hierarchical species recognition model achieving 96.3\% top-1 accuracy across 847 species, a density-aware population estimation module with 8.2\% mean absolute error on standardized transects, and a multi-spectral habitat quality index derived from satellite imagery fused with ground-truth camera trap observations. The architecture employs a novel \emph{Temporal Context Attention} mechanism that leverages sequential camera trap activations to disambiguate visually similar species and reject false triggers with 99.1\% precision. We evaluate on the Snapshot Serengeti, Wildlife Insights, and LILA BC benchmark datasets, demonstrating state-of-the-art performance while requiring 3.7$\times$ less compute than comparable systems. All models, training code, and evaluation protocols are released as open-source components of the \Zoo{} Data Commons.
+
+\textbf{Keywords}: camera trap analysis, species recognition, population estimation, habitat assessment, conservation AI, decentralized science
+\end{abstract}
+
+\tableofcontents
+
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-system-architecture}
+\input{sections/04-experimental-evaluation}
+\input{sections/05-decentralized-deployment-on-zoo-infrastr}
+\input{sections/06-case-study-serengeti-ecosystem-assessmen}
+\input{sections/07-limitations-and-future-work}
+\input{sections/08-conclusion}
+\input{sections/99-acknowledgments}
+
+\end{document}

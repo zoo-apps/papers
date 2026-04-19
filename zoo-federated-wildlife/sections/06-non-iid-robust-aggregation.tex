@@ -1,0 +1,63 @@
+\section{Non-IID Robust Aggregation}
+
+\label{sec:aggregation}
+
+\subsection{Ecological Non-IID Characterization}
+
+We characterize the non-IID nature of wildlife monitoring data along three axes:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Species Distribution Skew:} The Jaccard similarity of species lists between sites ranges from 0.02 (Amazon vs.\ Serengeti) to 0.78 (adjacent sites in the same biome).
+    \item \textbf{Observation Density Skew:} Camera trap densities range from 0.1 to 25 cameras per km$^2$, creating 250x variation in data volume per unit area.
+    \item \textbf{Temporal Skew:} Monitoring periods range from 2 months to 8 years, with seasonal deployment patterns creating systematic temporal gaps.
+\end{itemize}
+
+\subsection{NIRA Algorithm}
+
+Standard FedAvg computes a weighted average of client updates:
+
+\begin{equation}
+    \theta^{(t+1)} = \sum_{k=1}^{K} \frac{N_k}{N} \theta_k^{(t)}
+\end{equation}
+
+This performs poorly under extreme non-IID conditions because updates from sites with very different species assemblages may conflict, leading to catastrophic interference.
+
+NIRA addresses this through hierarchical clustering-based aggregation:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Ecological Clustering:} Sites are grouped into ecological clusters $\{C_1, \ldots, C_M\}$ based on species composition similarity, computed from the public metadata (species lists) without accessing raw data.
+    \item \textbf{Intra-Cluster Aggregation:} Within each cluster, updates are averaged using standard FedAvg:
+    \begin{equation}
+        \theta_{C_m}^{(t+1)} = \sum_{k \in C_m} \frac{N_k}{\sum_{j \in C_m} N_j} \theta_k^{(t)}
+    \end{equation}
+    \item \textbf{Inter-Cluster Aggregation:} Cluster models are merged selectively, sharing only the components of the model that generalize across clusters (shared feature extractor) while maintaining cluster-specific classification heads:
+    \begin{equation}
+        \phi^{(t+1)} = \sum_{m=1}^{M} \frac{|C_m|}{K} \phi_{C_m}^{(t+1)} \qquad \psi_{C_m}^{(t+1)} = \text{local}
+    \end{equation}
+\end{enumerate}
+
+\subsection{Dynamic Cluster Assignment}
+
+Clusters are re-computed every $R$ rounds using a similarity metric based on gradient directions rather than raw data:
+
+\begin{equation}
+    \text{sim}(k, j) = \frac{\nabla_\phi \mathcal{L}_k \cdot \nabla_\phi \mathcal{L}_j}{\|\nabla_\phi \mathcal{L}_k\| \cdot \|\nabla_\phi \mathcal{L}_j\|}
+\end{equation}
+
+This allows clusters to adapt as models improve: sites that initially appear dissimilar may develop similar gradient directions as the shared representation matures.
+
+\subsection{Rare Species Knowledge Transfer}
+
+A key benefit of federation is improving detection of rare species through cross-site knowledge transfer.
+We introduce a \emph{species embedding sharing} mechanism where sites with observations of a rare species contribute a species-specific embedding vector:
+
+\begin{equation}
+    \mathbf{e}_s^{\text{global}} = \frac{\sum_{k: s \in \mathcal{S}_k} N_{k,s} \cdot \mathbf{e}_s^{(k)}}{\sum_{k: s \in \mathcal{S}_k} N_{k,s}}
+\end{equation}
+
+\noindent where $\mathbf{e}_s^{(k)}$ is site $k$'s learned embedding for species $s$ and $N_{k,s}$ is the observation count.
+These embeddings, being summary statistics rather than raw data, can be shared with minimal privacy risk (formally bounded by the DP guarantees on the gradient updates that produced them).
+
+% ============================================================
+% 7. Implementation
+% ============================================================

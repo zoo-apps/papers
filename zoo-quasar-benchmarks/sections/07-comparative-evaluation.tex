@@ -1,0 +1,50 @@
+\section{Comparative Evaluation}
+
+\label{sec:comparison}
+
+\subsection{Single-Layer Alternatives}
+
+We compare Zoo's dual-layer design against three single-layer alternatives:
+
+\begin{enumerate}
+    \item \textbf{Quasar-only}: No compute verification. Faster but no AI quality guarantees.
+    \item \textbf{PoAI-only}: Every block requires compute verification. Slower but thorough.
+    \item \textbf{Combined}: Compute verification integrated into consensus voting. Medium speed.
+\end{enumerate}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Design} & \textbf{Finality} & \textbf{TPS} & \textbf{Useful Compute} & \textbf{Safety} \\
+\midrule
+Quasar-only & 6.3ms & 4,760K & 0\% & \checkmark \\
+PoAI-only & 45ms & 890K & 99.5\% & \checkmark \\
+Combined & 28ms & 1,420K & 95\% & \checkmark \\
+\textbf{Dual-layer} & \textbf{6.7ms} & \textbf{4,712K} & \textbf{98.2\%} & \checkmark \\
+\bottomrule
+\end{tabular}
+\caption{Comparison of consensus designs. Dual-layer achieves near-Quasar performance with near-PoAI compute utilization.}
+\label{tab:designs}
+\end{table}
+
+The dual-layer design achieves 99.3\% of Quasar-only performance while capturing 98.7\% of PoAI-only useful compute. This is strictly better than the combined approach in both dimensions.
+
+\subsection{Comparison with Other AI Chains}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Chain} & \textbf{Consensus} & \textbf{Finality} & \textbf{AI Verify} & \textbf{TPS} \\
+\midrule
+Zoo Network & Quasar + PoAI & 6.7ms & TEE + scoring & 4.7M \\
+Bittensor & Yuma & 12s & Emission-based & 200 \\
+Ritual & DPoS & 2s & Infernet oracles & 1,000 \\
+Gensyn & Truebit-variant & 30s & Re-execution & 500 \\
+\bottomrule
+\end{tabular}
+\caption{Zoo Network vs other AI-focused chains. Zoo achieves orders-of-magnitude higher throughput with faster finality.}
+\label{tab:ai-chains}
+\end{table}
+

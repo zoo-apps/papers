@@ -1,0 +1,80 @@
+\section{Architecture}
+
+
+\subsection{Components}
+
+\begin{description}
+\item[\texttt{hanzoai/replicate}] Litestream-based WAL streaming
+  daemon.  Watches SQLite WAL, ships frames to S3.  Runs as a
+  sidecar container sharing the data volume with the primary
+  service container.
+
+\item[\texttt{hanzoai/age}] X25519 + ChaCha20-Poly1305 file
+  encryption.  Used for encrypting WAL snapshots and segments
+  at rest in S3.  Compatible with \texttt{luxfi/age} (same
+  wire format).
+
+\item[\texttt{hanzoai/s3}] S3-compatible object storage.  Deployed
+  as a ClusterIP service within the Zoo K8s cluster
+  (\texttt{s3.zoo.svc.cluster.local:9000}).  Backed by
+  DigitalOcean Spaces or MinIO depending on environment.
+
+\item[ConfigMap] Shared \texttt{replicate-config} ConfigMap
+  containing the Litestream YAML configuration.  All services
+  reference the same ConfigMap; pod identity (\texttt{POD\_NAME})
+  provides per-replica S3 path namespacing.
+\end{description}
+
+\subsection{Data Flow}
+
+\begin{verbatim}
+Service writes to SQLite
+  -> WAL frames written to shared PVC
+  -> Replicate sidecar reads WAL
+  -> Frames uploaded to S3 (1s interval)
+  -> Optional: age encryption before upload
+
+Pod restart:
+  -> Init container runs replicate restore
+  -> Fetches latest snapshot + WAL segments
+  -> Reconstructs SQLite database
+  -> Primary container starts with warm data
+\end{verbatim}
+
+\subsection{K8s Sidecar Pattern}
+
+Each service pod contains three components:
+
+\begin{enumerate}
+\item \textbf{Init container} (\texttt{replicate-restore}): Runs
+  \texttt{replicate restore -if-db-not-exists -if-replica-exists}
+  to restore from S3 on cold start.  No-op if database already
+  exists on the PVC.
+
+\item \textbf{Primary container}: The service binary (e.g.,
+  \texttt{zoo-bridge}, future Base-powered services).  Reads and
+  writes \texttt{/app/data/data.db}.
+
+\item \textbf{Sidecar container} (\texttt{replicate}): Runs
+  \texttt{replicate replicate} to continuously stream WAL changes
+  to S3.  Shares the \texttt{/app/data} volume with the primary.
+\end{enumerate}
+
+\subsection{S3 Path Layout}
+
+\begin{verbatim}
+s3://zoo-data/
+  {pod-name}/
+    generations/
+      {generation-id}/
+        snapshots/
+          {index}.snapshot.lz4
+        wal/
+          {index}.wal.lz4
+\end{verbatim}
+
+Each pod (e.g., \texttt{zoo-bridge-0}, \texttt{zoo-bridge-1})
+replicates to a distinct prefix.  The \texttt{POD\_NAME}
+environment variable is injected via the Kubernetes downward API
+(\texttt{metadata.name} fieldRef).
+

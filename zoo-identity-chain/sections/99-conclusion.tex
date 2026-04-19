@@ -1,0 +1,45 @@
+\section{Conclusion}
+
+
+\IChain{} demonstrates that decentralized identity can replace centralized IAM without sacrificing usability or security. By making identity a chain-native primitive backed by validator threshold signing, Zoo Network achieves:
+
+\begin{itemize}
+\item \textbf{Decentralized trust}: No single authority controls identity issuance.
+\item \textbf{Privacy by default}: ZK proofs enable selective disclosure as the standard presentation mode.
+\item \textbf{Formal guarantees}: Lean 4 proofs establish authority, vouching, and revocation correctness.
+\item \textbf{Ecosystem integration}: Cross-chain resolution and IAM bridges ensure practical adoption.
+\end{itemize}
+
+Future work includes post-quantum ZK proof systems (integration with \KChain{}'s ML-DSA keys \cite{zoo-key-management}), credential aggregation across multiple issuers, and reputation scoring based on credential usage patterns.
+
+\begin{thebibliography}{99}
+
+\bibitem{w3c-did-core}
+M. Sporny, D. Longley, M. Sabadello, D. Reed, O. Steele, and C. Allen, ``Decentralized Identifiers (DIDs) v1.0,'' W3C Recommendation, 2022.
+
+\bibitem{w3c-vc-data-model}
+M. Sporny, D. Longley, and D. Chadwick, ``Verifiable Credentials Data Model v1.1,'' W3C Recommendation, 2022.
+
+\bibitem{groth2016size}
+J. Groth, ``On the Size of Pairing-Based Non-interactive Arguments,'' in \textit{EUROCRYPT}, 2016.
+
+\bibitem{camenisch2009accumulator}
+J. Camenisch, M. Kohlweiss, and C. Soriente, ``An Accumulator Based on Bilinear Maps and Efficient Revocation for Anonymous Credentials,'' in \textit{PKC}, 2009.
+
+\bibitem{zoo-threshold-signatures}
+Z. Kelling, ``Threshold Signatures on Zoo Network,'' Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-key-management}
+Z. Kelling, ``Post-Quantum Distributed Key Management: ML-KEM and ML-DSA on Zoo Network's K-Chain,'' Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-dao-governance}
+Zoo Labs Foundation, ``Zoo DAO: Decentralized Governance for Open Science Research,'' 2026.
+
+\bibitem{lux-id-did-specification}
+Lux Industries, ``Lux DID Method Specification (did:lux:*),'' 2025.
+
+\bibitem{lux-id-iam}
+Lux Industries, ``Lux Identity and Access Management via OIDC,'' 2025.
+
+\end{thebibliography}
+

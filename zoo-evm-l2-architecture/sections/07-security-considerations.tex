@@ -1,0 +1,21 @@
+\section{Security Considerations}
+
+
+\subsection{Quantum Threat Timeline}
+
+Current estimates place cryptographically relevant quantum computers (CRQC) at 2030--2035. Zoo EVM's hybrid approach provides immediate classical security (ECDSA) with quantum-resistant backup (ML-DSA/SLH-DSA). Key migration procedures are defined: if ECDSA is compromised, ML-DSA attestations enable trustworthy key rotation.
+
+\subsection{Threshold Custody}
+
+Zoo treasury funds are managed via 2-of-3 MPC (CGGMP21 for ECDSA, FROST for EdDSA). This prevents single-point-of-compromise scenarios. Shamir backup enables recovery if one key share is lost.
+
+\subsection{AI Mining Security}
+
+The AI Mining precompile mitigates compute fraud through:
+\begin{itemize}[nosep]
+  \item Deterministic task replay for verification
+  \item Statistical validation for stochastic tasks
+  \item Slashing conditions for fraudulent results
+  \item Rate limiting to prevent compute exhaustion attacks
+\end{itemize}
+

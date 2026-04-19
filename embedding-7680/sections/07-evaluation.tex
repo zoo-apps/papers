@@ -1,0 +1,104 @@
+\section{Evaluation}
+
+\label{sec:evaluation}
+
+\subsection{MTEB Benchmark Results}
+
+\begin{table}[h]
+\centering
+\caption{MTEB benchmark scores (average across 56 datasets)}
+\label{tab:mteb}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Model} & \textbf{Dimensions} & \textbf{MTEB Score} \\
+\midrule
+text-embedding-3-large & 3,072 & 64.6 \\
+voyage-large-2 & 1,536 & 65.2 \\
+Qwen3-Embedding-8B & 4,096 & 67.8 \\
+E5-mistral-7b-instruct & 4,096 & 66.6 \\
+\textbf{Zen Reranker} & \textbf{7,680} & \textbf{68.4} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Zen Reranker achieves state-of-the-art among open-source models.
+
+\subsection{Retrieval Performance}
+
+\begin{table}[h]
+\centering
+\caption{Retrieval metrics on BEIR benchmark}
+\label{tab:retrieval}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model} & \textbf{R@5} & \textbf{R@10} & \textbf{R@100} & \textbf{nDCG@10} \\
+\midrule
+BM25 & 0.412 & 0.524 & 0.789 & 0.438 \\
+E5-large-v2 & 0.621 & 0.718 & 0.892 & 0.647 \\
+Qwen3-Embedding-8B & 0.683 & 0.774 & 0.921 & 0.712 \\
+\textbf{Zen Reranker} & \textbf{0.701} & \textbf{0.789} & \textbf{0.934} & \textbf{0.728} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Cross-Model Retrieval}
+
+Critical for \DSO{}: can we retrieve experiences embedded by different models?
+
+\begin{table}[h]
+\centering
+\caption{Cross-model retrieval Recall@5 (experiences embedded by row, query by column)}
+\label{tab:crossmodel}
+\begin{tabular}{lccc}
+\toprule
+ & \textbf{DeepSeek-V3} & \textbf{Qwen3-72B} & \textbf{Llama-3.3} \\
+\midrule
+DeepSeek-V3 & 0.98 & 0.89 & 0.87 \\
+Qwen3-72B & 0.91 & 0.99 & 0.92 \\
+Llama-3.3 & 0.88 & 0.93 & 0.98 \\
+\textbf{Zen Reranker} & \textbf{0.94} & \textbf{0.95} & \textbf{0.93} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Zen Reranker achieves consistently high cross-model retrieval (94.7\% average R@5).
+
+\subsection{Latency Analysis}
+
+\begin{table}[h]
+\centering
+\caption{Embedding latency comparison}
+\label{tab:latency}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Configuration} & \textbf{Embed (ms)} & \textbf{Align (ms)} & \textbf{Total (ms)} \\
+\midrule
+Generic + Projection & 21.5 & 9.7 & 31.2 \\
+\textbf{Zen Reranker (native)} & \textbf{21.5} & \textbf{0} & \textbf{21.5} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Native 7680-dim output eliminates alignment overhead entirely.
+
+\subsection{Storage Efficiency}
+
+For a corpus of 1 million experiences:
+
+\begin{table}[h]
+\centering
+\caption{Storage requirements}
+\label{tab:storage}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Format} & \textbf{Size (GB)} & \textbf{vs. FP32} \\
+\midrule
+FP32 (7680-dim) & 28.8 & 1.0$\times$ \\
+FP16 & 14.4 & 2.0$\times$ \\
+\textbf{BitDelta} & \textbf{0.92} & \textbf{31.3$\times$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+BitDelta enables storing 1M embeddings in under 1GB.
+

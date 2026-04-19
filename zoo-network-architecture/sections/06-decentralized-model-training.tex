@@ -1,0 +1,45 @@
+\section{Decentralized Model Training}
+
+
+\subsection{Federated Learning}
+
+Zoo supports federated learning \cite{mcmahan2017federated} where data remains on contributor devices:
+
+\begin{enumerate}
+\item \textbf{Initialization}: Coordinator publishes initial model $\theta_0$ and experience library $E_0$ on IPFS.
+\item \textbf{Local Training}: Participants download $\theta_0$ and $E_0$, perform Training-Free GRPO locally with their data, produce experience updates $\Delta E_i$.
+\item \textbf{Aggregation}: Coordinator collects $\{\Delta E_i\}$, runs batch consolidation (Section 4.2.3), produces $E_1$.
+\item \textbf{Distribution}: Updated library $E_1$ published on IPFS; participants download for next round.
+\end{enumerate}
+
+Unlike traditional federated learning (which aggregates gradients), Zoo aggregates \textit{semantic experiences}. This is more efficient (natural language is compact) and interpretable (humans can audit experiences).
+
+\subsection{Privacy-Preserving Techniques}
+
+\subsubsection{Differential Privacy}
+
+Experiences can be sanitized via differential privacy \cite{dwork2014algorithmic}:
+\[
+\Pr[A(E) \in S] \leq e^\epsilon \Pr[A(E') \in S] + \delta
+\]
+Noise is added to experience embeddings or metadata to prevent inference attacks.
+
+\subsubsection{Zero-Knowledge Proofs}
+
+For sensitive experiences, contributors can submit zero-knowledge proofs of correctness without revealing content. For example, a zkSNARK \cite{bitansky2013snarks} proving "this experience improves validation accuracy by $\geq 5\%$" without disclosing the experience text.
+
+\subsubsection{Secure Multi-Party Computation}
+
+Multiple parties jointly compute experience consolidation without revealing individual contributions. This is particularly useful for medical/financial domains where data is regulated.
+
+\subsection{Incentive Alignment}
+
+Contributors are rewarded via:
+\begin{itemize}
+\item \textbf{Inference Credits}: 1 hour of contribution $\approx$ 1000 free inference queries.
+\item \textbf{KEEPER Tokens}: Proportional to upvotes received on submitted experiences.
+\item \textbf{Revenue Share}: 10\% of API usage fees distributed to top contributors.
+\end{itemize}
+
+This creates a virtuous cycle: high-quality contributions improve models, attract more users, generate more revenue, reward contributors.
+

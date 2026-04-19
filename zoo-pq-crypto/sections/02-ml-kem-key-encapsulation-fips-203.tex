@@ -1,0 +1,32 @@
+\section{ML-KEM: Key Encapsulation (FIPS 203)}
+
+
+\subsection{Construction}
+
+\MLKEM{} is based on the Module Learning With Errors (Module-LWE) problem. Zoo deploys \MLKEM{}-768 (NIST Security Level~3).
+
+\begin{definition}[Module-LWE]
+Given $\mathbf{A} \xleftarrow{\$} R_q^{k \times k}$, $\mathbf{s} \leftarrow \beta_\eta^k$, $\mathbf{e} \leftarrow \beta_\eta^k$, distinguish $(\mathbf{A}, \mathbf{A}\mathbf{s} + \mathbf{e})$ from $(\mathbf{A}, \mathbf{u})$ where $\mathbf{u} \xleftarrow{\$} R_q^k$, with $R_q = \mathbb{Z}_q[X]/(X^{256} + 1)$, $q = 3329$, $k = 3$.
+\end{definition}
+
+Key generation produces $pk = (\rho, \hat{\mathbf{t}})$ where $\mathbf{t} = \mathbf{A}\mathbf{s} + \mathbf{e}$. Encapsulation computes ciphertext via $\mathbf{u} = \text{NTT}^{-1}(\hat{\mathbf{A}}^T \hat{\mathbf{r}}) + \mathbf{e}_1$ and $v = \text{NTT}^{-1}(\hat{\mathbf{t}}^T \hat{\mathbf{r}}) + e_2 + \lceil q/2 \rfloor \cdot m$. Decapsulation with FO transform achieves IND-CCA2 security.
+
+\subsection{Performance and Usage}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Parameter} & \textbf{ML-KEM-768} & \textbf{ECDH (X25519)} \\
+\midrule
+Public key & 1,184\,B & 32\,B \\
+Ciphertext & 1,088\,B & 32\,B \\
+KeyGen / Encaps / Decaps & 32 / 40 / 42\,$\mu$s & 48 / 150 / 150\,$\mu$s \\
+\bottomrule
+\end{tabular}
+\caption{\MLKEM{}-768 vs classical ECDH}
+\label{tab:mlkem-perf}
+\end{table}
+
+\MLKEM{} is faster than X25519 despite 37x larger keys. Zoo uses it for validator P2P encrypted channels, optional PQ-encrypted transaction memos, and secure share distribution during \Corona{} DKG.
+

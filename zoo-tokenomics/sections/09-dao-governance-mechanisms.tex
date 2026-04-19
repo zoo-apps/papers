@@ -1,0 +1,96 @@
+\section{DAO Governance Mechanisms}
+
+
+Zoo's DAO operates under non-profit constraints while maintaining decentralized decision-making:
+
+\subsection{Governance Structure}
+
+\begin{enumerate}
+\item \textbf{Token Holder Governance}: Quadratic voting (Section 4.1)
+\item \textbf{Technical Committee}: 7 elected developers (serve 1-year terms)
+\item \textbf{Experience Curation Board}: 11 domain experts (evaluate experience quality)
+\item \textbf{Treasury Management Committee}: 5 elected members (oversee DAO spending)
+\item \textbf{Executive Director}: Appointed by 501(c)(3) board (ensures legal compliance)
+\end{enumerate}
+
+\subsection{Proposal Types and Thresholds}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Proposal Type} & \textbf{Quorum} & \textbf{Threshold} & \textbf{Voting Period} \\
+\midrule
+Protocol parameters & 5\% & 51\% & 7 days \\
+Treasury <1B $\KEEPER$ & 3\% & 51\% & 5 days \\
+Treasury >1B $\KEEPER$ & 10\% & 66\% & 14 days \\
+Experience removal & 2\% & 51\% & 3 days \\
+Validator slashing & 5\% & 66\% & 7 days \\
+Constitution amendment & 15\% & 75\% & 21 days \\
+\bottomrule
+\end{tabular}
+\caption{DAO proposal requirements by type}
+\label{tab:dao_proposals}
+\end{table}
+
+\subsection{Quadratic Voting Mechanics}
+
+Zoo implements quadratic voting to balance large and small holders:
+
+\begin{equation}
+V_i = \sqrt{S_i}
+\end{equation}
+
+where $V_i$ = voting power, $S_i$ = staked $\KEEPER$ tokens
+
+\textbf{Example:}
+\begin{itemize}
+\item Alice: 100M $\KEEPER$ staked → $\sqrt{100M} = 10,000$ votes
+\item Bob: 1B $\KEEPER$ staked (10× more) → $\sqrt{1B} = 31,623$ votes (only 3.16× more)
+\end{itemize}
+
+This prevents whale dominance while still rewarding stake.
+
+\textbf{Vote Delegation:}
+
+Users can delegate voting power to experts:
+\begin{itemize}
+\item Delegation: Transfer voting power (not tokens)
+\item Revocable: Instant revocation (no lockup)
+\item Public: Delegation visible on-chain (transparency)
+\item Split: Can delegate to multiple representatives with percentage weights
+\end{itemize}
+
+\subsection{Treasury Management Transparency}
+
+All DAO treasury transactions are:
+\begin{itemize}
+\item \textbf{On-chain}: Publicly auditable via block explorer
+\item \textbf{Proposal-linked}: Each transaction references approved proposal
+\item \textbf{Multi-signature}: Requires 3-of-5 Treasury Committee signatures
+\item \textbf{Time-locked}: 48-hour delay between approval and execution (allows community intervention)
+\end{itemize}
+
+\textbf{Quarterly Reporting:}
+
+Treasury Management Committee publishes quarterly reports:
+\begin{itemize}
+\item Asset allocation breakdown
+\item Quarter-over-quarter spending analysis
+\item Grant recipient outcomes
+\item Long-term sustainability projections
+\end{itemize}
+
+\subsection{Non-Profit Compliance}
+
+Zoo's 501(c)(3) status imposes legal constraints on governance:
+
+\begin{enumerate}
+\item \textbf{IRS Oversight}: Annual Form 990 filing (public disclosure)
+\item \textbf{Mission Alignment}: All DAO votes must serve charitable purpose (AI democratization)
+\item \textbf{No Private Benefit}: Cannot distribute profits to private interests
+\item \textbf{Executive Director Veto}: ED can veto DAO decisions that violate 501(c)(3) rules (override requires 80\% supermajority)
+\end{enumerate}
+
+This creates \textbf{hybrid decentralization} - maximum autonomy within legal boundaries.
+

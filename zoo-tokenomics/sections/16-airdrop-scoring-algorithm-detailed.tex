@@ -1,0 +1,27 @@
+\section{Airdrop Scoring Algorithm (Detailed)}
+
+
+Complete scoring formula with all parameters:
+
+\begin{align}
+E_i^{\text{raw}} &= \log(1 + d_i) \times f_i \times (1 + 0.5 \times \mathbb{1}_{\text{founder}}) \\
+D_i^{\text{raw}} &= \sum_{j=1}^{N_i} \left( q_{ij} \times \sqrt{v_{ij}} \times m_j \right) \\
+C_i^{\text{raw}} &= \sum_{k=1}^{M_i} \left( l_{ik} \times r_{ik} \times (1 + 0.3 \times \mathbb{1}_{\text{core}}) \right) \\
+R_i^{\text{raw}} &= \sqrt[3]{n_i} \times \left( 1 - 0.5 \times \frac{s_i}{n_i} \right)
+\end{align}
+
+where:
+\begin{itemize}
+\item $d_i$: Days active
+\item $f_i$: Activity frequency (posts/day)
+\item $\mathbb{1}_{\text{founder}}$: Indicator for founding team (50\% bonus)
+\item $q_{ij}$: Quality score for dataset $j$ (0-1)
+\item $v_{ij}$: Volume (examples in dataset $j$)
+\item $m_j$: Rarity multiplier for domain (1-5×)
+\item $l_{ik}$: Lines of code in commit $k$
+\item $r_{ik}$: Review score for commit $k$ (0-1)
+\item $\mathbb{1}_{\text{core}}$: Indicator for core infrastructure commits (30\% bonus)
+\item $n_i$: Valid referrals (KYC-passed)
+\item $s_i$: Suspected Sybil referrals (penalty term)
+\end{itemize}
+

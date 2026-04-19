@@ -1,0 +1,88 @@
+\section{Background and Related Work}
+
+
+\subsection{The Limitations of Parameter Fine-Tuning}
+
+Traditional \LLM{} fine-tuning operates in parameter space $\Theta \in \mathbb{R}^d$ (where $d \approx 10^{9}$--$10^{12}$). Given a base model $\pi_{\theta_0}$ and task-specific dataset $\mathcal{D} = \{(x_i, y_i)\}_{i=1}^N$, the objective is:
+
+\begin{equation}
+\theta^* = \arg\min_{\theta} \mathbb{E}_{(x,y) \sim \mathcal{D}}[\mathcal{L}(\pi_\theta(x), y)] + \lambda \|\theta - \theta_0\|^2
+\end{equation}
+
+This approach suffers from fundamental limitations:
+
+\begin{itemize}
+    \item \textbf{Opacity}: Changes to billions of parameters are uninterpretable.
+    \item \textbf{Catastrophic Forgetting}: Updates for task A degrade performance on task B.
+    \item \textbf{Computational Cost}: Requires 20,000+ GPU-hours (\$10,000+) for 32B models.
+    \item \textbf{Centralization}: Only well-funded labs can afford iterative refinement.
+    \item \textbf{Non-Composability}: Cannot combine task-specific fine-tunes without retraining.
+    \item \textbf{Lack of Provenance}: No audit trail for why parameters changed.
+\end{itemize}
+
+\subsection{Reinforcement Learning from Human Feedback (RLHF)}
+
+RLHF methods~\cite{christiano2017deep,ouyang2022training} improve upon supervised fine-tuning by learning from preference data:
+
+\begin{equation}
+\mathcal{L}_{\text{RLHF}}(\theta) = \mathbb{E}_{x \sim \mathcal{D}}[r_\phi(\pi_\theta(x))] - \beta \text{KL}(\pi_\theta || \pi_{\text{ref}})
+\end{equation}
+
+where $r_\phi$ is a learned reward model and $\beta$ controls divergence from reference policy $\pi_{\text{ref}}$. Recent variants include:
+
+\begin{itemize}
+    \item \textbf{PPO}~\cite{schulman2017proximal}: Proximal Policy Optimization with value networks
+    \item \textbf{DPO}~\cite{rafailov2023direct}: Direct Preference Optimization (value-free)
+    \item \textbf{GRPO}~\cite{shao2024deepseekmath}: Group Relative Policy Optimization
+\end{itemize}
+
+While RLHF reduces reliance on labeled data, it still updates parameters and inherits all aforementioned limitations. The reward model $r_\phi$ is itself a black box, and the optimization process lacks transparency.
+
+\subsection{Prompt Engineering and RAG}
+
+An alternative paradigm operates in \textit{context space} rather than parameter space. Prompt engineering manually crafts instructions, while Retrieval-Augmented Generation (RAG)~\cite{lewis2020retrieval} dynamically retrieves relevant documents:
+
+\begin{equation}
+\pi_\theta(y | x) = \mathbb{E}_{d \sim \text{Retrieve}(x, \mathcal{D})}[\pi_\theta(y | x, d)]
+\end{equation}
+
+RAG maintains model parameters fixed ($\theta = \theta_0$) while augmenting context. However:
+
+\begin{itemize}
+    \item Retrieval targets \textit{factual} content, not \textit{reasoning strategies}
+    \item No mechanism for extracting insights from model's own trajectories
+    \item Quality depends on external document corpus, not learned experiences
+\end{itemize}
+
+\subsection{Training-Free Optimization}
+
+Recent work demonstrates LLMs can "learn" via context manipulation:
+
+\begin{itemize}
+    \item \textbf{In-Context Learning}~\cite{brown2020language}: Few-shot examples as context
+    \item \textbf{Chain-of-Thought}~\cite{wei2022chain}: Step-by-step reasoning prompts
+    \item \textbf{Tree-of-Thoughts}~\cite{yao2023tree}: Exploring multiple reasoning paths
+    \item \textbf{Self-Consistency}~\cite{wang2022self}: Sampling diverse solutions and voting
+\end{itemize}
+
+Our work extends this paradigm by:
+\begin{enumerate}
+    \item Automatically extracting reasoning strategies via introspection
+    \item Accumulating insights across training epochs (not ephemeral per-query)
+    \item Decentralizing curation through blockchain governance
+\end{enumerate}
+
+Training-Free GRPO~\cite{tencentyoutu2025grpo} pioneered semantic advantage extraction but lacked decentralized infrastructure. The Experience Ledger provides the missing cryptographic and governance layers.
+
+\subsection{Decentralized Machine Learning}
+
+Prior work on decentralized ML~\cite{mcmahan2017communication,kairouz2021advances} focuses on federated learning: training models across distributed devices while preserving privacy. Key differences from our approach:
+
+\begin{itemize}
+    \item Federated learning still updates parameters (just distributed)
+    \item Goal is privacy-preserving aggregation of gradients, not knowledge curation
+    \item No concept of semantic experiences or interpretable improvements
+\end{itemize}
+
+Blockchain-based ML systems~\cite{kurtulmus2018trustless,harris2019decentralized} have explored on-chain model verification and compute marketplaces but do not address the semantic optimization problem.
+

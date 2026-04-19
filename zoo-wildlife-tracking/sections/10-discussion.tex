@@ -1,0 +1,23 @@
+\section{Discussion}
+
+
+\subsection{Adoption Considerations}
+
+The success of \WildTrack{} depends on adoption by the wildlife tracking community. Key factors include:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Integration with existing platforms}: We provide Movebank-compatible APIs and data export formats to minimize migration friction.
+    \item \textbf{Governance}: Privacy tier assignments and policy updates are governed by the Zoo DAO (see companion paper~\cite{zoo2026dao}), with species experts serving as policy advisors.
+    \item \textbf{Computational overhead}: The cloaking and ZK proof systems add modest computational costs (5--15\% overhead for data upload, less than 1\% for data consumption).
+    \item \textbf{Regulatory compliance}: \WildTrack{} is designed to comply with CITES data sharing requirements while providing stronger privacy guarantees than current ad hoc practices.
+\end{enumerate}
+
+\subsection{Limitations}
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Small population species}: For species with very small populations (e.g., fewer than 50 individuals), achieving meaningful $k$-anonymity requires large cloaking radii that degrade ecological utility.
+    \item \textbf{Temporal inference attacks}: Sophisticated adversaries may exploit temporal patterns in data release schedules to narrow location estimates.
+    \item \textbf{Habitat heterogeneity}: In landscapes with highly restricted habitat (e.g., riverine species in arid environments), habitat-aware cloaking may inadvertently reveal approximate locations.
+    \item \textbf{Key management}: The current system requires data owners to manage encryption keys; key loss results in permanent data loss for that trajectory.
+\end{enumerate}
+

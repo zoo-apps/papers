@@ -1,0 +1,58 @@
+\section{Model Weight Custody}
+
+\label{sec:model-custody}
+
+\subsection{Model NFT Standard}
+
+On Zoo Network, trained AI models are represented as Model NFTs (ERC-721 tokens) with the following metadata:
+
+\begin{lstlisting}[basicstyle=\ttfamily\small,caption=Model NFT Metadata]
+{
+  "name": "Snow Leopard Classifier v3",
+  "modelHash": "0xabc...def",
+  "architecture": "ResNet-50",
+  "trainingDataHash": "0x123...456",
+  "accuracy": 0.947,
+  "custodyKey": "zoo-mpc-0x789...",
+  "threshold": [2, 3],
+  "roles": ["researcher", "dao", "escrow"],
+  "deploymentPolicy": "requires_dao_vote"
+}
+\end{lstlisting}
+
+\subsection{Custody Operations}
+
+The MPC key associated with a Model NFT authorizes four operations:
+
+\begin{enumerate}
+    \item \textbf{Deploy}: Make the model available for inference on Zoo Network. Requires researcher + DAO (2-of-3).
+
+    \item \textbf{Fine-tune}: Authorize fine-tuning with new data. Requires researcher + DAO (2-of-3).
+
+    \item \textbf{Transfer}: Transfer model ownership to another party. Requires researcher + DAO (2-of-3) or DAO + escrow (after 48h delay).
+
+    \item \textbf{Retire}: Permanently disable the model. Requires any 2-of-3.
+\end{enumerate}
+
+\subsection{Governance Gate}
+
+Model deployment goes through a governance gate:
+
+\begin{algorithm}[t]
+\caption{Model Deployment with MPC Governance}
+\label{alg:deploy}
+\begin{algorithmic}[1]
+\STATE Researcher submits deployment proposal on-chain
+\STATE DAO reviews model safety report (bias audit, accuracy, risk assessment)
+\STATE DAO votes on deployment (ZOO token-weighted, 72h voting period)
+\IF{vote passes ($> 50\%$ quorum, $> 66\%$ approval)}
+    \STATE DAO activates its key share
+    \STATE Researcher activates its key share
+    \STATE MPC produces deployment signature
+    \STATE Model deployed to Zoo inference network
+\ELSE
+    \STATE Deployment rejected; model remains locked
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+

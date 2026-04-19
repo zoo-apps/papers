@@ -1,0 +1,74 @@
+\section{Architecture}
+
+\label{sec:architecture}
+
+\cevm{} comprises four stages per block: dependency analysis, parallel execution, conflict detection, and sequential re-execution.
+
+\subsection{Transaction Dependency Analysis}
+
+\begin{definition}[Read-Write Set]
+For transaction $t$, let $R(t) \subseteq \mathcal{S}$ denote state slots read and $W(t) \subseteq \mathcal{S}$ slots written, where $\mathcal{S}$ is the global state-slot universe.
+\end{definition}
+
+\begin{definition}[Independence]
+Transactions $t_i, t_j$ are \emph{independent} iff:
+\begin{equation}
+W(t_i) \cap W(t_j) = \emptyset \;\wedge\; W(t_i) \cap R(t_j) = \emptyset \;\wedge\; R(t_i) \cap W(t_j) = \emptyset
+\end{equation}
+\end{definition}
+
+\cevm{} estimates read-write sets via static analysis of calldata and contract bytecode.
+For simple transfers and well-typed calls, analysis is exact.
+For dynamic dispatch (\texttt{DELEGATECALL} chains), it over-approximates, conservatively placing ambiguous transactions in the conflict set.
+
+The dependency graph $G = (T, E)$ has edge $(t_i, t_j) \in E$ iff $t_i, t_j$ are not independent.
+The maximal independent set $I \subseteq T$ is computed via greedy graph coloring in $O(n \log n)$, with conflict set $C = T \setminus I$.
+
+\begin{algorithm}
+\caption{Transaction Partitioning}
+\label{alg:partition}
+\begin{algorithmic}[1]
+\REQUIRE Transaction set $T = \{t_1, \ldots, t_n\}$, state snapshot $\sigma$
+\ENSURE Independent set $I$, conflict set $C$
+\STATE Compute $R(t_i), W(t_i)$ for each $t_i$ via static analysis
+\STATE Build dependency graph $G = (T, E)$
+\STATE $I \gets \text{GreedyMaxIndependentSet}(G)$
+\STATE $C \gets T \setminus I$
+\RETURN $I, C$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Parallel Execution}
+
+Transactions in $I$ are dispatched to GPU streaming multiprocessors (SMs).
+Each SM executes one transaction against a read-only snapshot of $\sigma_{\text{pre}}$ in GPU global memory.
+State writes buffer in per-transaction write logs in SM-local shared memory.
+No cross-transaction communication occurs during parallel execution.
+The GPU kernel implements the full EVM instruction set in CUDA C++, including Cancun hard fork opcodes (EIP-4844).
+
+\subsection{Conflict Detection and Re-execution}
+
+After parallel execution, write logs are merged.
+If two transactions in $I$ wrote to the same slot---a false negative in static analysis---a conflict is detected.
+
+\begin{definition}[Execution Conflict]
+A conflict exists between $t_i, t_j \in I$ if $W_{\text{actual}}(t_i) \cap W_{\text{actual}}(t_j) \neq \emptyset$.
+\end{definition}
+
+Conflicting transactions move to $C$ and the merge restarts.
+False negatives occur in fewer than 0.3\% of transactions.
+
+The conflict set $C$ executes \emph{sequentially} on CPU, ordered by block index, against the state from applying $I$'s merged writes to $\sigma_{\text{pre}}$.
+
+\begin{theorem}[Deterministic Execution]
+\label{thm:deterministic}
+For any block $B$ with transaction set $T$, \cevm{} produces a unique state root $\sigma_{\text{post}}$ independent of partition $(I, C)$, provided $C$ executes sequentially in block order.
+\end{theorem}
+
+\begin{proof}
+$I$ has pairwise-disjoint write sets; commutativity of disjoint updates ensures the merged state equals any sequential ordering of $I$.
+$C$ then applies sequentially in canonical order.
+Since sequential execution is deterministic and the base state is unique, $\sigma_{\text{post}}$ is unique.
+\end{proof}
+
+%% ---------------------------------------------------------------------------

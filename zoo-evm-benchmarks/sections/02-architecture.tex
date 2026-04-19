@@ -1,0 +1,70 @@
+\section{Architecture}
+
+\label{sec:architecture}
+
+\subsection{Lux C++ EVM}
+
+The Lux EVM is a ground-up C++ reimplementation of the Ethereum Virtual Machine, designed for GPU acceleration~\cite{lux-evmgpu-benchmark}. Key architectural differences from geth/evmone:
+
+\begin{itemize}
+    \item \textbf{Opcode compilation}: EVM bytecode is compiled to an intermediate representation (IR) suitable for GPU dispatch, rather than interpreted instruction-by-instruction.
+    \item \textbf{Parallel state access}: A transactional memory model allows concurrent reads with conflict detection, enabling multiple transactions to execute simultaneously when they access disjoint state.
+    \item \textbf{GPU shaders}: Arithmetic opcodes (\texttt{ADD}, \texttt{MUL}, \texttt{EXP}, \texttt{KECCAK256}) are implemented as compute shaders, dispatched in batches across GPU cores.
+    \item \textbf{State trie}: The Merkle Patricia Trie is stored in GPU-accessible memory with parallel hash computation for root updates.
+\end{itemize}
+
+\subsection{GPU Execution Pipeline}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=1.2cm,
+    box/.style={rectangle, draw, minimum width=2.8cm, minimum height=0.8cm, align=center, fill=blue!10, font=\small},
+    arrow/.style={->, thick}
+]
+    \node[box] (decode) {TX Decode\\(CPU)};
+    \node[box, right=1.5cm of decode] (compile) {Opcode Compile\\(CPU $\to$ IR)};
+    \node[box, right=1.5cm of compile] (dispatch) {GPU Dispatch\\(Batch)};
+    \node[box, below=of dispatch] (execute) {Shader Execute\\(GPU Cores)};
+    \node[box, left=1.5cm of execute] (state) {State Commit\\(Parallel Trie)};
+    \node[box, left=1.5cm of state] (finalize) {Block Finalize\\(Quasar)};
+
+    \draw[arrow] (decode) -- (compile);
+    \draw[arrow] (compile) -- (dispatch);
+    \draw[arrow] (dispatch) -- (execute);
+    \draw[arrow] (execute) -- (state);
+    \draw[arrow] (state) -- (finalize);
+\end{tikzpicture}
+\caption{Zoo EVM GPU execution pipeline. Transactions are batched for GPU dispatch after opcode compilation.}
+\label{fig:pipeline}
+\end{figure}
+
+The pipeline processes transactions in three phases:
+
+\begin{enumerate}
+    \item \textbf{Preparation (CPU)}: Transaction decoding, signature verification, nonce checking, and opcode-to-IR compilation. This phase is parallelized across CPU cores.
+
+    \item \textbf{Execution (GPU)}: IR programs are dispatched as compute shader workgroups. Each workgroup processes one transaction. Memory access conflicts are detected via atomic compare-and-swap on state slots. Conflicting transactions are re-executed sequentially.
+
+    \item \textbf{Commitment (GPU+CPU)}: State trie updates are computed in parallel on GPU. The Merkle root is finalized on CPU and submitted to Quasar consensus.
+\end{enumerate}
+
+\subsection{Block Parameters}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Parameter} & \textbf{Zoo Network} & \textbf{Ethereum L1} \\
+\midrule
+Block gas limit & 1,000,000,000 & 30,000,000 \\
+Target block time & 100ms & 12s \\
+Max TXs/block (21K gas) & 47,619 & 1,428 \\
+Consensus & Quasar + PoAI & Gasper (PoS) \\
+Finality & 10ms (Quasar) & 12.8 min (2 epochs) \\
+\bottomrule
+\end{tabular}
+\caption{Block parameters: Zoo Network vs Ethereum L1.}
+\label{tab:params}
+\end{table}
+

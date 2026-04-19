@@ -1,0 +1,33 @@
+\section{Related Work}
+
+\label{sec:related}
+
+\subsection{Reproducibility Infrastructure}
+
+Computational reproducibility has received substantial infrastructure investment.
+Workflow management systems such as Nextflow \citep{ditommaso2017nextflow}, Snakemake \citep{molder2021sustainable}, and Galaxy \citep{afgan2018galaxy} capture analysis pipelines as executable specifications.
+Container technologies (Docker, Singularity) preserve software environments.
+\citet{stodden2018empirical} found that even with these tools, only 26\% of computational results in published papers could be independently reproduced, primarily due to missing data, undocumented parameters, and environment-specific dependencies.
+
+\subsection{Pre-Registration and Open Science}
+
+Pre-registration requires researchers to specify hypotheses and analysis plans before data collection \citep{nosek2018preregistration}.
+Registered Reports extend pre-registration by committing journals to publish results regardless of outcome \citep{chambers2013registered}.
+While effective at reducing publication bias, these mechanisms rely on voluntary compliance and centralized platforms susceptible to single points of failure.
+
+\subsection{Blockchain for Science}
+
+Blockchain applications in science have focused on several areas: timestamping research claims \citep{koepsell2020blockchain}, managing intellectual property \citep{hasan2019blockchain}, decentralized peer review \citep{tenorio2019open}, and funding through decentralized autonomous organizations \citep{wright2021desci}.
+\citet{bartling2020blockchain} surveyed the landscape and identified experiment management and reproducibility verification as underexplored application domains.
+
+\subsection{Provenance Systems}
+
+Data provenance systems track the lineage of computational artifacts.
+The W3C PROV specification \citep{moreau2013prov} provides a standard data model for provenance.
+\citet{mcphillips2015yesworkflow} introduced YesWorkflow for extracting provenance from scripts.
+ProvDB \citep{miao2018provdb} stores provenance alongside data in relational databases.
+These systems operate within single organizations and lack mechanisms for cross-institutional verification or economic incentive alignment.
+
+% ============================================================
+% 3. Protocol Design
+% ============================================================

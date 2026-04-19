@@ -1,0 +1,74 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{definition}{Definition}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\PoAI}{\textsc{PoAI}}
+\newcommand{\TPS}{\textsc{tps}}
+\newcommand{\EVM}{\textsc{evm}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\title{\textbf{Zoo EVM Performance: GPU-Accelerated Execution on a Conservation-First L2}}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{December 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present performance benchmarks for the Zoo Network EVM, a conservation-focused L2 on Lux Network (chain ID 200200) that inherits the Lux C++ EVM with GPU shader acceleration. The Zoo EVM achieves a 1 billion gas block limit, processing up to 47,619 simple transactions per block. With GPU-parallel opcode execution, the EVM reaches 47.6 million transactions per second (TPS) in raw execution throughput, and 4.76 million TPS when bounded by Quasar consensus finality at 10ms. We benchmark the Zoo EVM across five workload categories: token transfers, AMM swaps, AI inference precompile calls, FHE operations, and complex DeFi interactions. The PoAI consensus layer adds AI compute verification overhead of 3--8\% depending on workload type. We compare Zoo EVM performance against Ethereum L2s (Arbitrum, Optimism, Base) and demonstrate 200--1,000$\times$ throughput improvements, attributable to GPU execution and Quasar's sub-second finality. All benchmarks are reproducible on Zoo testnet.
+
+\textbf{Keywords}: EVM performance, GPU acceleration, blockchain throughput, Zoo Network, conservation L2
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-architecture}
+\input{sections/03-benchmarks}
+\input{sections/04-poai-consensus-overhead}
+\input{sections/05-comparison-with-ethereum-l2s}
+\input{sections/06-ai-workload-profiling}
+\input{sections/07-scalability-analysis}
+\input{sections/08-related-work}
+\input{sections/09-conclusion}
+\input{sections/99-acknowledgments}
+
+\end{document}

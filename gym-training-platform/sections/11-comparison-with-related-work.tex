@@ -1,0 +1,35 @@
+\section{Comparison with Related Work}
+
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lcccccc}
+\toprule
+Feature & Gym & Axolotl & llama-recipes & TRL & Ludwig & AutoTrain \\
+\midrule
+Web UI & ✓ & ✗ & ✗ & ✗ & ✓ & ✓ \\
+CLI & ✓ & ✓ & ✓ & ✗ & ✓ & ✓ \\
+Python API & ✓ & ✓ & ✓ & ✓ & ✓ & ✓ \\
+Model Count & 112 & 80+ & 10 & Any & Any & 50+ \\
+Multi-Modal & ✓ & ✓ & ✗ & ✗ & ✓ & ✓ \\
+RLHF Methods & 6 & 3 & 1 & 5 & 0 & 2 \\
+Training-Free & ✓ & ✗ & ✗ & ✗ & ✗ & ✗ \\
+Quantization & 4/8-bit & 4/8-bit & 8-bit & ✗ & ✗ & 4/8-bit \\
+Educational Focus & ✓ & ✗ & ✗ & ✗ & ✓ & ✗ \\
+501(c)(3) Status & ✓ & ✗ & ✗ & ✗ & ✗ & ✗ \\
+\bottomrule
+\end{tabular}
+\caption{Feature comparison with major LLM training frameworks.}
+\end{table}
+
+\textbf{Key Differentiators}:
+\begin{itemize}
+\item \textbf{Gym}: Comprehensive, educational, non-profit, Training-Free GRPO
+\item \textbf{Axolotl}: Strong YAML configs, active community, but CLI-only
+\item \textbf{llama-recipes}: Official Meta recipes, excellent for LLaMA family
+\item \textbf{TRL}: Low-level library, requires coding expertise
+\item \textbf{Ludwig}: General ML framework, less LLM-optimized
+\item \textbf{AutoTrain}: Commercial, proprietary optimizations, vendor lock-in
+\end{itemize}
+

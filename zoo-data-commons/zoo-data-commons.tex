@@ -1,0 +1,92 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+
+% ============================================================
+% Preamble
+% ============================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,fit}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{fancyhdr}
+\usepackage{authblk}
+\usepackage{abstract}
+\usepackage{natbib}
+\bibliographystyle{plainnat}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    citecolor=green!50!black,
+    urlcolor=blue!80!black
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Antje Worring, Zach Kelling}
+\lhead{Zoo Data Commons}
+\rfoot{Page \thepage}
+
+% ============================================================
+\title{\textbf{Zoo Data Commons: A Decentralized Repository for Open Biodiversity Datasets} \\[0.5em]
+\large FAIR-Compliant Data Infrastructure with Provenance Tracking and Incentivized Curation}
+
+\author[1]{Antje Worring, Zach Kelling}
+\affil[1]{Antje Worring, Zach Kelling, Research Division \\ \texttt{research@zoo.ngo}}
+
+\date{July 2023}
+
+\begin{document}
+
+\zoocoverpage
+
+% ============================================================
+% Abstract
+% ============================================================
+\begin{abstract}
+\noindent
+Biodiversity data is fragmented across thousands of institutional repositories, government databases, citizen science platforms, and individual researcher collections, impeding the large-scale ecological analyses essential for conservation decision-making.
+We present the Zoo Data Commons (ZDC), a decentralized repository for open biodiversity datasets built on IPFS and the Zoo Network blockchain.
+ZDC introduces a novel \emph{Data Object Model} that wraps biodiversity datasets in cryptographically signed metadata envelopes conforming to the FAIR principles (Findable, Accessible, Interoperable, Reusable).
+Each data object carries an immutable provenance chain recording its complete transformation history from raw collection through processing, validation, and aggregation.
+We implement a three-tier access control system supporting open, permissioned, and sovereign data governance models, enabling indigenous communities and local stakeholders to maintain control over culturally sensitive ecological knowledge.
+A token-incentivized curation market rewards data contributors, validators, and annotators, aligning individual incentives with collective data quality improvement.
+Over 12 months of operation, ZDC has ingested 2.4 million biodiversity records across 14,200 species from 847 contributors, with a median data quality score 23\% higher than comparable centralized repositories.
+The platform has facilitated 312 cross-institutional data reuse events and supported 47 peer-reviewed publications.
+ZDC is specified as Zoo Improvement Proposal ZIP-009 and deployed as open infrastructure.
+\end{abstract}
+
+\vspace{0.5em}
+\noindent\textbf{Keywords:} biodiversity data, FAIR principles, decentralized storage, data provenance, IPFS, access control, open science
+
+% ============================================================
+% 1. Introduction
+% ============================================================
+
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-fair-native-data-object-model}
+\input{sections/04-provenance-preserving-storage}
+\input{sections/05-sovereign-access-control}
+\input{sections/06-incentivized-curation-market}
+\input{sections/07-implementation}
+\input{sections/08-evaluation}
+\input{sections/09-discussion}
+\input{sections/99-conclusion}
+
+\end{document}

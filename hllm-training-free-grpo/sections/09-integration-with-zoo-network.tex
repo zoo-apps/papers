@@ -1,0 +1,89 @@
+\section{Integration with Zoo Network}
+
+\label{sec:governance}
+
+Training-Free GRPO is designed for deployment on Zoo Network, a decentralized AI/ML blockchain built on Hanzo Network's base compute infrastructure.
+
+\subsection{Decentralized Compute Layer}
+
+\textbf{Hanzo GPU Nodes:}
+\begin{itemize}
+    \item Docker-based LLM inference containers
+    \item Auto-scaling GPU instances (NVIDIA A100/H100)
+    \item Distributed training support (FSDP, DeepSpeed)
+    \item Proof of Inference (optional zk-SNARK verification)
+\end{itemize}
+
+\textbf{Inference Routing:}
+\begin{enumerate}
+    \item User submits query to Zoo Network API
+    \item Router fetches canonical experience library (IPFS + on-chain root hash)
+    \item Semantic search retrieves relevant experiences
+    \item Query + experiences routed to available GPU node
+    \item Frozen base model executes inference
+    \item Response returned with optional cryptographic proof
+\end{enumerate}
+
+\subsection{DAO Governance with KEEPER Tokens}
+
+Experience library updates are governed by the Zoo DAO using KEEPER tokens:
+
+\begin{itemize}
+    \item \textbf{Proposal}: Contributors submit experience updates (new Merkle root + IPFS CID)
+    \item \textbf{Voting}: KEEPER holders vote (quadratic voting to prevent plutocracy)
+    \item \textbf{Threshold}: 66\% approval required (2/3 supermajority)
+    \item \textbf{Execution}: Approved updates recorded on-chain
+    \item \textbf{Rewards}: Contributors earn inference credits + usage royalties
+\end{itemize}
+
+\textbf{Quadratic Voting Formula:}
+\begin{equation}
+\text{VotePower}(x) = \sqrt{\text{KEEPERBalance}(x)}
+\end{equation}
+This ensures large token holders cannot dominate governance (square root dampening).
+
+\subsection{Economic Model: Contribute → Access}
+
+Users contribute data/experiences to earn future inference rights:
+
+\begin{enumerate}
+    \item \textbf{Data Contribution}: Upload training datasets, preference pairs, domain text
+    \item \textbf{Experience Curation}: Propose new experiences, vote on updates
+    \item \textbf{Quality Signals}: Rank model outputs, flag harmful content
+\end{enumerate}
+
+\textbf{Rewards:}
+\begin{itemize}
+    \item \textbf{Inference Credits}: Free queries proportional to contribution
+    \item \textbf{Priority Routing}: Skip queues during high demand
+    \item \textbf{Governance Rights}: KEEPER tokens for voting power
+    \item \textbf{Usage Royalties}: Revenue share when your experiences are used
+\end{itemize}
+
+\subsection{Security and Verification}
+
+\subsubsection{Content-Addressable Storage}
+All experiences stored in IPFS/Arweave:
+\begin{itemize}
+    \item \textbf{Tamper-Proof}: Content hash changes if modified
+    \item \textbf{Deduplication}: Identical experiences automatically merged
+    \item \textbf{Permanence}: Arweave ensures perpetual availability
+\end{itemize}
+
+\subsubsection{Merkle Proofs}
+On-chain registry stores only Merkle root (32 bytes):
+\begin{itemize}
+    \item \textbf{Verification}: Anyone can verify experience inclusion with $\mathcal{O}(\log N)$ proof
+    \item \textbf{Audit Trail}: Complete history of library changes recorded
+    \item \textbf{Lightweight}: Blockchain stores 32 bytes, not entire library
+\end{itemize}
+
+\subsubsection{Frozen Base Model}
+Model weights are cryptographically verified:
+\begin{itemize}
+    \item \textbf{SHA-256 Hash}: Immutable identifier for model version
+    \item \textbf{Hugging Face Hub}: Canonical source with Git history
+    \item \textbf{No Weight Updates}: Eliminates model poisoning attacks
+    \item \textbf{Verifiable Inference}: Optional zk-SNARKs prove (input, model, context) → output
+\end{itemize}
+

@@ -1,0 +1,22 @@
+\section{Security Analysis}
+
+
+\subsection{Threat Model}
+
+We consider two adversary classes:
+
+\begin{enumerate}
+\item \textbf{Classical adversary} $\mathcal{A}_C$: Polynomial-time, controls $f < t$ validators.
+\item \textbf{Quantum adversary} $\mathcal{A}_Q$: Has access to a fault-tolerant quantum computer, controls $f < t$ validators.
+\end{enumerate}
+
+\begin{theorem}[Key Extraction Resistance]
+Under the MLWE assumption with parameters $(n, k, q, \eta)$ as specified in FIPS 203/204, neither $\mathcal{A}_C$ nor $\mathcal{A}_Q$ can extract the complete private key from fewer than $t$ shares.
+\end{theorem}
+
+\begin{proof}
+Reconstructing the secret from $f < t$ shares requires solving $f$ equations in $t$ unknowns over $R_q^k$---information-theoretically impossible by Shamir's threshold property.
+\end{proof}
+
+Proactive share refresh (Section~5.3) provides forward secrecy: compromising shares in epoch $e$ does not help after refresh in $e+1$. During the BLS/ML-DSA migration period, hybrid signatures provide defense in depth---security holds if \emph{either} the discrete log assumption (BLS) \emph{or} the MLWE/MSIS assumption (ML-DSA) holds.
+

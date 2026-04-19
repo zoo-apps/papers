@@ -1,0 +1,86 @@
+\section{Inference Router}
+
+
+The Inference Router is a Solidity smart contract coordinating query execution.
+
+\subsection{Contract Interface}
+
+\begin{verbatim}
+contract InferenceRouter {
+    struct Request {
+        bytes32 queryHash;
+        address user;
+        uint256 timestamp;
+        string ipfsCID;  // Experience library version
+    }
+
+    mapping(bytes32 => Request) public requests;
+    mapping(address => uint256) public nodeStakes;
+
+    function submitQuery(
+        string memory query,
+        string memory ipfsCID
+    ) public payable returns (bytes32 requestId);
+
+    function fulfillQuery(
+        bytes32 requestId,
+        string memory response,
+        bytes memory proof
+    ) public;
+
+    function slashNode(address node) public;
+}
+\end{verbatim}
+
+\subsection{Query Lifecycle}
+
+\begin{enumerate}
+\item \textbf{Submission}: User calls \texttt{submitQuery(query, ipfsCID)}, pays fee in native token (ZOO).
+\item \textbf{Node Selection}: Router selects GPU node via:
+   \begin{itemize}
+   \item \textit{Round-robin}: Fair distribution.
+   \item \textit{Stake-weighted}: Nodes with higher stakes prioritized.
+   \item \textit{Performance-based}: Nodes with lower latency prioritized.
+   \end{itemize}
+\item \textbf{Execution}: Selected node:
+   \begin{enumerate}
+   \item Fetches base model (frozen weights) from IPFS.
+   \item Fetches experience library at \texttt{ipfsCID}.
+   \item Retrieves top-$k$ relevant experiences.
+   \item Constructs prompt: \texttt{experiences + query}.
+   \item Runs inference.
+   \item Optionally generates proof (zkSNARK or optimistic).
+   \end{enumerate}
+\item \textbf{Fulfillment}: Node calls \texttt{fulfillQuery(requestId, response, proof)}. Contract verifies proof (if provided) and releases payment.
+\item \textbf{Dispute}: If proof fails or response is incorrect, user can challenge. Validators re-execute query; if node is malicious, stake is slashed.
+\end{enumerate}
+
+\subsection{Proof Systems}
+
+\subsubsection{Optimistic Proofs}
+
+Default mode: no cryptographic proof. Users can challenge within dispute window (e.g., 1 hour). Validators re-run inference; if outputs differ, slash node.
+
+\begin{itemize}
+\item \textbf{Pros}: Zero overhead, fast finality.
+\item \textbf{Cons}: Requires dispute mechanism, delayed finality.
+\end{itemize}
+
+\subsubsection{zkSNARK Proofs}
+
+Node generates a succinct proof that inference was executed correctly:
+\[
+\pi \leftarrow \text{Prove}(\text{circuit}, \text{model}, \text{input}, \text{output})
+\]
+Contract verifies:
+\[
+\text{Verify}(\pi, \text{output}) = \text{True}
+\]
+
+\begin{itemize}
+\item \textbf{Pros}: Instant finality, no disputes.
+\item \textbf{Cons}: Proving overhead ($\sim$10x inference time), circuit complexity.
+\end{itemize}
+
+Current implementations: \texttt{zkML} \cite{zkml2023}, \texttt{Modulus Labs EZKL} \cite{ezkl2023}.
+

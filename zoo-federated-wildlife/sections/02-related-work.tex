@@ -1,0 +1,36 @@
+\section{Related Work}
+
+\label{sec:related}
+
+\subsection{Federated Learning}
+
+Federated Learning was formalized by \citet{mcmahan2017communication} with the FedAvg algorithm.
+Subsequent work addressed non-IID data through personalization \citep{li2020federated}, clustering \citep{ghosh2020efficient}, and multi-task formulations \citep{smith2017federated}.
+Communication efficiency improvements include gradient compression \citep{alistarh2017qsgd}, sparsification \citep{stich2018sparsified}, and distillation-based approaches \citep{lin2020ensemble}.
+\citet{kairouz2021advances} provide a comprehensive survey of open problems and advances.
+
+\subsection{Differential Privacy in Federated Learning}
+
+Differential privacy (DP) provides formal privacy guarantees for statistical analyses \citep{dwork2014algorithmic}.
+Integration with FL was established by \citet{mcmahan2018learning} through user-level DP.
+\citet{geyer2017differentially} proposed client-level DP-SGD for federated settings.
+Adaptive privacy budget allocation has been explored in the context of heterogeneous data sensitivity \citep{kang2020incentive}, but not for ecological conservation applications.
+
+\subsection{Machine Learning for Wildlife Monitoring}
+
+Deep learning has been applied extensively to camera trap classification \citep{norouzzadeh2018automatically, beery2019efficient}, acoustic species detection \citep{kahl2021birdnet, stowell2019automatic}, and movement ecology \citep{patterson2017statistical}.
+Multi-modal approaches combining visual and acoustic data have shown improved performance \citep{verma2022towards}.
+However, most work assumes centralized data access.
+
+\citet{tuia2022perspectives} identified distributed learning as a key frontier for conservation machine learning but noted the absence of domain-specific frameworks.
+\citet{beery2021iwildcam} documented the domain shift problem across camera trap sites, which directly motivates our non-IID robust aggregation approach.
+
+\subsection{Privacy in Conservation Data}
+
+The sensitivity of conservation data---particularly precise locations of endangered species---has been recognized as a critical concern \citep{lindenmayer2017do}.
+\citet{tulloch2018decision} analyzed the tradeoff between data openness and conservation risk.
+Current approaches rely on coarse spatial aggregation (grid-based reporting) rather than formal privacy mechanisms, sacrificing data utility for protection.
+
+% ============================================================
+% 3. Problem Formulation
+% ============================================================

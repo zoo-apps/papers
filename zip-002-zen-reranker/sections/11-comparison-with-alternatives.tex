@@ -1,0 +1,51 @@
+\section{Comparison with Alternatives}
+
+
+\subsection{BAAI bge-reranker-v2-m3}
+
+\begin{table}[h]
+\centering
+\caption{Comparison with BAAI bge-reranker-v2-m3}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Metric} & \textbf{bge-reranker-v2-m3} & \textbf{Zen-Reranker-8B} \\
+\midrule
+Dimension & 1024 & 7680 \\
+Parameters & 568M & 8.3B \\
+MTEB Avg & 64.7 & 68.4 \\
+MTEB Retrieval & 58.1 & 62.7 \\
+DSO Recall@5 & 81.3\% & 94.7\% \\
+Compression Ratio & 26.9$\times$ & 31.87$\times$ \\
+Latency (ms) & 16.2 & 21.5 \\
+Training Cost & \$8,000 & \$10,800 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Trade-offs:}
+\begin{itemize}
+\item BGE: Faster inference, lower cost
+\item \textbf{Zen-Reranker: Higher accuracy, better DSO performance, optimal compression}
+\end{itemize}
+
+\subsection{jina-embeddings-v3}
+
+\begin{table}[h]
+\centering
+\caption{Comparison with jina-embeddings-v3}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Metric} & \textbf{jina-embeddings-v3} & \textbf{Zen-Reranker-8B} \\
+\midrule
+Dimension (configurable) & 768-8192 & 7680 (native) \\
+Parameters & 570M & 8.3B \\
+MTEB Avg & 66.2 & 68.4 \\
+DSO Cross-Model & 85.7\% & 94.7\% \\
+Byzantine Robustness & Not evaluated & 92.1\% @ 30\% attack \\
+License & Apache 2.0 & Apache 2.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key Difference:} Jina supports variable dimensions via truncation/padding, but not optimized for 7680-dim DSO. Zen-Reranker is purpose-built.
+

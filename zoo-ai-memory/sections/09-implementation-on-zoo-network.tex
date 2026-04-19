@@ -1,0 +1,72 @@
+\section{Implementation on Zoo Network}
+
+\label{sec:implementation}
+%----------------------------------------------------------------------
+
+\subsection{Multi-Chain Mapping}
+
+The Memory Capsule architecture maps to \Zoo{} Network's specialized chains:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Component} & \textbf{Chain} & \textbf{Responsibility} \\
+\midrule
+Capsule identity, anchors & \IChain{} & DID binding, head hash anchoring \\
+Vault encryption keys & \KChain{} & Key derivation, rotation, escrow \\
+Threshold reveal & \TChain{} & Share distribution, quorum decryption \\
+FHE inference & \AChain{} & Homomorphic computation on encrypted state \\
+Governance (GC policy) & \GChain{} & Community votes on default parameters \\
+\bottomrule
+\end{tabular}
+\caption{Memory Capsule component mapping to \Zoo{} chains}
+\label{tab:chain_mapping}
+\end{table}
+
+\subsection{A-Chain Integration}
+
+\AChain{} provides the inference runtime for \FHE{}-encrypted memory queries. When an agent issues an encrypted recall:
+
+\begin{enumerate}
+    \item The encrypted query is submitted to \AChain{} as an inference request.
+    \item \AChain{} validators execute the \CKKS{} similarity search across the capsule's encrypted embeddings.
+    \item The encrypted result (top-$k$ indices) is returned to the agent.
+    \item If threshold decryption is required, the result is forwarded to \TChain{}.
+\end{enumerate}
+
+\subsection{I-Chain Identity Binding}
+
+Each capsule is bound to exactly one \DID{} on \IChain{}. The binding is enforced at the protocol level:
+
+\begin{itemize}
+    \item Capsule creation requires a valid \IChain{} \DID{} transaction.
+    \item All operations on the capsule require a signature from the bound \DID{}.
+    \item Ownership transfer is an \IChain{} transaction that atomically updates the \DID{} binding and re-encrypts the vault key via \KChain{}.
+\end{itemize}
+
+\subsection{K-Chain Key Hierarchy}
+
+The key hierarchy for a capsule:
+
+\begin{align}
+k_{\textit{root}} &\leftarrow \text{KChain.DeriveRoot}(\textit{did}) \\
+k_{\textit{vault}} &\leftarrow \text{HKDF}(k_{\textit{root}}, \text{``vault''}) \\
+k_{\textit{entry}}(i) &\leftarrow \text{HKDF}(k_{\textit{vault}}, \text{``entry''} \| i) \\
+k_{\textit{embedding}}(i) &\leftarrow \text{HKDF}(k_{\textit{vault}}, \text{``embed''} \| i)
+\end{align}
+
+Key rotation is handled by \KChain{}: a rotation event re-encrypts the vault key under a new root, without re-encrypting individual entries (which use derived keys from the vault key).
+
+\subsection{T-Chain Threshold Protocol}
+
+For threshold-protected memories, \TChain{} implements the following protocol:
+
+\begin{enumerate}
+    \item \textbf{Setup.} During capsule creation, the vault key $k_{\textit{vault}}$ is split into $n$ shares via Feldman VSS and distributed to \TChain{} validators.
+    \item \textbf{Access.} The agent submits a decryption request with a valid capability token to \TChain{}.
+    \item \textbf{Quorum.} Each validator independently verifies the capability token against \IChain{} and, if valid, contributes its share.
+    \item \textbf{Reconstruction.} Once $t$ shares are collected, the key is reconstructed in a secure enclave, used for decryption, and immediately discarded.
+\end{enumerate}
+
+%----------------------------------------------------------------------

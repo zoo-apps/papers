@@ -1,0 +1,80 @@
+\section{Experiment Commitment Protocol}
+
+\label{sec:commitments}
+
+\subsection{Commitment Structure}
+
+An experiment commitment $C$ is a signed, timestamped document containing:
+
+\begin{equation}
+    C = \text{Sign}_{\text{sk}_r}\left(H, M, D_{\text{spec}}, A, \theta, t_{\text{commit}}\right)
+\end{equation}
+
+\noindent where:
+\begin{itemize}[leftmargin=*]
+    \item $H$ is a structured hypothesis specification in a formal hypothesis language (see below).
+    \item $M$ is a methodology description including experimental design, sample size justification, and analysis plan.
+    \item $D_{\text{spec}}$ is a data specification describing expected input data schemas, collection protocols, and quality criteria.
+    \item $A$ is a set of analysis scripts with pinned dependencies (container image hash, package versions).
+    \item $\theta$ is a parameter vector specifying all configurable parameters with their values and sensitivity analysis ranges.
+    \item $t_{\text{commit}}$ is the commitment timestamp from the blockchain consensus.
+\end{itemize}
+
+The commitment is stored on-chain as:
+
+\begin{equation}
+    C_{\text{chain}} = (\text{pk}_r, \text{hash}(C), t_{\text{commit}}, \text{status})
+\end{equation}
+
+\noindent where $\text{hash}(C)$ is the content hash of the full commitment stored on IPFS, and $\text{status} \in \{\text{committed}, \text{executing}, \text{completed}, \text{deviated}, \text{withdrawn}\}$.
+
+\subsection{Formal Hypothesis Language}
+
+We introduce the Zoo Hypothesis Language (ZHL), a structured representation that enables machine-readable hypothesis specification:
+
+\begin{equation}
+    H = (\mathcal{X}, \mathcal{Y}, f_{\text{null}}, f_{\text{alt}}, \alpha, \beta, \delta_{\min})
+\end{equation}
+
+\noindent where $\mathcal{X}$ is the set of independent variables with their domains, $\mathcal{Y}$ is the set of dependent variables, $f_{\text{null}}$ and $f_{\text{alt}}$ are the null and alternative hypothesis functions, $\alpha$ is the significance level, $\beta$ is the target power, and $\delta_{\min}$ is the minimum effect size of interest.
+
+ZHL supports common experimental designs:
+
+\begin{table}[H]
+\centering
+\caption{Zoo Hypothesis Language design templates.}
+\label{tab:zhl_templates}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Template} & \textbf{Description} \\
+\midrule
+\texttt{COMPARE(A, B, metric, test)} & Two-group comparison with specified test statistic \\
+\texttt{CORRELATE(X, Y, method)} & Correlation analysis with method specification \\
+\texttt{PREDICT(X, Y, model, metric)} & Predictive modeling with specified evaluation metric \\
+\texttt{CLUSTER(X, k\_range, method)} & Exploratory clustering with pre-specified evaluation \\
+\texttt{TEMPORAL(Y, covariates, model)} & Time series analysis with specified model class \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Deviation Detection}
+
+During experiment execution, the protocol monitors for deviations from the commitment.
+We define a deviation score:
+
+\begin{equation}
+    \Delta(C, E) = \sum_{i} w_i \cdot d_i(C_i, E_i)
+\end{equation}
+
+\noindent where $C_i$ and $E_i$ are the committed and executed versions of component $i$ (methodology, parameters, analysis scripts), $d_i$ is a component-specific distance metric, and $w_i$ is the severity weight.
+
+Deviations are classified into three categories:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Registered Deviation ($\Delta < \tau_1$):} Minor adjustments documented in real-time (e.g., sample size adjustment due to practical constraints). Automatically recorded on-chain.
+    \item \textbf{Material Deviation ($\tau_1 \leq \Delta < \tau_2$):} Significant changes requiring justification and peer review before results are accepted.
+    \item \textbf{Commitment Violation ($\Delta \geq \tau_2$):} Fundamental departures that void the original commitment. The experiment may continue but is treated as a new, uncommitted study.
+\end{itemize}
+
+% ============================================================
+% 5. Federated Execution Graphs
+% ============================================================

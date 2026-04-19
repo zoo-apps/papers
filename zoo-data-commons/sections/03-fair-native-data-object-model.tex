@@ -1,0 +1,89 @@
+\section{FAIR-Native Data Object Model}
+
+\label{sec:data_model}
+
+\subsection{Object Structure}
+
+A Zoo Data Object (ZDO) is the atomic unit of the Data Commons.
+Each ZDO comprises four components:
+
+\begin{equation}
+    \text{ZDO} = (\mathcal{M}, \mathcal{D}, \mathcal{P}, \mathcal{G})
+\end{equation}
+
+\noindent where $\mathcal{M}$ is the metadata envelope, $\mathcal{D}$ is the data payload, $\mathcal{P}$ is the provenance chain, and $\mathcal{G}$ is the governance specification.
+
+\subsection{Metadata Envelope}
+
+The metadata envelope $\mathcal{M}$ is a structured document conforming to a JSON-LD schema that extends Darwin Core with additional fields for FAIR compliance:
+
+\begin{equation}
+    \mathcal{M} = (\text{id}, \text{schema}, \text{taxon}, \text{spatial}, \text{temporal}, \text{method}, \text{quality}, \text{links})
+\end{equation}
+
+\begin{table}[H]
+\centering
+\caption{Metadata envelope fields and their FAIR mapping.}
+\label{tab:metadata}
+\begin{tabularx}{\textwidth}{@{}llcX@{}}
+\toprule
+\textbf{Field} & \textbf{Type} & \textbf{FAIR} & \textbf{Description} \\
+\midrule
+\texttt{id} & CID & F1 & Content-addressed identifier (IPFS CID) \\
+\texttt{schema} & URI & I1 & Reference to the data schema definition \\
+\texttt{taxon} & OntologyRef & I2 & Taxonomic classification with ontology mapping \\
+\texttt{spatial} & GeoJSON & F3 & Geographic extent with coordinate reference system \\
+\texttt{temporal} & ISO8601 & F3 & Temporal coverage with resolution specification \\
+\texttt{method} & MethodRef & R1 & Collection methodology with controlled vocabulary \\
+\texttt{quality} & QualityScore & R2 & Automated quality assessment scores \\
+\texttt{links} & LinkSet & F4 & Related ZDOs, publications, and external resources \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Taxonomic Ontology Integration}
+
+ZDC maintains a unified taxonomic knowledge graph that reconciles multiple backbone taxonomies:
+
+\begin{equation}
+    \mathcal{T}_{\text{unified}} = \text{Reconcile}(\mathcal{T}_{\text{GBIF}}, \mathcal{T}_{\text{ITIS}}, \mathcal{T}_{\text{CoL}}, \mathcal{T}_{\text{WoRMS}})
+\end{equation}
+
+The reconciliation algorithm produces a mapping $\phi: \mathcal{N}_{\text{source}} \rightarrow \mathcal{N}_{\text{unified}}$ from source taxonomy names to unified nodes, with confidence scores and conflict annotations.
+Each ZDO's taxonomic field references a node in the unified graph, enabling cross-dataset queries that are invariant to naming conventions.
+
+We use a graph embedding approach to detect synonyms and near-matches:
+
+\begin{equation}
+    \text{sim}(n_i, n_j) = \cos(\mathbf{e}_i, \mathbf{e}_j) + \lambda \cdot \text{Jaccard}(\text{features}(n_i), \text{features}(n_j))
+\end{equation}
+
+\noindent where $\mathbf{e}_i$ is the embedding of node $n_i$ from a graph neural network trained on the taxonomy structure, and $\text{features}(n_i)$ includes morphological, ecological, and geographic characteristics.
+
+\subsection{Data Quality Assessment}
+
+Each ZDO undergoes automated quality assessment producing a vector of scores:
+
+\begin{equation}
+    \mathbf{q} = (q_{\text{complete}}, q_{\text{consistent}}, q_{\text{spatial}}, q_{\text{temporal}}, q_{\text{taxonomic}})
+\end{equation}
+
+\begin{itemize}[leftmargin=*]
+    \item $q_{\text{complete}} \in [0,1]$: Fraction of required metadata fields populated.
+    \item $q_{\text{consistent}} \in [0,1]$: Internal consistency score (e.g., species range vs.\ reported coordinates).
+    \item $q_{\text{spatial}} \in [0,1]$: Spatial precision and validity assessment.
+    \item $q_{\text{temporal}} \in [0,1]$: Temporal precision and plausibility.
+    \item $q_{\text{taxonomic}} \in [0,1]$: Confidence of taxonomic identification.
+\end{itemize}
+
+The composite quality score is:
+
+\begin{equation}
+    Q = \sum_{k} w_k \cdot q_k \cdot \mathbb{1}[q_k > q_k^{\min}]
+\end{equation}
+
+\noindent where $w_k$ are domain-specific weights and $q_k^{\min}$ are minimum thresholds; objects failing any threshold are flagged for review rather than rejected outright.
+
+% ============================================================
+% 4. Storage Architecture
+% ============================================================

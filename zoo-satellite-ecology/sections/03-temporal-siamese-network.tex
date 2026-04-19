@@ -1,0 +1,127 @@
+\section{Temporal Siamese Network}
+
+\label{sec:tsn}
+
+\subsection{Architecture Overview}
+
+The TSN processes a temporal sequence of multi-spectral satellite images to detect ecological changes.
+Unlike bi-temporal methods that compare only two images, TSN ingests a sequence of $T$ images spanning the monitoring period, enabling robust change detection that distinguishes persistent land use change from transient events (cloud shadows, seasonal variation, short-term flooding).
+
+The architecture consists of three components:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Spatial Encoder:} A shared convolutional backbone that extracts spatial features from each image independently.
+    \item \textbf{Temporal Attention Module:} A transformer-based module that models temporal dependencies across the image sequence, identifying persistent changes while suppressing transient artifacts.
+    \item \textbf{Change Decoder:} A fully convolutional decoder that produces pixel-level change maps with class labels.
+\end{enumerate}
+
+\subsection{Spatial Encoder}
+
+The spatial encoder $E_\psi$ processes each multi-spectral image $\mathbf{x}_t \in \mathbb{R}^{H \times W \times B}$ (where $B$ is the number of spectral bands) to produce a feature map:
+
+\begin{equation}
+    \mathbf{F}_t = E_\psi(\mathbf{x}_t) \in \mathbb{R}^{h \times w \times d}
+\end{equation}
+
+We use a ResNet-34 backbone pretrained on satellite imagery, modified to accept $B$-channel input (10 bands for Sentinel-2).
+The encoder is shared across all timesteps (Siamese structure), ensuring consistent feature extraction.
+
+\subsection{Temporal Attention Module}
+
+The temporal attention module processes the sequence of feature maps $\{\mathbf{F}_1, \ldots, \mathbf{F}_T\}$ to identify temporally persistent changes.
+For each spatial position $(i, j)$, we extract a temporal feature vector:
+
+\begin{equation}
+    \mathbf{v}_{i,j} = [\mathbf{F}_1[i,j]; \mathbf{F}_2[i,j]; \ldots; \mathbf{F}_T[i,j]] \in \mathbb{R}^{T \times d}
+\end{equation}
+
+A transformer encoder with $L$ layers processes this temporal sequence:
+
+\begin{equation}
+    \hat{\mathbf{v}}_{i,j} = \text{TransformerEnc}(\mathbf{v}_{i,j} + \mathbf{PE})
+\end{equation}
+
+\noindent where $\mathbf{PE} \in \mathbb{R}^{T \times d}$ encodes absolute temporal position (day of year, allowing the model to learn phenological patterns).
+
+The attention mechanism naturally learns to:
+\begin{itemize}[leftmargin=*]
+    \item Weight cloud-free observations more heavily than cloud-contaminated ones.
+    \item Distinguish seasonal vegetation cycles (high attention to phenological outliers) from persistent change (consistent signal across recent timesteps).
+    \item Identify gradual degradation patterns that no single bi-temporal comparison would detect.
+\end{itemize}
+
+\subsection{Change Decoder}
+
+The change decoder produces two outputs from the attended temporal features:
+
+\begin{equation}
+    \hat{c}_{i,j} = D_{\text{detect}}(\hat{\mathbf{v}}_{i,j}) \in [0, 1] \qquad \hat{y}_{i,j} = D_{\text{classify}}(\hat{\mathbf{v}}_{i,j}) \in \mathbb{R}^{C}
+\end{equation}
+
+\noindent where $\hat{c}$ is the change probability and $\hat{y}$ is the change type classification logits over $C$ ecological change categories:
+
+\begin{table}[H]
+\centering
+\caption{Ecological change categories.}
+\label{tab:change_categories}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Category} & \textbf{Code} & \textbf{Description} \\
+\midrule
+Deforestation & DEF & Conversion of forest to non-forest \\
+Degradation & DEG & Reduction in canopy cover without complete removal \\
+Agricultural Expansion & AGR & Conversion to cropland or pasture \\
+Urban Expansion & URB & Conversion to built environment \\
+Mining & MIN & Surface mining and quarrying \\
+Fire & FIR & Wildfire or prescribed burning \\
+Flooding & FLD & Inundation events (natural or anthropogenic) \\
+Reforestation & REF & Regrowth or active replanting \\
+No Change & NOC & Stable land cover \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Training}
+
+The loss function combines binary change detection and multi-class classification:
+
+\begin{equation}
+    \mathcal{L} = \mathcal{L}_{\text{BCE}}(\hat{c}, c) + \lambda \cdot \mathbb{1}[c=1] \cdot \mathcal{L}_{\text{CE}}(\hat{y}, y)
+\end{equation}
+
+\noindent where $c$ is the ground-truth change label, $y$ is the change type label, and the classification loss is applied only to changed pixels.
+We use focal loss variants of both BCE and CE to handle the extreme class imbalance (most pixels are unchanged).
+
+\subsection{Training Dataset}
+
+We construct a training dataset from Sentinel-2 imagery covering 12 biomes:
+
+\begin{table}[H]
+\centering
+\caption{Training dataset composition by biome.}
+\label{tab:training_data}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Biome} & \textbf{Tiles} & \textbf{Change Pixels (K)} & \textbf{Annotation Source} & \textbf{Years} \\
+\midrule
+Tropical Forest & 2,847 & 1,234 & GFC + expert & 2019--2025 \\
+Temperate Forest & 1,623 & 487 & GFC + expert & 2019--2025 \\
+Boreal Forest & 894 & 312 & GFC + FIRMS & 2019--2025 \\
+Savanna & 1,247 & 567 & Expert annotation & 2020--2025 \\
+Grassland & 782 & 234 & CLC + expert & 2020--2025 \\
+Wetland & 534 & 187 & Expert annotation & 2020--2025 \\
+Mangrove & 412 & 156 & GMW + expert & 2020--2025 \\
+Coral Reef (coastal) & 287 & 89 & Allen Coral Atlas & 2020--2025 \\
+Tundra & 198 & 67 & Expert annotation & 2021--2025 \\
+Desert Margin & 345 & 123 & Expert annotation & 2020--2025 \\
+Montane & 467 & 178 & Expert annotation & 2020--2025 \\
+Agricultural Frontier & 1,834 & 892 & MapBiomas + expert & 2019--2025 \\
+\midrule
+\textbf{Total} & 11,470 & 4,526 & & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================
+% 4. Habitat Fragmentation Index
+% ============================================================

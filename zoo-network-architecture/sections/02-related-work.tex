@@ -1,0 +1,33 @@
+\section{Related Work}
+
+
+\subsection{Decentralized Machine Learning}
+
+Prior efforts toward decentralized ML include:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Federated Learning (FL)} \cite{mcmahan2017federated}: Trains models across devices without centralizing data. However, coordination typically remains centralized (e.g., Google's FL infrastructure).
+\item \textbf{Blockchain-based FL} \cite{kim2019blockchained}: Uses blockchain for coordination but lacks AI-specific primitives (experience management, context optimization).
+\item \textbf{Ocean Protocol / SingularityNet} \cite{ocean2021whitepaper,singularitynet2021whitepaper}: Focus on data marketplaces and AI service trading but do not address training optimization or semantic knowledge curation.
+\item \textbf{Bittensor} \cite{bittensor2021whitepaper}: Incentivizes model training via proof-of-intelligence. Zoo complements this by adding semantic experiences and frozen-weight optimization.
+\end{itemize}
+
+\subsection{Efficient Fine-Tuning}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{LoRA/QLoRA} \cite{hu2021lora,dettmers2023qlora}: Reduce fine-tuning costs via low-rank adaptation. Still requires gradient updates and GPU clusters.
+\item \textbf{RLHF} \cite{ouyang2022training}: Reinforcement learning from human feedback. PPO-based approaches are sample-inefficient and computationally expensive.
+\item \textbf{DPO/IPO} \cite{rafailov2023dpo}: Direct preference optimization bypasses reward models but still updates parameters.
+\item \textbf{Training-Free GRPO} \cite{tencent2025grpo}: Our work builds directly on this, extending it with decentralized governance and cryptographic verification.
+\end{itemize}
+
+\subsection{Blockchain AI Infrastructure}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Akash/Render Network} \cite{akash2021whitepaper}: Decentralized compute marketplaces but lack AI-specific orchestration.
+\item \textbf{Hanzo Network} \cite{hanzo2025paper}: Provides the L1 compute layer on which Zoo is built. Hanzo handles consensus, GPU allocation, and base infrastructure.
+\item \textbf{Lux Blockchain} \cite{lux2025whitepaper}: L0 multi-consensus layer with post-quantum cryptography. Zoo inherits security from Lux.
+\end{itemize}
+
+Zoo uniquely combines semantic optimization, cryptographic auditability, and economic incentives into a cohesive L2 stack.
+

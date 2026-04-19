@@ -1,0 +1,21 @@
+\section{Empirical Evaluation}
+
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Signature Scheme} & \textbf{Verify ($\mu$s)} & \textbf{Tx Size (B)} & \textbf{TPS (GPU)} \\
+\midrule
+ECDSA (secp256k1) & 120 & 245 & 8,300 \\
+\MLDSA{}-65 (CPU) & 250 & 3,554 & 4,000 \\
+\MLDSA{}-65 (GPU) & 35 & 3,554 & 6,200 \\
+Hybrid ECDSA+\MLDSA{} (GPU) & 48 & 3,619 & 5,800 \\
+\bottomrule
+\end{tabular}
+\caption{Transaction throughput on Zoo testnet}
+\label{tab:tx-throughput}
+\end{table}
+
+GPU-accelerated \MLDSA{} achieves 75\% of classical ECDSA throughput with full quantum resistance. Hybrid mode adds 6\% overhead. Storage growth (14x per transaction vs ECDSA) is mitigated by signature pruning after finality and separate witness storage.
+

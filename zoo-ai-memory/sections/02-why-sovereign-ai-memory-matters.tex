@@ -1,0 +1,26 @@
+\section{Why Sovereign AI Memory Matters}
+
+\label{sec:why}
+%----------------------------------------------------------------------
+
+\subsection{Persistence Across Sessions}
+
+Long-running agent tasks---multi-day research projects, ongoing code refactoring, iterative design work---require memory that outlives individual inference calls. Current systems approximate persistence through conversation logs, but these degrade rapidly: a 200k-token conversation history is neither searchable nor structured, and exceeding the context window forces lossy summarization.
+
+A sovereign memory system treats session boundaries as irrelevant. The capsule persists on-chain; the agent attaches to it at session start and detaches at session end. No information is lost.
+
+\subsection{Privacy From Providers}
+
+When an agent processes medical records, legal documents, or proprietary code, the memory it forms is as sensitive as the source material. Provider-controlled memory creates an untenable situation: the user must trust the provider not to inspect, sell, or leak derived knowledge.
+
+Sovereign memory eliminates this trust requirement. The capsule is encrypted with keys the provider never sees. The provider runs inference; the agent manages its own state.
+
+\subsection{Portability Across Models}
+
+Model capability evolves rapidly. Users should be free to migrate from one model to another without losing accumulated context. Sovereign memory, stored in a model-agnostic format and encrypted with user-controlled keys, makes migration a key-management operation rather than a data-migration project.
+
+\subsection{Agent Autonomy}
+
+Autonomous agents---those operating with delegated authority over wallets, APIs, and infrastructure---need memory they control. An Agent NFT \cite{zoo-agent-nft} that cannot remember its own transaction history, learned preferences, or accumulated expertise is not autonomous in any meaningful sense. Memory Capsules provide the state layer that Agent NFTs require.
+
+%----------------------------------------------------------------------

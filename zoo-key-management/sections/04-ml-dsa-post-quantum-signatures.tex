@@ -1,0 +1,40 @@
+\section{ML-DSA: Post-Quantum Signatures}
+
+
+\subsection{FIPS 204 Overview}
+
+ML-DSA is a lattice-based signature scheme built on the Module Learning With Errors and Module Short Integer Solution (MSIS) problems.
+
+\begin{definition}[ML-DSA Parameters]
+\begin{itemize}
+\item \textbf{ML-DSA-65}: NIST security level 3. Default for transaction signing.
+\item \textbf{ML-DSA-87}: NIST security level 5. Required for long-term credential signing and governance actions.
+\end{itemize}
+\end{definition}
+
+\subsection{Signature Sizes}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Scheme} & \textbf{Public Key} & \textbf{Signature} & \textbf{Security Level} \\
+\midrule
+ML-DSA-65 & 1,952 bytes & 3,293 bytes & 3 \\
+ML-DSA-87 & 2,592 bytes & 4,595 bytes & 5 \\
+Ed25519 & 32 bytes & 64 bytes & $\approx$1 (classical) \\
+BLS12-381 & 48 bytes & 96 bytes & $\approx$1 (classical) \\
+\bottomrule
+\end{tabular}
+\caption{Signature sizes (ML-DSA vs classical)}
+\label{tab:dsa-sizes}
+\end{table}
+
+\subsection{Threshold ML-DSA}
+
+Threshold ML-DSA signing uses a commit-reveal structure: each signer $v_i$ commits $w_i = A \cdot y_i$ (masking vector), the challenge $c = H(\text{msg} \| w_1 \| \cdots \| w_t)$ is computed after all commitments, each $v_i$ responds with $z_i = y_i + c \cdot s_i$ (with rejection sampling), and \KeyVM{} aggregates $z = \sum_{i \in S} \lambda_i \cdot z_i$.
+
+\begin{theorem}[Threshold ML-DSA Security]
+Under MLWE and MSIS hardness, the threshold ML-DSA scheme is EUF-CMA secure when the adversary controls fewer than $t$ signers.
+\end{theorem}
+

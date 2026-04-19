@@ -1,0 +1,89 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+
+% ============================================================
+% Preamble
+% ============================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,fit}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{fancyhdr}
+\usepackage{authblk}
+\usepackage{abstract}
+\usepackage{natbib}
+\bibliographystyle{plainnat}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    citecolor=green!50!black,
+    urlcolor=blue!80!black
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Antje Worring, Zach Kelling}
+\lhead{Satellite-Based Ecological Monitoring}
+\rfoot{Page \thepage}
+
+% ============================================================
+\title{\textbf{Satellite-Based Ecological Monitoring: Deep Learning for Land Use Change Detection} \\[0.5em]
+\large Remote Sensing with Temporal CNNs for Deforestation Tracking and Habitat Fragmentation Analysis}
+
+\author[1]{Antje Worring, Zach Kelling}
+\affil[1]{Antje Worring, Zach Kelling, Research Division \\ \texttt{research@zoo.ngo}}
+
+\date{February 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+% ============================================================
+% Abstract
+% ============================================================
+\begin{abstract}
+\noindent
+Land use change---particularly deforestation, agricultural expansion, and urban encroachment---is the primary driver of biodiversity loss, yet monitoring these changes at global scale with sufficient spatial and temporal resolution for conservation intervention remains a formidable challenge.
+We present ZooSat, a deep learning pipeline for continuous ecological monitoring from satellite imagery that detects land use changes at 10-meter spatial resolution with weekly temporal granularity.
+ZooSat introduces a \emph{Temporal Siamese Network} (TSN) architecture that processes paired multi-spectral satellite image sequences to detect and classify ecological change events, achieving 94.2\% change detection accuracy and 87.8\% change type classification accuracy on a new benchmark dataset spanning 12 biomes.
+We develop a \emph{Habitat Fragmentation Index} (HFI) computed from detected changes using landscape ecology metrics, providing a quantitative measure of habitat connectivity degradation that correlates strongly ($r = 0.87$) with field-measured biodiversity loss.
+A novel \emph{Conservation Alert System} (CAS) processes change detections through a priority ranking model that accounts for ecological sensitivity, protected area status, species richness, and change magnitude to generate actionable alerts for conservation organizations.
+Over 18 months of operational deployment covering 2.4 million km$^2$ across 47 protected areas in 14 countries, ZooSat generated 12,847 conservation alerts, of which 89.3\% were validated as genuine ecological threats.
+The system detected 234 deforestation events an average of 11.2 days earlier than existing global forest monitoring systems, enabling rapid response interventions that prevented an estimated 4,200 hectares of additional forest loss.
+\end{abstract}
+
+\vspace{0.5em}
+\noindent\textbf{Keywords:} remote sensing, change detection, deforestation, habitat fragmentation, deep learning, conservation monitoring
+
+% ============================================================
+% 1. Introduction
+% ============================================================
+
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-temporal-siamese-network}
+\input{sections/04-habitat-fragmentation-index}
+\input{sections/05-conservation-alert-system}
+\input{sections/06-evaluation}
+\input{sections/07-system-architecture}
+\input{sections/08-discussion}
+\input{sections/99-conclusion}
+
+\end{document}

@@ -1,0 +1,46 @@
+\section{Conclusion}
+
+
+\KChain{} demonstrates that distributed post-quantum key management is practical at blockchain consensus timescales. By replacing centralized KMS with validator-distributed threshold shares and NIST-standardized post-quantum primitives, Zoo Network achieves:
+
+\begin{itemize}
+\item \textbf{No single point of compromise}: Key material never exists in complete form on any node.
+\item \textbf{Quantum resistance}: ML-KEM and ML-DSA provide security against both classical and quantum adversaries.
+\item \textbf{Performance}: GPU NTT acceleration makes post-quantum operations practical for real-time consensus.
+\item \textbf{Formal guarantees}: Lean 4 proofs establish correctness of all cryptographic primitives and their threshold adaptations.
+\item \textbf{Secure implementation}: Constant-time operations, locked memory, and cryptographic clearing prevent side-channel attacks.
+\end{itemize}
+
+Future work includes integration of hybrid post-quantum TLS for validator communication, homomorphic encryption for computation on encrypted key shares, and hardware security module (HSM) integration for validators requiring additional physical security guarantees.
+
+\begin{thebibliography}{99}
+
+\bibitem{fips203}
+NIST, ``Module-Lattice-Based Key-Encapsulation Mechanism Standard (FIPS 203),'' 2024.
+
+\bibitem{fips204}
+NIST, ``Module-Lattice-Based Digital Signature Standard (FIPS 204),'' 2024.
+
+\bibitem{fips205}
+NIST, ``Stateless Hash-Based Digital Signature Standard (FIPS 205),'' 2024.
+
+\bibitem{shamir1979share}
+A. Shamir, ``How to Share a Secret,'' \textit{Communications of the ACM}, vol. 22, no. 11, 1979.
+
+\bibitem{feldman1987practical}
+P. Feldman, ``A Practical Scheme for Non-interactive Verifiable Secret Sharing,'' in \textit{FOCS}, 1987.
+
+\bibitem{zoo-threshold-signatures}
+Z. Kelling, ``Threshold Signatures on Zoo Network,'' Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-identity-chain}
+Z. Kelling, ``Decentralized Identity on Zoo Network: Chain-Native DIDs and Verifiable Credentials via I-Chain,'' Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-pq-crypto}
+Z. Kelling, ``Post-Quantum Cryptography in Zoo Network,'' Zoo Labs Foundation, 2026.
+
+\bibitem{lux-pq-crypto-suite}
+Lux Industries, ``Lux Post-Quantum Cryptography Suite,'' 2025.
+
+\end{thebibliography}
+

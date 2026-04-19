@@ -1,0 +1,93 @@
+\section{Curation Protocol}
+
+\label{sec:curation}
+
+\subsection{Decentralized Autonomous Organization (DAO)}
+
+Experience quality is maintained via \Zoo{} Network \DAO{}, where KEEPER token holders vote on proposed changes.
+
+\subsubsection{Governance Token}
+
+\textbf{KEEPER Token}:
+\begin{itemize}
+    \item Supply: 1,000,000,000 (fixed)
+    \item Distribution: 40\% community (data contributors), 30\% foundation, 20\% team, 10\% treasury
+    \item Utility: Governance voting, experience curation, compute resource allocation
+\end{itemize}
+
+\subsubsection{Voting Mechanism}
+
+\textbf{Standard Voting}:
+\begin{equation}
+\text{VotingPower}(\text{voter}) = \text{KEEPER}_{\text{balance}}(\text{voter})
+\end{equation}
+
+\textbf{Quadratic Voting} (optional):
+\begin{equation}
+\text{VotingPower}_{\text{quad}}(\text{voter}) = \sqrt{\text{KEEPER}_{\text{balance}}(\text{voter})}
+\end{equation}
+
+Quadratic voting mitigates plutocracy by reducing marginal influence of large holders.
+
+\subsubsection{Proposal Lifecycle}
+
+\begin{enumerate}
+    \item \textbf{Submission}: Any KEEPER holder can propose experience Add/Modify/Delete
+    \item \textbf{Discussion}: 3-day community debate period
+    \item \textbf{Voting}: 7-day voting window (quorum: 10\% of supply)
+    \item \textbf{Execution}: If approved (66\% threshold), update registry
+    \item \textbf{Archival}: Record decision on-chain and Arweave
+\end{enumerate}
+
+\subsection{Reputation System}
+
+To incentivize high-quality contributions, we implement a reputation score:
+
+\begin{equation}
+R(\text{contributor}) = \sum_{e \in \mathcal{E}_{\text{contributor}}} w(e)
+\end{equation}
+
+where $w(e)$ is experience weight:
+
+\begin{equation}
+w(e) = e.\text{conf} \cdot \log(1 + e.\text{usage\_count}) \cdot \frac{\text{upvotes}}{\text{upvotes} + \text{downvotes}}
+\end{equation}
+
+\textbf{Benefits of High Reputation}:
+\begin{itemize}
+    \item Priority in proposal queue
+    \item Reduced voting quorum (8\% instead of 10\%)
+    \item Additional KEEPER rewards (airdropped quarterly)
+\end{itemize}
+
+\subsection{Byzantine Resistance}
+
+\begin{definition}[Byzantine Fault Tolerance]
+The Experience Ledger is $(f, n)$-Byzantine resistant if it tolerates up to $f$ malicious nodes among $n$ participants while guaranteeing:
+\begin{enumerate}
+    \item \textbf{Safety}: No invalid experiences enter $\mathcal{E}$
+    \item \textbf{Liveness}: Valid experiences are eventually accepted
+\end{enumerate}
+\end{definition}
+
+\begin{theorem}[Byzantine Robustness]
+Under the assumption that at least $2f + 1$ of $n$ voters are honest, the \DAO{} voting protocol ensures safety and liveness.
+\end{theorem}
+
+\begin{proof}
+\textbf{Safety}: For an invalid experience $e'$ to be accepted, it requires $> 66\%$ votes. With $2f + 1$ honest voters out of $n = 3f + 1$, at most $f$ malicious voters can collude. Thus maximum malicious votes is $f/(3f+1) < 33\%$, insufficient to approve $e'$.
+
+\textbf{Liveness}: A valid experience $e$ requires $\geq 66\%$ votes. Honest voters ($2f+1$) represent $(2f+1)/(3f+1) \approx 67\% > 66\%$, sufficient to approve $e$ even with all malicious voters abstaining.
+\end{proof}
+
+\subsection{Sybil Resistance}
+
+To prevent sock-puppet attacks:
+
+\begin{enumerate}
+    \item \textbf{Stake Requirement}: Minimum 1000 KEEPER to propose (economic barrier)
+    \item \textbf{Identity Verification}: Optional Gitcoin Passport integration (reputation score)
+    \item \textbf{Rate Limiting}: Max 3 proposals per address per week
+    \item \textbf{Quadratic Voting}: Reduces impact of splitting tokens across addresses
+\end{enumerate}
+

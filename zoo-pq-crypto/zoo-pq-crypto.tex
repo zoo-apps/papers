@@ -1,0 +1,79 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{xcolor}
+
+\pgfplotsset{compat=1.18}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\Corona}{\textsc{Corona}}
+\newcommand{\MLKEM}{\textsc{ML-KEM}}
+\newcommand{\MLDSA}{\textsc{ML-DSA}}
+\newcommand{\SLHDSA}{\textsc{SLH-DSA}}
+\newcommand{\KChain}{\textsc{K-Chain}}
+\newcommand{\QChain}{\textsc{Q-Chain}}
+
+% Title information
+\title{\textbf{Post-Quantum Cryptography Suite for Zoo Network: ML-KEM, ML-DSA, SLH-DSA, and Corona}\\
+\large NIST FIPS 203/204/205 Integration with Lattice-Based Threshold Signatures}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{October 2024}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present the post-quantum cryptography suite deployed across Zoo Network, implementing all three NIST post-quantum standards---\MLKEM{} (FIPS~203), \MLDSA{} (FIPS~204), and \SLHDSA{} (FIPS~205)---alongside the \Corona{} lattice-based threshold signature scheme. Each primitive serves a distinct role: \KChain{} uses \MLKEM{} for key encapsulation and \MLDSA{} for transaction signatures; \QChain{} uses \Corona{} for threshold validator operations; and the consensus layer uses hybrid BLS12-381 + \Corona{} for dual-path finality. \SLHDSA{} provides hash-based stateless signatures for long-term key certification. GPU-accelerated Number Theoretic Transform (NTT) achieves 8x throughput over CPU. Hybrid classical+post-quantum composition ensures backward compatibility. All implementations are formally verified in Lean~4 (Crypto/MLKEM.lean, Crypto/MLDSA.lean, Crypto/SLHDSA.lean, Crypto/Corona.lean, Crypto/Hybrid.lean).
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\input{sections/01-introduction}
+\input{sections/02-ml-kem-key-encapsulation-fips-203}
+\input{sections/03-ml-dsa-digital-signatures-fips-204}
+\input{sections/04-slh-dsa-hash-based-signatures-fips-205}
+\input{sections/05-corona-post-quantum-threshold-signatur}
+\input{sections/06-hybrid-classical-post-quantum-compositio}
+\input{sections/07-gpu-ntt-acceleration}
+\input{sections/08-chain-specific-deployment}
+\input{sections/09-formal-verification}
+\input{sections/10-empirical-evaluation}
+\input{sections/11-cross-references-and-related-work}
+\input{sections/99-conclusion}
+
+\end{document}

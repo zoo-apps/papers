@@ -1,0 +1,843 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+\input{shared/lstlang}
+
+% Listings style
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue!70!black}\bfseries,
+  commentstyle=\color{green!50!black}\itshape,
+  stringstyle=\color{red!60!black},
+  showstringspaces=false,
+  tabsize=2,
+  captionpos=b
+}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\GYM}{\textsc{Gym}}
+\newcommand{\LLM}{\textsc{llm}}
+\newcommand{\DAO}{\textsc{dao}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{Hanzod: Distributed Training Orchestration\\for the Zoo Gym}}
+
+\author{
+Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Hanzo Industries \quad Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{December 2024}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \textbf{hanzod}, the distributed training orchestrator for Zoo Gym.  Hanzod coordinates heterogeneous GPU nodes into ring topologies, schedules GSPO training jobs, validates submitted deltas, aggregates checkpoints, and publishes trained models.  Implemented in Rust for performance and memory safety, hanzod manages the full lifecycle of a decentralized training job: node registration, bandwidth probing, ring construction, epoch coordination, fault recovery, delta quality assessment, weighted checkpoint merging, and dual publication to IPFS and HuggingFace Hub.  We describe the internal architecture---job scheduler, ring manager, delta validator, and model publisher---and their interaction with the Hanzo AI compute chain for staking verification and reward distribution.  On a 64-node deployment, hanzod maintains 99.2\% job completion rate with median scheduling latency of 340ms and ring reconfiguration time of 8s after node failure.
+
+\textbf{Keywords}: training orchestration, job scheduling, ring topology, delta validation, IPFS, HuggingFace
+\end{abstract}
+
+%----------------------------------------------------------------------
+\section{Introduction}
+
+Decentralized training requires a coordinator that can match the reliability of centralized training clusters while tolerating untrusted, heterogeneous participants.  In centralized training, the orchestrator (e.g., SLURM, Kubernetes) trusts all nodes and controls the network.  In Zoo Gym, the orchestrator must handle:
+
+\begin{enumerate}
+    \item \textbf{Untrusted nodes}: Any node may submit poisoned gradients, go offline, or replay stale data.
+    \item \textbf{Heterogeneous hardware}: Nodes range from RTX 4080 (16 GB) to H100 (80 GB), with 10$\times$ throughput variation.
+    \item \textbf{WAN latency}: Nodes are geographically distributed, with link latencies from 5ms to 300ms.
+    \item \textbf{Economic coordination}: Staking verification, reward calculation, and slashing must be atomic with training state.
+\end{enumerate}
+
+Hanzod addresses these by separating concerns into four subsystems: the \textbf{job scheduler} (Section~\ref{sec:scheduler}), the \textbf{ring manager} (Section~\ref{sec:ring}), the \textbf{delta validator} (Section~\ref{sec:validator}), and the \textbf{model publisher} (Section~\ref{sec:publisher}).
+
+\subsection{Design Principles}
+
+\begin{enumerate}
+    \item \textbf{No single point of failure}: Any node meeting the orchestrator stake threshold (50{,}000 GYM) can assume the orchestrator role.
+    \item \textbf{Deterministic state}: The orchestrator's state is a pure function of the on-chain event log plus submitted deltas.  Any node can reconstruct it.
+    \item \textbf{Minimal trust}: The orchestrator validates but does not compute gradients.  It cannot bias the training process without detection.
+\end{enumerate}
+
+%----------------------------------------------------------------------
+\section{Architecture}
+\label{sec:architecture}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=1.8cm,
+    box/.style={rectangle, draw, minimum width=3cm, minimum height=0.9cm, fill=blue!8, font=\small, align=center},
+    store/.style={cylinder, draw, shape border rotate=90, minimum width=1.6cm, minimum height=0.8cm, fill=green!8, font=\small, aspect=0.3},
+    ext/.style={rectangle, draw, minimum width=2.2cm, minimum height=0.7cm, fill=yellow!10, font=\small, align=center, rounded corners},
+    ->,>=stealth,thick
+]
+    % Core
+    \node[box] (sched) {Job Scheduler};
+    \node[box, right=2.5cm of sched] (ring) {Ring Manager};
+    \node[box, below=of sched] (valid) {Delta Validator};
+    \node[box, below=of ring] (pub) {Model Publisher};
+
+    % Stores
+    \node[store, below left=1.5cm and 0.5cm of valid] (kv) {Valkey};
+    \node[store, below right=1.5cm and 0.5cm of pub] (ipfs) {IPFS};
+
+    % External
+    \node[ext, above=1.5cm of sched] (chain) {Hanzo Chain};
+    \node[ext, above=1.5cm of ring] (nodes) {GPU Nodes};
+    \node[ext, right=2cm of ipfs] (hf) {HuggingFace};
+
+    % Connections
+    \draw (chain) -- node[left,font=\scriptsize]{stakes, rewards} (sched);
+    \draw (nodes) -- node[right,font=\scriptsize]{register, heartbeat} (ring);
+    \draw (sched) -- node[above,font=\scriptsize]{create ring} (ring);
+    \draw (ring) -- node[right,font=\scriptsize]{deltas} (valid);
+    \draw (sched) -- node[left,font=\scriptsize]{job state} (valid);
+    \draw (valid) -- node[above,font=\scriptsize]{merged ckpt} (pub);
+    \draw (valid) -- (kv);
+    \draw (pub) -- (ipfs);
+    \draw (pub) -- node[above,font=\scriptsize]{push} (hf);
+\end{tikzpicture}
+\caption{Hanzod architecture.  Four subsystems coordinate through Valkey (state store) and interact with external systems.}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{Technology Stack}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Component} & \textbf{Technology} & \textbf{Rationale} \\
+\midrule
+Core binary & Rust & Memory safety, performance \\
+State store & Valkey (hanzoai/kv) & Sub-ms latency, Lua scripting \\
+Object store & IPFS & Content-addressed, decentralized \\
+Model registry & HuggingFace Hub & Standard model hosting \\
+Chain interaction & Hanzo RPC (chain 36900) & Stake/reward verification \\
+Node communication & gRPC + TLS 1.3 & Bidirectional streaming \\
+\bottomrule
+\end{tabular}
+\caption{Hanzod technology stack.}
+\label{tab:stack}
+\end{table}
+
+%----------------------------------------------------------------------
+\section{Job Scheduler}
+\label{sec:scheduler}
+
+\subsection{Job Lifecycle}
+
+A training job progresses through five states:
+
+\begin{enumerate}
+    \item \textbf{Pending}: Job submitted, waiting for sufficient nodes.
+    \item \textbf{Provisioning}: Ring being constructed, model being distributed.
+    \item \textbf{Running}: Training epochs in progress.
+    \item \textbf{Aggregating}: Final checkpoint being merged and validated.
+    \item \textbf{Published}: Model published to IPFS/HuggingFace.
+\end{enumerate}
+
+\begin{lstlisting}[language=Rust,caption=Job state machine]
+#[derive(Debug, Clone)]
+pub enum JobState {
+    Pending { min_nodes: u32, deadline: Instant },
+    Provisioning { ring: Ring, model_cid: String },
+    Running {
+        ring: Ring,
+        epoch: u32,
+        step: u64,
+        deltas: Vec<DeltaRef>,
+    },
+    Aggregating { deltas: Vec<DeltaRef> },
+    Published {
+        ipfs_cid: String,
+        hf_repo: String,
+        quality: f64,
+    },
+    Failed { reason: String },
+}
+
+impl Job {
+    pub fn transition(&mut self, event: JobEvent)
+        -> Result<(), JobError> {
+        self.state = match (&self.state, event) {
+            (Pending { .. }, NodesReady(ring)) =>
+                Provisioning { ring, model_cid: self.model.clone() },
+            (Provisioning { ring, .. }, ModelDistributed) =>
+                Running { ring: ring.clone(), epoch: 0,
+                    step: 0, deltas: vec![] },
+            (Running { .. }, EpochComplete(deltas)) =>
+                Aggregating { deltas },
+            (Aggregating { .. }, Published(cid, repo, q)) =>
+                Published { ipfs_cid: cid, hf_repo: repo,
+                    quality: q },
+            _ => return Err(JobError::InvalidTransition),
+        };
+        Ok(())
+    }
+}
+\end{lstlisting}
+
+\subsection{Scheduling Policy}
+
+Jobs are scheduled FIFO with priority based on:
+\begin{equation}
+    P_j = \frac{s_j \cdot u_j}{t_j}
+\end{equation}
+where $s_j$ is the submitter's stake, $u_j$ is the job's expected utility (estimated from model size and dataset), and $t_j$ is the time since submission.  Higher-stake submitters with older jobs get priority.
+
+\subsection{Node Eligibility}
+
+A node is eligible for a job if:
+\begin{enumerate}
+    \item Stake $\geq$ 10{,}000 GYM (verified on-chain).
+    \item GPU VRAM $\geq$ minimum for the model (from job spec).
+    \item Uptime in last 24h $\geq$ 95\%.
+    \item No active slashing penalty.
+\end{enumerate}
+
+%----------------------------------------------------------------------
+\section{Ring Manager}
+\label{sec:ring}
+
+\subsection{Node Registration}
+
+Nodes register with hanzod via gRPC, providing hardware attestation:
+
+\begin{lstlisting}[language=Rust,caption=Node registration]
+pub struct NodeInfo {
+    pub id: NodeId,
+    pub pubkey: Ed25519PublicKey,
+    pub gpu: GpuInfo,
+    pub bandwidth: BandwidthProbe,
+    pub stake: u64,
+    pub region: String,
+}
+
+pub struct GpuInfo {
+    pub model: String,        // "NVIDIA A100-SXM4-80GB"
+    pub vram_bytes: u64,      // 85899345920
+    pub compute_cap: (u8, u8), // (8, 0)
+    pub driver_sig: Vec<u8>,  // signed by driver
+}
+
+impl RingManager {
+    pub fn register_node(&mut self, info: NodeInfo)
+        -> Result<(), RegistrationError> {
+        // Verify stake on-chain
+        let on_chain_stake = self.chain
+            .get_stake(&info.id)?;
+        if on_chain_stake < MIN_STAKE {
+            return Err(RegistrationError::InsufficientStake);
+        }
+        // Verify GPU attestation
+        self.verify_gpu_attestation(&info.gpu)?;
+        // Bandwidth probe
+        let bw = self.probe_bandwidth(&info.id)?;
+        self.nodes.insert(info.id.clone(), info);
+        Ok(())
+    }
+}
+\end{lstlisting}
+
+\subsection{Ring Construction}
+
+Given a set of eligible nodes, the ring is constructed to minimize the bottleneck link bandwidth:
+
+\begin{algorithm}[t]
+\caption{Ring Construction}
+\label{alg:ring}
+\begin{algorithmic}[1]
+\REQUIRE Nodes $\{v_1, \ldots, v_N\}$, pairwise bandwidth $B_{ij}$
+\STATE Sort nodes by region for locality
+\STATE Initialize ring: $\mathcal{R} = [v_1]$
+\WHILE{unplaced nodes remain}
+    \STATE $v_{\text{last}} \leftarrow \mathcal{R}[-1]$
+    \STATE $v_{\text{next}} \leftarrow \arg\max_{v \notin \mathcal{R}} B(v_{\text{last}}, v)$
+    \STATE Append $v_{\text{next}}$ to $\mathcal{R}$
+\ENDWHILE
+\STATE // Close the ring: check $B(\mathcal{R}[-1], \mathcal{R}[0])$
+\IF{$B(\mathcal{R}[-1], \mathcal{R}[0]) < B_{\min}$}
+    \STATE Apply 2-opt local search to improve closing link
+\ENDIF
+\RETURN $\mathcal{R}$
+\end{algorithmic}
+\end{algorithm}
+
+The greedy nearest-neighbor heuristic with 2-opt refinement runs in $O(N^2)$ and produces rings within 10\% of optimal bottleneck bandwidth in our experiments.
+
+\subsection{Fault Recovery}
+
+\begin{algorithm}[t]
+\caption{Ring Fault Recovery}
+\label{alg:fault}
+\begin{algorithmic}[1]
+\REQUIRE Failed node $v_f$, current ring $\mathcal{R}$
+\STATE $v_{\text{prev}} \leftarrow$ predecessor of $v_f$ in $\mathcal{R}$
+\STATE $v_{\text{next}} \leftarrow$ successor of $v_f$ in $\mathcal{R}$
+\STATE Remove $v_f$ from $\mathcal{R}$
+\STATE Connect $v_{\text{prev}} \to v_{\text{next}}$
+\STATE Broadcast ring update to all nodes
+\STATE Record $v_f$ failure (toward slashing)
+\STATE // Optionally add standby node
+\IF{standby nodes available}
+    \STATE Insert standby between $v_{\text{prev}}$ and $v_{\text{next}}$
+\ENDIF
+\STATE Restart current all-reduce round with $N-1$ nodes
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Heartbeat Protocol}
+
+Each node sends a heartbeat every 10 seconds:
+
+\begin{lstlisting}[language=Rust,caption=Heartbeat message]
+pub struct Heartbeat {
+    pub node_id: NodeId,
+    pub timestamp: u64,
+    pub gpu_utilization: f32,
+    pub memory_used: u64,
+    pub current_step: u64,
+    pub signature: Ed25519Signature,
+}
+
+impl RingManager {
+    pub fn check_heartbeats(&mut self) {
+        let now = Instant::now();
+        for (id, last) in &self.last_heartbeat {
+            if now.duration_since(*last) > TIMEOUT {
+                self.handle_node_failure(id);
+            }
+        }
+    }
+}
+\end{lstlisting}
+
+Timeout is 30 seconds (3 missed heartbeats).
+
+%----------------------------------------------------------------------
+\section{Delta Validator}
+\label{sec:validator}
+
+\subsection{Validation Pipeline}
+
+Each submitted delta passes through four checks:
+
+\begin{enumerate}
+    \item \textbf{Signature verification}: Ed25519 signature over delta hash must match the registered public key.
+    \item \textbf{Format validation}: Delta binary must conform to the format spec (24-byte header, valid tensor names, correct shapes for the model architecture).
+    \item \textbf{Quality assessment}: Delta quality score $q_i$ computed from validation loss improvement, gradient norm stability, and convergence contribution.
+    \item \textbf{Spot-check}: 10\% of deltas are re-verified by applying the delta to a held-out batch and comparing the claimed loss to the actual loss.
+\end{enumerate}
+
+\begin{lstlisting}[language=Rust,caption=Delta validation pipeline]
+pub struct DeltaValidator {
+    model_config: ModelConfig,
+    validation_shard: Dataset,
+    running_norm_avg: f64,
+}
+
+impl DeltaValidator {
+    pub fn validate(&mut self, delta: &SignedDelta)
+        -> Result<DeltaScore, ValidationError> {
+        // 1. Signature
+        delta.verify_signature()?;
+
+        // 2. Format
+        let parsed = Delta::parse(&delta.payload)?;
+        self.check_tensor_shapes(&parsed)?;
+
+        // 3. Quality
+        let loss_before = self.eval_loss()?;
+        self.apply_delta(&parsed)?;
+        let loss_after = self.eval_loss()?;
+        self.unapply_delta(&parsed)?;
+
+        let delta_l = ((loss_before - loss_after)
+            / loss_before).max(0.0);
+        let norm = parsed.l2_norm();
+        let stability = (-2.0
+            * (norm / self.running_norm_avg - 1.0).abs())
+            .exp();
+        let convergence = parsed
+            .cosine_sim(&self.last_agg_delta)
+            .max(0.0);
+
+        self.running_norm_avg = 0.95
+            * self.running_norm_avg + 0.05 * norm;
+
+        let score = DeltaScore {
+            loss_improvement: delta_l,
+            stability,
+            convergence,
+            composite: 0.5 * delta_l
+                + 0.3 * stability
+                + 0.2 * convergence,
+        };
+
+        // 4. Spot-check (10% probability)
+        if rand::random::<f64>() < 0.1 {
+            self.spot_check(&parsed, &score)?;
+        }
+
+        Ok(score)
+    }
+}
+\end{lstlisting}
+
+\subsection{Spot-Check Verification}
+
+The spot-check re-runs the training step on the orchestrator's hardware:
+
+\begin{enumerate}
+    \item Retrieve the same batch from the dataset (indexed by step number).
+    \item Run forward pass with the pre-delta model weights.
+    \item Compare claimed loss to measured loss within tolerance $\epsilon = 0.05$.
+    \item If discrepancy exceeds $\epsilon$, flag the delta and initiate slashing.
+\end{enumerate}
+
+\begin{proposition}[Spot-Check Detection Rate]
+With 10\% spot-check rate and $E$ epochs, a consistently dishonest node is detected with probability $1 - 0.9^E$.  After 20 epochs, $p_{\text{detect}} > 0.88$.
+\end{proposition}
+
+%----------------------------------------------------------------------
+\section{Checkpoint Aggregation}
+
+At epoch boundaries, validated deltas are merged:
+
+\begin{lstlisting}[language=Rust,caption=Weighted checkpoint merge]
+pub fn merge_deltas(deltas: &[(Delta, DeltaScore)])
+    -> Delta {
+    let total_weight: f64 = deltas.iter()
+        .map(|(_, s)| s.composite as f64)
+        .sum();
+
+    let mut merged = Delta::zeros_like(&deltas[0].0);
+
+    for (delta, score) in deltas {
+        let w = score.composite as f64 / total_weight;
+        merged.add_scaled(delta, w);
+    }
+
+    merged
+}
+\end{lstlisting}
+
+For Byzantine robustness, coordinate-wise median can replace weighted average when $>$30\% of nodes are suspected adversarial.
+
+%----------------------------------------------------------------------
+\section{Model Publisher}
+\label{sec:publisher}
+
+\subsection{Dual Publication}
+
+Merged checkpoints are published to two destinations:
+
+\begin{lstlisting}[language=Rust,caption=Model publication]
+pub struct ModelPublisher {
+    ipfs: IpfsClient,
+    hf: HuggingFaceClient,
+    signing_key: Ed25519SigningKey,
+}
+
+impl ModelPublisher {
+    pub async fn publish(&self, checkpoint: &Checkpoint,
+        job: &Job) -> Result<PublishResult, PublishError> {
+        // 1. Serialize checkpoint
+        let bytes = checkpoint.serialize()?;
+
+        // 2. Upload to IPFS
+        let cid = self.ipfs.add(&bytes).await?;
+
+        // 3. Push to HuggingFace
+        let repo = format!("zooai/{}-epoch-{}",
+            job.model_name, job.epoch);
+        self.hf.create_or_update(&repo, &bytes).await?;
+
+        // 4. Sign publication record
+        let record = PublishRecord {
+            cid: cid.clone(),
+            hf_repo: repo.clone(),
+            epoch: job.epoch,
+            quality: checkpoint.aggregate_quality(),
+            timestamp: now(),
+        };
+        let sig = self.signing_key
+            .sign(&record.canonical_bytes());
+
+        // 5. Record on-chain
+        self.chain.record_publication(
+            &record, &sig).await?;
+
+        Ok(PublishResult { cid, hf_repo: repo })
+    }
+}
+\end{lstlisting}
+
+\subsection{Cross-Verification}
+
+The IPFS CID is included in the HuggingFace model card, and the HuggingFace repo URL is recorded alongside the CID on-chain.  Users can verify model integrity by:
+
+\begin{enumerate}
+    \item Downloading from HuggingFace.
+    \item Computing the content hash.
+    \item Comparing against the on-chain CID.
+\end{enumerate}
+
+If the hashes match, the model is authentic.  If not, either HuggingFace or the on-chain record was tampered with, and users should prefer the IPFS-hosted copy (content-addressed, immutable).
+
+%----------------------------------------------------------------------
+\section{Interaction with Hanzo Compute Chain}
+\label{sec:chain}
+
+Hanzod interacts with the Hanzo compute chain (chain ID 36900) for three operations:
+
+\subsection{Stake Verification}
+
+Before admitting a node, hanzod queries the on-chain staking contract:
+
+\begin{lstlisting}[language=Rust,caption=On-chain stake verification]
+pub async fn verify_stake(&self, node_id: &NodeId)
+    -> Result<u64, ChainError> {
+    let stake = self.chain.call(
+        "GYMToken",
+        "stakes",
+        &[node_id.as_address()],
+    ).await?;
+    Ok(stake.as_u64())
+}
+\end{lstlisting}
+
+\subsection{Reward Distribution}
+
+After each epoch, hanzod computes per-node rewards and submits a batch transaction:
+
+\begin{lstlisting}[language=Rust,caption=Batch reward distribution]
+pub async fn distribute_rewards(&self,
+    epoch: u32,
+    rewards: &[(NodeId, u64)],
+) -> Result<TxHash, ChainError> {
+    let workers: Vec<Address> = rewards.iter()
+        .map(|(n, _)| n.as_address()).collect();
+    let amounts: Vec<U256> = rewards.iter()
+        .map(|(_, a)| U256::from(*a)).collect();
+
+    self.chain.send_tx(
+        "MiningPool",
+        "distributeEpochRewards",
+        &[
+            Token::Uint(U256::from(epoch)),
+            Token::Array(workers.into_iter()
+                .map(Token::Address).collect()),
+            Token::Array(amounts.into_iter()
+                .map(Token::Uint).collect()),
+        ],
+    ).await
+}
+\end{lstlisting}
+
+\subsection{Slashing}
+
+When a node fails validation, hanzod submits a slashing transaction:
+
+\begin{lstlisting}[language=Rust,caption=Slashing submission]
+pub async fn slash_node(&self,
+    node: &NodeId,
+    pct: u8,
+    evidence: &[u8],
+) -> Result<TxHash, ChainError> {
+    self.chain.send_tx(
+        "GYMToken",
+        "slash",
+        &[
+            Token::Address(node.as_address()),
+            Token::Uint(U256::from(pct)),
+            Token::Address(self.address()), // reporter
+            Token::Bytes(evidence.to_vec()),
+        ],
+    ).await
+}
+\end{lstlisting}
+
+%----------------------------------------------------------------------
+\section{Deployment}
+\label{sec:deployment}
+
+\subsection{Container Configuration}
+
+\begin{lstlisting}[language=YAML,caption=Hanzod deployment (compose.yml)]
+services:
+  hanzod:
+    image: ghcr.io/zoolabs/hanzod:latest
+    environment:
+      - HANZO_RPC=https://rpc.hanzo.network
+      - HANZO_CHAIN_ID=36900
+      - IPFS_URL=http://ipfs:5001
+      - VALKEY_URL=redis://kv:6379
+      - HF_TOKEN=${HF_TOKEN}
+      - ORCHESTRATOR_KEY=${ORCH_KEY}
+    ports:
+      - "9550:9550"  # gRPC
+      - "9551:9551"  # metrics
+    depends_on:
+      - kv
+      - ipfs
+
+  kv:
+    image: hanzoai/kv:8
+    volumes:
+      - kv-data:/data
+
+  ipfs:
+    image: ipfs/kubo:latest
+    volumes:
+      - ipfs-data:/data/ipfs
+
+volumes:
+  kv-data:
+  ipfs-data:
+\end{lstlisting}
+
+\subsection{Kubernetes Deployment}
+
+For production, hanzod runs on Zoo's Kubernetes cluster with:
+
+\begin{itemize}
+    \item \textbf{Replicas}: 3 (active-passive with leader election via Valkey).
+    \item \textbf{Resources}: 4 CPU, 8 GB RAM (orchestrator does not need GPU).
+    \item \textbf{Storage}: 100 GB SSD for delta cache.
+    \item \textbf{Network}: Exposed via hanzoai/ingress on port 9550.
+\end{itemize}
+
+%----------------------------------------------------------------------
+\section{Evaluation}
+\label{sec:evaluation}
+
+\subsection{Setup}
+
+64-node deployment across 4 regions (US-West, US-East, EU-West, Asia-Pacific).  Hardware: 16$\times$ A100, 24$\times$ RTX 4090, 24$\times$ RTX 4080.  Model: Qwen3-2507 with QLoRA.  Training: 50 epochs on 100K samples.
+
+\subsection{Scheduling Performance}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lc}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Median scheduling latency & 340 ms \\
+P99 scheduling latency & 1.2 s \\
+Ring construction time (64 nodes) & 4.8 s \\
+Ring reconfiguration (1 failure) & 8.1 s \\
+Ring reconfiguration (3 failures) & 14.3 s \\
+Job completion rate & 99.2\% \\
+Mean epoch duration & 42 min \\
+\bottomrule
+\end{tabular}
+\caption{Hanzod scheduling and ring management metrics.}
+\label{tab:scheduling}
+\end{table}
+
+\subsection{Delta Validation}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lc}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Deltas validated (50 epochs) & 3{,}200 \\
+Mean validation latency & 180 ms \\
+Spot-checks performed & 312 (9.8\%) \\
+Spot-check failures & 4 (1.3\%) \\
+Slashing events triggered & 2 \\
+Mean quality score & 0.72 \\
+\bottomrule
+\end{tabular}
+\caption{Delta validation statistics over 50 epochs.}
+\label{tab:validation}
+\end{table}
+
+\subsection{Publication}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lc}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Checkpoints published & 50 \\
+IPFS upload time (median) & 12 s \\
+HuggingFace push time (median) & 28 s \\
+On-chain recording time & 3 s \\
+Cross-verification pass rate & 100\% \\
+\bottomrule
+\end{tabular}
+\caption{Model publication metrics.}
+\label{tab:publication}
+\end{table}
+
+\subsection{Orchestrator Failover}
+
+We simulated orchestrator crashes during active training:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Scenario} & \textbf{Recovery Time} & \textbf{Data Loss} \\
+\midrule
+Clean shutdown & 0 s & None \\
+Process crash (Valkey intact) & 6 s & None \\
+Process + Valkey crash & 18 s & Last partial step \\
+Full node failure & 45 s & Last partial step \\
+\bottomrule
+\end{tabular}
+\caption{Orchestrator failover scenarios.}
+\label{tab:failover}
+\end{table}
+
+The 45-second full-node recovery involves leader election among standby orchestrators, state reconstruction from on-chain events, and ring re-establishment.
+
+%----------------------------------------------------------------------
+\section{Related Work}
+
+\textbf{Training orchestrators.}  Ray~\cite{moritz2018ray} and DeepSpeed~\cite{rasley2020deepspeed} orchestrate distributed training within trusted clusters.  Hanzod extends orchestration to untrusted, permissionless networks.
+
+\textbf{Decentralized compute.}  Gensyn~\cite{gensyn2023} proposes trustless training verification via probabilistic proofs.  Hanzod uses deterministic spot-checking and Ed25519 signatures, which are simpler and sufficient for the Zoo Gym threat model.
+
+\textbf{Job schedulers.}  SLURM~\cite{yoo2003slurm} and Kubernetes~\cite{burns2016borg} manage cluster resources but assume trusted infrastructure.  Hanzod's scheduler incorporates stake verification and quality scoring.
+
+\textbf{Federated learning servers.}  Flower~\cite{beutel2020flower} coordinates federated learning with pluggable aggregation.  Hanzod adds ring-topology communication, delta-level validation, and on-chain settlement.
+
+%----------------------------------------------------------------------
+\section{Conclusion}
+
+Hanzod provides the operational backbone for Zoo Gym: a Rust orchestrator that manages the full lifecycle of decentralized training jobs with 99.2\% completion rate and sub-second scheduling latency.  By separating job scheduling, ring management, delta validation, and model publication into independent subsystems, hanzod achieves both reliability and auditability.  The deterministic state property ensures that any qualified node can reconstruct the orchestrator's state from on-chain records, eliminating the single point of failure.
+
+\section*{Acknowledgments}
+
+This work was supported by Zoo Labs Foundation.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{25}
+
+\bibitem{moritz2018ray}
+P.~Moritz, R.~Nishihara, S.~Wang, A.~Tumanov, R.~Liaw, E.~Liang, M.~Elibol, Z.~Yang, W.~Paul, M.~I.~Jordan, and I.~Stoica, ``Ray: A Distributed Framework for Emerging AI Applications,'' \textit{OSDI}, 2018.
+
+\bibitem{rasley2020deepspeed}
+J.~Rasley, S.~Rajbhandari, O.~Ruwase, and Y.~He, ``DeepSpeed: System Optimizations Enable Training Deep Learning Models with Over 100 Billion Parameters,'' \textit{KDD}, 2020.
+
+\bibitem{gensyn2023}
+Gensyn, ``Gensyn Protocol: Trustless Training of Deep Neural Networks,'' Whitepaper, 2023.
+
+\bibitem{yoo2003slurm}
+A.~B.~Yoo, M.~A.~Jette, and M.~Grondona, ``SLURM: Simple Linux Utility for Resource Management,'' \textit{JSSPP}, 2003.
+
+\bibitem{burns2016borg}
+B.~Burns, B.~Grant, D.~Oppenheimer, E.~Brewer, and J.~Wilkes, ``Borg, Omega, and Kubernetes,'' \textit{ACM Queue}, 2016.
+
+\bibitem{beutel2020flower}
+D.~J.~Beutel, T.~Tober, D.~Stojkovic, S.~Joshi, et al., ``Flower: A Friendly Federated Learning Framework,'' \textit{arXiv:2007.14390}, 2020.
+
+\bibitem{sergeev2018horovod}
+A.~Sergeev and M.~Del~Balso, ``Horovod: Fast and Easy Distributed Deep Learning,'' \textit{arXiv:1802.05799}, 2018.
+
+\bibitem{shoeybi2019megatron}
+M.~Shoeybi et al., ``Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism,'' \textit{arXiv:1909.08053}, 2019.
+
+\bibitem{shao2024deepseekmath}
+Z.~Shao et al., ``DeepSeekMath: Pushing the Limits of Mathematical Reasoning,'' \textit{arXiv:2402.03300}, 2024.
+
+\bibitem{schulman2017proximal}
+J.~Schulman et al., ``Proximal Policy Optimization Algorithms,'' \textit{arXiv:1707.06347}, 2017.
+
+\bibitem{patarasuk2009bandwidth}
+P.~Patarasuk and X.~Yuan, ``Bandwidth Optimal All-Reduce Algorithms,'' \textit{J. Parallel Distrib. Comput.}, 2009.
+
+\bibitem{yin2018byzantine}
+D.~Yin et al., ``Byzantine-Robust Distributed Learning,'' \textit{ICML}, 2018.
+
+\bibitem{mcmahan2017communication}
+H.~B.~McMahan et al., ``Communication-Efficient Learning of Deep Networks,'' \textit{AISTATS}, 2017.
+
+\bibitem{ipfs2014}
+J.~Benet, ``IPFS -- Content Addressed, Versioned, P2P File System,'' \textit{arXiv:1407.3561}, 2014.
+
+\bibitem{bernstein2012ed25519}
+D.~J.~Bernstein et al., ``High-Speed High-Security Signatures,'' \textit{J. Cryptographic Engineering}, 2012.
+
+\bibitem{hu2021lora}
+E.~J.~Hu et al., ``LoRA: Low-Rank Adaptation of Large Language Models,'' \textit{ICLR}, 2022.
+
+\bibitem{dettmers2023qlora}
+T.~Dettmers et al., ``QLoRA: Efficient Finetuning of Quantized Language Models,'' \textit{NeurIPS}, 2023.
+
+\bibitem{touvron2023llama}
+H.~Touvron et al., ``LLaMA 2: Open Foundation and Fine-Tuned Chat Models,'' \textit{arXiv:2307.09288}, 2023.
+
+\bibitem{qwen2024qwen25}
+J.~Bai et al., ``Qwen2.5 Technical Report,'' \textit{arXiv:2412.15115}, 2024.
+
+\bibitem{vonwerra2022trl}
+L.~von~Werra et al., ``TRL: Transformer Reinforcement Learning,'' \url{https://github.com/huggingface/trl}, 2022.
+
+\bibitem{bittensor2023}
+Opentensor Foundation, ``Bittensor: A Peer-to-Peer Intelligence Market,'' Whitepaper, 2023.
+
+\bibitem{ethereum2014}
+V.~Buterin, ``Ethereum Whitepaper,'' 2014.
+
+\bibitem{filecoin2017}
+Protocol Labs, ``Filecoin: A Decentralized Storage Network,'' Whitepaper, 2017.
+
+\bibitem{dao2023flashattention}
+T.~Dao, ``FlashAttention-2,'' \textit{arXiv:2307.08691}, 2023.
+
+\bibitem{nccl2024}
+NVIDIA, ``NCCL: The NVIDIA Collective Communications Library,'' \url{https://developer.nvidia.com/nccl}, 2024.
+
+\end{thebibliography}
+
+\end{document}

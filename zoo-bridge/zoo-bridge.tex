@@ -1,0 +1,76 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\Beluga}{\textsc{Beluga}}
+\newcommand{\Warp}{\textsc{Warp}}
+\newcommand{\Teleport}{\textsc{Teleport}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\title{\textbf{Zoo Bridge: Cross-Chain AI Asset Transfer Between Lux and Zoo Networks}}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{April 2024}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \textbf{Zoo Bridge}, a cross-chain asset transfer protocol connecting the Lux Network L0 (chain ID 96369) with the Zoo L2 (chain ID 200200) and the Beluga L3 (chain ID 420420). Zoo Bridge transfers four asset classes: ZOO tokens, AI model NFTs, research data commitments, and inference credits. The protocol builds on two Lux primitives: \Warp{} messaging for verified cross-chain communication with post-quantum BLS signatures, and \Teleport{} for instant token transfers with sub-second finality. We achieve bridge transfer latency of 1.2 seconds for Warp-based transfers and 340ms for Teleport transfers between Lux and Zoo. For the Beluga L3 extension, we introduce a relay mechanism that chains two Warp messages (Lux $\to$ Zoo $\to$ Beluga) with aggregate verification, completing in 2.4 seconds. The bridge secures \$47M in total value locked across 12,400 active bridge positions. We analyze security under the standard Lux validator assumption and prove that bridge safety reduces to the safety of the underlying Warp protocol.
+
+\textbf{Keywords}: cross-chain bridge, Warp messaging, Teleport, AI assets, Zoo Network, post-quantum signatures
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-background}
+\input{sections/03-bridgeable-asset-classes}
+\input{sections/04-warp-bridge-protocol}
+\input{sections/05-teleport-bridge-protocol}
+\input{sections/06-beluga-l3-relay}
+\input{sections/07-security-analysis}
+\input{sections/08-bridge-statistics}
+\input{sections/09-related-work}
+\input{sections/10-conclusion}
+\input{sections/99-acknowledgments}
+
+\end{document}

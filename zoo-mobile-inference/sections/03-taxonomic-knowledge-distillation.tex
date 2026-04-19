@@ -1,0 +1,77 @@
+\section{Taxonomic Knowledge Distillation}
+
+\label{sec:distillation}
+
+\subsection{Motivation}
+
+Standard knowledge distillation \citep{hinton2015distilling} transfers knowledge from a teacher model $T$ to a smaller student model $S$ by training $S$ to match the soft probability distribution produced by $T$.
+For species recognition with thousands of classes, this approach treats all inter-class relationships uniformly: confusing a jaguar with a leopard is penalized identically to confusing a jaguar with a jellyfish.
+
+Biological taxonomy provides a rich hierarchical structure that should inform the compression process.
+Species within the same genus share more visual features than species in different families; a student model should therefore allocate more capacity to distinguishing closely related species than to trivially separable groups.
+
+\subsection{Hierarchical Loss Function}
+
+We define a hierarchical distillation loss that operates at multiple taxonomic levels simultaneously:
+
+\begin{equation}
+    \mathcal{L}_{\text{TKD}} = \sum_{\ell \in \mathcal{L}} \alpha_\ell \cdot \text{KL}\left(q_\ell^T \| q_\ell^S\right) + \lambda \cdot \mathcal{L}_{\text{CE}}(y, p^S)
+\end{equation}
+
+\noindent where $\mathcal{L} = \{\text{species}, \text{genus}, \text{family}, \text{order}, \text{class}, \text{phylum}\}$ is the set of taxonomic levels, $q_\ell^T$ and $q_\ell^S$ are the teacher and student probability distributions at level $\ell$ (obtained by marginalizing the species-level distribution over the taxonomic hierarchy), $\alpha_\ell$ are level-specific weights, $\mathcal{L}_{\text{CE}}$ is the standard cross-entropy loss with hard labels $y$, and $\lambda$ controls the hard-label contribution.
+
+The level weights $\alpha_\ell$ are set inversely proportional to the number of classes at each level, ensuring that fine-grained discrimination receives proportionally more training signal:
+
+\begin{equation}
+    \alpha_\ell = \frac{|\mathcal{C}_\ell|^{-1}}{\sum_{\ell'} |\mathcal{C}_{\ell'}|^{-1}}
+\end{equation}
+
+\subsection{Capacity Allocation via Taxonomic Embedding}
+
+We further exploit taxonomic structure in the student architecture design.
+The student model's final classification layer is decomposed into a hierarchy of smaller classifiers:
+
+\begin{equation}
+    p(s \mid \mathbf{x}) = p(s \mid g, \mathbf{x}) \cdot p(g \mid f, \mathbf{x}) \cdot p(f \mid o, \mathbf{x}) \cdot p(o \mid \mathbf{x})
+\end{equation}
+
+\noindent where $s, g, f, o$ denote species, genus, family, and order.
+Each conditional classifier operates on a progressively refined feature representation, with early features shared across the hierarchy and later features specialized for fine-grained discrimination.
+
+This decomposition reduces the number of parameters in the classification head from $O(d \cdot S)$ to $O(d \cdot G + \max_g |C_g| \cdot d')$ where $S$ is the total number of species, $G$ is the number of genera, $|C_g|$ is the number of species in genus $g$, and $d' < d$ is the dimension of the genus-specific feature space.
+
+\subsection{Regional Specialization}
+
+ZooMobile supports regional model variants that further reduce model size by focusing on species present in specific geographic areas.
+Given a deployment region $R$, the species set is pruned to:
+
+\begin{equation}
+    \mathcal{S}_R = \{s \in \mathcal{S} : \text{range}(s) \cap R \neq \emptyset\} \cup \mathcal{S}_{\text{invasive}} \cup \mathcal{S}_{\text{confusable}}
+\end{equation}
+
+\noindent where $\mathcal{S}_{\text{invasive}}$ includes known invasive species that may appear unexpectedly and $\mathcal{S}_{\text{confusable}}$ includes species visually similar to those in $\mathcal{S}_R$ that could cause dangerous misidentifications (e.g., venomous vs.\ non-venomous snakes).
+
+\begin{table}[H]
+\centering
+\caption{Model compression results: TKD vs.\ standard distillation.}
+\label{tab:compression}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Model} & \textbf{Size (MB)} & \textbf{Params (M)} & \textbf{Top-1 (\%)} & \textbf{Top-5 (\%)} \\
+\midrule
+Teacher (ViT-Large) & 1,142 & 304.4 & 91.8 & 98.2 \\
+Standard KD (MobileNetV3) & 21.4 & 5.4 & 83.1 & 94.7 \\
+TKD (MobileNetV3) & 18.7 & 4.7 & 85.4 & 95.8 \\
+TKD + Regional (East Africa) & 12.1 & 3.0 & 87.3 & 96.1 \\
+TKD + Regional (SE Asia) & 11.8 & 2.9 & 86.7 & 95.9 \\
+TKD + Regional (Amazon) & 13.4 & 3.4 & 86.1 & 95.4 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+TKD improves upon standard distillation by 2.3 percentage points in top-1 accuracy while reducing model size by an additional 12.6\%.
+Regional specialization further reduces size to 12 MB while \emph{increasing} top-1 accuracy by 1.9 points due to reduced class confusion.
+
+% ============================================================
+% 4. Mixed-Precision Quantization
+% ============================================================

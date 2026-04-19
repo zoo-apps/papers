@@ -1,0 +1,60 @@
+\section{GPU Execution Model}
+
+\label{sec:gpu-model}
+
+\subsection{Amdahl's Law for Blockchain Execution}
+
+Let $f$ denote the sequential fraction (state conflicts + overhead) and $p$ the number of parallel execution units (GPU SMs).
+By Amdahl's law:
+
+\begin{equation}
+S(p) = \frac{1}{f + \frac{1-f}{p}}
+\label{eq:amdahl}
+\end{equation}
+
+\begin{definition}[Sequential Fraction]
+\begin{equation}
+f = \frac{|C|}{|T|} + \frac{\text{overhead}_{\text{analysis}} + \text{overhead}_{\text{merge}}}{W_{\text{total}}}
+\end{equation}
+\end{definition}
+
+On Zoo L2, empirical measurements yield $f \in [0.03, 0.08]$, mean $\bar{f} = 0.047$.
+For H100 with $p = 132$ SMs: $S(132) \approx 18.6\times$.
+Theoretical bound: $S_{\max} = 1/f \approx 21.3\times$.
+
+\subsection{Workload Decomposition}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Workload} & \textbf{Block Gas Fraction} & \textbf{Conflict Rate} \\
+\midrule
+Simple transfers (EOA $\to$ EOA) & 12\% & 0.1\% \\
+AI Mining submissions & 35\% & 0.8\% \\
+DEX swaps and liquidity ops & 28\% & 11.2\% \\
+FHE ciphertext operations & 15\% & 0.3\% \\
+Governance and staking & 7\% & 2.1\% \\
+Other contract calls & 3\% & 5.4\% \\
+\bottomrule
+\end{tabular}
+\caption{Workload decomposition and conflict rates on Zoo L2 (30-day average)}
+\label{tab:workload}
+\end{table}
+
+DEX operations exhibit the highest conflict rate (11.2\%) due to shared liquidity pool state.
+AI Mining and FHE are nearly conflict-free as they write to isolated storage slots.
+
+\subsection{Memory Bandwidth Bounds}
+
+GPU EVM execution is bounded by memory bandwidth, not compute.
+On H100's 3.35~TB/s HBM3:
+
+\begin{equation}
+\text{Throughput}_{\max} = \frac{B_{\text{mem}}}{b_{\text{avg}}} = \frac{3.35 \times 10^{12}}{1.46 \times 10^{3}} \approx 2.29 \times 10^{9} \text{ ops/sec}
+\end{equation}
+
+where $b_{\text{avg}} = 1.46$~KB is average memory traffic per gas operation.
+This ceiling matches empirical measurements, confirming \cevm{} saturates GPU memory bandwidth.
+
+%% ---------------------------------------------------------------------------

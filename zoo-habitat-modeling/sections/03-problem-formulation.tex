@@ -1,0 +1,56 @@
+\section{Problem Formulation}
+
+\label{sec:problem}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Notation}
+
+Let $\Species = \{s_1, \ldots, s_K\}$ denote a set of $K$ focal species.
+The study area is discretized into a regular grid of $N$ cells, each
+represented as a node $v_i$ in a spatial graph $G = (V, E)$, where $V =
+\{v_1, \ldots, v_N\}$ and $E \subseteq V \times V$.
+
+Each node $v_i$ is associated with an environmental feature vector
+$\mathbf{x}_i \in \R^d$ comprising bioclimatic variables, topographic
+metrics, land cover, and vegetation indices. For a climate scenario $c
+\in \Climate$ and time period $t$, the features become
+$\mathbf{x}_i^{(c,t)}$.
+
+Edge weights $w_{ij}$ encode the dispersal permeability between adjacent
+cells, determined by terrain, land cover, and geographic distance.
+
+\subsection{Objectives}
+
+For each species $s_k$, we seek to learn a function:
+\begin{equation}
+  f_k: (G, \mathbf{X}^{(c,t)}) \rightarrow [0,1]^N
+\end{equation}
+that maps the spatial graph with time- and scenario-specific features to
+a vector of habitat suitability scores across all cells. The model must:
+
+\begin{enumerate}
+  \item Accurately predict current species distributions when validated
+    against independent occurrence data.
+  \item Produce calibrated probability estimates under future climate
+    projections.
+  \item Identify spatially connected regions of suitable habitat
+    (connectivity analysis).
+  \item Locate optimal corridors linking disjoint habitat patches.
+\end{enumerate}
+
+\subsection{Loss Function}
+
+Given presence-absence labels $y_i^{(k)} \in \{0, 1\}$ for species $k$
+at cell $i$, we minimize a composite loss:
+\begin{equation}
+  \Loss = \Loss_{\text{BCE}} + \lambda_1 \Loss_{\text{spatial}} +
+  \lambda_2 \Loss_{\text{connect}}
+  \label{eq:loss}
+\end{equation}
+where $\Loss_{\text{BCE}}$ is the weighted binary cross-entropy,
+$\Loss_{\text{spatial}}$ penalizes spatially incoherent predictions
+(encouraging smooth habitat boundaries), and $\Loss_{\text{connect}}$
+rewards predictions that maintain graph connectivity of suitable patches.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

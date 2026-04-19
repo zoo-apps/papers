@@ -1,0 +1,38 @@
+\section{Conclusion}
+
+
+\Quasar{} hybrid consensus provides Zoo Network with post-quantum finality at sub-second latency for 1,000-validator sets. The key insight is that GPU hardware, already required for Zoo's AI inference workloads, can be co-opted for consensus verification at negligible marginal cost ($< 0.01\%$ GPU memory, $< 4\%$ latency overhead from dual-path execution). The 10x BLS batch speedup and parallel \Corona{} verification make post-quantum security practical today, not contingent on future quantum threats.
+
+All protocol properties---safety, liveness, and batch correctness---are formally verified in Lean~4, providing machine-checked guarantees beyond informal arguments.
+
+\begin{thebibliography}{99}
+
+\bibitem{shor1997polynomial}
+P.~W. Shor, ``Polynomial-time algorithms for prime factorization and discrete logarithms on a quantum computer,'' \textit{SIAM J. Comput.}, vol.~26, no.~5, pp.~1484--1509, 1997.
+
+\bibitem{nist2024pqc}
+NIST, ``Post-Quantum Cryptography Standardization,'' FIPS 203, 204, 205, 2024.
+
+\bibitem{lyubashevsky2010ideal}
+V.~Lyubashevsky, C.~Peikert, and O.~Regev, ``On ideal lattices and learning with errors over rings,'' in \textit{EUROCRYPT}, 2010.
+
+\bibitem{wahby2019fast}
+R.~S. Wahby and D.~Boneh, ``Fast and simple constant-time hashing to the BLS12-381 elliptic curve,'' \textit{IACR ePrint}, 2019/403.
+
+\bibitem{lux-quasar-consensus}
+Lux Industries, ``Quasar: Hybrid Consensus with Dual-Path Finality,'' Lux Technical Report, 2025.
+
+\bibitem{lux-quantum-consensus}
+Lux Industries, ``Quantum-Resistant Consensus for Multi-Chain Architectures,'' Lux Technical Report, 2025.
+
+\bibitem{zoo-tokenomics}
+Z.~Kelling, ``Zoo Network Tokenomics: Fair Distribution Through Complete Airdrop,'' Zoo Labs Foundation, 2025.
+
+\bibitem{zoo-pq-crypto}
+Z.~Kelling, ``Post-Quantum Cryptography Suite for Zoo Network,'' Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-threshold-sigs}
+Z.~Kelling, ``Threshold Signatures for Decentralized Validator Sets on Zoo Network,'' Zoo Labs Foundation, 2026.
+
+\end{thebibliography}
+

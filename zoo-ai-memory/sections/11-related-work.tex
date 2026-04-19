@@ -1,0 +1,28 @@
+\section{Related Work}
+
+\label{sec:related}
+%----------------------------------------------------------------------
+
+\subsection{AI Memory Systems}
+
+MemGPT \cite{packer2023memgpt} introduced virtual memory management for LLMs, paging context in and out of the model's attention window. While effective for extending effective context length, MemGPT stores memory in plaintext, provides no cross-session persistence, and offers no privacy guarantees.
+
+Langchain's memory modules and LlamaIndex's storage abstractions provide programmatic memory interfaces but rely on centralized vector databases (Pinecone, Weaviate) with provider-controlled access.
+
+OpenAI's memory feature (2024) stores user preferences server-side in plaintext, with no user-controlled encryption, no portability, and no formal access control beyond on/off.
+
+None of these systems provide sovereignty as defined in this paper.
+
+\subsection{Encrypted Databases}
+
+CryptDB \cite{popa2011cryptdb} pioneered SQL over encrypted data using onion encryption layers. Mylar \cite{popa2014mylar} extended this to web applications. Both rely on a trusted proxy and do not support homomorphic computation.
+
+\subsection{CRDTs for Distributed State}
+
+Shapiro et al. \cite{shapiro2011crdt} formalized CRDTs for eventually consistent distributed systems. Automerge and Yjs implement CRDTs for collaborative editing. Our contribution is applying CRDTs to encrypted memory state, where the merge function must operate without observing plaintext content.
+
+\subsection{Agent NFTs and Sovereign AI}
+
+The Agent NFT standard \cite{zoo-agent-nft} established on-chain identity for AI agents. Memory Capsules provide the state layer that Agent NFTs require for genuine autonomy. The \Lux{} agent sovereignty framework \cite{lux-agent-sovereignty} defines the broader philosophical and legal context for AI asset ownership.
+
+%----------------------------------------------------------------------

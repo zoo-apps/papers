@@ -1,0 +1,25 @@
+\section{Introduction}
+
+
+The intersection of AI and blockchain creates novel custody requirements that existing wallet infrastructure does not address. Three specific challenges motivate Zoo MPC:
+
+\textbf{Model Weight Custody.} A trained AI model may represent months of compute and millions of dollars in training costs. Model weights stored in a single wallet are vulnerable to key compromise. Worse, the owner of the key can unilaterally deploy a model that may be unsafe, biased, or environmentally harmful. Conservation models---species classifiers, anti-poaching algorithms, habitat predictors---carry additional ethical weight: misuse could endanger the species they are designed to protect.
+
+\textbf{Research Data Access Control.} Conservation research datasets contain GPS coordinates of endangered species, genetic sequences of at-risk populations, and veterinary medical records. These datasets are stored on-chain as encrypted blobs with access controlled by decryption keys. A single keyholder could leak data to poachers or biopirates.
+
+\textbf{Agent NFT Wallets.} Zoo Network supports autonomous AI agents represented as NFTs~\cite{zoo-agent-nft}. These agents hold ZOO tokens, interact with DeFi protocols, and execute transactions on behalf of their operators. An agent's private key must be distributed across multiple parties to prevent unilateral fund extraction.
+
+\subsection{Contributions}
+
+\begin{enumerate}
+    \item \textbf{Zoo MPC Architecture}: Integration of CGGMP21 and FROST into Zoo Network's custody layer (Section~\ref{sec:architecture}).
+
+    \item \textbf{Model Weight Custody Protocol}: A threshold deployment scheme for AI models with governance gates (Section~\ref{sec:model-custody}).
+
+    \item \textbf{Research Data Access Control}: Threshold decryption for conservation datasets with institutional review (Section~\ref{sec:data-access}).
+
+    \item \textbf{Agent Wallet Protocol}: Distributed key management for autonomous AI agents (Section~\ref{sec:agent-wallets}).
+
+    \item \textbf{Evaluation}: Signing latency, key generation time, and security analysis (Section~\ref{sec:evaluation}).
+\end{enumerate}
+

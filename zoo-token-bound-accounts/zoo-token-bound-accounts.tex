@@ -1,0 +1,588 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+\input{shared/lstlang}
+
+% Listing style
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  captionpos=b,
+  xleftmargin=2em,
+  framexleftmargin=1.5em,
+}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\NFT}{\textsc{nft}}
+\newcommand{\ERC}{\textsc{erc}}
+\newcommand{\DAO}{\textsc{dao}}
+\newcommand{\ZOO}{\$\textsc{zoo}}
+\newcommand{\TBA}{\textsc{tba}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{Token-Bound Accounts for Wildlife:\\Giving Animals Their Own Wallets}}
+
+\author{
+Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{February 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present the Zoo implementation of token-bound accounts (TBAs) for wildlife NFTs, based on ERC-6551 and the Lux LRC-6551 standard (LP-9551). Every ZRC-721 wildlife NFT receives a deterministic smart contract wallet that can hold ZRC-20 tokens, other NFTs, and ZRC-1155 badges. This enables wildlife NFTs to receive direct donations for specific animals, accumulate conservation action histories, hold research data artifacts, and participate in Zoo DAO governance through delegated voting power. We describe the TBA registry, account implementation, donation flow, conservation history recording, governance delegation, and cross-chain TBA synchronization. The mechanism directly realizes the ``piggybank'' concept from the Zoo AGI architecture: each digital animal has a dedicated account that grows in value as the community invests in its protection.
+
+\textbf{Keywords}: token-bound accounts, ERC-6551, wildlife NFT, donations, conservation history, piggybank
+\end{abstract}
+
+\section{Introduction}
+
+Consider Tiger \#42, a tracked Bengal tiger in the Sundarbans represented by a ZRC-721 NFT. Today, a donor who wants to support this specific animal must donate to a general conservation fund and hope the funds are allocated correctly. There is no mechanism to send tokens directly to the tiger, no way for the tiger's NFT to accumulate a conservation history, and no way for the tiger to ``own'' research data about itself.
+
+Token-bound accounts solve this by giving each NFT its own Ethereum-compatible smart contract wallet. When a ZRC-721 wildlife NFT is minted, a deterministic account is deployed via CREATE2. This account can:
+
+\begin{enumerate}
+    \item Receive \ZOO{} token donations from anyone.
+    \item Hold ZRC-20 tokens, ZRC-721 NFTs, and ZRC-1155 badges.
+    \item Record conservation actions (veterinary care, habitat protection, anti-poaching patrols).
+    \item Delegate voting power to the NFT owner, giving the animal a ``voice'' in governance.
+    \item Transfer its entire contents automatically when the NFT changes hands.
+\end{enumerate}
+
+This is the ``piggybank'' concept from the Zoo AGI paper~\cite{zooagi2024}: each digital animal has a dedicated account that grows in value and information as the community invests in its protection.
+
+\subsection{Contributions}
+
+\begin{enumerate}
+    \item The IZooTBARegistry and IZooTBA interfaces with conservation extensions (Section~\ref{sec:interface}).
+    \item The donation flow enabling direct per-animal funding (Section~\ref{sec:donation}).
+    \item Conservation history recording as an append-only on-chain log (Section~\ref{sec:history}).
+    \item Governance delegation from TBA-held tokens (Section~\ref{sec:governance}).
+    \item Cross-chain TBA synchronization via the Zoo-Lux bridge (Section~\ref{sec:crosschain}).
+    \item Security analysis of ownership confusion, circular ownership, and fund drain attacks (Section~\ref{sec:security}).
+\end{enumerate}
+
+
+\section{Background}
+
+\subsection{ERC-6551}
+
+ERC-6551~\cite{erc6551} defines a registry for creating token-bound accounts. The registry uses CREATE2 to deploy a deterministic account for any NFT, given an implementation address, salt, chain ID, token contract, and token ID. The account's \texttt{owner()} returns the current owner of the bound NFT, so ownership changes automatically when the NFT transfers.
+
+\subsection{The Piggybank Concept}
+
+The Zoo AGI architecture~\cite{zooagi2024} proposes that each AI agent and digital animal should have a ``piggybank''---a dedicated account that accumulates value from donations, service fees, and yield. TBAs are the on-chain realization of this concept. Unlike a traditional piggybank that merely stores value, a TBA is a full smart contract wallet capable of executing arbitrary transactions, holding diverse asset types, and participating in governance.
+
+\subsection{Conservation Fund Routing}
+
+The Zoo ecosystem routes conservation funds through verified addresses in the Zoo Contract Registry (ZIP-0100). A TBA's \texttt{withdrawToConservation} function restricts withdrawals to registered conservation projects, ensuring that donations to a specific animal actually reach conservation outcomes.
+
+
+\section{Registry Interface}
+\label{sec:interface}
+
+\begin{lstlisting}[language=Solidity,caption=IZooTBARegistry interface]
+interface IZooTBARegistry {
+    function createAccount(
+        address implementation,
+        bytes32 salt,
+        uint256 chainId,
+        address tokenContract,
+        uint256 tokenId
+    ) external returns (address account);
+
+    function account(
+        address implementation,
+        bytes32 salt,
+        uint256 chainId,
+        address tokenContract,
+        uint256 tokenId
+    ) external view returns (address);
+
+    event AccountCreated(
+        address account,
+        address indexed implementation,
+        bytes32 salt,
+        uint256 chainId,
+        address indexed tokenContract,
+        uint256 indexed tokenId
+    );
+}
+\end{lstlisting}
+
+The registry is a singleton deployed at a deterministic address on Zoo L2 (Chain ID: 200200). All TBA addresses are computable before deployment via the standard CREATE2 formula:
+
+\begin{equation}
+\text{addr} = \text{keccak256}(\texttt{0xff} \| \text{registry} \| \text{salt}' \| \text{keccak256}(\text{initcode}))
+\end{equation}
+
+where $\text{salt}' = \text{keccak256}(\text{salt} \| \text{chainId} \| \text{tokenContract} \| \text{tokenId})$.
+
+
+\section{Account Implementation}
+
+\begin{lstlisting}[language=Solidity,caption=IZooTBA interface]
+interface IZooTBA is IERC165,
+    IERC721Receiver, IERC1155Receiver {
+
+    // ERC-6551 Core
+    function token() external view returns (
+        uint256 chainId,
+        address tokenContract,
+        uint256 tokenId
+    );
+    function owner()
+        external view returns (address);
+    function isValidSigner(
+        address signer, bytes calldata context
+    ) external view returns (bytes4);
+    function state()
+        external view returns (uint256);
+    function execute(
+        address to, uint256 value,
+        bytes calldata data, uint8 operation
+    ) external payable returns (bytes memory);
+
+    // Conservation Extensions
+    function totalDonationsReceived()
+        external view returns (uint256);
+    function donorCount()
+        external view returns (uint256);
+    function donationFrom(address donor)
+        external view returns (uint256);
+    function donate(uint256 amount) external;
+    function withdrawToConservation(
+        address fund, uint256 amount
+    ) external;
+
+    event DonationReceived(
+        address indexed donor,
+        uint256 amount,
+        uint256 totalDonations
+    );
+    event ConservationWithdrawal(
+        address indexed fund,
+        uint256 amount,
+        address indexed authorizedBy
+    );
+
+    // Conservation History
+    struct ConservationAction {
+        uint256 timestamp;
+        address initiator;
+        string actionType;  // "donation",
+            // "observation", "medical",
+            // "relocation", "research"
+        uint256 value;      // ZOO amount or 0
+        string detailsCID;  // IPFS CID
+    }
+
+    function conservationHistory()
+        external view returns (
+            ConservationAction[] memory);
+    function recordConservationAction(
+        string calldata actionType,
+        uint256 value,
+        string calldata detailsCID
+    ) external;
+
+    event ConservationActionRecorded(
+        string actionType,
+        address indexed initiator,
+        uint256 value,
+        uint256 timestamp
+    );
+
+    // Governance Delegation
+    function delegateVotingPower(
+        address token, address delegatee
+    ) external;
+}
+\end{lstlisting}
+
+
+\section{Automatic TBA Provisioning}
+
+ZRC-721 contracts conforming to ZIP-0701 automatically create a TBA at mint time:
+
+\begin{lstlisting}[language=Solidity,caption=Automatic TBA creation on mint]
+function _afterTokenTransfer(
+    address from, address to,
+    uint256 tokenId, uint256 batchSize
+) internal override {
+    super._afterTokenTransfer(
+        from, to, tokenId, batchSize);
+    if (from == address(0)) {
+        // Mint: create TBA
+        IZooTBARegistry(ZOO_TBA_REGISTRY)
+            .createAccount(
+                ZOO_TBA_IMPLEMENTATION,
+                bytes32(0),
+                block.chainid,
+                address(this),
+                tokenId
+            );
+    }
+}
+\end{lstlisting}
+
+This ensures every wildlife NFT has a functional account from the moment of creation. Donors can send \ZOO{} to the computed TBA address even before the TBA contract is deployed; the funds will be accessible once the account is created.
+
+
+\section{Donation Flow}
+\label{sec:donation}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=1.5cm and 2cm,
+    box/.style={rectangle, draw, minimum width=2.5cm, minimum height=0.7cm, align=center, font=\footnotesize, fill=blue!8},
+    arr/.style={->, >=stealth, thick},
+]
+    \node[box] (donor) {Donor};
+    \node[box, right=of donor] (tba) {TBA\\(Tiger \#42)};
+    \node[box, right=of tba] (zoo) {\ZOO{} Token};
+    \node[box, below=of tba] (fund) {Conservation\\Fund};
+
+    \draw[arr] (donor) -- node[above, font=\scriptsize] {donate(1000)} (tba);
+    \draw[arr] (tba) -- node[above, font=\scriptsize] {transferFrom} (zoo);
+    \draw[arr] (tba) -- node[right, font=\scriptsize, align=center] {withdrawTo\\Conservation} (fund);
+\end{tikzpicture}
+\caption{Donation flow: a donor sends \ZOO{} directly to a wildlife NFT's TBA. The NFT owner later withdraws to a verified conservation fund.}
+\label{fig:donation}
+\end{figure}
+
+\begin{enumerate}
+    \item A donor calls \texttt{donate(1000)} on Tiger \#42's TBA.
+    \item The TBA transfers 1,000 \ZOO{} from the donor to itself via \texttt{transferFrom}.
+    \item The TBA records the donation: updates \texttt{totalDonationsReceived}, increments \texttt{donorCount} (if new donor), and records the per-donor amount.
+    \item A \texttt{DonationReceived} event is emitted.
+    \item A conservation action record is appended: \texttt{actionType: "donation"}.
+    \item Later, the NFT owner calls \texttt{withdrawToConservation(fund, 500)}.
+    \item The TBA verifies the fund address against the Zoo Contract Registry (ZIP-0100).
+    \item 500 \ZOO{} is transferred to the conservation fund.
+    \item A \texttt{ConservationWithdrawal} event is emitted.
+\end{enumerate}
+
+\begin{theorem}[Donation Integrity]
+All \ZOO{} tokens held by a TBA are traceable to specific donors. The \texttt{donationFrom} mapping provides a complete accounting of all inflows, and the conservation history provides a complete accounting of all outflows.
+\end{theorem}
+
+
+\section{Conservation History}
+\label{sec:history}
+
+Each TBA maintains an append-only conservation action log. Action types include:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{llp{5cm}}
+\toprule
+\textbf{Action Type} & \textbf{Value Field} & \textbf{Details} \\
+\midrule
+donation & ZOO amount & Donor address, message \\
+observation & 0 & GPS coordinates, photo CID \\
+medical & ZOO cost & Procedure, veterinarian \\
+relocation & 0 & Origin, destination, reason \\
+research & 0 & Dataset CID, researcher \\
+\bottomrule
+\end{tabular}
+\caption{Conservation action types recorded in TBA history.}
+\label{tab:actions}
+\end{table}
+
+Records are written by:
+\begin{itemize}
+    \item The NFT owner (for any action type).
+    \item Authorized verifiers in the Zoo Contract Registry (for ``verified'' records that carry higher trust).
+    \item The TBA itself (automatically, for donations and withdrawals).
+\end{itemize}
+
+This on-chain history enables donors to verify that their contributions to Tiger \#42 resulted in actual conservation outcomes: veterinary care, anti-poaching patrols, habitat monitoring.
+
+
+\section{Governance Delegation}
+\label{sec:governance}
+
+Wildlife NFTs that hold \ZOO{} tokens through their TBA can participate in Zoo DAO governance:
+
+\begin{lstlisting}[language=Solidity,caption=Governance delegation from TBA]
+function delegateVotingPower(
+    address token, address delegatee
+) external {
+    require(msg.sender == owner(),
+        "only NFT owner");
+    IZRC20Votes(token).delegate(delegatee);
+}
+\end{lstlisting}
+
+The NFT owner delegates the TBA's \ZOO{} voting power to a chosen delegatee (typically themselves). This means:
+
+\begin{itemize}
+    \item Tiger \#42's \ZOO{} donations contribute to governance voting power.
+    \item The more a community donates to an animal, the more governance influence that animal carries.
+    \item The human owner votes ``on behalf of'' the animal, creating a symbolic ``voice for nature.''
+\end{itemize}
+
+\begin{definition}[Wildlife Governance Weight]
+For a wildlife NFT with TBA holding $B$ \ZOO{} tokens, its governance weight is:
+\begin{equation}
+W_{\text{wildlife}} = B \cdot (1 + \beta \cdot R_{\text{species}})
+\end{equation}
+where $R_{\text{species}}$ is a multiplier based on IUCN threat status: CR = 2.0, EN = 1.5, VU = 1.0, NT = 0.5, LC = 0.25.
+\end{definition}
+
+This weights governance influence toward more endangered species, aligning governance power with conservation urgency.
+
+
+\section{Cross-Chain TBA Synchronization}
+\label{sec:crosschain}
+
+When a ZRC-721 NFT is bridged to Lux C-Chain via ZIP-0800:
+
+\begin{enumerate}
+    \item The TBA on Zoo L2 is frozen: no new \texttt{execute} calls are accepted.
+    \item A mirror TBA is created on Lux C-Chain using the same salt and implementation.
+    \item Held assets remain on Zoo L2. They are accessible via the Zoo-Lux bridge.
+    \item When the NFT returns to Zoo L2, the original TBA is unfrozen and the Lux mirror is deactivated.
+\end{enumerate}
+
+The freeze is enforced by incrementing the TBA's \texttt{state()} nonce on bridge-out. Any pending operations signed with the old nonce are invalidated.
+
+\begin{theorem}[Cross-Chain Asset Safety]
+A TBA's assets cannot be double-spent across chains. The freeze mechanism ensures exactly one chain has an active TBA at any time. Asset access on the inactive chain requires a bridge transfer, which is mediated by the MPC signer set (ZIP-0800).
+\end{theorem}
+
+
+\section{Reference Implementation}
+
+\begin{lstlisting}[language=Solidity,caption=ZooTBA reference implementation (simplified)]
+contract ZooTBA is IZooTBA, ERC165 {
+    uint256 private _state;
+    mapping(address => uint256) private _donations;
+    uint256 private _totalDonations;
+    uint256 private _donorCount;
+    ConservationAction[] private _history;
+
+    function donate(uint256 amount) external {
+        IERC20(ZOO_TOKEN).transferFrom(
+            msg.sender, address(this), amount);
+        if (_donations[msg.sender] == 0)
+            _donorCount++;
+        _donations[msg.sender] += amount;
+        _totalDonations += amount;
+        _history.push(ConservationAction({
+            timestamp: block.timestamp,
+            initiator: msg.sender,
+            actionType: "donation",
+            value: amount,
+            detailsCID: ""
+        }));
+        emit DonationReceived(
+            msg.sender, amount, _totalDonations);
+    }
+
+    function withdrawToConservation(
+        address fund, uint256 amount
+    ) external {
+        require(msg.sender == owner(),
+            "only NFT owner");
+        require(IRegistry(ZOO_REGISTRY)
+            .isConservationFund(fund),
+            "unverified fund");
+        IERC20(ZOO_TOKEN).transfer(fund, amount);
+        _history.push(ConservationAction({
+            timestamp: block.timestamp,
+            initiator: msg.sender,
+            actionType: "withdrawal",
+            value: amount,
+            detailsCID: ""
+        }));
+        emit ConservationWithdrawal(
+            fund, amount, msg.sender);
+    }
+
+    function owner() public view returns (address) {
+        (,address tokenContract, uint256 tokenId)
+            = token();
+        return IERC721(tokenContract)
+            .ownerOf(tokenId);
+    }
+
+    function execute(
+        address to, uint256 value,
+        bytes calldata data, uint8 operation
+    ) external payable returns (bytes memory) {
+        require(msg.sender == owner(),
+            "only NFT owner");
+        require(operation == 0, "only call");
+        _state++;
+        (bool success, bytes memory result) =
+            to.call{value: value}(data);
+        require(success, "execution failed");
+        return result;
+    }
+}
+\end{lstlisting}
+
+
+\section{Security Analysis}
+\label{sec:security}
+
+\subsection{Ownership Confusion}
+
+The TBA's \texttt{owner()} changes when the NFT transfers. The \texttt{state()} nonce increments on each ownership change, invalidating pending operations signed by the previous owner.
+
+\subsection{Reentrancy}
+
+The \texttt{execute} function can call arbitrary contracts. The implementation increments \texttt{\_state} before the external call (checks-effects-interactions) and uses a reentrancy guard.
+
+\subsection{Fund Drain}
+
+A compromised NFT owner key could drain the TBA. Mitigations:
+\begin{itemize}
+    \item \texttt{withdrawToConservation} only sends to verified conservation funds.
+    \item The general \texttt{execute} function is subject to rate limiting (optional extension).
+    \item Multi-sig requirements can be configured for withdrawals exceeding a threshold.
+\end{itemize}
+
+\subsection{Circular Ownership}
+
+A TBA could hold its own parent NFT, creating a circular ownership loop where the TBA owns the NFT that owns the TBA. Implementations MUST prevent an account from acquiring its own bound token.
+
+\subsection{Conservation Fund Verification}
+
+The \texttt{withdrawToConservation} function verifies the destination against the live Zoo Contract Registry. A stale local cache could allow withdrawals to deregistered addresses. The implementation queries the registry on every call.
+
+\subsection{Gas Griefing}
+
+Unbounded conservation history arrays could make \texttt{conservationHistory()} calls exceed gas limits. Implementations SHOULD paginate history queries and set a per-account record limit (e.g., 10,000 records).
+
+
+\section{Related Work}
+
+ERC-6551~\cite{erc6551} defines the token-bound account standard. Tokenbound~\cite{tokenbound2023} provides SDK and infrastructure for ERC-6551 accounts. Lens Protocol~\cite{lens2022} uses NFT-based profiles with associated data; TBAs generalize this to any NFT. Bored Ape Yacht Club's ``summoning'' mechanic~\cite{bayc2022} gives NFTs agent-like qualities; TBAs formalize the underlying account model.
+
+In conservation finance, the GiveDirectly~\cite{givedirectly2020} model of direct cash transfers to individuals shares conceptual DNA with TBA-based per-animal donations: both remove intermediaries between donors and beneficiaries.
+
+The zoo-agi paper~\cite{zooagi2024} introduced the piggybank concept for AI agents. This paper realizes the same concept for wildlife NFTs, extending it with conservation-specific features (verified fund withdrawals, action history, species-weighted governance).
+
+
+\section{Conclusion}
+
+Token-bound accounts transform static wildlife NFTs into living on-chain entities that accumulate value, history, and governance influence. The mechanism creates a direct link between a donor and a specific animal, habitat, or research program---no intermediary fund management required. When the community donates to Tiger \#42, those tokens stay with Tiger \#42, grow Tiger \#42's governance voice, and are withdrawable only to verified conservation projects.
+
+This is the on-chain realization of a simple idea: every animal deserves its own wallet.
+
+\section*{Acknowledgments}
+
+This work was supported by Zoo Labs Foundation. We thank the Tokenbound team for the ERC-6551 reference implementation and the Lux team for the LRC-6551 standard.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{20}
+
+\bibitem{erc6551}
+J.~Fang et al., ``EIP-6551: Non-fungible Token Bound Accounts,'' Ethereum Improvement Proposals, 2023.
+
+\bibitem{tokenbound2023}
+Tokenbound, ``Tokenbound: Infrastructure for ERC-6551,'' \url{https://tokenbound.org}, 2023.
+
+\bibitem{lrc6551}
+Lux Partners, ``LP-9551: LRC-6551 Token-Bound Accounts,'' Lux Protocol Standards, 2023.
+
+\bibitem{zooagi2024}
+Z.~Kelling et al., ``Zoo AGI: Autonomous Agents for Conservation,'' Zoo Labs Foundation Technical Report, 2024.
+
+\bibitem{erc721}
+W.~Entriken et al., ``EIP-721: Non-Fungible Token Standard,'' Ethereum Improvement Proposals, 2018.
+
+\bibitem{zip0100}
+Zoo Labs Foundation, ``ZIP-0100: Zoo Contract Registry,'' Zoo Improvement Proposals, 2024.
+
+\bibitem{zip0500}
+Zoo Labs Foundation, ``ZIP-0500: ESG Principles for Conservation Impact,'' Zoo Improvement Proposals, 2024.
+
+\bibitem{zip0700}
+Zoo Labs Foundation, ``ZIP-0700: ZRC-20 Fungible Token Standard,'' Zoo Improvement Proposals, 2025.
+
+\bibitem{zip0701}
+Zoo Labs Foundation, ``ZIP-0701: ZRC-721 NFT Standard,'' Zoo Improvement Proposals, 2025.
+
+\bibitem{zip0800}
+Zoo Labs Foundation, ``ZIP-0800: Zoo-Lux Bridge Protocol,'' Zoo Improvement Proposals, 2025.
+
+\bibitem{erc4337}
+V.~Buterin et al., ``EIP-4337: Account Abstraction Using Alt Mempool,'' Ethereum Improvement Proposals, 2021.
+
+\bibitem{lens2022}
+Lens Protocol, ``Lens: Decentralized Social Graph,'' Technical Documentation, 2022.
+
+\bibitem{bayc2022}
+Yuga Labs, ``Bored Ape Yacht Club: NFT Collection with Utility,'' 2022.
+
+\bibitem{givedirectly2020}
+GiveDirectly, ``Direct Cash Transfers to the Extreme Poor,'' \url{https://givedirectly.org}, 2020.
+
+\bibitem{safe2021}
+Safe, ``Safe: Multi-Signature Wallet Infrastructure,'' Technical Documentation, 2021.
+
+\bibitem{erc1155}
+W.~Radomski et al., ``EIP-1155: Multi Token Standard,'' Ethereum Improvement Proposals, 2018.
+
+\bibitem{openzeppelin}
+OpenZeppelin, ``OpenZeppelin Contracts,'' \url{https://openzeppelin.com/contracts}, 2023.
+
+\bibitem{zip0015}
+Zoo Labs Foundation, ``ZIP-0015: Zoo L2 Chain Architecture,'' Zoo Improvement Proposals, 2024.
+
+\bibitem{create2}
+V.~Buterin, ``EIP-1014: Skinny CREATE2,'' Ethereum Improvement Proposals, 2018.
+
+\bibitem{erc165}
+C.~Reitwie{\ss}ner et al., ``EIP-165: Standard Interface Detection,'' Ethereum Improvement Proposals, 2018.
+
+\end{thebibliography}
+
+\end{document}

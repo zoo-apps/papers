@@ -1,0 +1,529 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+\input{shared/lstlang}
+
+% Listing style
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  captionpos=b,
+  xleftmargin=2em,
+  framexleftmargin=1.5em,
+}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\NFT}{\textsc{nft}}
+\newcommand{\ERC}{\textsc{erc}}
+\newcommand{\DAO}{\textsc{dao}}
+\newcommand{\ZOO}{\$\textsc{zoo}}
+\newcommand{\LLM}{\textsc{llm}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{Zoo $\leftrightarrow$ Hanzo Settlement Integration:\\AI Compute Payments from Zoo Applications}}
+
+\author{
+Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{March 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present the settlement integration between Zoo DeFi protocols and the Hanzo AI compute marketplace. The protocol enables \ZOO{} token holders to pay for AI inference, model training, and agent execution on Hanzo infrastructure, with final settlement on Lux C-Chain. It introduces a three-phase flow: (1)~pre-authorization on Zoo L2, where \ZOO{} tokens are escrowed in a Settlement Vault with configurable payment modes (prepaid, streaming, postpaid); (2)~compute execution on Hanzo, where the Compute Oracle attests to usage via signed reports; and (3)~finalization on Lux C-Chain, where the Settlement Ledger records the immutable payment record with provider share, conservation share, and protocol fee. Conservation impact is tracked end-to-end: a configurable fraction of compute spending (default 2\%) generates conservation credits per ZIP-0700. The protocol supports DeFi composability via compute staking, streaming payments, and inference pools.
+
+\textbf{Keywords}: settlement, AI compute, micropayments, streaming, Hanzo, conservation impact
+\end{abstract}
+
+\section{Introduction}
+
+The Zoo, Hanzo, and Lux ecosystems form a complementary triad:
+
+\begin{itemize}
+    \item \textbf{Zoo}: Community, governance, conservation funding, and DeFi liquidity.
+    \item \textbf{Hanzo}: AI compute infrastructure, LLM gateway (100+ providers), and agent frameworks.
+    \item \textbf{Lux}: Settlement finality, cross-chain security, and DeFi infrastructure.
+\end{itemize}
+
+Zoo applications---avatar tutors for conservation education, habitat modeling with satellite imagery, species classification from camera traps---require AI compute from Hanzo. Today, this compute is paid via traditional payment rails, disconnected from the on-chain economy. ZIP-0801 unifies settlement so that \ZOO{} tokens are a first-class payment method for AI compute, settlement occurs on Lux for finality and auditability, and conservation impact flows automatically from every inference call.
+
+\subsection{Contributions}
+
+\begin{enumerate}
+    \item The ISettlementVault interface for escrowed compute payments on Zoo L2 (Section~\ref{sec:vault}).
+    \item The ISettlementLedger interface for final records on Lux C-Chain (Section~\ref{sec:ledger}).
+    \item The IComputeOracle interface for attested usage reporting (Section~\ref{sec:oracle}).
+    \item The three-phase settlement flow with conservation impact tracking (Section~\ref{sec:flow}).
+    \item DeFi composability via compute staking, streaming, and inference pools (Section~\ref{sec:defi}).
+    \item Security analysis of oracle compromise, escrow drain, and price manipulation (Section~\ref{sec:security}).
+\end{enumerate}
+
+
+\section{Architecture}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=1.2cm and 2.5cm,
+    box/.style={rectangle, draw, minimum width=3cm, minimum height=0.8cm, align=center, font=\footnotesize, fill=blue!8},
+    arr/.style={->, >=stealth, thick},
+]
+    \node[box] (vault) {SettlementVault\\(Zoo L2)};
+    \node[box, right=of vault] (ledger) {SettlementLedger\\(Lux C-Chain)};
+    \node[box, below=of ledger] (oracle) {ComputeOracle\\(Hanzo)};
+
+    \draw[arr] (vault) -- node[above, font=\scriptsize] {bridge (ZIP-0800)} (ledger);
+    \draw[arr] (oracle) -- node[right, font=\scriptsize] {attestation} (vault);
+    \draw[arr] (oracle) -- node[right, font=\scriptsize] {usage proof} (ledger);
+
+    \node[box, below=of vault] (user) {Zoo App\\(User)};
+    \draw[arr] (user) -- node[left, font=\scriptsize] {escrow ZOO} (vault);
+    \draw[arr] (user) -- node[below, font=\scriptsize] {inference} (oracle);
+\end{tikzpicture}
+\caption{Zoo $\leftrightarrow$ Hanzo settlement architecture.}
+\label{fig:architecture}
+\end{figure}
+
+
+\section{Settlement Vault}
+\label{sec:vault}
+
+\begin{lstlisting}[language=Solidity,caption=ISettlementVault interface]
+interface ISettlementVault {
+    enum PaymentMode {
+        PREPAID,    // Full amount escrowed upfront
+        STREAMING,  // Per-second streaming payment
+        POSTPAID    // Credit-based, settled after
+    }
+
+    struct ComputeSession {
+        bytes32 sessionId;
+        address payer;
+        address hanzoEndpoint;
+        PaymentMode mode;
+        uint256 maxAmount;
+        uint256 consumedAmount;
+        uint256 ratePerSecond; // For STREAMING
+        uint256 startTimestamp;
+        uint256 endTimestamp;  // 0 = active
+        uint16 conservationBps;
+        bool finalized;
+    }
+
+    function createSession(
+        address hanzoEndpoint,
+        PaymentMode mode,
+        uint256 maxAmount,
+        uint256 ratePerSecond,
+        uint16 conservationBps
+    ) external returns (bytes32 sessionId);
+
+    function recordUsage(
+        bytes32 sessionId,
+        uint256 amount,
+        bytes calldata oracleAttestation
+    ) external;
+
+    function finalizeSession(
+        bytes32 sessionId
+    ) external;
+
+    function cancelSession(
+        bytes32 sessionId
+    ) external;
+
+    event SessionCreated(
+        bytes32 indexed sessionId,
+        address indexed payer,
+        address indexed hanzoEndpoint,
+        PaymentMode mode,
+        uint256 maxAmount
+    );
+    event UsageRecorded(
+        bytes32 indexed sessionId,
+        uint256 amount,
+        uint256 totalConsumed
+    );
+    event SessionFinalized(
+        bytes32 indexed sessionId,
+        uint256 totalPaid,
+        uint256 conservationDonation,
+        uint256 refunded
+    );
+}
+\end{lstlisting}
+
+
+\section{Settlement Ledger}
+\label{sec:ledger}
+
+\begin{lstlisting}[language=Solidity,caption=ISettlementLedger interface]
+interface ISettlementLedger {
+    struct SettlementRecord {
+        bytes32 sessionId;
+        address payer;
+        address provider;
+        uint256 totalAmount;
+        uint256 providerShare;
+        uint256 conservationShare;
+        uint256 protocolFee;
+        uint256 timestamp;
+        bytes32 usageProofHash;
+    }
+
+    function processSettlement(
+        bytes32 sessionId,
+        address payer,
+        address provider,
+        uint256 totalAmount,
+        uint256 conservationBps,
+        bytes32 usageProofHash
+    ) external;
+
+    function getSettlement(bytes32 sessionId)
+        external view returns (
+            SettlementRecord memory);
+    function providerTotalSettled(
+        address provider
+    ) external view returns (uint256);
+    function totalConservationImpact()
+        external view returns (uint256);
+
+    event SettlementProcessed(
+        bytes32 indexed sessionId,
+        address indexed payer,
+        address indexed provider,
+        uint256 totalAmount,
+        uint256 conservationShare
+    );
+}
+\end{lstlisting}
+
+
+\section{Compute Oracle}
+\label{sec:oracle}
+
+\begin{lstlisting}[language=Solidity,caption=IComputeOracle interface]
+interface IComputeOracle {
+    struct UsageReport {
+        bytes32 sessionId;
+        uint256 tokensProcessed;  // LLM tokens
+        uint256 computeSeconds;   // GPU-seconds
+        uint256 zooAmount;        // ZOO for usage
+        string model;             // e.g., "zen-72b"
+        uint256 timestamp;
+        bytes signature;          // Operator sig
+    }
+
+    function submitReport(
+        UsageReport calldata report
+    ) external;
+    function operator()
+        external view returns (address);
+    function pricePerMillionTokens(
+        string calldata model
+    ) external view returns (uint256);
+
+    event UsageReported(
+        bytes32 indexed sessionId,
+        uint256 tokensProcessed,
+        uint256 zooAmount,
+        string model
+    );
+}
+\end{lstlisting}
+
+The oracle is the minimal trusted component: it attests to off-chain compute usage. Its operator is registered in the Zoo Contract Registry (ZIP-0100) and can be rotated by governance.
+
+
+\section{Settlement Flow}
+\label{sec:flow}
+
+\subsection{Phase 1: Pre-Authorization (Zoo L2)}
+
+\begin{enumerate}
+    \item User calls \texttt{createSession()} with payment mode and maximum \ZOO{}.
+    \item \ZOO{} tokens transferred from user to vault (escrowed).
+    \item \texttt{sessionId} returned and communicated to Hanzo via API.
+\end{enumerate}
+
+\subsection{Phase 2: Compute Execution (Hanzo)}
+
+\begin{enumerate}
+    \item User sends inference/training requests to Hanzo API with \texttt{sessionId} in headers.
+    \item Hanzo executes the workload and meters usage.
+    \item Compute Oracle periodically submits \texttt{UsageReport} to the Settlement Vault.
+    \item For STREAMING mode, the vault continuously drains escrow at \texttt{ratePerSecond}.
+\end{enumerate}
+
+\begin{lstlisting}[caption=Hanzo API integration via HTTP headers]
+POST /v1/chat/completions HTTP/1.1
+Host: llm.hanzo.ai
+Authorization: Bearer <hanzo-api-key>
+X-Zoo-Session-Id: 0xabc123...
+X-Zoo-Payer: 0x742d35Cc...
+Content-Type: application/json
+
+{
+  "model": "zen-72b",
+  "messages": [
+    {"role": "user",
+     "content": "Analyze satellite imagery
+       for deforestation"}
+  ],
+  "max_tokens": 4096
+}
+\end{lstlisting}
+
+\subsection{Phase 3: Finalization (Lux C-Chain)}
+
+\begin{enumerate}
+    \item Session ends (user-initiated, timeout, or escrow depleted).
+    \item \texttt{finalizeSession()} computes the split:
+    \begin{itemize}
+        \item Provider share: \texttt{consumed * (10000 - conservBps - protocolBps) / 10000}
+        \item Conservation share: \texttt{consumed * conservBps / 10000}
+        \item Protocol fee: \texttt{consumed * protocolBps / 10000} (default 100 bps = 1\%)
+        \item Refund: \texttt{maxAmount - consumed} returned to payer
+    \end{itemize}
+    \item Provider share and protocol fee bridged to Lux C-Chain via ZIP-0800.
+    \item Conservation share sent to Zoo conservation fund on Zoo L2.
+    \item Settlement Ledger records the final settlement with \texttt{usageProofHash}.
+\end{enumerate}
+
+
+\section{Pricing}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Model Tier} & \textbf{ZOO / 1M Input} & \textbf{ZOO / 1M Output} \\
+\midrule
+Small ($< 10$B params) & 50 ZOO & 150 ZOO \\
+Medium (10B--100B) & 200 ZOO & 600 ZOO \\
+Large (100B--500B) & 500 ZOO & 1,500 ZOO \\
+Frontier (500B+) & 2,000 ZOO & 6,000 ZOO \\
+\bottomrule
+\end{tabular}
+\caption{Compute pricing by model tier (ZOO per 1M tokens).}
+\label{tab:pricing}
+\end{table}
+
+Prices are updated daily based on the ZOO/USD TWAP from Lux DEX pools. The oracle publishes prices on-chain and signs each update.
+
+
+\section{DeFi Composability}
+\label{sec:defi}
+
+\subsection{Compute Staking}
+
+Stake \ZOO{} to earn compute credits at a discount. Staked \ZOO{} generates conservation impact credits passively:
+
+\begin{equation}
+\text{credits\_per\_year} = S_{\text{staked}} \cdot r_{\text{conservation}}
+\end{equation}
+
+where $r_{\text{conservation}} = 0.02$ (2\% annual conservation yield on staked compute).
+
+\subsection{Streaming Payments}
+
+Pay-per-second for long-running training jobs:
+
+\begin{equation}
+\text{amount\_consumed}(t) = r \cdot (t - t_0)
+\end{equation}
+
+where $r$ is the rate in ZOO/second and $t_0$ is the session start. The vault halts streaming when escrow is depleted.
+
+\subsection{Inference Pools}
+
+Liquidity pools where \ZOO{} providers fund shared compute access:
+
+\begin{equation}
+\text{LP\_yield} = \frac{\text{session\_fees} \cdot (1 - \text{conservation\_bps} / 10000)}{\text{total\_pool\_liquidity}}
+\end{equation}
+
+LPs earn a share of settlement fees proportional to their contribution.
+
+\subsection{Compute Futures}
+
+Pre-purchase compute at today's prices for future use. Backed by \ZOO{} escrow in the Settlement Vault. The futures contract locks in the current \texttt{pricePerMillionTokens} for a specified duration.
+
+
+\section{Conservation Impact}
+
+Every compute session generates conservation impact:
+
+\begin{enumerate}
+    \item The \texttt{conservationBps} parameter (default 200 bps = 2\%) determines the fraction directed to conservation.
+    \item Conservation \ZOO{} sent to the default conservation fund (ZIP-0100).
+    \item The payer receives non-transferable impact credits (per ZIP-0700).
+    \item The Settlement Ledger maintains a running total queryable by anyone.
+\end{enumerate}
+
+\begin{theorem}[Conservation from Compute]
+If Zoo applications generate $V$ ZOO in annual compute spending with conservation rate $c$, the annual conservation funding from compute alone is:
+\begin{equation}
+F_{\text{conservation}} = V \cdot \frac{c}{10000}
+\end{equation}
+With $V = 10{,}000{,}000$ ZOO/year and $c = 200$ bps, $F_{\text{conservation}} = 200{,}000$ ZOO/year directed to conservation from AI inference alone.
+\end{theorem}
+
+
+\section{Security Analysis}
+\label{sec:security}
+
+\subsection{Oracle Compromise}
+
+A compromised Compute Oracle could report false usage and drain escrowed \ZOO{}. Mitigations:
+\begin{itemize}
+    \item Per-session spending caps (\texttt{maxAmount}).
+    \item Anomaly detection on usage patterns.
+    \item Governance ability to pause and replace the oracle.
+\end{itemize}
+
+\subsection{Escrow Drain}
+
+STREAMING mode continuously drains escrow. Users MUST set appropriate \texttt{maxAmount} limits. The vault MUST halt streaming when escrow is depleted.
+
+\subsection{Price Manipulation}
+
+ZOO/USD price feeds could be manipulated via flash loans on Lux DEXs. The oracle uses 24-hour TWAP, not spot price.
+
+\subsection{Bridge Latency}
+
+Settlement finalization requires a bridge message from Zoo to Lux. During bridge congestion, finalization may be delayed. The vault holds escrowed funds safely until finalization completes.
+
+\subsection{Replay Protection}
+
+Each \texttt{UsageReport} includes a \texttt{sessionId} and \texttt{timestamp}. The vault tracks cumulative usage per session and rejects reports that would exceed \texttt{maxAmount}.
+
+\subsection{Provider Rug}
+
+A provider could accept payment and not deliver compute. Usage reports are signed by the Compute Oracle, not the provider. The oracle independently verifies compute execution before attesting.
+
+
+\section{Related Work}
+
+Superfluid~\cite{superfluid2021} provides streaming payment primitives; the Settlement Vault's STREAMING mode uses analogous constant-flow mechanics. Filecoin~\cite{filecoin2017} settles storage payments on-chain with proof-of-replication; our Compute Oracle provides analogous attestation for AI compute. Ritual~\cite{ritual2023} integrates AI inference with blockchain settlement; our three-phase architecture provides additional separation of concerns. Akash Network~\cite{akash2020} provides a decentralized compute marketplace; our protocol specifically integrates with the Hanzo centralized compute gateway while maintaining on-chain settlement for auditability.
+
+The conservation impact layer is unique to the Zoo ecosystem: no existing compute payment protocol directs a fraction of spending to ecological outcomes.
+
+
+\section{Conclusion}
+
+The Zoo $\leftrightarrow$ Hanzo settlement integration makes \ZOO{} a first-class payment method for AI compute. The three-phase architecture---pre-authorization on Zoo L2, execution on Hanzo, finalization on Lux C-Chain---separates concerns across the stack while maintaining end-to-end auditability. Conservation impact from every inference call creates a sustainable funding mechanism where AI usage directly supports ecological outcomes.
+
+\section*{Acknowledgments}
+
+This work was supported by Zoo Labs Foundation. We thank the Hanzo AI team for the compute gateway integration and the Lux team for settlement layer support.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{20}
+
+\bibitem{superfluid2021}
+Superfluid, ``Superfluid Protocol: Real-Time Finance,'' \url{https://docs.superfluid.finance}, 2021.
+
+\bibitem{filecoin2017}
+Protocol Labs, ``Filecoin: A Decentralized Storage Network,'' Technical Report, 2017.
+
+\bibitem{ritual2023}
+Ritual, ``Ritual: Sovereign Execution Layer for AI,'' Technical Documentation, 2023.
+
+\bibitem{akash2020}
+Akash Network, ``Akash: The Decentralized Cloud,'' Technical Documentation, 2020.
+
+\bibitem{hip0101}
+Hanzo AI, ``HIP-0101: Hanzo-Lux Bridge Protocol,'' Hanzo Improvement Proposals, 2023.
+
+\bibitem{hip0044}
+Hanzo AI, ``HIP-0044: API Gateway,'' Hanzo Improvement Proposals, 2023.
+
+\bibitem{hip0040}
+Hanzo AI, ``HIP-0040: Multi-Language SDK,'' Hanzo Improvement Proposals, 2023.
+
+\bibitem{zip0015}
+Zoo Labs Foundation, ``ZIP-0015: Zoo L2 Chain Architecture,'' Zoo Improvement Proposals, 2024.
+
+\bibitem{zip0042}
+Zoo Labs Foundation, ``ZIP-0042: Cross-Ecosystem Interoperability,'' Zoo Improvement Proposals, 2024.
+
+\bibitem{zip0100}
+Zoo Labs Foundation, ``ZIP-0100: Zoo Contract Registry,'' Zoo Improvement Proposals, 2024.
+
+\bibitem{zip0500}
+Zoo Labs Foundation, ``ZIP-0500: ESG Principles for Conservation Impact,'' Zoo Improvement Proposals, 2024.
+
+\bibitem{zip0700}
+Zoo Labs Foundation, ``ZIP-0700: ZRC-20 Fungible Token Standard,'' Zoo Improvement Proposals, 2025.
+
+\bibitem{zip0800}
+Zoo Labs Foundation, ``ZIP-0800: Zoo-Lux Bridge Protocol,'' Zoo Improvement Proposals, 2025.
+
+\bibitem{erc20}
+F.~Vogelsteller and V.~Buterin, ``EIP-20: Token Standard,'' Ethereum Improvement Proposals, 2015.
+
+\bibitem{chainlink2021}
+S.~Nazarov et al., ``Chainlink 2.0: Next Steps in Decentralized Oracle Networks,'' Technical Report, 2021.
+
+\bibitem{uniswap2021}
+H.~Adams et al., ``Uniswap v3 Core,'' Technical Documentation, 2021.
+
+\bibitem{aave2020}
+Aave, ``Aave Protocol V2,'' Technical Documentation, 2020.
+
+\bibitem{eip3156}
+A.~Martinez and M.~San~Juan, ``EIP-3156: Flash Loans,'' Ethereum Improvement Proposals, 2020.
+
+\bibitem{openzeppelin}
+OpenZeppelin, ``OpenZeppelin Contracts,'' \url{https://openzeppelin.com/contracts}, 2023.
+
+\bibitem{gelato2022}
+Gelato Network, ``Gelato: Automate Smart Contract Executions,'' Technical Documentation, 2022.
+
+\end{thebibliography}
+
+\end{document}

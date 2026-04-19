@@ -1,0 +1,96 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc,fit}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{xcolor}
+\usepackage{listings}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\AChain}{\textsc{A-Chain}}
+\newcommand{\IChain}{\textsc{I-Chain}}
+\newcommand{\KChain}{\textsc{K-Chain}}
+\newcommand{\TChain}{\textsc{T-Chain}}
+\newcommand{\GChain}{\textsc{G-Chain}}
+\newcommand{\CKKS}{\textsc{CKKS}}
+\newcommand{\TFHE}{\textsc{TFHE}}
+\newcommand{\CRDT}{\textsc{CRDT}}
+\newcommand{\DID}{\textsc{DID}}
+\newcommand{\FHE}{\textsc{FHE}}
+\newcommand{\KEEPER}{\textsc{Keeper}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=black
+}
+
+% Title information
+\title{\textbf{Sovereign AI Memory: Persistent, Private, and Portable\\Agent State on Zoo Network}\\
+\large Encrypted Memory Capsules with Threshold Access Control}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{April 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+Contemporary AI agents suffer from persistent amnesia. Each session begins tabula rasa; memory, when it exists, lives in provider-controlled vector databases that the agent cannot own, move, or protect. We argue that AI memory is not a retrieval problem---it is a \emph{sovereignty} problem. This paper introduces \textbf{Memory Capsules}, encrypted append-only vaults that give agents persistent, private, and portable state on \Zoo{} Network. A Memory Capsule binds to a decentralized identity (\DID{}) on \IChain{}, stores content-addressed entries in an encrypted SQLite vault sealed with \KChain{}-managed keys, synchronizes across agent instances via operation-based \CRDT{}s, and enforces fine-grained access through capability tokens and \TChain{} threshold reveal. We formalize four memory types---episodic, semantic, procedural, and preference---and show how each maps to distinct encryption and garbage-collection policies. For sensitive memories, we demonstrate \FHE{}-encrypted reasoning via \CKKS{} on \AChain{}: an agent can query its own memory without decrypting it, and third parties can verify reasoning traces without observing content. Cross-agent knowledge transfer is achieved through selective disclosure using zero-knowledge proofs, enabling collaborative intelligence without surrendering private state. We benchmark Memory Capsule operations on \Zoo{} Network, measuring append latency (1.2\,ms), \CRDT{} merge throughput (14k ops/s), and \FHE{} query overhead (340\,ms per encrypted recall). The architecture positions AI memory as a first-class on-chain asset: ownable, transferable, and economically valuable.
+
+\textbf{Keywords}: AI memory, sovereign state, encrypted vault, CRDT, FHE, capability-based access, decentralized identity
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%----------------------------------------------------------------------
+
+\input{sections/01-introduction}
+\input{sections/02-why-sovereign-ai-memory-matters}
+\input{sections/03-memory-capsule-architecture}
+\input{sections/04-memory-access-control}
+\input{sections/05-memory-types}
+\input{sections/06-fhe-encrypted-memory}
+\input{sections/07-cross-agent-knowledge-transfer}
+\input{sections/08-memory-economics}
+\input{sections/09-implementation-on-zoo-network}
+\input{sections/10-benchmarks}
+\input{sections/11-related-work}
+\input{sections/99-conclusion}
+
+\end{document}

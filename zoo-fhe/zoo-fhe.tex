@@ -1,0 +1,84 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{xcolor}
+
+\pgfplotsset{compat=1.18}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\TChain}{\textsc{T-Chain}}
+\newcommand{\KChain}{\textsc{K-Chain}}
+\newcommand{\TFHE}{\textsc{TFHE}}
+\newcommand{\CKKS}{\textsc{CKKS}}
+\newcommand{\MLKEM}{\textsc{ML-KEM}}
+\newcommand{\NTT}{\textsc{NTT}}
+\newcommand{\LWE}{\textsc{LWE}}
+\newcommand{\RLWE}{\textsc{RLWE}}
+
+% Title information
+\title{\textbf{Threshold Fully Homomorphic Encryption on Zoo Network:\\GPU-Accelerated Confidential Computation}\\
+\large Privacy-Preserving Smart Contracts via TFHE and CKKS}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{September 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \Zoo{} Network's integration of threshold fully homomorphic encryption (\TFHE{} and \CKKS{}) into a Layer~2 blockchain, enabling arbitrary computation on encrypted on-chain state. \Zoo{} deploys programmable bootstrapping (\TFHE{}) for boolean and integer circuits and approximate arithmetic (\CKKS{}) for privacy-preserving machine-learning inference directly within smart contracts. By mapping the Number Theoretic Transform butterfly network onto GPU thread blocks, we achieve a \textbf{40$\times$ speedup} over CPU-only bootstrapping, reducing single-gate bootstrap latency from 12\,ms to 0.3\,ms. Ciphertext operations are distributed across validators via an Encrypt-to-Shares (E2S) threshold decryption protocol with a \textbf{67-of-100} default quorum, ensuring that no individual validator ever possesses a complete decryption key. Key shares are protected in transit with \MLKEM{}-768 post-quantum key encapsulation and anchored on \Lux{} \KChain{}. Formal correctness of the \CKKS{} rescaling pipeline, \TFHE{} noise budget tracking, and GPU scaling bounds are verified in Lean~4 (proofs reside in \texttt{Crypto/FHE/CKKS.lean}, \texttt{Crypto/FHE/TFHE.lean}, and \texttt{GPU/FHEScaling.lean}). We benchmark confidential DeFi order matching, sealed-bid auctions, and encrypted neural-network inference, demonstrating practical throughput for production deployment on \Zoo{} \TChain{}.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%----------------------------------------------------------------------
+
+\input{sections/01-introduction}
+\input{sections/02-tfhe-on-zoo}
+\input{sections/03-ckks-on-zoo}
+\input{sections/04-gpu-acceleration}
+\input{sections/05-threshold-decryption}
+\input{sections/06-integration-with-t-chain}
+\input{sections/07-formal-verification}
+\input{sections/08-applications}
+\input{sections/09-benchmarks}
+\input{sections/10-related-work}
+\input{sections/11-conclusion}
+\input{sections/99-acknowledgments}
+
+\end{document}

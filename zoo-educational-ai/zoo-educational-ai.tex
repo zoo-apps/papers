@@ -1,0 +1,91 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+
+% ============================================================
+% Preamble
+% ============================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,fit}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{fancyhdr}
+\usepackage{authblk}
+\usepackage{abstract}
+\usepackage{natbib}
+\bibliographystyle{plainnat}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    citecolor=green!50!black,
+    urlcolor=blue!80!black
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Antje Worring, Zach Kelling}
+\lhead{Educational AI for Conservation}
+\rfoot{Page \thepage}
+
+% ============================================================
+\title{\textbf{Educational AI for Conservation: Adaptive Learning Systems} \\[0.5em]
+\large Personalized Conservation Education through Intelligent Tutoring and Multi-Language Assessment}
+
+\author[1]{Antje Worring, Zach Kelling}
+\affil[1]{Antje Worring, Zach Kelling, Research Division \\ \texttt{research@zoo.ngo}}
+
+\date{January 2023}
+
+\begin{document}
+
+\zoocoverpage
+
+% ============================================================
+% Abstract
+% ============================================================
+\begin{abstract}
+\noindent
+Conservation education faces persistent challenges: diverse learner populations spanning indigenous communities, field biologists, policy makers, and the general public; limited access in remote ecosystems where biodiversity loss is most acute; and a rapidly expanding scientific knowledge base that outpaces traditional curricula.
+We present ZooEd, a decentralized adaptive learning system built on the Zoo Network that delivers personalized conservation education at scale.
+ZooEd combines a Bayesian Knowledge Tracing model with transformer-based content generation to produce individualized learning pathways across 47 languages.
+The system employs a novel \emph{Conservation Competency Ontology} (CCO) that maps 2,847 learning objectives across six domains: species identification, habitat ecology, threat assessment, policy frameworks, community engagement, and field methodology.
+We introduce a \emph{Spaced Repetition with Ecological Context} (SREC) algorithm that schedules review activities using real-time environmental data from the Zoo sensor network, grounding abstract concepts in tangible local observations.
+Multi-modal assessment combines image-based species identification, scenario reasoning, and free-response evaluation via large language models.
+A 14-month deployment across 23 conservation sites in 11 countries demonstrates that ZooEd learners achieve 34\% higher knowledge retention, 28\% greater transfer to field tasks, and 41\% improved engagement compared to static curricula.
+All system components are released as open-source software under the Zoo Improvement Proposal framework (ZIP-007), with learner data governed by on-chain consent and differential privacy guarantees.
+\end{abstract}
+
+\vspace{0.5em}
+\noindent\textbf{Keywords:} adaptive learning, conservation education, intelligent tutoring, knowledge tracing, multi-language NLP, decentralized education
+
+% ============================================================
+% 1. Introduction
+% ============================================================
+
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-conservation-competency-ontology}
+\input{sections/04-adaptive-learning-engine}
+\input{sections/05-multi-modal-assessment-framework}
+\input{sections/06-system-architecture}
+\input{sections/07-experimental-evaluation}
+\input{sections/08-ablation-studies}
+\input{sections/09-discussion}
+\input{sections/99-conclusion}
+
+\end{document}

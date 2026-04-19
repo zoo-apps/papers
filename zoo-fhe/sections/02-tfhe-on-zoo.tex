@@ -1,0 +1,46 @@
+\section{TFHE on Zoo}
+
+\label{sec:tfhe}
+%----------------------------------------------------------------------
+
+\subsection{LWE Encryption}
+
+\TFHE{} operates over the Learning With Errors (\LWE{}) problem. A plaintext bit $m \in \{0,1\}$ is encrypted as:
+
+\begin{equation}
+  \mathsf{ct} = (\mathbf{a}, b) \in \mathbb{Z}_q^n \times \mathbb{Z}_q, \quad b = \langle \mathbf{a}, \mathbf{s} \rangle + m \cdot \lfloor q/2 \rfloor + e
+\end{equation}
+
+\noindent where $\mathbf{s} \in \mathbb{Z}_q^n$ is the secret key, $\mathbf{a} \xleftarrow{\$} \mathbb{Z}_q^n$ is uniform, and $e$ is a small Gaussian noise term with standard deviation $\sigma$. \Zoo{} fixes $n = 630$, $q = 2^{32}$, and $\sigma = 2^{-15}$, yielding 128-bit security under standard \LWE{} hardness assumptions~\cite{albrecht2015lwe}.
+
+\subsection{Boolean Gate Evaluation}
+
+Homomorphic boolean gates (AND, OR, XOR, NOT) on \LWE{} ciphertexts follow the gate-bootstrapping paradigm of Chillotti et al.~\cite{chillotti2020tfhe}. For two input ciphertexts $\mathsf{ct}_0, \mathsf{ct}_1$:
+
+\begin{equation}
+  \mathsf{ct}_{\mathrm{AND}} = \mathsf{Bootstrap}\!\left( (0, \lfloor q/8 \rfloor) - \mathsf{ct}_0 - \mathsf{ct}_1 \right)
+\end{equation}
+
+The bootstrap operation simultaneously evaluates a lookup table and refreshes noise, producing a ciphertext with bounded noise regardless of input noise level.
+
+\subsection{Programmable Bootstrapping}
+
+\Zoo{} uses programmable bootstrapping (PBS) to evaluate arbitrary functions $f: \mathbb{Z}_p \to \mathbb{Z}_p$ during the bootstrap step itself. The test polynomial $v(X) \in \mathbb{Z}_q[X]/(X^N+1)$ encodes $f$ in its coefficients:
+
+\begin{equation}
+  v(X) = \sum_{i=0}^{N-1} f\!\left(\left\lfloor \frac{i \cdot p}{2N} \right\rfloor\right) X^i
+\end{equation}
+
+This eliminates post-bootstrap computation for common operations (sign extraction, ReLU, step functions), reducing circuit depth and noise accumulation.
+
+\subsection{Noise Management}
+
+Each homomorphic operation adds noise to the ciphertext. \Zoo{} tracks noise budgets per ciphertext in the VM state:
+
+\begin{definition}[Noise Budget]
+For ciphertext $\mathsf{ct} = (\mathbf{a}, b)$ with secret $\mathbf{s}$, the noise $e = b - \langle \mathbf{a}, \mathbf{s} \rangle - m \cdot \lfloor q/2 \rfloor$. The noise budget is $\beta = \lfloor \log_2(q/2) \rfloor - \lceil \log_2 |e| \rceil$ bits. Decryption succeeds when $\beta > 0$.
+\end{definition}
+
+The VM rejects execution when a ciphertext's projected noise budget would drop below 1 bit, forcing the contract to insert a bootstrap before proceeding. Gas metering accounts for bootstrap cost.
+
+%----------------------------------------------------------------------

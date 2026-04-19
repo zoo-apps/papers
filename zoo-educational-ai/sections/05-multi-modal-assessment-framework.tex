@@ -1,0 +1,80 @@
+\section{Multi-Modal Assessment Framework}
+
+\label{sec:assessment}
+
+\subsection{Assessment Modalities}
+
+ZooEd employs four assessment modalities, each calibrated for reliability across languages and cultural contexts:
+
+\begin{table}[H]
+\centering
+\caption{Assessment modalities and their characteristics.}
+\label{tab:assessment_modalities}
+\begin{tabularx}{\textwidth}{@{}lccX@{}}
+\toprule
+\textbf{Modality} & \textbf{Objectives} & \textbf{Reliability} & \textbf{Description} \\
+\midrule
+Image Identification & 834 & $\kappa = 0.91$ & Species identification from photographs with graduated difficulty \\
+Scenario Reasoning & 1,176 & $\kappa = 0.84$ & Multi-step decision scenarios with branching consequences \\
+Free Response & 612 & $\kappa = 0.79$ & Open-ended explanations evaluated by calibrated LLM rubrics \\
+Practical Demonstration & 225 & $\kappa = 0.88$ & Video or photo evidence of field skill execution \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Image-Based Species Identification}
+
+Species identification assessments use a graduated difficulty framework.
+For each target species $s$, we construct distractor sets at five difficulty levels:
+
+\begin{equation}
+    D_k(s) = \{s' \in \mathcal{S} : d_{\text{taxon}}(s, s') \leq k \wedge d_{\text{visual}}(s, s') \leq \epsilon_k\}
+\end{equation}
+
+\noindent where $d_{\text{taxon}}$ is taxonomic distance (same genus = 1, same family = 2, etc.), $d_{\text{visual}}$ is visual similarity computed from a pretrained feature extractor, and $\epsilon_k$ controls the visual confusability at level $k$.
+
+Assessment images are drawn from the Zoo Data Commons (\Cref{sec:data_commons_ref}), filtered for quality and annotated with difficulty metadata.
+Each assessment presents 4--6 candidate species with the learner selecting the correct identification and optionally providing a justification that references diagnostic features.
+
+\subsection{Scenario-Based Reasoning}
+
+Scenario assessments present multi-step conservation decision problems.
+Each scenario is modeled as a decision tree:
+
+\begin{equation}
+    \mathcal{T} = (V, E, \rho, \omega)
+\end{equation}
+
+\noindent where $V$ is the set of decision nodes, $E$ is the set of directed edges (choices), $\rho: V \rightarrow \mathcal{O}^*$ maps each node to the set of objectives it assesses, and $\omega: E \rightarrow \mathbb{R}$ assigns ecological outcome scores to each decision path.
+
+The system evaluates not only the terminal outcome but the reasoning trajectory, awarding partial credit for locally optimal decisions even when the global path is suboptimal.
+This rubric is computed as:
+
+\begin{equation}
+    \text{Score}(\pi) = \sum_{v \in \pi} w_v \cdot \mathbb{1}[\text{choice}(v) \in \text{acceptable}(v)]
+\end{equation}
+
+\noindent where $\pi$ is the learner's path through the scenario, $w_v$ is the weight of node $v$ (proportional to the difficulty of the assessed objectives), and $\text{acceptable}(v)$ is the set of defensible choices at node $v$ as determined by expert annotation.
+
+\subsection{LLM-Based Free Response Evaluation}
+
+Free-response answers are evaluated using a calibrated language model pipeline:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Rubric Application:} The LLM evaluates the response against a structured rubric specific to the learning objective, producing scores on 3--5 criteria.
+    \item \textbf{Multi-Rater Simulation:} Three independent LLM evaluations with different random seeds produce a score distribution, mitigating single-evaluation bias.
+    \item \textbf{Calibration:} Scores are calibrated against a held-out set of 500 expert-graded responses per language, using isotonic regression to map raw LLM scores to calibrated mastery probabilities.
+    \item \textbf{Feedback Generation:} The LLM generates formative feedback in the learner's language, identifying strengths and specific areas for improvement.
+\end{enumerate}
+
+The calibrated mastery estimate from free response assessment is:
+
+\begin{equation}
+    \hat{p}_{\text{mastery}} = f_{\text{cal}}\left(\frac{1}{K}\sum_{k=1}^{K} r_k\right)
+\end{equation}
+
+\noindent where $r_k$ is the raw score from the $k$-th LLM evaluation and $f_{\text{cal}}$ is the calibration function.
+
+% ============================================================
+% 6. System Architecture
+% ============================================================

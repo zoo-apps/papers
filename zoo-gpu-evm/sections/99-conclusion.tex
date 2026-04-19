@@ -1,0 +1,50 @@
+\section{Conclusion}
+
+\label{sec:conclusion}
+
+\cevm{} achieves 2.3~Gops/sec on a single GPU---$23.8\times$ over the fastest CPU EVM---while preserving full determinism through conflict detection and sequential re-execution.
+Lean~4 verification provides mathematical guarantees that parallel execution produces identical state roots to sequential execution.
+Multi-GPU linear scaling to 8.9~Gops/sec on four H100s meets the throughput demands of Zoo's AI-native L2 workloads.
+
+Zoo Network's integration of \cevm{} with DEX VM, FHE VM, and AI Mining VM establishes a template for GPU-accelerated blockchain execution that maintains EVM compatibility while unlocking throughput previously exclusive to centralized systems.
+
+Future work includes intra-precompile parallelism for DEX and FHE VMs, predictive conflict analysis via ML \cite{zoo-tokenomics}, ZK proof co-scheduling on GPU \cite{zoo-fhe}, and cross-L2 parallel execution across \Lux{} subnets \cite{zoo-dex}.
+
+%% ---------------------------------------------------------------------------
+\begin{thebibliography}{99}
+
+\bibitem{wood2014ethereum}
+G. Wood, ``Ethereum: A secure decentralised generalised transaction ledger,'' Ethereum Project Yellow Paper, 2014.
+
+\bibitem{zoo-network-architecture}
+Z. Kelling, ``Zoo Network: Decentralized AI training and inference layer with semantic optimization,'' Zoo Labs Foundation, 2025.
+
+\bibitem{zoo-tokenomics}
+Z. Kelling, ``Zoo Network tokenomics: Fair distribution through complete airdrop,'' Zoo Labs Foundation, 2025.
+
+\bibitem{lux-gpu-evm}
+Lux Partners, ``GPU-accelerated EVM execution for high-throughput blockchain networks,'' Lux Network Whitepaper Series, 2025.
+
+\bibitem{monad2024}
+Monad Labs, ``Monad: A high-performance EVM-compatible L1 with parallel execution,'' 2024.
+
+\bibitem{sei2024}
+Sei Labs, ``Sei v2: The first parallelized EVM blockchain,'' 2024.
+
+\bibitem{megaeth2024}
+MegaETH, ``MegaETH: Real-time blockchain with sub-millisecond latency,'' 2024.
+
+\bibitem{solana2020}
+A. Yakovenko, ``Solana: A new architecture for a high performance blockchain,'' 2020.
+
+\bibitem{kevm2018}
+E. Hildenbrandt et al., ``KEVM: A complete formal semantics of the Ethereum Virtual Machine,'' IEEE CSF, 2018.
+
+\bibitem{zoo-fhe}
+Z. Kelling, ``Fully homomorphic encryption on Zoo Network,'' Zoo Labs Foundation, forthcoming.
+
+\bibitem{zoo-dex}
+Z. Kelling, ``Decentralized exchange architecture on Zoo L2,'' Zoo Labs Foundation, forthcoming.
+
+\end{thebibliography}
+

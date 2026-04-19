@@ -1,0 +1,26 @@
+\section{Applications}
+
+\label{sec:apps}
+%----------------------------------------------------------------------
+
+\subsection{Confidential DeFi}
+
+\textbf{Encrypted order matching.} Users submit encrypted limit orders $\mathsf{Enc}(\mathit{price}, \mathit{quantity})$. The matching engine evaluates comparison circuits homomorphically (\TFHE{} for price comparison, \CKKS{} for quantity arithmetic). Matched orders are decrypted via threshold decryption; unmatched orders remain encrypted and invisible to other participants.
+
+This eliminates front-running, sandwich attacks, and information leakage from the order book.
+
+\subsection{Private AI Inference}
+
+A model owner publishes encrypted weights $\mathsf{Enc}(W_i)$ and a user submits encrypted input $\mathsf{Enc}(\mathbf{x})$. The contract evaluates the forward pass entirely under \CKKS{} encryption:
+
+\begin{equation}
+  \mathsf{Enc}(\hat{y}) = f_{\mathrm{NN}}(\mathsf{Enc}(W_1), \ldots, \mathsf{Enc}(W_L), \mathsf{Enc}(\mathbf{x}))
+\end{equation}
+
+Neither the model weights nor the input are revealed to any party. The user decrypts $\hat{y}$ locally. This enables monetization of proprietary models without exposing intellectual property.
+
+\subsection{Sealed-Bid Auctions}
+
+Bidders submit $\mathsf{Enc}(\mathit{bid}_i)$ to an auction contract. The contract computes the maximum via a homomorphic comparison tree (\TFHE{} with $\lceil \log_2 k \rceil$ rounds for $k$ bids). Only the winning bid is decrypted; losing bids remain sealed.
+
+%----------------------------------------------------------------------

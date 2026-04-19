@@ -1,0 +1,64 @@
+\section{Security Analysis}
+
+\label{sec:security}
+
+\subsection{Threat Model}
+
+We consider adversaries who may:
+\begin{enumerate}
+    \item Attempt to drain agent wallet
+    \item Manipulate agent to make bad trades
+    \item Steal agent key material
+    \item Perform Sybil attacks via agent cloning
+\end{enumerate}
+
+\subsection{Security Properties}
+
+\begin{theorem}[Wallet Safety]
+Under autonomy bounds, an agent cannot transfer more than $\min(\text{maxTx}, \text{dailyLimit})$ within any 24-hour period.
+\end{theorem}
+
+\begin{proof}
+Each transaction requires autonomy check (Algorithm~\ref{alg:tx}). Transactions exceeding maxTx require owner signature. Daily limit is enforced by smart contract. Rate limiting prevents rapid draining.
+\end{proof}
+
+\begin{theorem}[Owner Override]
+The owner can always halt agent activity and withdraw assets.
+\end{theorem}
+
+\begin{proof}
+Owner key $K_O$ can:
+\begin{enumerate}
+    \item Set autonomy parameters to zero (disable all actions)
+    \item Execute direct wallet withdrawal
+    \item Revoke agent key authorization
+\end{enumerate}
+\end{proof}
+
+\begin{theorem}[Key Separation]
+Agent cannot access owner's external assets; owner cannot impersonate agent.
+\end{theorem}
+
+\begin{proof}
+Agent key $K_A$ is derived from model hash and stored in TEE. Owner never has access to $sk_A$. Agent key only controls agent wallet, not owner's personal wallets.
+\end{proof}
+
+\subsection{Attack Mitigation}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Attack} & \textbf{Mitigation} & \textbf{Residual Risk} \\
+\midrule
+Wallet drain & Autonomy bounds & Low \\
+Bad trades & Whitelist + limits & Medium \\
+Key theft & TEE protection & Low \\
+Agent cloning & Model hash binding & Low \\
+Flash loan attack & Cooldown period & Medium \\
+\bottomrule
+\end{tabular}
+\caption{Attack mitigation strategies.}
+\label{tab:attacks}
+\end{table}
+

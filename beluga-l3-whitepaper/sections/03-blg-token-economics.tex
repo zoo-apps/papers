@@ -1,0 +1,64 @@
+\section{BLG Token Economics}
+\label{sec:token}
+%% ============================================================
+
+\BLG{} is the native gas token of \Beluga{} with a fixed supply of 100,000,000 (100M) tokens. There is no inflation, no minting function, and no token burns beyond standard EIP-1559 base fee burns.
+
+\subsection{Allocation}
+
+\begin{table}[h]
+\centering
+\caption{BLG token allocation.}
+\label{tab:allocation}
+\begin{tabular}{@{}llrl@{}}
+\toprule
+Pool & Tokens & \% & Governance \\
+\midrule
+DAO Treasury & 60,000,000 & 60\% & Safe multisig (4-of-7) \\
+Inference Pool & 20,000,000 & 20\% & Smart contract (auto-distribute) \\
+Training Bounties & 10,000,000 & 10\% & Smart contract (escrow) \\
+LP Seeding & 10,000,000 & 10\% & Paired with ZOO on Zoo DEX \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{DAO Treasury}
+
+The 60M \BLG{} DAO treasury is held in a Gnosis Safe multisig on \Beluga{} (chain ID 420420). The 4-of-7 multisig requires approval from a quorum of \Zoo{} Labs Foundation directors. Treasury funds are released via governance proposals with a 7-day timelock:
+
+\begin{itemize}[nosep]
+    \item \textbf{Grants}: Fund model training, dataset curation, tooling development.
+    \item \textbf{Liquidity}: Provide additional DEX liquidity as volume grows.
+    \item \textbf{Incentives}: Seasonal campaigns for specific model architectures or domains.
+    \item \textbf{Burn}: Community may vote to burn excess treasury tokens.
+\end{itemize}
+
+\subsection{Inference Pool}
+
+The 20M \BLG{} inference pool is held in the \texttt{InferenceRewards} contract. When a user pays \BLG{} for an inference request, the payment is split:
+
+\begin{equation}
+\text{inference\_fee} = \underbrace{0.80 \cdot f}_{\text{host reward}} + \underbrace{0.15 \cdot f}_{\text{model owner}} + \underbrace{0.05 \cdot f}_{\text{protocol}}
+\end{equation}
+
+where $f$ is the per-request fee determined by the inference pricing precompile. The inference pool subsidizes early requests when organic fee revenue is insufficient, decaying linearly over 4 years.
+
+\subsection{Training Bounties}
+
+The 10M \BLG{} training bounty pool seeds the \texttt{TrainingBounty} contract. Anyone may post a bounty specifying a base model, target benchmark, dataset constraints, and \BLG{} reward. The bounty is escrowed until a submitter demonstrates improvement via on-chain verified evaluation.
+
+\subsection{LP Seeding}
+
+The 10M \BLG{} LP seeding allocation bootstraps the BLG/ZOO trading pair on Zoo DEX. Initial liquidity is provided at a price determined by the \Zoo{} Labs Foundation based on testnet demand. Liquidity positions are locked for 12 months, after which the \DAO{} may vote on rebalancing.
+
+\subsection{Fee Model}
+
+\Beluga{} uses EIP-1559 dynamic fee pricing with AI-specific adjustments:
+
+\begin{equation}
+\text{gas\_price} = \text{base\_fee} + \text{priority\_fee}
+\end{equation}
+
+The base fee adjusts per-block targeting 50\% gas utilization. AI-specific transaction types (inference, training submission) receive gas discounts via the precompile layer, as these operations generate protocol revenue through their own fee mechanisms.
+
+%% ============================================================

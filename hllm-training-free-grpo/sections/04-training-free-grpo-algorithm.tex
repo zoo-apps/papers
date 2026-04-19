@@ -1,0 +1,283 @@
+\section{Training-Free GRPO Algorithm}
+
+\label{sec:algorithm}
+
+We now present the complete Training-Free Group Relative Policy Optimization algorithm.
+
+\subsection{Overview}
+
+Training-Free GRPO operates entirely in context space, using semantic advantages extracted via LLM introspection. The algorithm has three stages executed within each training iteration:
+
+\begin{enumerate}
+    \item \textbf{Stage 1: Trajectory Summarization} — Condense each rollout into a step-by-step natural language summary.
+    \item \textbf{Stage 2: Group Advantage Extraction} — Compare trajectories within groups to identify strategic patterns and propose experience updates.
+    \item \textbf{Stage 3: Batch Consolidation} — Merge and refine all proposed updates into final consolidated operations.
+\end{enumerate}
+
+\subsection{Algorithm Formulation}
+
+\begin{algorithm}[H]
+\caption{Training-Free Group Relative Policy Optimization}
+\label{alg:tfgrpo}
+\begin{algorithmic}[1]
+\REQUIRE Training queries $\mathcal{Q} = \{q_1, \ldots, q_N\}$, ground truth answers $\mathcal{GT} = \{a_1, \ldots, a_N\}$, frozen foundation model $\pi_\theta$, group size $G$, number of epochs $T$
+\ENSURE Experience library $\mathcal{E}$
+\STATE Initialize $\mathcal{E} \leftarrow \emptyset$
+\FOR{epoch $t = 1$ to $T$}
+    \STATE $\text{AllOperations} \leftarrow []$
+    \FOR{each query $q_i \in \mathcal{Q}$}
+        \STATE \textcolor{blue}{// Stage 0: Generate group rollouts}
+        \STATE $\text{Trajectories} \leftarrow []$
+        \FOR{$g = 1$ to $G$}
+            \STATE $\tau_g \leftarrow \pi_\theta(\cdot | q_i, \text{Format}(\mathcal{E}, q_i))$ \COMMENT{Context injection}
+            \STATE $r_g \leftarrow \text{Reward}(\tau_g, a_i)$ \COMMENT{Evaluate correctness}
+            \STATE $\text{Trajectories}.\text{append}((\tau_g, r_g))$
+        \ENDFOR
+
+        \IF{$\text{std}([r_1, \ldots, r_G]) = 0$}
+            \STATE \textbf{continue} \COMMENT{Skip homogeneous groups}
+        \ENDIF
+
+        \STATE \textcolor{blue}{// Stage 1: Trajectory summarization}
+        \STATE $\text{Summaries} \leftarrow []$
+        \FOR{each $(\tau_g, r_g) \in \text{Trajectories}$}
+            \STATE $s_g \leftarrow \text{LLM}_{\text{sum}}(\tau_g, r_g, a_i)$ \COMMENT{Summarize trajectory}
+            \STATE $\text{Summaries}.\text{append}(s_g)$
+        \ENDFOR
+
+        \STATE \textcolor{blue}{// Stage 2: Group advantage extraction}
+        \STATE $\text{Operations}_i \leftarrow \text{LLM}_{\text{extract}}(\text{Summaries}, \mathcal{E}, q_i, a_i)$
+        \STATE $\text{AllOperations}.\text{append}(\text{Operations}_i)$
+    \ENDFOR
+
+    \STATE \textcolor{blue}{// Stage 3: Batch consolidation}
+    \STATE $\text{FinalOps} \leftarrow \text{LLM}_{\text{consolidate}}(\text{AllOperations}, \mathcal{E})$
+    \STATE $\mathcal{E} \leftarrow \text{ApplyOperations}(\mathcal{E}, \text{FinalOps})$
+
+    \STATE \textcolor{blue}{// Evaluation}
+    \STATE $\text{Performance}_t \leftarrow \text{Evaluate}(\pi_\theta, \mathcal{E}, \mathcal{Q}_{\text{val}})$
+    \STATE \textbf{if} $\text{Performance}_t < \text{Performance}_{t-1}$ \textbf{then} revert $\mathcal{E}$
+\ENDFOR
+\RETURN $\mathcal{E}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Stage 1: Trajectory Summarization}
+
+The first stage converts each full trajectory (potentially hundreds of tokens with tool calls, reasoning steps, etc.) into a concise step-by-step summary that highlights:
+\begin{itemize}
+    \item Actions taken at each step
+    \item Which experiences were applied
+    \item Where errors or detours occurred (if incorrect)
+    \item Core outcomes of each step
+\end{itemize}
+
+\textbf{Prompt Template:}
+\begin{quote}
+\small
+\textit{An agent system may be provided with some experiences, and then it produces the following trajectory to solve the given problem. Please summarize the trajectory step-by-step:}
+
+\textit{1. For each step, describe what action is being taken, and which experience has been used in this step.}
+
+\textit{2. Given the grading of this rollout and the correct answer, identify and explain any steps that represent detours, errors, or backtracking.}
+
+\textit{3. Maintain all the core outcome of each step.}
+
+\textit{<trajectory>\{trajectory\}</trajectory>}
+
+\textit{<evaluation>\{correct/wrong\}</evaluation>}
+
+\textit{<groundtruth>\{answer\}</groundtruth>}
+
+\textit{Only return the trajectory summary of each step.}
+\end{quote}
+
+\textbf{Example Summary:}
+\begin{quote}
+\small
+\textit{Step 1: Applied experience [G0] to validate geometry solution lies within bounded region. Identified that point $P$ must satisfy $0 \leq x \leq 5$.}
+
+\textit{Step 2: Computed distance formula using Pythagorean theorem. No specific experience applied, standard calculation.}
+
+\textit{Step 3: ERROR - Failed to check discriminant sign before solving quadratic. Should have applied experience [G21] to separate real/imaginary parts first. This led to extraneous solution.}
+
+\textit{Step 4: Backtracked and recomputed with proper validation. Final answer $x = 3$.}
+\end{quote}
+
+This summarization serves two purposes:
+\begin{enumerate}
+    \item \textbf{Compression}: Reduces context length for subsequent LLM calls
+    \item \textbf{Attribution}: Explicitly links experiences to outcomes, enabling targeted updates
+\end{enumerate}
+
+\subsection{Stage 2: Group Advantage Extraction}
+
+The second stage compares all $G$ trajectory summaries within a group to identify patterns that distinguish successful from unsuccessful attempts. The LLM is prompted to:
+\begin{itemize}
+    \item Identify key correct decisions in successful trajectories
+    \item Pinpoint where and why reasoning went wrong in failed trajectories
+    \item Note strategies that were used or missed
+    \item Propose up to 3 operations to update the experience library
+\end{itemize}
+
+\textbf{Prompt Template:}
+\begin{quote}
+\small
+\textit{Review these problem-solving attempts and extract generalizable experiences:}
+
+\textit{1. Trajectory Analysis:}
+\begin{itemize}
+    \item[] \textit{- For successful steps: Identify key correct decisions}
+    \item[] \textit{- For errors: Pinpoint where/why reasoning went wrong}
+    \item[] \textit{- Note patterns or strategies used/missed}
+\end{itemize}
+
+\textit{2. Update Existing Experiences:}
+\begin{itemize}
+    \item[] \textit{- Options: [modify, add, delete]}
+    \item[] \textit{- Max 3 operations per group}
+    \item[] \textit{- Requirements: Begin with context, focus on strategic patterns}
+\end{itemize}
+
+\textit{Return JSON: [\{"option": "add", "experience": "..."\}, ...]}
+
+\textit{<problem>\{problem\}</problem>}
+
+\textit{<trajectories>\{G summaries\}</trajectories>}
+
+\textit{<groundtruth>\{answer\}</groundtruth>}
+
+\textit{<experience>\{current experiences\}</experience>}
+\end{quote}
+
+\textbf{Example Extraction:}
+\begin{quote}
+\small
+\begin{verbatim}
+[
+  {
+    "option": "add",
+    "experience": "When solving quadratic equations in
+     geometry problems, check discriminant sign before
+     proceeding to avoid extraneous solutions."
+  },
+  {
+    "option": "modify",
+    "experience_id": "G0",
+    "new_text": "When solving geometry problems with
+     intersections or constrained regions, validate
+     solutions satisfy ALL boundary conditions."
+  }
+]
+\end{verbatim}
+\end{quote}
+
+\subsection{Stage 3: Batch Consolidation}
+
+The final stage reviews all proposed operations from the entire batch (across all queries) and consolidates them to:
+\begin{itemize}
+    \item Merge duplicate or highly similar experiences
+    \item Ensure each experience is concise ($\leq 32$ words)
+    \item Remove low-value or contradictory experiences
+    \item Maintain diversity and coverage
+\end{itemize}
+
+\textbf{Prompt Template:}
+\begin{quote}
+\small
+\textit{Consolidate suggested updates into final experience revisions:}
+
+\textit{Requirements:}
+\begin{enumerate}
+    \item[] \textit{1. Clear, generalizable, $\leq$ 32 words}
+    \item[] \textit{2. Focus on strategic thinking}
+    \item[] \textit{3. Avoid duplication}
+\end{enumerate}
+
+\textit{Options: [modify, merge, delete]}
+
+\textit{<experience>\{current\}</experience>}
+
+\textit{<suggested\_updates>\{all group operations\}</suggested\_updates>}
+
+\textit{Return JSON with final operations.}
+\end{quote}
+
+\textbf{Example Consolidation:}
+\begin{quote}
+\small
+\begin{verbatim}
+[
+  {
+    "option": "merge",
+    "experience_ids": ["temp_1", "temp_5", "temp_12"],
+    "new_experience": "For quadratic equations in geometry,
+     validate discriminant and boundary conditions before
+     accepting solutions.",
+    "id": "G45"
+  },
+  {
+    "option": "delete",
+    "experience_id": "G23",
+    "reason": "Contradicted by empirical evidence in
+     current batch."
+  }
+]
+\end{verbatim}
+\end{quote}
+
+\subsection{Experience Format and Characteristics}
+
+Each experience follows a consistent format designed for maximum utility:
+
+\begin{itemize}
+    \item \textbf{Concise}: $\leq 32$ words to fit many in context window
+    \item \textbf{Strategic}: Focus on "when" and "why", not "how to calculate"
+    \item \textbf{Contextual}: Begin with triggering condition ("When solving...", "For problems involving...")
+    \item \textbf{Actionable}: Specify clear decision or validation step
+    \item \textbf{Generalizable}: Avoid problem-specific details, focus on patterns
+\end{itemize}
+
+\textbf{Example Experiences from AIME Dataset:}
+
+\begin{enumerate}
+    \item[\texttt{[G0]}] \textit{When solving geometry problems with intersections, validate solutions lie within bounded regions or segments, not on extensions, to avoid extraneous answers.}
+
+    \item[\texttt{[G1]}] \textit{For expected extreme statistics in combinatorial problems, use direct enumeration for small sizes.}
+
+    \item[\texttt{[G10]}] \textit{When using mathematical invariants to prove impossibility, always validate them against known achievable states or small cases.}
+
+    \item[\texttt{[G21]}] \textit{For complex polynomials with real parameters, separate real and imaginary parts to find when real roots exist.}
+
+    \item[\texttt{[G37]}] \textit{In geometry problems with points on sides of a triangle and given segment lengths, first determine all three side lengths by summing the appropriate segments.}
+\end{enumerate}
+
+\subsection{Context Injection Strategy}
+
+During inference, the experience library is injected into the system prompt:
+
+\begin{quote}
+\small
+\textit{You are a mathematical problem solver. Use the following learned experiences to guide your reasoning:}
+
+\textit{\# Learned Experiences}
+
+\textit{[G0]. When solving geometry problems with intersections...}
+
+\textit{[G1]. For expected extreme statistics...}
+
+\textit{...}
+
+\textit{Now solve the following problem, explicitly noting which experiences you apply:}
+
+\textit{[Problem statement]}
+\end{quote}
+
+For long experience libraries ($>50$ experiences), we use embedding-based retrieval to select only the top-$k$ most relevant experiences for each query:
+
+\begin{equation}
+\mathcal{E}_{\text{relevant}}(q) = \text{TopK}\left(\left\{ e \in \mathcal{E} : \text{sim}(\text{embed}(e), \text{embed}(q)) \right\}, k=5\right)
+\end{equation}
+
+This balances context richness with inference cost, maintaining the Hamiltonian equilibrium.
+

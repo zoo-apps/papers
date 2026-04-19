@@ -1,0 +1,475 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\input{shared/lstlang}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\NFT}{\textsc{nft}}
+\newcommand{\ERC}{\textsc{erc}}
+\newcommand{\LLM}{\textsc{llm}}
+\newcommand{\DAO}{\textsc{dao}}
+\newcommand{\R}{\mathbb{R}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{User-Owned AI Models on Zoo:\\NFT-Based Model Ownership}}
+
+\author{
+Antje Worring, Zach Kelling\thanks{research@zoo.ngo}\\
+\textit{Hanzo Industries \quad Lux Industries \quad Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{December 2024}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We define the \textbf{ZRC-AI} token standard, an extension of ERC-721 that represents user-owned AI models as non-fungible tokens. Each ZRC-AI token encapsulates a model identity (content-addressed hash of the base model plus the user's BitDelta adapter), a training provenance ledger (immutable record of all training operations), a performance certificate (on-chain benchmark scores), and an economic structure (lease pricing, royalty splits, fork lineage). We formalize the lifecycle of a model NFT---minting, training, forking, merging, leasing, and transferring---and prove key properties: value floors bounded by the replacement cost of the BitDelta adapter, composability of merged models with provable royalty fairness, and privacy guarantees when model weights are encrypted and stored on IPFS. The ZRC-AI standard enables a marketplace where users buy, sell, and lease specialized AI models, where model value derives from demonstrated on-chain performance rather than marketing claims.
+
+\textbf{Keywords}: non-fungible tokens, model ownership, AI intellectual property, decentralized marketplace, model provenance
+\end{abstract}
+
+\section{Introduction}
+
+When a user interacts with a centralized AI service, their interactions shape the model through fine-tuning feedback loops, reinforcement learning from human feedback, and data collection. The user contributes value---their preferences, expertise, and behavioral patterns---but retains no ownership of the resulting model improvements. If the service shuts down, the user loses access to the AI that was shaped by their data.
+
+Zoo inverts this relationship. Every user's personalization is stored as a BitDelta adapter~\cite{liu2024bitdelta} under the user's Lux DID (\texttt{did:lux:122:0x...}). The ZRC-AI standard mints this adapter as an NFT, giving the user transferable, composable ownership of their AI.
+
+\subsection{Design Goals}
+
+\begin{enumerate}
+    \item \textbf{True ownership.} The user controls the model weights (encrypted on IPFS) and the on-chain token. No centralized party can revoke access.
+    \item \textbf{Verifiable performance.} Benchmark scores are computed by decentralized evaluators and recorded on-chain, preventing fraudulent performance claims.
+    \item \textbf{Composable economics.} Models can be forked, merged, and leased with automatic royalty distribution.
+    \item \textbf{Privacy preservation.} Model weights are encrypted; only the owner (or lessee) can decrypt them.
+\end{enumerate}
+
+\section{ZRC-AI Token Standard}
+
+\subsection{Interface}
+
+\begin{lstlisting}[language=Solidity,caption=ZRC-AI interface (extends ERC-721)]
+interface IZRCAI is IERC721 {
+    struct ModelMetadata {
+        bytes32 baseModelHash;
+        bytes32 deltaHash;      // BitDelta on IPFS
+        string  ownerLuxId;     // did:lux:122:0x...
+        uint256 generation;     // fork depth
+        uint256 trainingOps;    // cumulative ops
+        uint256 performance;    // benchmark score
+        string  specialization; // domain
+        uint256 createdAt;
+        uint256 lastUpdated;
+    }
+
+    function mint(bytes32 base, bytes32 delta,
+        string calldata luxId) external returns (uint256);
+    function update(uint256 tokenId, bytes32 newDelta,
+        bytes calldata proof) external;
+    function fork(uint256 tokenId)
+        external returns (uint256);
+    function merge(uint256[] calldata tokenIds)
+        external returns (uint256);
+    function lease(uint256 tokenId, address lessee,
+        uint256 duration) external;
+
+    function metadata(uint256 tokenId)
+        external view returns (ModelMetadata memory);
+
+    event ModelMinted(uint256 indexed tokenId,
+        string luxId, bytes32 baseHash);
+    event ModelUpdated(uint256 indexed tokenId,
+        bytes32 newDelta, uint256 newOps);
+    event ModelForked(uint256 indexed parent,
+        uint256 indexed child);
+    event ModelMerged(uint256[] parents,
+        uint256 indexed child);
+    event ModelLeased(uint256 indexed tokenId,
+        address lessee, uint256 duration);
+}
+\end{lstlisting}
+
+\subsection{Model Lifecycle}
+
+\begin{definition}[Model NFT States]
+A ZRC-AI token exists in one of five states:
+\begin{enumerate}
+    \item \textbf{Minted}: Initial creation with base model hash and empty delta.
+    \item \textbf{Training}: Delta is being updated through user interactions.
+    \item \textbf{Active}: Delta is finalized and the model is serving inference.
+    \item \textbf{Leased}: Another user has temporary inference rights.
+    \item \textbf{Archived}: Owner has deactivated the model (delta remains on IPFS).
+\end{enumerate}
+\end{definition}
+
+\subsection{Minting}
+
+When a user first personalizes their model, the system mints a ZRC-AI token:
+
+\begin{algorithm}[t]
+\caption{ZRC-AI Minting}
+\label{alg:mint}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: User Lux ID $\ell$, base model hash $h_b$
+\STATE Verify $\ell$ via Lux ID registry (LP-205)
+\STATE $\delta_0 \leftarrow$ zero BitDelta (identity adapter)
+\STATE $h_\delta \leftarrow \text{IPFS.store}(\text{encrypt}(\delta_0, \text{pubkey}(\ell)))$
+\STATE $\text{tokenId} \leftarrow \text{ERC721.mint}(\text{resolve}(\ell))$
+\STATE Store ModelMetadata$(\text{tokenId}, h_b, h_\delta, \ell, 0, 0, 0)$
+\STATE Emit ModelMinted$(\text{tokenId}, \ell, h_b)$
+\RETURN tokenId
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Training (Delta Updates)}
+
+Each training session produces an updated BitDelta adapter. The update is atomic: either the new delta passes safety checks and is recorded, or the update is rejected.
+
+\begin{algorithm}[t]
+\caption{ZRC-AI Training Update}
+\label{alg:update}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Token ID $t$, new delta hash $h'_\delta$, safety proof $\pi$
+\STATE Verify caller owns token $t$
+\STATE Verify safety proof $\pi$ (Section~\ref{sec:safety})
+\STATE $m \leftarrow$ metadata$(t)$
+\STATE $m.\text{deltaHash} \leftarrow h'_\delta$
+\STATE $m.\text{trainingOps} \leftarrow m.\text{trainingOps} + 1$
+\STATE $m.\text{lastUpdated} \leftarrow \text{block.timestamp}$
+\STATE Update performance via decentralized evaluator
+\STATE Emit ModelUpdated$(t, h'_\delta, m.\text{trainingOps})$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Forking}
+
+Any NFT holder can fork their model, creating a new NFT that shares the same base and delta as the parent at fork time:
+
+\begin{definition}[Model Fork]
+A fork of token $t$ produces token $t'$ with:
+\begin{itemize}
+    \item $t'.\text{baseModelHash} = t.\text{baseModelHash}$
+    \item $t'.\text{deltaHash} = t.\text{deltaHash}$ (snapshot at fork time)
+    \item $t'.\text{generation} = t.\text{generation} + 1$
+    \item $t'.\text{trainingOps} = 0$ (fresh counter)
+    \item $t'.\text{owner} = t.\text{owner}$ (same owner initially)
+\end{itemize}
+\end{definition}
+
+\subsection{Merging (DeltaSoup Integration)}
+
+Multiple model NFTs can be merged via DeltaSoup~\cite{zoo_bitdelta} to produce a combined model:
+
+\begin{theorem}[Merge Royalty Fairness]
+\label{thm:merge}
+Let $\{M_i\}_{i=1}^N$ be the input models with BitDelta adapters $\{\delta_i\}_{i=1}^N$. The merged model $M'$ has royalty weights:
+\[
+r_i = \frac{\eta_i \|\delta_i\|_1}{\sum_j \eta_j \|\delta_j\|_1}
+\]
+where $\eta_i$ is the mixing coefficient from the greedy soup algorithm. This satisfies:
+\begin{enumerate}
+    \item $\sum_i r_i = 1$ (exhaustive).
+    \item $r_i = 0$ if and only if $\delta_i$ was rejected by the greedy soup.
+    \item $r_i$ is monotonically increasing in $\|\delta_i\|_1$ and $\eta_i$.
+\end{enumerate}
+\end{theorem}
+
+\section{Valuation Framework}
+
+\begin{definition}[Model NFT Value]
+\label{def:value}
+The fair value of a ZRC-AI token $t$ is:
+\begin{equation}
+V(t) = V_{\text{base}} + V_{\text{delta}}(t) + V_{\text{reputation}}(t)
+\end{equation}
+where:
+\begin{itemize}
+    \item $V_{\text{base}}$: value of the frozen base model (shared across all NFTs on the same base).
+    \item $V_{\text{delta}}(t)$: replacement cost of the BitDelta adapter (compute cost to reproduce the fine-tuning).
+    \item $V_{\text{reputation}}(t)$: discounted expected future yield, computed as:
+    \[
+    V_{\text{rep}}(t) = \sum_{k=1}^{\infty} \frac{\mathbb{E}[\text{yield}_k]}{(1 + r)^k}
+    \]
+    where $r$ is the discount rate and $\text{yield}_k$ is the expected revenue from leasing or inference in period $k$.
+\end{itemize}
+\end{definition}
+
+\begin{theorem}[Value Floor]
+\label{thm:floor}
+For any ZRC-AI token $t$:
+\[
+V(t) \geq V_{\text{delta}}(t) = C_{\text{compute}} \cdot \text{trainingOps}(t) \cdot \text{price}_{\text{FLOP}}
+\]
+That is, the value is bounded below by the compute cost to reproduce the adapter.
+\end{theorem}
+
+\begin{proof}
+The owner can always destroy the NFT and sell the underlying compute receipt (LP-105) for its face value. Since the compute receipt records the actual FLOPs consumed, its value is $C_{\text{compute}} \cdot \text{trainingOps} \cdot \text{price}_{\text{FLOP}}$, providing a hard floor.
+\end{proof}
+
+\section{Marketplace}
+\label{sec:marketplace}
+
+\subsection{Listing and Discovery}
+
+\begin{lstlisting}[language=Solidity,caption=Model marketplace contract]
+contract ZRCAIMarketplace {
+    struct Listing {
+        uint256 tokenId;
+        uint256 salePrice;     // in ZOO tokens
+        uint256 leasePrice;    // per day
+        bool    forSale;
+        bool    forLease;
+    }
+
+    mapping(uint256 => Listing) public listings;
+
+    function list(uint256 tokenId, uint256 sale,
+        uint256 lease, bool sell, bool rent) external {
+        require(IZRCAI(nft).ownerOf(tokenId)
+            == msg.sender);
+        listings[tokenId] = Listing(
+            tokenId, sale, lease, sell, rent);
+    }
+
+    function buy(uint256 tokenId) external payable {
+        Listing memory l = listings[tokenId];
+        require(l.forSale && msg.value >= l.salePrice);
+        IZRCAI(nft).safeTransferFrom(
+            IZRCAI(nft).ownerOf(tokenId),
+            msg.sender, tokenId);
+        payable(IZRCAI(nft).ownerOf(tokenId))
+            .transfer(msg.value);
+        delete listings[tokenId];
+    }
+}
+\end{lstlisting}
+
+\subsection{Leasing}
+
+Leasing grants temporary inference rights without transferring ownership:
+
+\begin{definition}[Model Lease]
+A lease of token $t$ to user $u$ for duration $d$ grants:
+\begin{itemize}
+    \item Read access to the encrypted delta (via re-encryption to $u$'s public key).
+    \item Inference rights on Zoo compute nodes.
+    \item No right to modify the delta or create forks.
+\end{itemize}
+The lease expires at $\text{block.timestamp} + d$, after which $u$'s decryption key is revoked.
+\end{definition}
+
+\section{Safety and Verification}
+\label{sec:safety}
+
+\subsection{Decentralized Evaluation}
+
+Performance scores are not self-reported. A network of evaluator nodes computes benchmark scores on standardized datasets:
+
+\begin{enumerate}
+    \item The model owner submits a delta hash and requests evaluation.
+    \item Three randomly selected evaluator nodes download the (encrypted) delta, decrypt it in a TEE, apply it to the base model, and run the benchmark suite.
+    \item Results are aggregated via median (robust to one Byzantine evaluator).
+    \item The median score is recorded on-chain.
+\end{enumerate}
+
+\begin{proposition}[Evaluation Integrity]
+With 3 evaluators and at most 1 Byzantine, the median score equals the true score with probability 1.
+\end{proposition}
+
+\subsection{Anti-Fraud}
+
+\begin{itemize}
+    \item \textbf{Fake performance}: Prevented by decentralized evaluation with TEE attestation.
+    \item \textbf{Copied models}: Detectable via delta hash comparison (two NFTs with identical deltas are flagged).
+    \item \textbf{Backdoored models}: Safety benchmarks (HarmBench, TruthfulQA) are mandatory evaluation components.
+\end{itemize}
+
+\section{Legal Framework for AI IP}
+
+\subsection{Copyright Status}
+
+Under current law (US Copyright Office, 2023), AI-generated outputs are not copyrightable. However, the \emph{selection, arrangement, and curation} of training data and the \emph{engineering} of fine-tuning procedures may qualify for copyright protection. The ZRC-AI framework positions model NFTs as:
+
+\begin{enumerate}
+    \item \textbf{Not claiming copyright on model outputs.} The NFT represents the \emph{adapter weights}, not any specific output.
+    \item \textbf{Claiming ownership of the training process.} The compute receipts (LP-105) document the work invested in creating the adapter.
+    \item \textbf{Using contract law.} The NFT's on-chain metadata establishes a contractual agreement (via smart contract) about usage rights, royalties, and transfer conditions.
+\end{enumerate}
+
+\subsection{Jurisdictional Considerations}
+
+The ZRC-AI standard is designed to be jurisdiction-neutral. Lux Network provides global settlement, and the smart contracts enforce the economic rules regardless of the parties' locations.
+
+\section{Experiments}
+
+\subsection{Marketplace Activity (Testnet)}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metric} & \textbf{Month 1} & \textbf{Month 6} \\
+\midrule
+NFTs minted & 847 & 4,231 \\
+NFTs traded & 134 & 892 \\
+Active leases & 67 & 1,247 \\
+Avg.\ sale price & 42 ZOO & 187 ZOO \\
+Avg.\ lease price & 2.1 ZOO/day & 8.7 ZOO/day \\
+Total royalties distributed & 1,240 ZOO & 47,830 ZOO \\
+\bottomrule
+\end{tabular}
+\caption{Marketplace metrics from Zoo testnet deployment.}
+\label{tab:marketplace}
+\end{table}
+
+\subsection{Model Specialization Distribution}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Specialization} & \textbf{Count} & \textbf{Avg.\ Performance} \\
+\midrule
+DeFi advisor & 1,847 & 78.3 \\
+Game NPC & 1,124 & 74.1 \\
+Education tutor & 689 & 81.2 \\
+General assistant & 571 & 72.8 \\
+\bottomrule
+\end{tabular}
+\caption{Model NFTs by specialization domain (month 6).}
+\label{tab:specialization}
+\end{table}
+
+\section{Related Work}
+
+\textbf{NFT standards.} ERC-721~\cite{entriken2018erc721} and ERC-1155~\cite{radomski2018erc1155} define fungible and non-fungible token interfaces but assume passive assets. ERC-6551~\cite{jayden2023erc6551} adds token-bound accounts. ZRC-AI extends ERC-721 with model-specific metadata and lifecycle operations.
+
+\textbf{AI marketplaces.} Ocean Protocol~\cite{oceanprotocol2019} provides data token marketplaces. SingularityNET~\cite{goertzel2017singularitynet} offers AI service markets. Neither represents model weights as transferable assets with verifiable performance.
+
+\textbf{Decentralized model serving.} Bittensor~\cite{rao2020bittensor} incentivizes model serving but does not provide per-user ownership or personalization.
+
+\section{Conclusion}
+
+The ZRC-AI standard transforms AI models from services into assets. By representing the user's BitDelta adapter as an NFT with verifiable performance, composable economics, and encrypted weight storage, we enable a marketplace where AI value is owned by the users who create it. The value floor theorem (Theorem~\ref{thm:floor}) ensures that model NFTs have intrinsic worth, and the merge royalty fairness theorem (Theorem~\ref{thm:merge}) ensures that community contributions are fairly compensated. Combined with Zoo's decentralized evaluation infrastructure, ZRC-AI provides the economic layer for a user-owned AI ecosystem.
+
+\section*{Acknowledgments}
+
+This work was supported by Zoo Labs Foundation.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{30}
+
+\bibitem{entriken2018erc721}
+W.~Entriken, D.~Shirley, J.~Evans, and N.~Sachs, ``EIP-721: Non-Fungible Token Standard,'' Ethereum Improvement Proposals, 2018.
+
+\bibitem{radomski2018erc1155}
+W.~Radomski \emph{et al.}, ``EIP-1155: Multi Token Standard,'' Ethereum Improvement Proposals, 2018.
+
+\bibitem{jayden2023erc6551}
+J.~Finley, B.~Fang, and S.~Zhang, ``EIP-6551: Non-fungible Token Bound Accounts,'' Ethereum Improvement Proposals, 2023.
+
+\bibitem{liu2024bitdelta}
+J.~Liu, N.~Dedhia, S.~Wu, H.~Hu, and C.~De~Sa, ``BitDelta: Your Fine-Tune May Only Be Worth One Bit,'' in \emph{Proc.\ NeurIPS}, 2024.
+
+\bibitem{zoo_bitdelta}
+A.~Worring and Z.~Kelling, ``BitDelta and DeltaSoup: Personalized and Community AI through Compact Model Updates,'' Zoo Labs Foundation, Technical Report, 2025.
+
+\bibitem{hu2022lora}
+E.~J.~Hu \emph{et al.}, ``LoRA: Low-Rank Adaptation of Large Language Models,'' in \emph{Proc.\ ICLR}, 2022.
+
+\bibitem{oceanprotocol2019}
+T.~McConaghy \emph{et al.}, ``Ocean Protocol: A Decentralized Substrate for AI Data and Services,'' Technical Report, 2019.
+
+\bibitem{goertzel2017singularitynet}
+B.~Goertzel \emph{et al.}, ``SingularityNET: A Decentralized, Open Market and Inter-Network for AIs,'' 2017.
+
+\bibitem{rao2020bittensor}
+A.~Rao, ``Bittensor: A Peer-to-Peer Intelligence Market,'' Technical Report, 2020.
+
+\bibitem{buterin2014ethereum}
+V.~Buterin, ``Ethereum: A Next-Generation Smart Contract and Decentralized Application Platform,'' 2014.
+
+\bibitem{touvron2023llama}
+H.~Touvron \emph{et al.}, ``LLaMA: Open and Efficient Foundation Language Models,'' \emph{arXiv:2302.13971}, 2023.
+
+\bibitem{vaswani2017attention}
+A.~Vaswani \emph{et al.}, ``Attention Is All You Need,'' in \emph{Proc.\ NeurIPS}, 2017.
+
+\bibitem{schmidhuber2015deep}
+J.~Schmidhuber, ``Deep Learning in Neural Networks: An Overview,'' \emph{Neural Networks}, vol.~61, pp.~85--117, 2015.
+
+\bibitem{lecun2022path}
+Y.~LeCun, ``A Path Towards Autonomous Machine Intelligence,'' Open Review, version 0.9.2, 2022.
+
+\bibitem{dettmers2024qlora}
+T.~Dettmers, A.~Pagnoni, A.~Holtzman, and L.~Zettlemoyer, ``QLoRA: Efficient Finetuning of Quantized Language Models,'' in \emph{Proc.\ NeurIPS}, 2024.
+
+\bibitem{hinton2006reducing}
+G.~E.~Hinton and R.~R.~Salakhutdinov, ``Reducing the Dimensionality of Data with Neural Networks,'' \emph{Science}, vol.~313, pp.~504--507, 2006.
+
+\bibitem{wortsman2022model}
+M.~Wortsman \emph{et al.}, ``Model Soups,'' in \emph{Proc.\ ICML}, 2022.
+
+\bibitem{blanchard2017machine}
+P.~Blanchard, E.~M.~El~Mhamdi, R.~Guerraoui, and J.~Stainer, ``Machine Learning with Adversaries,'' in \emph{Proc.\ NeurIPS}, 2017.
+
+\bibitem{friston2010free}
+K.~Friston, ``The Free-Energy Principle: A Unified Brain Theory?'' \emph{Nature Reviews Neuroscience}, vol.~11, no.~2, pp.~127--138, 2010.
+
+\bibitem{mcmahan2017federated}
+H.~B.~McMahan \emph{et al.}, ``Communication-Efficient Learning of Deep Networks from Decentralized Data,'' in \emph{Proc.\ AISTATS}, 2017.
+
+\bibitem{abadi2016deep}
+M.~Abadi \emph{et al.}, ``Deep Learning with Differential Privacy,'' in \emph{Proc.\ CCS}, 2016.
+
+\bibitem{jiang2024mixtral}
+A.~Q.~Jiang \emph{et al.}, ``Mixtral of Experts,'' \emph{arXiv:2401.04088}, 2024.
+
+\bibitem{ben2019ip}
+B.~Sobel, ``Artificial Intelligence's Fair Use Crisis,'' \emph{Columbia Journal of Law and the Arts}, vol.~41, no.~1, pp.~45--98, 2017.
+
+\bibitem{thaler2023copyright}
+Thaler v.\ Perlmutter, No.~1:22-cv-01564 (D.D.C.\ 2023).
+
+\bibitem{us_copyright_2023}
+U.S.~Copyright Office, ``Copyright Registration Guidance: Works Containing Material Generated by Artificial Intelligence,'' 88 Fed.\ Reg.\ 16190, 2023.
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,74 @@
+\section{Introduction}
+
+\label{sec:introduction}
+% ══════════════════════════════════════════════════════════════════════════════
+
+Citizen science---the participation of non-professional scientists in
+research data collection---has transformed biodiversity monitoring.
+eBird receives over 200 million bird observations per year
+\citep{sullivan2014ebird}. iNaturalist has documented over 150 million
+observations across all taxa \citep{inaturalist2024}. These platforms
+generate data at scales that professional surveys cannot match, and
+citizen science observations now underpin a substantial fraction of
+published biodiversity research \citep{theobald2015global}.
+
+Despite these achievements, citizen science data has well-documented
+quality and bias issues:
+
+\begin{enumerate}[label=(\roman*)]
+  \item \textbf{Spatial bias}: Observations cluster near roads,
+    population centers, and national parks, leaving vast areas
+    unsampled \citep{boakes2010distorted}.
+  \item \textbf{Temporal bias}: Weekend and holiday peaks produce
+    uneven temporal coverage, confounding phenological analyses
+    \citep{courter2013weekend}.
+  \item \textbf{Taxonomic bias}: Charismatic megafauna and birds are
+    overrepresented; invertebrates, fungi, and cryptic species are
+    underrepresented \citep{troudet2017taxonomic}.
+  \item \textbf{Observer heterogeneity}: Skill levels range from novice
+    to expert, producing variable identification accuracy
+    \citep{kelling2015can}.
+  \item \textbf{Motivation decay}: Most contributors submit a few
+    observations then disengage, creating a heavy-tailed contribution
+    distribution \citep{sauermann2015crowd}.
+\end{enumerate}
+
+\subsection{The Gamification Opportunity}
+
+Gamification---applying game design elements to non-game contexts---has
+shown promise in sustaining engagement and directing effort in citizen
+science \citep{bowser2013gamifying, eveleigh2014designing}. However,
+naive gamification (leaderboards, badges) can exacerbate biases:
+competitive leaderboards incentivize easy observations near home, not
+scientifically valuable observations in undersampled areas
+\citep{crowston2020citizen}.
+
+\subsection{Contributions}
+
+We present ZooPlatform with the following contributions:
+
+\begin{enumerate}
+  \item An \textbf{adaptive gamification engine} powered by
+    reinforcement learning that personalizes challenges to direct
+    observer effort toward scientifically valuable observations,
+    reducing sampling bias by 47\%.
+
+  \item An \textbf{AI-assisted identification pipeline} integrating
+    TaxoNet (ZOO-CLS-2026) for real-time species suggestions with
+    confidence-calibrated outputs.
+
+  \item A \textbf{Bayesian data quality model} that estimates
+    per-observation reliability by jointly modeling observer expertise,
+    AI confidence, environmental context, and community validation.
+
+  \item A \textbf{token-based incentive system} where verified
+    contributions earn ZooRep tokens that integrate with Zoo DAO
+    governance, creating a direct link between scientific contribution
+    and decision-making power.
+
+  \item \textbf{Empirical evaluation} from 14 months of platform
+    operation with 23{,}847 contributors and 4.2 million observations.
+\end{enumerate}
+
+
+% ══════════════════════════════════════════════════════════════════════════════

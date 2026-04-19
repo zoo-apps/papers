@@ -1,0 +1,24 @@
+\section{ZK Precompile ISA}
+
+
+Z-Chain exposes cryptographic primitives as EVM precompiles at address range \texttt{0x0500--0x051F}:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llr}
+\toprule
+\textbf{Address} & \textbf{Operation} & \textbf{Gas} \\
+\midrule
+\texttt{0x0501} & Poseidon2 hash & 800 \\
+\texttt{0x0502} & Pedersen commit (legacy) & 6,000 \\
+\texttt{0x0510} & STARK field arithmetic (Goldilocks) & 8--15 \\
+\texttt{0x0511} & STARK extension field (Fp2) & 25 \\
+\texttt{0x0512} & STARK Poseidon2 over Goldilocks & 800 \\
+\texttt{0x0513} & STARK FRI fold & 2,000 \\
+\texttt{0x0514} & STARK Merkle verification & 400/level \\
+\texttt{0x051F} & STARK full proof verify & 100K--500K \\
+\bottomrule
+\end{tabular}
+\caption{ZK Cryptographic ISA precompiles.}
+\end{table}
+

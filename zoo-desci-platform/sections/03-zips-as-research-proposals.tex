@@ -1,0 +1,58 @@
+\section{ZIPs as Research Proposals}
+
+\label{sec:zips}
+%----------------------------------------------------------------------
+
+\subsection{From Improvement Proposals to Research Proposals}
+
+Zoo Improvement Proposals (\ZIP{}s) \cite{zoo-dao-governance} are the governance mechanism for the \Zoo{} Network. We extend \ZIP{}s to serve as research funding proposals, replacing traditional grant applications:
+
+\begin{definition}[Research ZIP]
+A Research \ZIP{} $Z = (\textit{title}, \textit{abstract}, \textit{team}, \textit{budget}, \textit{milestones}, \textit{timeline}, \textit{capsule\_id})$ is a proposal for community-funded research, submitted to \GChain{} for \DAO{} vote.
+\end{definition}
+
+\subsection{Proposal Lifecycle}
+
+\begin{enumerate}
+    \item \textbf{Submission.} Researcher submits a Research \ZIP{} to \GChain{} with a deposit of 10M $\KEEPER$ tokens (refundable upon completion).
+    \item \textbf{Community Review.} A 14-day review period where any $\KEEPER$ holder can comment, ask questions, and signal support or opposition.
+    \item \textbf{Peer Review.} Three reviewers are selected from the reviewer pool (staked researchers with verified credentials on \IChain{}). Reviewers stake 1M $\KEEPER$ on their review quality.
+    \item \textbf{Vote.} A 7-day voting period on \GChain{}. Standard proposals require 51\% majority with 5\% quorum; large grants ($>$100M $\KEEPER$) require 66\% supermajority with 10\% quorum.
+    \item \textbf{Funding.} Approved proposals receive milestone-based funding from the \DAO{} treasury.
+    \item \textbf{Milestones.} Each milestone requires a deliverable (data, code, paper) committed to the Research Capsule. Milestone completion is verified by the original reviewers.
+    \item \textbf{Completion.} Final milestone triggers deposit refund and completion badge on the researcher's \IChain{} \DID{}.
+\end{enumerate}
+
+\subsection{Incentivized Peer Review}
+
+Peer review on \Zoo{} is not volunteer labor---it is staked, compensated, and reputation-building:
+
+\begin{itemize}
+    \item \textbf{Reviewer Stake.} Reviewers stake 1M $\KEEPER$ when accepting a review assignment. The stake is slashed if the review is flagged as low-quality by the community (>10\% of voters object).
+    \item \textbf{Compensation.} Reviewers earn 500K $\KEEPER$ per completed review, paid from the proposal's budget.
+    \item \textbf{Reputation.} Completed reviews accrue reputation tokens on the reviewer's \DID{}. High-reputation reviewers are prioritized for future assignments.
+    \item \textbf{Conflict Checks.} \IChain{} \DID{} credentials are used to verify that reviewers have no institutional or co-authorship conflicts with the proposer.
+\end{itemize}
+
+\subsection{Advantages Over Traditional Grants}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Property} & \textbf{Traditional Grants} & \textbf{Research ZIPs} \\
+\midrule
+Decision timeline & 12--18 months & 21 days \\
+Reviewer compensation & \$0 & 500K $\KEEPER$ \\
+Review transparency & Opaque & Public \\
+Funding source & Government/foundation & Community \DAO{} \\
+Geographic restriction & Yes (citizenship, residency) & No \\
+Progress tracking & Annual reports & On-chain milestones \\
+Reproducibility requirement & Rare & Mandatory \\
+\bottomrule
+\end{tabular}
+\caption{Research ZIPs vs.\ traditional grant funding}
+\label{tab:grants_comparison}
+\end{table}
+
+%----------------------------------------------------------------------

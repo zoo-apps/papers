@@ -1,0 +1,19 @@
+\section{Validator Set Management}
+
+
+\subsection{Stake-Weighted Selection}
+
+Validators are selected proportionally to their staked $\textsc{Keeper}$ tokens. The probability of validator $v_i$ being included in the active set of size $k$ is:
+
+\begin{equation}
+P(v_i \in \mathcal{A}) = 1 - \left(1 - \frac{w_i}{W}\right)^k
+\end{equation}
+
+For validators with significant stake ($w_i / W \geq 1/k$), inclusion is near-certain.
+
+\subsection{Epoch Transitions and DKG}
+
+Validator sets rotate every epoch ($E = 1000$ blocks). At epoch boundary $h_e$: (1)~compute $\mathcal{V}_{e+1}$ from staking state at $h_e - 100$; (2)~execute \Corona{} distributed key generation for the new set; (3)~BLS keys persist (no DKG needed); (4)~transition at $h_e + 1$ with 10-block overlap.
+
+The \Corona{} DKG has each validator $v_i$ sample polynomial $f_i(x) = \sum_{j=0}^{t-1} a_{i,j} x^j$ over $R_q$, broadcast commitments, and send encrypted shares to peers. The collective public key is $PK = \sum_{i=1}^{n} C_{i,0}$. The protocol completes in 3 rounds with $O(n^2)$ messages ($\sim$7.6\,GB for $n = 1000$).
+

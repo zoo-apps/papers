@@ -1,0 +1,71 @@
+\section{Layered Architecture}
+
+
+Zoo Network operates as a specialized Layer 2 atop Hanzo's base compute infrastructure. This section details the multi-layer design.
+
+\subsection{Layer 0: Lux Consensus}
+
+\textbf{Lux} \cite{lux2025whitepaper} provides the foundational consensus layer with:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Wave Consensus}: DAG-based finality via repeated sub-sampled voting \cite{rocket2020snowman}. Achieves sub-second confirmation with Byzantine fault tolerance.
+\item \textbf{Post-Quantum Cryptography}: CRYSTALS-Dilithium signatures resist quantum attacks.
+\item \textbf{Multi-Chain Architecture}: Supports heterogeneous virtual machines (EVM, WASM, custom).
+\end{itemize}
+
+Zoo inherits security and finality guarantees from Lux's validator set.
+
+\subsection{Layer 1: Hanzo Compute Infrastructure}
+
+\textbf{Hanzo} \cite{hanzo2025paper} extends Lux with compute-specific capabilities:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{GPU Compute Nodes}: Distributed GPU clusters run containerized LLM inference. Nodes stake collateral and earn rewards proportional to compute provided.
+\item \textbf{Proof of Compute}: Validators verify inference correctness via sampling or zero-knowledge proofs.
+\item \textbf{Storage Primitives}: Integration with IPFS for content-addressable data and Arweave for permanent archival.
+\item \textbf{Rust Crates}: Hanzo provides reusable libraries (consensus, mining, HTTP APIs, libp2p networking) that Zoo extends.
+\end{itemize}
+
+Hanzo is blockchain-agnostic compute infrastructure; Zoo specializes it for AI/ML workloads.
+
+\subsection{Layer 2: Zoo AI/ML Specialization}
+
+Zoo adds AI-specific components:
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Smart Contracts}:
+   \begin{itemize}
+   \item \textit{Inference Router}: Routes queries to available GPU nodes, specifies experience library versions, records proofs.
+   \item \textit{Experience Registry}: Stores Merkle roots of experience libraries, handles DAO votes for curation.
+   \item \textit{Governance Contract}: Manages proposals, voting, and treasury allocation.
+   \end{itemize}
+
+\item \textbf{Off-Chain Components}:
+   \begin{itemize}
+   \item \textit{Semantic Context Manager}: Maintains experience embeddings, performs similarity search for retrieval.
+   \item \textit{Experience Storage}: IPFS (current library), Arweave (immutable history).
+   \item \textit{GPU Compute Nodes}: Load frozen base models, inject experiences into context windows, execute inference.
+   \end{itemize}
+
+\item \textbf{Rust Libraries} (extend Hanzo):
+   \begin{itemize}
+   \item \texttt{zoo\_mcp}: Model Context Protocol for experience management.
+   \item \texttt{zoo\_embedding}: Vector embedding generation.
+   \item \texttt{zoo\_job\_queue\_manager}: Training job scheduling.
+   \item \texttt{zoo\_tools\_primitives}: AI-specific utilities.
+   \end{itemize}
+\end{enumerate}
+
+\subsection{Data Flow}
+
+\begin{enumerate}
+\item User submits query via Inference Router contract.
+\item Router selects GPU node and experience library version.
+\item GPU node fetches base model (frozen weights) and experience library (IPFS).
+\item Experiences are injected into context window.
+\item Model generates response.
+\item Response returned to user; proof recorded on-chain.
+\end{enumerate}
+
+This architecture separates concerns: Lux handles consensus, Hanzo handles compute, Zoo handles AI-specific logic.
+

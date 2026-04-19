@@ -1,0 +1,50 @@
+\section{Verification Oracle Network}
+
+\label{sec:oracle}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Data Sources}
+
+The oracle network integrates four primary data streams:
+
+\begin{table}[H]
+\centering
+\caption{Oracle data sources and their characteristics.}
+\label{tab:oracle_sources}
+\begin{tabular}{p{2.5cm}p{3cm}p{2cm}p{3cm}}
+\toprule
+\textbf{Source} & \textbf{Metrics} & \textbf{Frequency} &
+  \textbf{Confidence} \\
+\midrule
+Satellite imagery & Forest cover, NDVI & Weekly & High for area \\
+Acoustic monitors & Species presence & Continuous & Medium-high \\
+Camera traps & Species abundance & Continuous & High (focal spp.) \\
+Citizen science & Occurrence, phenology & Variable & Medium \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Consensus Mechanism}
+
+Verifiers submit outcome assessments. The oracle uses a stake-weighted
+median to aggregate:
+\begin{equation}
+  O_{\text{consensus}} = \text{weighted-median}\!\left(
+    \{(o_j, s_j)\}_{j=1}^{J}\right)
+\end{equation}
+Verifiers outside 1.5 IQR of consensus lose a fraction of their stake.
+
+\subsection{Confidence Scoring}
+
+Each assessment includes a confidence score:
+\begin{equation}
+  \text{Confidence} = \min\!\left(
+    w_1 \cdot \text{DataCoverage} +
+    w_2 \cdot \text{VerifierAgreement} +
+    w_3 \cdot \text{TemporalConsistency},\; 1.0
+  \right)
+\end{equation}
+Milestone payments require confidence $\geq 0.8$.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,60 @@
+\section{Consensus: PoAI on Beluga}
+\label{sec:consensus}
+%% ============================================================
+
+\Beluga{} adapts the Proof of AI (\PoAI{}) consensus mechanism \cite{zoo-poai} to the L3 setting. In the original \PoAI{} design, validators contribute AI compute to earn block production rights. On \Beluga{}, we preserve this principle while leveraging the inherited Zoo validator set for liveness guarantees.
+
+\subsection{Validator Roles}
+
+\Beluga{} validators serve dual roles:
+
+\begin{description}[nosep]
+    \item[Block production] Standard BFT block production inherited from Quasar \cite{lux-quasar}. Any Zoo validator may propose \Beluga{} blocks.
+    \item[AI verification] A rotating committee of 7 validators is selected per epoch to verify training submissions and inference attestations. Committee selection is weighted by the validator's demonstrated AI compute capacity.
+\end{description}
+
+\subsection{Block Production Protocol}
+
+\begin{algorithm}
+\caption{Beluga block production}
+\label{alg:block}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} Pending transactions $T$, previous block $B_{k-1}$
+\STATE Leader $\ell$ selected by round-robin from Zoo validator set
+\STATE $\ell$ orders transactions: inference requests first, then training, then governance
+\STATE $\ell$ executes transactions against EVM state
+\STATE $\ell$ computes state root $r$ and receipts root
+\STATE $\ell$ broadcasts block proposal $B_k = (T, r, \text{sig}_\ell)$
+\STATE Validators verify execution, sign attestation
+\IF{$\geq 2f+1$ attestations received (where $3f+1 = n$)}
+    \STATE Block $B_k$ is finalized
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+Transaction ordering prioritizes inference requests to minimize latency for real-time AI applications. This does not create MEV concerns because inference pricing is determined by the \texttt{0x0300} precompile, not by transaction ordering.
+
+\subsection{AI Verification Committee}
+
+The AI verification committee validates off-chain compute claims:
+
+\begin{enumerate}[nosep]
+    \item \textbf{TEE attestation check}: Verify the cryptographic attestation from the Intel SGX, AMD SEV, or ARM TrustZone enclave where compute was performed.
+    \item \textbf{Spot-check re-execution}: Re-run 5\% of claimed inference requests on committee hardware and compare outputs (cosine similarity $> 0.99$ required).
+    \item \textbf{Training verification}: For training submissions, re-run evaluation benchmarks on the submitted weights.
+\end{enumerate}
+
+Committee rotation every epoch (1 hour) prevents collusion. A committee member who fails to participate in verification loses their committee bond (100 \BLG{}).
+
+\subsection{Finality}
+
+\Beluga{} achieves finality in two steps:
+
+\begin{enumerate}[nosep]
+    \item \textbf{Optimistic finality} ($\leq 500$ms): Block is accepted by $2f+1$ validators.
+    \item \textbf{Verified finality} ($\leq 1.1$s): Block is checkpointed to Zoo via Warp message, providing L2-level security.
+\end{enumerate}
+
+For inference requests requiring real-time responses, optimistic finality is sufficient. For high-value operations (model registration, bounty claims), applications should wait for verified finality.
+
+%% ============================================================

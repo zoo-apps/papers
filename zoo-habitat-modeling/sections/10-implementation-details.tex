@@ -1,0 +1,40 @@
+\section{Implementation Details}
+
+\label{sec:implementation}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Software Stack}
+
+HabitatNet is implemented in Python 3.11 using PyTorch 2.2 and PyTorch
+Geometric 2.5. Spatial data processing uses \texttt{rasterio},
+\texttt{geopandas}, and \texttt{h3-py} for hexagonal grid construction.
+The corridor algorithm uses \texttt{networkx} for graph operations and
+\texttt{scipy.sparse} for efficient Laplacian computations.
+
+\subsection{Training Protocol}
+
+\begin{itemize}
+  \item \textbf{Optimizer}: AdamW with learning rate $3 \times 10^{-4}$,
+    weight decay $10^{-4}$.
+  \item \textbf{Schedule}: Cosine annealing with warm restarts over 200
+    epochs.
+  \item \textbf{Batch size}: 16 subgraphs of 10{,}000 nodes each,
+    sampled using ClusterGCN \citep{chiang2019cluster}.
+  \item \textbf{Graph layers}: $L = 6$ message-passing layers with 128
+    hidden dimensions.
+  \item \textbf{Regularization}: Dropout (0.2), edge dropout (0.1),
+    and DropMessage \citep{fang2023dropmessage}.
+  \item \textbf{Loss weights}: $\lambda_1 = 0.1$, $\lambda_2 = 0.05$
+    (selected by validation).
+\end{itemize}
+
+\subsection{Computational Requirements}
+
+Training a continental-scale model requires approximately 48 GPU-hours on
+an NVIDIA A100 (80\,GB). Inference for a 1-million-cell region takes
+approximately 4 minutes. The corridor algorithm runs in $O(B \cdot N
+\cdot M^2)$ time, where $B$ is the budget, $N$ is the number of cells,
+and $M$ is the number of patches.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

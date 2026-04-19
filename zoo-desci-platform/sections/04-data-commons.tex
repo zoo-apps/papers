@@ -1,0 +1,59 @@
+\section{Data Commons}
+
+\label{sec:commons}
+%----------------------------------------------------------------------
+
+\subsection{DID-Authenticated Data Contributions}
+
+The \Zoo{} Data Commons \cite{zoo-data-commons} is a decentralized repository where researchers contribute datasets with cryptographic provenance:
+
+\begin{enumerate}
+    \item The contributor authenticates via their \IChain{} \DID{}.
+    \item The dataset is hashed (BLAKE3) and the hash is anchored on \IChain{} with the contributor's \DID{} as author.
+    \item The dataset is stored on decentralized storage (IPFS/Filecoin) with the on-chain hash as the content address.
+    \item Metadata (schema, license, domain, quality metrics) is stored on-chain.
+\end{enumerate}
+
+\subsection{Usage Receipts}
+
+Every use of a dataset in a Research Capsule generates a \emph{usage receipt}---an on-chain record linking the consuming capsule to the contributing dataset:
+
+\begin{verbatim}
+struct UsageReceipt {
+    dataset_hash:  bytes32,
+    consumer_did:  bytes32,
+    capsule_id:    bytes32,
+    usage_type:    uint8,    // 0=training, 1=validation,
+                             // 2=analysis, 3=reference
+    timestamp:     uint64
+}
+\end{verbatim}
+
+Usage receipts serve two purposes:
+\begin{enumerate}
+    \item \textbf{Attribution.} Data contributors receive verifiable credit for each use of their data.
+    \item \textbf{Compensation.} Contributors earn $\KEEPER$ tokens proportional to usage. The default rate is 100 $\KEEPER$ per receipt, paid from the consuming capsule's budget.
+\end{enumerate}
+
+\subsection{Citation Graphs on G-Chain}
+
+Research Capsules cite each other, creating a directed acyclic graph of scientific knowledge. This citation graph is stored on \GChain{} and provides:
+
+\begin{itemize}
+    \item \textbf{Impact Metrics.} Citation count, h-index, and PageRank-style importance scores computed on-chain.
+    \item \textbf{Retroactive Funding.} High-impact work (measured by citations) can receive retroactive \DAO{} funding, rewarding quality after the fact rather than guessing impact before.
+    \item \textbf{Dependency Tracking.} If a foundational dataset or method is retracted, all dependent capsules are flagged automatically.
+\end{itemize}
+
+\subsection{FAIR Compliance}
+
+The Data Commons natively satisfies the FAIR principles \cite{wilkinson2016fair}:
+
+\begin{itemize}
+    \item \textbf{Findable.} Content-addressed with persistent identifiers on \IChain{}.
+    \item \textbf{Accessible.} Open by default. Sensitive data is threshold-gated but discoverable (metadata is public).
+    \item \textbf{Interoperable.} Schema metadata enforces standard formats. Cross-references use DIDs.
+    \item \textbf{Reusable.} License and provenance are on-chain. Usage terms are machine-readable.
+\end{itemize}
+
+%----------------------------------------------------------------------

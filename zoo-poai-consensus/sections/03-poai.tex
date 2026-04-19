@@ -1,0 +1,161 @@
+\section{\PoAI{}
+ Protocol}
+\label{sec:protocol}
+
+\subsection{System Model}
+
+\textbf{Participants}:
+\begin{itemize}
+    \item \textbf{Workers}: Perform AI computation within \TEE{}s
+    \item \textbf{Validators}: Verify attestations and score quality
+    \item \textbf{Aggregators}: Combine attestations for on-chain submission
+\end{itemize}
+
+\textbf{Assumptions}:
+\begin{itemize}
+    \item At least $2f+1$ of $3f+1$ validators are honest
+    \item \TEE{} hardware is not compromised (standard \TEE{} assumption)
+    \item Network is partially synchronous (bounded delay after GST)
+\end{itemize}
+
+\subsection{Protocol Overview}
+
+\PoAI{} operates in epochs:
+
+\begin{enumerate}
+    \item \textbf{Work Phase}: Workers perform AI computation in \TEE{}s
+    \item \textbf{Attestation Phase}: Workers submit \TEE{} attestations
+    \item \textbf{Scoring Phase}: Validators evaluate work quality
+    \item \textbf{Aggregation Phase}: Attestations aggregated via BLS
+    \item \textbf{Finalization}: Block produced, rewards distributed
+\end{enumerate}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=2cm,
+    box/.style={rectangle, draw, minimum width=2.5cm, minimum height=1cm, align=center, fill=blue!10},
+    arrow/.style={->, thick}
+]
+    \node[box] (work) {Work Phase\\(Workers)};
+    \node[box, right=of work] (attest) {Attestation\\(TEE)};
+    \node[box, right=of attest] (score) {Scoring\\(Validators)};
+    \node[box, below=1.5cm of score] (agg) {Aggregation\\(BLS)};
+    \node[box, left=of agg] (final) {Finalization\\(Block)};
+
+    \draw[arrow] (work) -- (attest);
+    \draw[arrow] (attest) -- (score);
+    \draw[arrow] (score) -- (agg);
+    \draw[arrow] (agg) -- (final);
+    \draw[arrow, dashed] (final) -- (work) node[midway, left] {Next Epoch};
+\end{tikzpicture}
+\caption{\PoAI{} epoch structure.}
+\label{fig:epoch}
+\end{figure}
+
+\subsection{Work Phase}
+
+Workers execute AI tasks within \TEE{}s:
+
+\begin{algorithm}[t]
+\caption{Worker Execution}
+\label{alg:worker}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Task $T$, model $M$, data $D$
+\STATE \textbf{Output}: Result $R$, attestation $A$
+\STATE Enter \TEE{} enclave
+\STATE Load verified model $M$ (hash checked)
+\STATE $R \leftarrow \text{Execute}(M, T, D)$
+\STATE $h \leftarrow \text{Hash}(T \| M \| D \| R)$
+\STATE $A \leftarrow \text{TEE.Attest}(h)$
+\STATE Exit enclave
+\RETURN $R, A$
+\end{algorithmic}
+\end{algorithm}
+
+The attestation $A$ includes:
+\begin{itemize}
+    \item \TEE{} measurement (code hash)
+    \item Input/output hashes
+    \item Timestamp and nonce
+    \item Hardware signature
+\end{itemize}
+
+\subsection{Attestation Phase}
+
+Workers submit attestations to the network:
+
+\begin{equation}
+A = (w, T, h_{\text{in}}, h_{\text{out}}, \tau, \text{sig}_{\text{TEE}})
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $w$: Worker identifier
+    \item $T$: Task type (inference, training, extraction)
+    \item $h_{\text{in}}, h_{\text{out}}$: Input/output hashes
+    \item $\tau$: Timestamp
+    \item $\text{sig}_{\text{TEE}}$: \TEE{} hardware signature
+\end{itemize}
+
+\subsection{Scoring Phase}
+
+Validators evaluate work quality:
+
+\begin{algorithm}[t]
+\caption{Quality Scoring}
+\label{alg:scoring}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Attestation $A$, sample outputs
+\STATE \textbf{Output}: Quality score $q \in [0, 1]$
+\STATE Verify \TEE{} signature authenticity
+\IF{signature invalid}
+    \RETURN $q = 0$
+\ENDIF
+\STATE Sample subset of outputs for evaluation
+\STATE $q_{\text{correct}} \leftarrow \text{VerifyCorrectness}(\text{samples})$
+\STATE $q_{\text{useful}} \leftarrow \text{AssessUtility}(\text{samples})$
+\STATE $q_{\text{novel}} \leftarrow \text{CheckNovelty}(\text{samples})$
+\STATE $q \leftarrow \alpha q_{\text{correct}} + \beta q_{\text{useful}} + \gamma q_{\text{novel}}$
+\RETURN $q$
+\end{algorithmic}
+\end{algorithm}
+
+Quality components:
+\begin{itemize}
+    \item $q_{\text{correct}}$: Output correctness (deterministic verification)
+    \item $q_{\text{useful}}$: Utility for downstream tasks (benchmark evaluation)
+    \item $q_{\text{novel}}$: Information gain over existing knowledge
+\end{itemize}
+
+\subsection{Aggregation Phase}
+
+Validator scores are aggregated using weighted median:
+
+\begin{equation}
+Q(A) = \text{WeightedMedian}(\{q_v(A)\}_{v \in V}, \{s_v\})
+\end{equation}
+
+where $s_v$ is validator $v$'s stake.
+
+Attestations are BLS-aggregated:
+
+\begin{equation}
+\sigma_{\text{block}} = \prod_{A \in \text{block}} \text{BLS.Sign}(sk_v, H(A))
+\end{equation}
+
+\subsection{Reward Distribution}
+
+Block rewards are distributed proportionally:
+
+\begin{equation}
+R_w = R_{\text{total}} \cdot \frac{\sum_{A \in \mathcal{A}_w} Q(A) \cdot C(A)}{\sum_{A \in \text{block}} Q(A) \cdot C(A)}
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $\mathcal{A}_w$: Attestations from worker $w$
+    \item $Q(A)$: Quality score
+    \item $C(A)$: Compute cost (measured in FLOPs)
+\end{itemize}
+

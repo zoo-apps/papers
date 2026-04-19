@@ -1,0 +1,27 @@
+\section{IPLD Schema}
+
+
+\begin{lstlisting}[caption=IPLD Schema Definition]
+type Experience struct {
+  version Int
+  content Content
+  embedding &Embedding
+  metadata optional Metadata
+  signature optional Bytes
+}
+
+type Content struct {
+  text String
+  domain [String]
+  confidence Float
+}
+
+type Embedding [768]Float
+
+type Metadata struct {
+  created Int
+  author String
+  source String
+}
+\end{lstlisting}
+

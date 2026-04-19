@@ -1,0 +1,39 @@
+\section{Problem Formulation}
+
+\label{sec:formulation}
+
+\subsection{System Model}
+
+We consider a federation of $K$ wildlife monitoring sites, each managed by an independent institution.
+Site $k$ operates a set of sensors $\mathcal{S}_k = \{s_1^{(k)}, \ldots, s_{n_k}^{(k)}\}$ that collectively produce a local dataset $\mathcal{D}_k = \{(\mathbf{x}_i^{(k)}, y_i^{(k)})\}_{i=1}^{N_k}$ where $\mathbf{x}_i$ is a sensor observation (image, spectrogram, trajectory, or sequence) and $y_i$ is a species label.
+
+The global objective is to train a model $f_\theta$ that minimizes the aggregate loss:
+
+\begin{equation}
+    \min_\theta \sum_{k=1}^{K} \frac{N_k}{N} \mathcal{L}_k(\theta) \quad \text{where} \quad \mathcal{L}_k(\theta) = \frac{1}{N_k} \sum_{i=1}^{N_k} \ell(f_\theta(\mathbf{x}_i^{(k)}), y_i^{(k)})
+\end{equation}
+
+\noindent subject to the constraint that raw data $\mathcal{D}_k$ never leaves site $k$, and model updates satisfy species-specific differential privacy guarantees.
+
+\subsection{Challenges}
+
+Three properties of wildlife monitoring data make standard FL insufficient:
+
+\textbf{Modality Heterogeneity.}
+Different sites deploy different sensor types.
+Site $k_1$ may have only camera traps, site $k_2$ only acoustic sensors, and site $k_3$ both.
+Standard FL requires a shared model architecture across all sites.
+
+\textbf{Extreme Non-IID.}
+Species assemblages vary dramatically across sites.
+A site in the Amazon may share fewer than 5\% of species with a site in East Africa.
+This creates extreme label distribution skew ($P_k(y) \neq P_j(y)$) and covariate shift ($P_k(\mathbf{x} \mid y) \neq P_j(\mathbf{x} \mid y)$).
+
+\textbf{Conservation-Sensitive Privacy.}
+Not all data requires the same privacy protection.
+The location of a critically endangered rhinoceros requires much stronger protection than the location of a common impala.
+Uniform privacy budgets waste utility by over-protecting common species and under-protecting rare ones.
+
+% ============================================================
+% 4. Heterogeneous Sensor Adapter
+% ============================================================

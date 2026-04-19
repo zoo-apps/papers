@@ -1,0 +1,168 @@
+\section{Conclusion}
+
+\label{sec:conclusion}
+
+We have presented ZooFed, a federated learning framework for cross-institutional wildlife monitoring that addresses modality heterogeneity through sensor-agnostic feature adapters, provides conservation-calibrated differential privacy with species-specific budgets, and handles extreme non-IID distributions through clustered multi-task aggregation.
+
+Evaluation on 18 sites with 4.2 million sensor events demonstrates 89.4\% detection accuracy (within 2.1\% of centralized training), 31.2\% improvement over local-only models for rare species, and formal privacy guarantees with $\epsilon \leq 0.5$ for critically endangered species.
+
+ZooFed enables a new model for conservation collaboration: institutions contribute to collective intelligence without surrendering data sovereignty.
+The framework is released as open infrastructure on the Zoo Network, with the aspiration that federated learning becomes the default paradigm for multi-site ecological research.
+
+% ============================================================
+% References
+% ============================================================
+\begin{thebibliography}{30}
+
+\bibitem[Abadi et~al.(2016)]{abadi2016deep}
+Abadi, M., Chu, A., Goodfellow, I., et~al. (2016).
+\newblock Deep learning with differential privacy.
+\newblock {\em Proceedings of CCS}, pages 308--318.
+
+\bibitem[Ahumada et~al.(2020)]{ahumada2020wildlife}
+Ahumada, J.~A., Fegraus, E., Birch, T., et~al. (2020).
+\newblock Wildlife Insights: A platform to maximize the potential of camera trap and other passive sensor wildlife data.
+\newblock {\em Environmental Conservation}, 47(1):1--6.
+
+\bibitem[Alistarh et~al.(2017)]{alistarh2017qsgd}
+Alistarh, D., Grubic, D., Li, J., Tomioka, R., and Vojnovic, M. (2017).
+\newblock QSGD: Communication-efficient SGD via gradient quantization and encoding.
+\newblock {\em NeurIPS}, 30.
+
+\bibitem[Beery et~al.(2019)]{beery2019efficient}
+Beery, S., Morris, D., and Yang, S. (2019).
+\newblock Efficient pipeline for camera trap image review.
+\newblock {\em arXiv preprint arXiv:1907.06772}.
+
+\bibitem[Beery et~al.(2021)]{beery2021iwildcam}
+Beery, S., Cole, E., Parker, J., et~al. (2021).
+\newblock The iWildCam 2021 competition dataset.
+\newblock {\em arXiv preprint arXiv:2105.03494}.
+
+\bibitem[Deiner et~al.(2017)]{deiner2017environmental}
+Deiner, K., Bik, H.~M., M\"{a}chler, E., et~al. (2017).
+\newblock Environmental DNA metabarcoding: Transforming how we survey animal and plant communities.
+\newblock {\em Molecular Ecology}, 26(21):5872--5895.
+
+\bibitem[Dwork and Roth(2014)]{dwork2014algorithmic}
+Dwork, C. and Roth, A. (2014).
+\newblock The algorithmic foundations of differential privacy.
+\newblock {\em Foundations and Trends in Theoretical Computer Science}, 9(3-4):211--407.
+
+\bibitem[Fritz et~al.(2019)]{fritz2019citizen}
+Fritz, S., See, L., Carlson, T., et~al. (2019).
+\newblock Citizen science and the United Nations Sustainable Development Goals.
+\newblock {\em Nature Sustainability}, 2(10):922--930.
+
+\bibitem[Geyer et~al.(2017)]{geyer2017differentially}
+Geyer, R.~C., Klein, T., and Nabi, M. (2017).
+\newblock Differentially private federated learning: A client level perspective.
+\newblock {\em arXiv preprint arXiv:1712.07557}.
+
+\bibitem[Ghosh et~al.(2020)]{ghosh2020efficient}
+Ghosh, A., Chung, J., Yin, D., and Ramchandran, K. (2020).
+\newblock An efficient framework for clustered federated learning.
+\newblock {\em NeurIPS}, 33:19586--19597.
+
+\bibitem[Gibb et~al.(2019)]{gibb2019emerging}
+Gibb, R., Browning, E., Glover-Kapfer, P., and Jones, K.~E. (2019).
+\newblock Emerging opportunities and challenges for passive acoustics in ecological assessment and monitoring.
+\newblock {\em Methods in Ecology and Evolution}, 10(2):169--185.
+
+\bibitem[Kahl et~al.(2021)]{kahl2021birdnet}
+Kahl, S., Wood, C.~M., Eibl, M., and Klinck, H. (2021).
+\newblock BirdNET: A deep learning solution for avian diversity monitoring.
+\newblock {\em Ecological Informatics}, 61:101236.
+
+\bibitem[Kairouz et~al.(2021)]{kairouz2021advances}
+Kairouz, P., McMahan, H.~B., Avent, B., et~al. (2021).
+\newblock Advances and open problems in federated learning.
+\newblock {\em Foundations and Trends in Machine Learning}, 14(1-2):1--210.
+
+\bibitem[Kang et~al.(2020)]{kang2020incentive}
+Kang, J., Xiong, Z., Niyato, D., et~al. (2020).
+\newblock Incentive mechanism for reliable federated learning: A joint optimization approach.
+\newblock {\em IEEE Internet of Things Journal}, 7(12):12221--12236.
+
+\bibitem[Kays et~al.(2015)]{kays2015terrestrial}
+Kays, R., Crofoot, M.~C., Jetz, W., and Wikelski, M. (2015).
+\newblock Terrestrial animal tracking as an eye on life and planet.
+\newblock {\em Science}, 348(6240):aaa2478.
+
+\bibitem[Li et~al.(2020)]{li2020federated}
+Li, T., Sahu, A.~K., Zaheer, M., et~al. (2020).
+\newblock Federated optimization in heterogeneous networks.
+\newblock {\em Proceedings of MLSys}, 2:429--450.
+
+\bibitem[Lin et~al.(2020)]{lin2020ensemble}
+Lin, T., Kong, L., Stich, S.~U., and Jaggi, M. (2020).
+\newblock Ensemble distillation for robust model fusion in federated learning.
+\newblock {\em NeurIPS}, 33:2351--2363.
+
+\bibitem[Lindenmayer et~al.(2017)]{lindenmayer2017do}
+Lindenmayer, D. and Scheele, B. (2017).
+\newblock Do not publish.
+\newblock {\em Science}, 356(6340):800--801.
+
+\bibitem[McMahan et~al.(2017)]{mcmahan2017communication}
+McMahan, B., Moore, E., Ramage, D., et~al. (2017).
+\newblock Communication-efficient learning of deep networks from decentralized data.
+\newblock {\em Proceedings of AISTATS}, pages 1273--1282.
+
+\bibitem[McMahan et~al.(2018)]{mcmahan2018learning}
+McMahan, H.~B., Ramage, D., Talwar, K., and Zhang, L. (2018).
+\newblock Learning differentially private recurrent language models.
+\newblock {\em Proceedings of ICLR}.
+
+\bibitem[Norouzzadeh et~al.(2018)]{norouzzadeh2018automatically}
+Norouzzadeh, M.~S., Nguyen, A., Kosmala, M., et~al. (2018).
+\newblock Automatically identifying, counting, and describing wild animals in camera-trap images.
+\newblock {\em Proceedings of the National Academy of Sciences}, 115(25):E5716--E5725.
+
+\bibitem[Patterson et~al.(2017)]{patterson2017statistical}
+Patterson, T.~A., Parton, A., Langrock, R., et~al. (2017).
+\newblock Statistical modelling of individual animal movement.
+\newblock {\em Journal of the Royal Statistical Society: Series B}, 79(4):1055--1069.
+
+\bibitem[Smith et~al.(2017)]{smith2017federated}
+Smith, V., Chiang, C.~K., Sanjabi, M., and Talwalkar, A.~S. (2017).
+\newblock Federated multi-task learning.
+\newblock {\em NeurIPS}, 30:4424--4434.
+
+\bibitem[Stich et~al.(2018)]{stich2018sparsified}
+Stich, S.~U., Cordonnier, J.~B., and Jaggi, M. (2018).
+\newblock Sparsified SGD with memory.
+\newblock {\em NeurIPS}, 31:4452--4463.
+
+\bibitem[Stowell(2019)]{stowell2019automatic}
+Stowell, D. (2019).
+\newblock Automatic acoustic identification of individuals in multiple species.
+\newblock {\em Journal of the Royal Society Interface}, 16(153):20180940.
+
+\bibitem[Tenopir et~al.(2011)]{tenopir2011data}
+Tenopir, C., Allard, S., Douglass, K., et~al. (2011).
+\newblock Data sharing by scientists: Practices and perceptions.
+\newblock {\em PLOS ONE}, 6(6):e21101.
+
+\bibitem[Tuia et~al.(2022)]{tuia2022perspectives}
+Tuia, D., Kellenberger, B., Beery, S., et~al. (2022).
+\newblock Perspectives in machine learning for wildlife conservation.
+\newblock {\em Nature Communications}, 13:792.
+
+\bibitem[Tulloch et~al.(2018)]{tulloch2018decision}
+Tulloch, A.~I.~T., Auerbach, N., and Avery-Gomm, S. (2018).
+\newblock A decision tree for assessing the risks and benefits of publishing biodiversity data.
+\newblock {\em Nature Ecology \& Evolution}, 2(8):1209--1217.
+
+\bibitem[Verma et~al.(2022)]{verma2022towards}
+Verma, V., Lamb, A., and Beckham, C. (2022).
+\newblock Towards multi-modal wildlife monitoring.
+\newblock {\em Ecological Informatics}, 68:101552.
+
+\bibitem[Antje Worring, Zach Kelling(2025)]{zoo2025dso}
+Antje Worring, Zach Kelling (2025).
+\newblock Decentralized Semantic Optimization: Collaborative knowledge curation on distributed networks.
+\newblock {\em Zoo Improvement Proposal ZIP-001}.
+
+\end{thebibliography}
+

@@ -1,0 +1,27 @@
+\section{Discussion}
+
+
+\subsection{Epoch Length Trade-off}
+
+The epoch length (currently 100 blocks) represents a trade-off:
+
+\begin{itemize}
+    \item \textbf{Shorter epochs} (10 blocks): Faster reward feedback, higher overhead (3.3ms/block vs 0.33ms/block)
+    \item \textbf{Longer epochs} (1000 blocks): Lower overhead (0.033ms/block), slower reward feedback
+\end{itemize}
+
+We chose 100 blocks ($\approx$630ms at 21 validators) as a compromise that provides sub-second reward feedback with $< 1$ms/block overhead.
+
+\subsection{Validator Hardware Requirements}
+
+The dual-layer design requires validators to have GPU hardware for both consensus participation and AI compute. This raises the hardware bar compared to CPU-only validators but ensures that all validators can verify AI attestations firsthand.
+
+Minimum validator requirements for Zoo mainnet:
+\begin{itemize}
+    \item CPU: 32 cores, 3.0 GHz
+    \item RAM: 128 GB
+    \item GPU: NVIDIA A100 40GB (or equivalent)
+    \item Storage: 2 TB NVMe SSD
+    \item Network: 1 Gbps
+\end{itemize}
+

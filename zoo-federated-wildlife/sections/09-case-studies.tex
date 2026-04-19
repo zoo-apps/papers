@@ -1,0 +1,23 @@
+\section{Case Studies}
+
+\label{sec:case_studies}
+
+\subsection{Cross-Continental Tiger Monitoring}
+
+Three sites in the consortium monitor tiger populations (Sundarbans, Western Ghats, SE Asian sites).
+Local-only models achieved 67\% individual identification accuracy due to small per-site sample sizes.
+ZooFed's federated training, with species embedding sharing for Panthera tigris, improved identification to 84\%, enabling the first cross-site population connectivity analysis without sharing raw location data.
+
+\subsection{Acoustic Biodiversity in the Amazon}
+
+The Amazon Basin site contributed only acoustic data.
+Through HSA cross-modal alignment with visual data from other Neotropical sites, the acoustic model for bird species improved from 71\% to 88\% accuracy, demonstrating that visual knowledge transfers meaningfully to acoustic identification through the shared embedding space.
+
+\subsection{Marine eDNA Privacy}
+
+The Great Barrier Reef site contained eDNA detection records for 12 critically endangered marine species.
+Under CCDP with $\gamma=2$, these species received $\epsilon=0.2$ privacy guarantees---sufficient to prevent re-identification of sampling locations even given strong auxiliary information---while overall marine species detection accuracy degraded by only 1.8\% compared to no-privacy training.
+
+% ============================================================
+% 10. Discussion
+% ============================================================

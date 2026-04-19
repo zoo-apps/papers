@@ -1,0 +1,78 @@
+\section{Introduction}
+
+\label{sec:introduction}
+% ══════════════════════════════════════════════════════════════════════════════
+
+The voluntary carbon market (VCM) reached \$2 billion in 2021
+\citep{foresttrends2022}, with nature-based solutions (NBS) representing
+the fastest-growing segment. NBS projects---including avoided
+deforestation (REDD+), reforestation, mangrove restoration, and peatland
+conservation---generate carbon credits by sequestering atmospheric CO$_2$
+or preventing its release from terrestrial carbon stocks.
+
+However, the scientific credibility of NBS carbon credits has been
+severely challenged. \citet{west2023action} found that 94\% of Verra's
+rainforest offset credits did not represent genuine emissions reductions.
+\citet{guizar2022carbon} showed that certified REDD+ projects in the
+Brazilian Amazon overestimated avoided deforestation by 1.8x on average.
+These findings have eroded buyer confidence and threaten the viability of
+carbon markets as a climate mitigation tool.
+
+The fundamental problem is MRV infrastructure. Current practice relies
+on:
+
+\begin{enumerate}[label=(\roman*)]
+  \item \textbf{Infrequent verification}: Third-party audits occur every
+    2--5 years, leaving extended periods without monitoring
+    \citep{schneider2019double}.
+  \item \textbf{Self-reported baselines}: Project developers construct
+    their own counterfactual deforestation scenarios, creating systematic
+    upward bias \citep{west2023action}.
+  \item \textbf{Manual field sampling}: Biomass estimation relies on
+    small plot samples extrapolated to vast areas, introducing large
+    sampling errors \citep{chave2014improved}.
+  \item \textbf{Opaque methodologies}: Verification reports are often
+    proprietary, preventing independent scrutiny \citep{badgley2022}.
+  \item \textbf{Delayed detection}: Reversals (fire, illegal logging,
+    drought mortality) may go undetected for years between audit cycles.
+\end{enumerate}
+
+\subsection{Digital MRV}
+
+Advances in satellite remote sensing, machine learning, and distributed
+ledger technology enable a fundamentally different approach to MRV---one
+that is continuous, transparent, and independently verifiable. Digital
+MRV (dMRV) replaces periodic manual audits with automated monitoring
+pipelines that process satellite data streams in near-real-time
+\citep{fuss2020moving}.
+
+\subsection{Contributions}
+
+We present ZooMRV, an end-to-end digital MRV platform with the following
+contributions:
+
+\begin{enumerate}
+  \item \textbf{CarbonNet}: A deep learning model for above-ground
+    biomass (AGB) estimation from multi-spectral satellite imagery and
+    LiDAR, achieving RMSE of 18.4 Mg/ha on independent validation data.
+
+  \item \textbf{Dynamic baselining}: An algorithmic approach to
+    counterfactual construction using synthetic controls
+    \citep{abadie2010synthetic} that eliminates self-reported baseline
+    bias.
+
+  \item \textbf{Continuous monitoring}: Near-real-time change detection
+    with 12-day median latency for reversal events, compared to 14
+    months for traditional audit cycles.
+
+  \item \textbf{On-chain attestation}: A blockchain-based credit
+    registry where each credit is linked to verifiable satellite data,
+    spatial boundaries, and algorithmic verification reports.
+
+  \item \textbf{Open validation}: All models, data, and methodologies
+    are open-source, enabling independent verification and continuous
+    improvement by the scientific community.
+\end{enumerate}
+
+
+% ══════════════════════════════════════════════════════════════════════════════

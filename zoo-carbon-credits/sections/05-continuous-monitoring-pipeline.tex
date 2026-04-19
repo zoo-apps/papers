@@ -1,0 +1,78 @@
+\section{Continuous Monitoring Pipeline}
+
+\label{sec:monitoring}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Data Ingestion}
+
+ZooMRV ingests data from multiple satellite constellations:
+
+\begin{table}[H]
+\centering
+\caption{Satellite data sources and processing characteristics.}
+\label{tab:satellites}
+\begin{tabular}{p{3cm}p{2cm}p{2cm}p{2cm}p{2.5cm}}
+\toprule
+\textbf{Source} & \textbf{Resolution} & \textbf{Revisit} &
+  \textbf{Coverage} & \textbf{Primary use} \\
+\midrule
+Sentinel-2 & 10\,m & 5 days & Global & AGB, change detection \\
+Sentinel-1 SAR & 10\,m & 6 days & Global & Cloud-free monitoring \\
+Landsat-9 & 30\,m & 16 days & Global & Long-term trends \\
+GEDI LiDAR & 25\,m & --- & Tropical & Canopy height, AGB cal. \\
+Planet NICFI & 4.7\,m & Monthly & Tropical & Fine-scale change \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Change Detection}
+
+We implement a multi-scale change detection algorithm:
+
+\paragraph{Pixel-level.} A temporal convolutional network (TCN) processes
+per-pixel time series of NDVI, NBR, and SWIR2 bands to detect abrupt
+changes (logging, fire) and gradual degradation:
+\begin{equation}
+  \hat{c}_i = \text{TCN}(\mathbf{x}_{i,t-T:t}) \in [0,1]
+\end{equation}
+where $\hat{c}_i$ is the change probability for pixel $i$.
+
+\paragraph{Object-level.} A U-Net semantic segmentation model
+identifies changed areas at the patch level, providing spatial context
+that reduces false positives from atmospheric and phenological variation.
+
+\paragraph{Alert aggregation.} Pixel and object-level detections are
+aggregated into alert polygons with associated confidence scores,
+change type classification (deforestation, degradation, fire, flood),
+and estimated biomass loss.
+
+\subsection{Reversal Detection Performance}
+
+\begin{table}[H]
+\centering
+\caption{Reversal detection performance across ecosystem types.}
+\label{tab:reversals}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Ecosystem} & \textbf{Detection rate} &
+  \textbf{False positive rate} & \textbf{Median latency} \\
+\midrule
+Tropical forest & 94.2\% & 3.1\% & 8 days \\
+Mangrove & 91.7\% & 4.8\% & 11 days \\
+Peatland & 87.3\% & 6.2\% & 18 days \\
+Grassland/savanna & 83.6\% & 8.1\% & 15 days \\
+\midrule
+\textbf{Overall} & \textbf{91.4\%} & \textbf{4.7\%} &
+  \textbf{12 days} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+ZooMRV detects 91.4\% of reversal events with a median latency of 12
+days, compared to the 14-month average for traditional audit cycles.
+The system detects 23\% more reversals than periodic audits, primarily
+small-scale degradation events that fall below audit detection
+thresholds.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

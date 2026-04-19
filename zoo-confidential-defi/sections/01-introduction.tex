@@ -1,0 +1,57 @@
+\section{Introduction}
+
+\label{sec:intro}
+%----------------------------------------------------------------------
+
+\subsection{The MEV Crisis}
+
+Maximal Extractable Value (\MEV{}) is the profit available to block producers by reordering, inserting, or censoring transactions within a block. On Ethereum, \MEV{} extraction exceeded \$1.5 billion in 2024 alone \cite{flashbots2024mev}, borne entirely by ordinary users through:
+
+\begin{enumerate}
+    \item \textbf{Front-Running.} A searcher observes a pending swap in the mempool, submits an identical swap with higher gas to execute first, and profits from the price impact.
+    \item \textbf{Sandwich Attacks.} A searcher brackets a victim's swap with a buy-before and sell-after, capturing the slippage as profit.
+    \item \textbf{Just-in-Time Liquidity.} A searcher provides liquidity immediately before a large swap (capturing fees) and removes it immediately after (avoiding impermanent loss).
+    \item \textbf{Time-Bandit Attacks.} Block producers reorg recent blocks to capture high-value \MEV{} from past transactions.
+\end{enumerate}
+
+These attacks share a common root cause: \textbf{transaction content is visible before execution.} The mempool is a public bulletin board. Anyone who can read it faster than others can extract value.
+
+\subsection{Why Existing Solutions Fall Short}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Solution} & \textbf{Orderflow Privacy} & \textbf{On-Chain Matching} & \textbf{No Trusted Party} \\
+\midrule
+Flashbots Protect & Partial (relay sees orders) & No (off-chain relay) & No \\
+MEV-Share & Partial (hints leaked) & No (off-chain) & No \\
+Penumbra & Full (shielded pool) & No (MASP, not matching) & Yes \\
+Renegade & Full (MPC matching) & No (off-chain MPC) & Partial \\
+\Zoo{} Confidential DeFi & \textbf{Full (FHE)} & \textbf{Yes} & \textbf{Yes} \\
+\bottomrule
+\end{tabular}
+\caption{Comparison of \MEV{} mitigation approaches}
+\label{tab:mev_comparison}
+\end{table}
+
+Flashbots and MEV-Share reduce \MEV{} by hiding orderflow from searchers, but the relay operator still observes all transactions. Penumbra provides shielded transfers but does not support on-chain order matching. Renegade uses MPC for dark-pool matching but relies on off-chain computation with a limited participant set.
+
+\subsection{Our Approach}
+
+\Zoo{} Confidential DeFi encrypts the entire orderflow lifecycle:
+
+\begin{enumerate}
+    \item Orders are encrypted under a collective \FHE{} public key before entering the mempool.
+    \item The \DEX{} VM evaluates encrypted orders homomorphically---price comparisons, volume matching, and settlement calculations are performed on ciphertexts.
+    \item Only matched order pairs are decrypted via \TChain{} threshold protocol.
+    \item Unmatched orders remain encrypted; no information is revealed about their content.
+\end{enumerate}
+
+This eliminates \MEV{} at the source: if no one can read the orders, no one can front-run them.
+
+\subsection{Paper Organization}
+
+Section~\ref{sec:primitives} introduces the cryptographic primitives. Section~\ref{sec:encrypted_orderflow} describes the encrypted orderflow protocol. Section~\ref{sec:matching} presents the FHE order matching engine. Section~\ref{sec:auctions} covers sealed-bid auctions. Section~\ref{sec:amm} describes the private AMM. Section~\ref{sec:settlement} details threshold settlement. Section~\ref{sec:comparison} compares against existing solutions. Section~\ref{sec:benchmarks} presents performance benchmarks. Section~\ref{sec:security} analyzes security properties. Section~\ref{sec:conclusion} concludes.
+
+%----------------------------------------------------------------------

@@ -1,0 +1,102 @@
+\section{Agent Wallet Architecture}
+
+\label{sec:wallet}
+
+\subsection{Multi-Signature Design}
+
+Each Agent NFT controls a dedicated wallet via multi-signature scheme:
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=1.5cm,
+    box/.style={rectangle, draw, minimum width=2cm, minimum height=0.8cm, align=center, fill=blue!10},
+    wallet/.style={rectangle, draw, minimum width=2cm, minimum height=0.8cm, align=center, fill=green!10},
+    key/.style={circle, draw, minimum size=0.6cm, fill=yellow!20}
+]
+    \node[box] (nft) {Agent NFT};
+    \node[wallet, below=of nft] (wallet) {Agent Wallet};
+
+    \node[key, below left=1cm and 1cm of wallet] (k1) {$K_A$};
+    \node[key, below=1cm of wallet] (k2) {$K_O$};
+    \node[key, below right=1cm and 1cm of wallet] (k3) {$K_R$};
+
+    \draw[-] (nft) -- (wallet);
+    \draw[-] (wallet) -- (k1) node[midway, left] {Agent};
+    \draw[-] (wallet) -- (k2) node[midway, right] {Owner};
+    \draw[-] (wallet) -- (k3) node[midway, right] {Recovery};
+
+    \node[below=0.3cm of k1, font=\tiny] {2-of-3};
+    \node[below=0.3cm of k2, font=\tiny] {threshold};
+    \node[below=0.3cm of k3, font=\tiny] {signing};
+\end{tikzpicture}
+\caption{Agent wallet multi-signature architecture.}
+\label{fig:wallet}
+\end{figure}
+
+\textbf{Key Roles}:
+\begin{itemize}
+    \item $K_A$: Agent key (controlled by AI reasoning engine)
+    \item $K_O$: Owner key (controlled by NFT owner)
+    \item $K_R$: Recovery key (optional, for emergency recovery)
+\end{itemize}
+
+\textbf{Signing Requirements}:
+\begin{itemize}
+    \item \textbf{Agent Actions} (within autonomy): $K_A$ alone
+    \item \textbf{Owner Override}: $K_O$ alone
+    \item \textbf{Autonomy Changes}: $K_A + K_O$
+    \item \textbf{Emergency Recovery}: $K_O + K_R$
+\end{itemize}
+
+\subsection{Agent Key Management}
+
+The agent key $K_A$ is generated and managed by the agent's \LLM{}:
+
+\begin{algorithm}[t]
+\caption{Agent Key Generation}
+\label{alg:keygen}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Agent model $M$, seed $s$
+\STATE \textbf{Output}: Key pair $(sk_A, pk_A)$
+\STATE $h \leftarrow \text{HKDF}(s, \text{Hash}(M))$
+\STATE $(sk_A, pk_A) \leftarrow \text{KeyGen}(h)$
+\STATE Store $sk_A$ in TEE or secure enclave
+\RETURN $(sk_A, pk_A)$
+\end{algorithmic}
+\end{algorithm}
+
+The private key is:
+\begin{itemize}
+    \item Derived deterministically from model hash (reproducible)
+    \item Stored in trusted execution environment (TEE)
+    \item Never exposed to the owner (owner cannot impersonate agent)
+\end{itemize}
+
+\subsection{Transaction Execution}
+
+\begin{algorithm}[t]
+\caption{Agent Transaction Execution}
+\label{alg:tx}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Agent $A$, action $a$
+\STATE \textbf{Output}: Transaction result
+\STATE \COMMENT{Autonomy check}
+\IF{$a.\text{value} > A.\text{autonomy.maxTx}$}
+    \STATE Require owner signature
+\ENDIF
+\IF{$a.\text{target} \notin A.\text{autonomy.whitelist}$}
+    \STATE Require owner signature
+\ENDIF
+\STATE \COMMENT{Rate limiting}
+\IF{$\text{now} - A.\text{lastTx} < A.\text{autonomy.cooldown}$}
+    \RETURN Error: Cooldown
+\ENDIF
+\STATE \COMMENT{Execute}
+\STATE $\sigma \leftarrow \text{Sign}(sk_A, a)$
+\STATE Submit $(a, \sigma)$ to blockchain
+\STATE Update $A.\text{lastTx} \leftarrow \text{now}$
+\RETURN Success
+\end{algorithmic}
+\end{algorithm}
+

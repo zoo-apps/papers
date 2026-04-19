@@ -1,0 +1,25 @@
+\section{Conservation Applications}
+
+\label{sec:applications}
+
+\subsection{Private Wildlife Monitoring}
+
+Camera traps deployed in protected areas generate millions of images containing GPS-tagged wildlife sightings. Publishing raw coordinates of endangered species (e.g., snow leopards, pangolins) enables poaching. Zoo FHE encrypts:
+
+\begin{itemize}
+    \item \textbf{Input images}: Camera trap photos encrypted at the edge device
+    \item \textbf{Species classifier}: ResNet-18 model with encrypted weights
+    \item \textbf{GPS coordinates}: Location data encrypted and never revealed
+    \item \textbf{Population counts}: Aggregated statistics released via threshold decryption
+\end{itemize}
+
+The conservation DAO can authorize aggregate statistics (``17 snow leopards detected in region X this month'') without revealing individual sighting locations.
+
+\subsection{Confidential Veterinary AI}
+
+Veterinary clinics in zoological institutions handle medical records subject to institutional privacy policies. Zoo FHE enables encrypted diagnostic imaging processed by AI classifiers, cross-institutional model training without sharing raw patient data, and treatment recommendation models operating on encrypted health histories. A $(2, 3)$-threshold between the treating veterinarian, the institution, and the Zoo DAO governs access to individual diagnostic results.
+
+\subsection{Encrypted Genomics}
+
+Species conservation genomics involves sensitive genetic data that could enable biopiracy if leaked. Zoo FHE supports genetic diversity analysis (computing heterozygosity on encrypted genotype matrices), phylogenetic inference (distance matrix computation under \CKKS{} encryption), and population viability analysis (stochastic simulation on encrypted demographic parameters). Encrypted heterozygosity is computed as $H_{\text{enc}} = 1 - \sum_{i} \text{CKKS.Mul}(p_{i,\text{enc}}, p_{i,\text{enc}})$ where $p_{i,\text{enc}}$ are encrypted allele frequencies.
+
