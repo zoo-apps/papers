@@ -1,0 +1,43 @@
+\section{Security Analysis}
+
+\label{sec:security}
+
+\subsection{Bridge Safety}
+
+\begin{theorem}[Bridge Safety Reduction]
+Zoo Bridge safety reduces to Warp protocol safety: if the Warp protocol is safe (no invalid messages verified), then the bridge cannot process invalid transfers.
+\end{theorem}
+
+\begin{proof}
+Every bridge action (mint, unlock, create) is triggered exclusively by a verified Warp message. The bridge contract checks:
+\begin{enumerate}
+    \item Warp signature verification passes
+    \item Nonce is strictly monotonic (no replay)
+    \item Asset type matches expected format
+    \item Amount/metadata matches source chain state
+\end{enumerate}
+If Warp verification is sound, conditions 1--4 are guaranteed by the source chain's consensus. An adversary cannot forge a bridge transfer without forging a Warp message, which requires corrupting $\geq 67\%$ of validator stake.
+\end{proof}
+
+\subsection{Liveness}
+
+\begin{theorem}[Bridge Liveness]
+If both source and destination chains are live and the Warp quorum threshold is met, bridge transfers complete within bounded time.
+\end{theorem}
+
+The timeout is set to 5 minutes. If a Warp message is not verified within 5 minutes, the source chain automatically unlocks the escrowed assets.
+
+\subsection{Double-Spend Prevention}
+
+Each bridge transfer is assigned a unique nonce per (source, destination, asset) triple. The destination bridge contract maintains a nonce counter and rejects any message with a nonce $\leq$ the last processed nonce. Combined with Quasar's finality guarantee, this prevents double-spend attacks.
+
+\subsection{Model NFT Integrity}
+
+\begin{theorem}[NFT Metadata Integrity]
+If a Model NFT is bridged from Zoo to Beluga, the License NFT on Beluga faithfully represents the original model's metadata.
+\end{theorem}
+
+\begin{proof}
+The Warp message payload includes the model hash, architecture, accuracy, and custody key---all verified by Zoo validators before signing. The Beluga bridge contract creates the License NFT deterministically from this payload. Metadata tampering requires forging the Warp signature.
+\end{proof}
+

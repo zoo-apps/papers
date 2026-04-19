@@ -1,0 +1,41 @@
+\section{Implementation}
+
+\label{sec:implementation}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Software Architecture}
+
+ZooMRV is implemented as a set of containerized microservices:
+
+\begin{itemize}
+  \item \textbf{Data ingestion}: Google Earth Engine and Planetary
+    Computer APIs for satellite data access; custom GEDI processor.
+  \item \textbf{CarbonNet inference}: PyTorch 2.2 model serving on
+    NVIDIA A100 GPUs; batch processing of Sentinel-2 tiles.
+  \item \textbf{Change detection}: Temporal analysis pipeline using
+    NumPy, Rasterio, and scikit-image.
+  \item \textbf{Baseline engine}: Synthetic control computation using
+    SciPy optimization; control area matching with H3 spatial indexing.
+  \item \textbf{Smart contracts}: Solidity contracts on Zoo Network;
+    IPFS for data storage.
+  \item \textbf{API layer}: FastAPI REST API exposing project status,
+    credit issuance, and verification endpoints.
+\end{itemize}
+
+\subsection{Computational Requirements}
+
+Processing a 1-million-hectare project requires approximately:
+\begin{itemize}
+  \item 2.4 GPU-hours for CarbonNet inference per monitoring period.
+  \item 0.8 CPU-hours for change detection per monitoring period.
+  \item 0.2 CPU-hours for baseline computation (one-time setup).
+  \item 12\,GB storage per monitoring period (compressed imagery and
+    derived products).
+\end{itemize}
+
+Annual monitoring of the full 2.3 Mha portfolio costs approximately
+\$18{,}000 in compute, or \$0.008 per hectare---orders of magnitude
+cheaper than field-based monitoring.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,69 @@
+\section{Warp Bridge Protocol}
+
+\label{sec:warp}
+
+\subsection{Message Format}
+
+\begin{lstlisting}[basicstyle=\ttfamily\small,caption=Zoo Bridge Warp Message]
+{
+  "version": 1,
+  "sourceChainId": 200200,
+  "destChainId": 96369,
+  "nonce": 42,
+  "sender": "0x<bridge_contract_zoo>",
+  "recipient": "0x<bridge_contract_lux>",
+  "assetType": "TOKEN|MODEL_NFT|DATA_COMMIT|CREDITS",
+  "payload": "<asset-specific-data>",
+  "timestamp": 1740000000,
+  "aggregateSignature": "0x<bls_sig>"
+}
+\end{lstlisting}
+
+\subsection{Verification}
+
+The destination chain verifies the Warp message by:
+
+\begin{enumerate}
+    \item Fetching the source chain's validator set from the P-Chain
+    \item Verifying the aggregate BLS signature against the validator public keys
+    \item Checking that the signing stake exceeds the 67\% quorum threshold
+    \item Verifying the nonce to prevent replay attacks
+    \item Executing the bridge action (mint/unlock/create)
+\end{enumerate}
+
+\begin{theorem}[Warp Bridge Safety]
+If the source chain's validator set is Byzantine fault tolerant (at most $f < n/3$ Byzantine validators), then no invalid Warp message can be verified on the destination chain.
+\end{theorem}
+
+\begin{proof}
+A valid aggregate signature requires $\geq 67\%$ of validator stake. With $f < n/3$ Byzantine validators controlling $< 33\%$ of stake, they cannot produce a valid aggregate signature for a message not endorsed by honest validators. Honest validators only sign messages corresponding to finalized transactions on the source chain.
+\end{proof}
+
+\subsection{Latency Analysis}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lc}
+\toprule
+\textbf{Phase} & \textbf{Latency (ms)} \\
+\midrule
+Source chain finality (Quasar) & 10 \\
+Warp message construction & 5 \\
+BLS signature aggregation & 80 \\
+Message propagation (source $\to$ dest) & 120 \\
+Destination chain inclusion & 10 \\
+Signature verification & 15 \\
+Bridge action execution & 8 \\
+Destination finality & 10 \\
+\midrule
+\textbf{Total (Lux $\leftrightarrow$ Zoo)} & \textbf{258} \\
+\textbf{Total with safety margin (2$\times$)} & \textbf{$\sim$500} \\
+\textbf{Observed median} & \textbf{1,200} \\
+\bottomrule
+\end{tabular}
+\caption{Warp bridge latency breakdown. Observed median is higher due to validator coordination overhead.}
+\label{tab:warp-latency}
+\end{table}
+
+The gap between theoretical (258ms) and observed (1.2s) latency is due to validator coordination: collecting sufficient BLS partial signatures requires waiting for slow validators. We use a 67\% stake threshold, so the bridge waits until enough validators respond.
+

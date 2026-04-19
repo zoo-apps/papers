@@ -1,0 +1,28 @@
+\section{Introduction}
+
+\label{sec:introduction}
+
+Deep learning has transformed species recognition from an expert-dependent task to an increasingly automated capability.
+Models trained on large-scale biodiversity image datasets achieve accuracy rivaling or exceeding trained taxonomists for well-represented taxa \citep{vanhorn2021benchmarking}.
+Yet the practical impact of these systems on conservation remains limited by a deployment gap: the environments where species identification is most needed---remote protected areas, marine reserves, tropical forests---are precisely those where cloud-based inference is unavailable and computational resources are minimal \citep{tuia2022perspectives}.
+
+Conservation field workers need species recognition at the point of observation, not hours or days later when connectivity becomes available.
+A ranger encountering an unknown animal on patrol, a marine biologist cataloging reef organisms during a dive survey, or a customs officer inspecting wildlife trade shipments all require real-time identification under constraints that current deployment practices do not address.
+
+Three technical barriers obstruct field deployment.
+First, \emph{model size}: state-of-the-art species classifiers based on Vision Transformers (ViT) or large ConvNets require 200--800 MB of parameters, exceeding the practical storage and memory limits for mobile deployment \citep{dosovitskiy2021image}.
+Second, \emph{inference latency}: interactive identification requires sub-200ms response times, while large models require seconds per inference on mobile processors without hardware acceleration \citep{howard2019searching}.
+Third, \emph{domain shift}: models trained on curated laboratory images degrade substantially when applied to field photographs characterized by variable lighting, camera motion, distance, and partial occlusion \citep{beery2018recognition}.
+
+We present ZooMobile, a framework that systematically addresses all three barriers.
+Our contributions are:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Taxonomic Knowledge Distillation (TKD):} A knowledge distillation approach that exploits the hierarchical structure of biological taxonomy to compress species recognition models by 94\% with only 4.5\% accuracy loss (\Cref{sec:distillation}).
+    \item \textbf{Species-Specific Mixed-Precision Quantization:} A quantization scheme that allocates bit-widths based on per-species sensitivity analysis, achieving sub-100ms inference on mobile processors (\Cref{sec:quantization}).
+    \item \textbf{Condition-Aware Inference:} A lightweight preprocessing module that estimates image quality and adapts inference behavior---preprocessing pipeline, confidence thresholds, and recommendation strategy---to field conditions (\Cref{sec:condition}).
+\end{enumerate}
+
+% ============================================================
+% 2. Related Work
+% ============================================================

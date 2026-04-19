@@ -1,0 +1,60 @@
+\section{Security Model}
+\label{sec:security}
+%% ============================================================
+
+\subsection{Threat Model}
+
+We consider the following adversaries:
+
+\begin{enumerate}
+    \item \textbf{Malicious trainer}: Submits fabricated training results to claim bounties.
+    \item \textbf{Malicious host}: Claims to serve inference but returns garbage outputs.
+    \item \textbf{Colluding validators}: A minority of validators attempt to approve invalid attestations.
+    \item \textbf{Sybil data contributor}: Creates many identities to inflate data contribution rewards.
+    \item \textbf{Bridge attacker}: Attempts to mint unbacked \BLG{} on Zoo or vice versa.
+\end{enumerate}
+
+\subsection{Defenses}
+
+\begin{description}[style=nextline]
+    \item[Against malicious trainers] TEE attestations are cryptographically bound to specific hardware. Fabricating an attestation requires compromising the TEE root of trust, which is a hardware-level attack. Additionally, the 5\% spot-check re-execution catches statistical output manipulation.
+
+    \item[Against malicious hosts] Periodic heartbeat probes send known inputs with known outputs. Hosts that fail $> 3$ consecutive probes are slashed and removed. The inference pricing precompile tracks per-host accuracy metrics on-chain.
+
+    \item[Against colluding validators] The AI verification committee requires $5/7$ agreement. With the Zoo validator set of $\geq 21$ validators and random committee selection, an adversary controlling $< 1/3$ of validators has $< 0.1\%$ probability of controlling $5/7$ of any committee.
+
+    \item[Against sybil data contributors] Data contributions are weighted by downstream model performance, not by volume. A sybil creating low-quality data earns nothing because no model trained on it will generate inference revenue. The contribution tracking in the Experience Ledger \cite{zoo-experience-ledger} provides tamper-evident provenance.
+
+    \item[Against bridge attackers] Teleport bridge security inherits from the Lux Warp protocol, which requires $> 2/3$ validator signatures. The bridge contract on both chains enforces matching mint/burn accounting with a 1-hour challenge period for large transfers ($> 100{,}000$ \BLG{}).
+\end{description}
+
+\subsection{Slashing Conditions}
+
+\begin{table}[h]
+\centering
+\caption{Slashing conditions and penalties.}
+\label{tab:slashing}
+\begin{tabular}{@{}llr@{}}
+\toprule
+Violation & Detection & Penalty \\
+\midrule
+Invalid TEE attestation & Committee verification & 100\% bond \\
+Inference output mismatch & Heartbeat probe & 50\% bond \\
+Committee non-participation & Timeout (1 epoch) & 100 BLG \\
+Double attestation signing & On-chain duplicate check & 100\% bond \\
+Bounty result fabrication & Re-evaluation + challenge & Bounty + 10\% stake \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Economic Security}
+
+The cost of attacking \Beluga{} is bounded below by the cost of attacking the Zoo validator set. With $N$ Zoo validators each staking $S$ ZOO, and $f < N/3$ Byzantine tolerance:
+
+\begin{equation}
+\text{attack\_cost} \geq f \cdot S \cdot \text{price}(\text{ZOO})
+\end{equation}
+
+This is strictly greater than the attack cost of any individual L3 because the validator set secures all Zoo L3s simultaneously.
+
+%% ============================================================

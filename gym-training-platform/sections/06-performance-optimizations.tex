@@ -1,0 +1,120 @@
+\section{Performance Optimizations}
+
+
+\subsection{Flash Attention}
+
+Flash Attention~\citep{dao2023flashattention} reduces attention memory from $O(N^2)$ to $O(N)$ via tiling:
+
+\begin{verbatim}
+# Standard attention: materialize full NxN matrix
+Q @ K^T @ V  # Memory: O(N^2)
+
+# Flash Attention: block-sparse computation
+for block_i in range(num_blocks):
+    for block_j in range(num_blocks):
+        compute_attention_block(Q[i], K[j], V[j])
+        # Memory: O(block_size^2)
+\end{verbatim}
+
+Flash Attention 2 adds:
+\begin{itemize}
+\item Reduced shared memory usage
+\item Better parallelism across SMs
+\item 2-3x speedup over Flash Attention 1
+\end{itemize}
+
+Gym enables Flash Attention automatically when:
+\begin{itemize}
+\item GPU supports BF16 or FP16
+\item Sequence length > 512 tokens
+\item \texttt{transformers >= 4.35.0}
+\end{itemize}
+
+\subsection{Liger Kernel}
+
+Liger~\citep{hsu2024liger} optimizes common LLM operations:
+
+\begin{itemize}
+\item \textbf{Fused Cross-Entropy}: Combines softmax + NLL loss in single kernel
+\item \textbf{Fused RMSNorm}: Layer norm without mean subtraction
+\item \textbf{Fused RoPE}: Rotary position embeddings
+\item \textbf{Fused SwiGLU}: Gated activation functions
+\end{itemize}
+
+Memory savings:
+\begin{verbatim}
+Standard:   [Activation] -> [Softmax] -> [CE Loss]
+            Memory: 3x hidden_dim
+
+Liger:      [Fused Op]
+            Memory: 1x hidden_dim (67% reduction)
+\end{verbatim}
+
+\subsection{Unsloth}
+
+Unsloth~\citep{unsloth2024} achieves 2x speedup via:
+\begin{itemize}
+\item Manual attention kernel implementation
+\item LoRA-specific fused operators
+\item Automatic mixed precision (AMP) optimization
+\item Gradient accumulation without extra memory
+\end{itemize}
+
+Benchmarks (7B model, A100 40GB):
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+Configuration & Tokens/sec & Memory (GB) \\
+\midrule
+Baseline & 1450 & 38.2 \\
+Flash Attention 2 & 2100 & 36.5 \\
++ Liger & 2400 & 34.1 \\
++ Unsloth & 2900 & 32.8 \\
+\bottomrule
+\end{tabular}
+\caption{Cumulative speedup from optimization stack.}
+\end{table}
+
+\subsection{Quantization}
+
+\subsubsection{Post-Training Quantization (PTQ)}
+
+Gym supports:
+\begin{itemize}
+\item \textbf{GPTQ}~\citep{frantar2023gptq}: Per-column quantization with Hessian approximation
+\item \textbf{AWQ}~\citep{lin2023awq}: Activation-aware weight quantization preserving salient channels
+\item \textbf{SmoothQuant}~\citep{xiao2023smoothquant}: Migrates difficulty from activations to weights
+\end{itemize}
+
+\subsubsection{Quantization-Aware Training (QAT)}
+
+QLoRA performs QAT implicitly:
+\begin{itemize}
+\item Base model quantized to 4-bit NF4
+\item LoRA adapters trained in FP16/BF16
+\item Gradients backpropagate through quantization
+\end{itemize}
+
+\textbf{NormalFloat4 (NF4)}: Information-theoretically optimal 4-bit format:
+\begin{equation}
+\text{NF4} = \{\text{quantiles of } \mathcal{N}(0,1) \text{ at intervals of } 1/16\}
+\end{equation}
+
+\subsection{Mixed Precision Training}
+
+Gym automatically enables AMP (Automatic Mixed Precision):
+\begin{itemize}
+\item Forward pass: FP16/BF16
+\item Gradient accumulation: FP32
+\item Optimizer states: FP32
+\item Loss scaling: Dynamic (FP16) or none (BF16)
+\end{itemize}
+
+BF16 preferred over FP16 when available (Ampere+ GPUs):
+\begin{itemize}
+\item Same dynamic range as FP32 (no loss scaling needed)
+\item Fewer NaN/Inf issues
+\item Slightly lower precision acceptable for LLMs
+\end{itemize}
+

@@ -1,0 +1,79 @@
+\section{ZooBench-Field Benchmark}
+
+\label{sec:benchmark}
+
+\subsection{Dataset Construction}
+
+Existing species recognition benchmarks (iNaturalist, CUB-200, PlantCLEF) are dominated by curated photographs taken under favorable conditions.
+We construct ZooBench-Field to evaluate recognition under authentic field conditions:
+
+\begin{table}[H]
+\centering
+\caption{ZooBench-Field dataset statistics.}
+\label{tab:zoobench}
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Statistic} & \textbf{Value} \\
+\midrule
+Total images & 287,412 \\
+Species & 4,203 \\
+Collection sites & 31 \\
+Countries & 18 \\
+Camera types & 47 (smartphones, camera traps, DSLRs) \\
+Expert-verified labels & 100\% \\
+Quality annotations & 100\% (4-axis) \\
+Condition distribution & Low light 23\%, Motion blur 18\%, Occlusion 31\%, Long distance 28\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Benchmark Results}
+
+\begin{table}[H]
+\centering
+\caption{Species recognition accuracy on ZooBench-Field.}
+\label{tab:benchmark_results}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Model} & \textbf{Size (MB)} & \textbf{Latency} & \textbf{Top-1 (\%)} & \textbf{Top-5 (\%)} \\
+\midrule
+ViT-Large (cloud) & 1,142 & 2.1s & 91.8 & 98.2 \\
+BioCLIP (cloud) & 428 & 890ms & 89.4 & 97.1 \\
+EfficientNet-B7 (cloud) & 256 & 680ms & 88.7 & 96.8 \\
+MobileNetV3 (standard KD) & 21.4 & 89ms & 83.1 & 94.7 \\
+MobileNetV3 (TKD) & 18.7 & 82ms & 85.4 & 95.8 \\
+\textbf{ZooMobile (full)} & \textbf{3.4} & \textbf{47ms} & \textbf{86.8} & \textbf{95.9} \\
+ZooMobile w/o CAI & 3.4 & 41ms & 84.2 & 94.3 \\
+ZooMobile w/o TKD & 3.1 & 47ms & 83.8 & 94.1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+ZooMobile achieves 86.8\% top-1 accuracy with a 3.4 MB model and 47ms latency, closing 76\% of the accuracy gap to the 1,142 MB cloud baseline while being 45x faster and 336x smaller.
+
+\subsection{Accuracy by Condition}
+
+\begin{table}[H]
+\centering
+\caption{ZooMobile accuracy by image condition (top-1 \%).}
+\label{tab:condition_accuracy}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Condition} & \textbf{ZooMobile} & \textbf{w/o CAI} & \textbf{Cloud Baseline} \\
+\midrule
+High quality & 92.4 & 91.8 & 95.1 \\
+Low light & 83.7 & 78.4 & 89.2 \\
+Motion blur & 81.2 & 76.1 & 87.8 \\
+Partial occlusion & 79.8 & 77.3 & 85.4 \\
+Long distance & 78.4 & 73.2 & 84.7 \\
+\midrule
+\textbf{Overall} & \textbf{86.8} & 84.2 & 91.8 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+CAI provides the largest benefit under low light (+5.3\%) and long distance (+5.2\%) conditions, where adaptive preprocessing (histogram equalization and super-resolution, respectively) substantially improve feature quality.
+
+% ============================================================
+% 7. Offline-First Architecture
+% ============================================================

@@ -1,0 +1,87 @@
+\section{Adaptive Learning Engine}
+
+\label{sec:adaptive}
+
+\subsection{Learner Model}
+
+We model each learner's knowledge state using an augmented Bayesian Knowledge Tracing (BKT) framework.
+For learner $u$ and objective $o_i$, the mastery state $M_{u,i}^{(t)} \in \{0, 1\}$ at interaction step $t$ follows:
+
+\begin{equation}
+    P(M_{u,i}^{(t)} = 1 \mid M_{u,i}^{(t-1)} = 0) = p_T(o_i, u)
+\end{equation}
+
+\begin{equation}
+    P(M_{u,i}^{(t)} = 0 \mid M_{u,i}^{(t-1)} = 1) = p_F(o_i, u)
+\end{equation}
+
+\noindent where $p_T$ is the transition probability (learning rate) and $p_F$ is the forgetting probability.
+Unlike standard BKT, we parameterize both $p_T$ and $p_F$ as functions of learner features and objective characteristics:
+
+\begin{equation}
+    p_T(o_i, u) = \sigma\left(\mathbf{w}_T^\top [\mathbf{e}_{o_i}; \mathbf{h}_u; \mathbf{f}_{u,i}]\right)
+\end{equation}
+
+\noindent where $\sigma$ is the sigmoid function, $\mathbf{e}_{o_i}$ is the objective embedding from the CCO graph (obtained via graph neural network encoding), $\mathbf{h}_u$ is the learner's latent profile vector, and $\mathbf{f}_{u,i}$ captures interaction features (time spent, attempt count, recency).
+
+\subsection{Content Selection Policy}
+
+Given the learner model, ZooEd selects the next learning activity by optimizing an acquisition function that balances learning efficiency, engagement, and ecological relevance:
+
+\begin{equation}
+    o^* = \arg\max_{o_i \in \mathcal{F}_u} \left[\alpha \cdot \text{IG}(o_i, u) + \beta \cdot \text{Eng}(o_i, u) + \gamma \cdot \text{Eco}(o_i, \mathbf{s}_t)\right]
+\end{equation}
+
+\noindent where $\mathcal{F}_u$ is the set of feasible objectives (prerequisites satisfied), $\text{IG}$ is the expected information gain for the learner model, $\text{Eng}$ is the predicted engagement score, $\text{Eco}$ is the ecological relevance score given current sensor state $\mathbf{s}_t$, and $\alpha, \beta, \gamma$ are tunable weights.
+
+The information gain component is computed as the expected reduction in entropy of the learner's knowledge state:
+
+\begin{equation}
+    \text{IG}(o_i, u) = H(M_{u,i}) - \mathbb{E}_{Y}\left[H(M_{u,i} \mid Y)\right]
+\end{equation}
+
+\noindent where $Y$ is the predicted assessment outcome.
+
+\subsection{Spaced Repetition with Ecological Context}
+\label{sec:srec}
+
+Standard spaced repetition algorithms schedule reviews based on forgetting curves estimated from past performance \citep{settles2016trainable}.
+Our SREC algorithm extends this by incorporating ecological triggers:
+
+\begin{equation}
+    r_i(t) = \max\left(r_i^{\text{base}}(t),\ r_i^{\text{eco}}(t)\right)
+\end{equation}
+
+\noindent where $r_i^{\text{base}}(t)$ is the base review urgency from the forgetting model and $r_i^{\text{eco}}(t)$ is an ecological trigger score.
+The ecological trigger activates when sensor data from the Zoo network detects conditions relevant to a learned objective:
+
+\begin{equation}
+    r_i^{\text{eco}}(t) = \text{sim}(\mathbf{e}_{o_i}, \phi(\mathbf{s}_t)) \cdot \mathbb{1}[\Delta t_{u,i} > \tau_{\min}]
+\end{equation}
+
+\noindent where $\phi(\mathbf{s}_t)$ projects the sensor state into the objective embedding space and $\Delta t_{u,i}$ is the time since the learner last engaged with objective $o_i$, gated by a minimum interval $\tau_{\min}$ to prevent notification fatigue.
+
+For example, when camera traps in a learner's region detect a species they recently studied, SREC triggers a contextual review activity incorporating the actual detection image, reinforcing the connection between learned knowledge and field observation.
+
+\subsection{Multi-Language Content Generation}
+
+ZooEd generates learning content in 47 languages using a pipeline architecture:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Canonical Content:} Subject matter experts author core content in English with structured annotations marking cultural adaptability points.
+    \item \textbf{Translation:} A multilingual transformer model fine-tuned on ecological text produces initial translations, with ecological terminology mapped through a curated glossary of 12,400 terms across all supported languages.
+    \item \textbf{Cultural Adaptation:} Local experts review and adapt examples, analogies, and cultural references. This review is incentivized through Zoo token rewards.
+    \item \textbf{Quality Assurance:} Back-translation verification and automated readability scoring ensure translations maintain pedagogical clarity.
+\end{enumerate}
+
+The content generation model is formalized as:
+
+\begin{equation}
+    \mathbf{y}_{\ell} = G(\mathbf{x}_{\text{en}}, \ell, \mathbf{c}_{\text{region}}, \mathbf{m}_{\text{glossary}})
+\end{equation}
+
+\noindent where $G$ is the generation model, $\mathbf{x}_{\text{en}}$ is English source content, $\ell$ is the target language code, $\mathbf{c}_{\text{region}}$ is regional context features, and $\mathbf{m}_{\text{glossary}}$ is the ecological terminology mapping.
+
+% ============================================================
+% 5. Assessment Framework
+% ============================================================

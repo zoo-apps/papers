@@ -1,0 +1,53 @@
+\section{T-Chain Architecture}
+
+\label{sec:architecture}
+
+\subsection{ThresholdVM Overview}
+
+\ThresholdVM{} is a native chain on Zoo Network, registered at chain creation alongside the EVM L2, Identity Chain, and Experience Ledger. It exposes a minimal state machine with three transaction types:
+
+\begin{enumerate}
+\item \textbf{KeygenTx}: Initiates a distributed key generation session among a quorum of validators.
+\item \textbf{SignTx}: Requests a threshold signature over an arbitrary message digest.
+\item \textbf{ReshareTx}: Re-distributes key shares to a new validator set without changing the public key.
+\end{enumerate}
+
+Each transaction type maps to a multi-round interactive protocol. \ThresholdVM{} manages session state, enforces round deadlines, and commits the protocol transcript to the chain once all rounds complete or a timeout triggers abort.
+
+\subsection{RPC API}
+
+The \TChain{} RPC surface is accessible at \texttt{/v1/threshold}:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lp{7cm}}
+\toprule
+\textbf{Method} & \textbf{Description} \\
+\midrule
+\texttt{threshold\_keygen} & Start a $t$-of-$n$ DKG session; returns \texttt{session\_id} and public key on completion \\
+\texttt{threshold\_sign} & Submit a message hash for threshold signing; returns partial signatures, then aggregated signature \\
+\texttt{threshold\_reshare} & Initiate share redistribution to a new committee \\
+\texttt{threshold\_status} & Query session state (pending, round $k$, complete, aborted) \\
+\texttt{threshold\_pubkey} & Retrieve the group public key for a given \texttt{key\_id} \\
+\bottomrule
+\end{tabular}
+\caption{T-Chain RPC methods}
+\label{tab:rpc}
+\end{table}
+
+\subsection{Session Management}
+
+A session $\mathcal{S} = (\texttt{session\_id}, \texttt{protocol}, t, n, \texttt{participants}, \texttt{round}, \texttt{deadline})$ tracks the lifecycle of each interactive protocol instance. Sessions are created by a \texttt{KeygenTx} or \texttt{SignTx} and progress through rounds as validators submit messages. If a validator fails to submit a round message before the deadline, the session enters \emph{identifiable abort}: the non-responding validator is recorded on-chain and subject to slashing.
+
+\begin{definition}[Session Liveness]
+A session $\mathcal{S}$ completes if at least $t$ of the $n$ participants submit valid round messages within every deadline. Formally, for each round $r \in \{1, \ldots, R\}$:
+\[
+|\{i \in \mathcal{S}.\texttt{participants} : \texttt{msg}_{i,r} \text{ valid} \}| \geq t
+\]
+\end{definition}
+
+\subsection{Permissioned Key Creation}
+
+Not every actor may initiate a keygen. \TChain{} enforces an \texttt{AuthorizedChains} registry: only chains listed in this registry (e.g., the EVM L2 bridge contract, the Identity Chain) may request key creation. This prevents spam and ensures that every generated key serves a concrete cross-chain or custodial purpose.
+
+%% --------------------------------------------------------------------------

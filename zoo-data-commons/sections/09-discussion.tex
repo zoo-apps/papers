@@ -1,0 +1,31 @@
+\section{Discussion}
+
+\label{sec:discussion}
+
+\subsection{Decentralization Trade-offs}
+
+The decentralized architecture introduces trade-offs compared to centralized repositories.
+Query latency is higher (median 2.3 seconds vs.\ 0.4 seconds for GBIF) due to distributed index traversal.
+Storage costs are approximately 3x higher than centralized cloud storage due to replication requirements.
+Governance complexity increases for sovereign datasets, as community decision-making is slower than administrative access grants.
+
+We argue these costs are justified by the gains in data integrity (immutable provenance), censorship resistance (no single point of control), and sovereignty (communities retain authentic authority).
+
+\subsection{Adoption Barriers}
+
+Three barriers limit broader adoption.
+First, the token-based incentive system requires researchers to interact with cryptocurrency, creating friction for those unfamiliar with Web3 tools.
+We are developing fiat on-ramps and institutional custody solutions to lower this barrier.
+Second, existing data infrastructure investments create lock-in effects; institutions with established GBIF publishing workflows have limited incentive to adopt a parallel system.
+Our GBIF synchronization adapter mitigates this by enabling dual publishing.
+Third, the sovereign governance tier requires community capacity building that extends beyond technical deployment.
+
+\subsection{Sustainability}
+
+Long-term sustainability depends on the curation market generating sufficient incentives to maintain data quality and storage persistence.
+Our economic model projects break-even at 50,000 active ZDOs, assuming current token valuation and storage costs.
+Institutional partnerships for cold-tier storage provide a non-token-dependent persistence backstop.
+
+% ============================================================
+% 10. Conclusion
+% ============================================================

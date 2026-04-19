@@ -1,0 +1,27 @@
+\section{Introduction}
+
+\label{sec:introduction}
+
+The scientific enterprise confronts interconnected structural failures that undermine its core epistemic mission.
+The reproducibility crisis, documented across psychology \citep{openscience2015estimating}, biomedical sciences \citep{begley2012drug}, and computational research \citep{hutson2018artificial}, reflects not individual misconduct but systemic incentive misalignment: researchers are rewarded for novel positive results rather than for rigorous methodology, transparent data sharing, or verification of existing claims \citep{smaldino2016natural}.
+
+Current responses to the reproducibility crisis are necessary but insufficient.
+Pre-registration platforms such as the Open Science Framework \citep{nosek2018preregistration} address selective reporting but cannot enforce methodological adherence.
+Computational reproducibility tools such as Docker containers and workflow managers \citep{gruning2018practical} capture execution environments but provide no mechanism for cross-institutional verification or economic incentive for reproduction efforts.
+Open data mandates \citep{wilkinson2016fair} increase availability but not discoverability or quality assurance.
+
+The Decentralized Science (DeSci) movement proposes that blockchain and peer-to-peer technologies can restructure scientific incentives by making research artifacts---hypotheses, data, methods, results---into verifiable, composable digital objects with clear provenance and ownership \citep{hamburg2019desci}.
+However, existing DeSci platforms focus primarily on funding mechanisms (e.g., quadratic funding for research) or credential systems (e.g., soulbound tokens for peer review), leaving the core challenge of experiment coordination largely unaddressed.
+
+We present ZooCoord, a protocol for decentralized research coordination that directly targets the experiment lifecycle---from hypothesis formulation through execution, verification, and dissemination.
+ZooCoord makes three contributions:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Experiment Commitment Protocol:} A cryptographic pre-registration scheme that binds researchers to hypotheses and methods before data collection, with tamper-evident deviation tracking (\Cref{sec:commitments}).
+    \item \textbf{Federated Execution Graphs:} A formalism for decomposing multi-site experiments into directed acyclic graphs of verifiable computational units, enabling parallel execution across independent nodes with end-to-end provenance (\Cref{sec:execution}).
+    \item \textbf{Reproducibility Verification Market:} A token-incentivized marketplace where independent parties are economically rewarded for verifying experiment reproducibility, creating a self-sustaining quality assurance ecosystem (\Cref{sec:market}).
+\end{enumerate}
+
+% ============================================================
+% 2. Related Work
+% ============================================================

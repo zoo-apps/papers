@@ -1,0 +1,29 @@
+\section{Introduction}
+
+\label{sec:introduction}
+
+The global biodiversity crisis demands not only technological intervention but a fundamental transformation in how conservation knowledge is produced, disseminated, and applied \citep{diaz2019global}.
+Traditional conservation education relies on static curricula delivered through centralized institutions, a model poorly suited to the geographic, linguistic, and socioeconomic diversity of communities living alongside threatened ecosystems \citep{brewer2020conservation}.
+
+Three structural barriers limit the effectiveness of current approaches.
+First, \emph{learner heterogeneity}: a park ranger in Borneo, a marine biology graduate student in Cape Town, and a subsistence farmer in the Amazon basin share a need for ecological understanding but differ profoundly in prior knowledge, language, cultural context, and available technology \citep{ardoin2020environmental}.
+Second, \emph{knowledge velocity}: the conservation sciences generate over 40,000 peer-reviewed publications annually \citep{fisher2022growth}, yet curricula update on multi-year cycles.
+Third, \emph{assessment disconnection}: conventional testing measures recall of decontextualized facts rather than the situated reasoning required for conservation decision-making \citep{stern2014value}.
+
+Adaptive learning systems (ALS) address these barriers by modeling individual learner knowledge states and dynamically selecting content to maximize learning efficiency \citep{vanlehn2011relative}.
+However, existing ALS platforms are proprietary, English-centric, and designed for formal education settings, making them inaccessible to the communities most critical for conservation outcomes \citep{kulik2016effectiveness}.
+
+We present ZooEd, a decentralized adaptive learning platform purpose-built for conservation education.
+ZooEd makes three primary contributions:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Conservation Competency Ontology (CCO):} A structured knowledge graph of 2,847 learning objectives across six conservation domains, enabling fine-grained learner modeling and cross-cultural curriculum alignment (\Cref{sec:ontology}).
+    \item \textbf{Adaptive Engine with Ecological Grounding:} A Bayesian Knowledge Tracing model augmented with spaced repetition scheduling that incorporates real-time ecological data from Zoo sensor networks, connecting abstract concepts to local environmental observations (\Cref{sec:adaptive}).
+    \item \textbf{Multi-Modal Multi-Language Assessment:} An assessment framework supporting image-based identification, scenario reasoning, and LLM-evaluated free responses across 47 languages with calibrated reliability (\Cref{sec:assessment}).
+\end{enumerate}
+
+The system is deployed on the Zoo Network, leveraging decentralized storage for content, on-chain consent management for learner data, and token-based incentive structures for content creation and peer instruction.
+
+% ============================================================
+% 2. Related Work
+% ============================================================

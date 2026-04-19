@@ -1,0 +1,55 @@
+\section{Encrypted Orderflow}
+
+\label{sec:encrypted_orderflow}
+%----------------------------------------------------------------------
+
+\subsection{Order Structure}
+
+A limit order $O = (\textit{side}, p, q, \textit{pair}, \tau, \textit{did})$ consists of:
+
+\begin{itemize}
+    \item $\textit{side} \in \{\texttt{BUY}, \texttt{SELL}\}$: order direction
+    \item $p \in \mathbb{R}^+$: limit price
+    \item $q \in \mathbb{R}^+$: quantity
+    \item $\textit{pair}$: trading pair (e.g., KEEPER/USDC)
+    \item $\tau$: expiry timestamp
+    \item $\textit{did}$: submitter's decentralized identity
+\end{itemize}
+
+\subsection{Encryption at Submission}
+
+Before entering the mempool, the submitter encrypts price and quantity:
+
+\begin{align}
+\hat{p} &= \text{TFHE.Encrypt}(pk, \textit{bits}(p)) \label{eq:enc_price} \\
+\hat{q} &= \text{CKKS.Encrypt}(pk, q) \label{eq:enc_qty}
+\end{align}
+
+Price is encrypted with \TFHE{} (bit-level) because matching requires exact comparison. Quantity is encrypted with \CKKS{} (approximate) because volume matching requires arithmetic.
+
+The trading pair and expiry are left in plaintext---they are necessary for routing orders to the correct matching engine, and revealing them leaks no exploitable information.
+
+\subsection{Mempool Privacy}
+
+The encrypted order enters the mempool as:
+
+\begin{equation}
+\hat{O} = (\textit{side}, \hat{p}, \hat{q}, \textit{pair}, \tau, \textit{did}, \sigma)
+\end{equation}
+
+where $\sigma$ is the submitter's signature over $\hat{O}$. Validators can verify the signature and check $\tau$ without decrypting price or quantity. The mempool reveals:
+
+\begin{itemize}
+    \item That an order exists (unavoidable)
+    \item Whether it is a buy or sell (needed for routing)
+    \item Which trading pair (needed for routing)
+    \item When it expires (needed for validity)
+\end{itemize}
+
+It does \emph{not} reveal price or quantity---exactly the information needed for front-running and sandwich attacks.
+
+\subsection{Order Cancellation}
+
+A submitter can cancel an unmatched order by signing a cancellation message referencing the order's hash. The cancellation is processed without decryption; the order is simply removed from the matching engine.
+
+%----------------------------------------------------------------------

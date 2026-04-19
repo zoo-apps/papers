@@ -1,0 +1,76 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\MPC}{\textsc{mpc}}
+\newcommand{\TSS}{\textsc{tss}}
+\newcommand{\FROST}{\textsc{frost}}
+\newcommand{\CGGMP}{\textsc{cggmp}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\title{\textbf{Zoo MPC: Threshold Custody for AI Model Weights and Research Assets}}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{November 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \textbf{Zoo MPC}, a threshold custody system for AI model weights, research datasets, and autonomous agent wallets on the Zoo Network (chain ID 200200). Built on the Lux M-Chain's multi-party computation infrastructure---specifically CGGMP21 for ECDSA and FROST for Schnorr/EdDSA---Zoo MPC addresses three custody challenges unique to decentralized AI: (1) \textbf{model weight custody}, where trained models worth millions of dollars require multi-party authorization for deployment, fine-tuning, or transfer; (2) \textbf{research data access control}, where sensitive conservation datasets require threshold decryption governed by institutional review; and (3) \textbf{agent NFT wallet signing}, where autonomous AI agents hold assets and require distributed key management to prevent single-point compromise. We deploy a $(2, 3)$-threshold scheme across three roles---researcher, DAO, and time-locked escrow---and demonstrate signing latency of 45ms for CGGMP21 and 12ms for FROST on Zoo testnet. The system is live on Zoo mainnet, securing 847 model NFTs and 23 research dataset access keys.
+
+\textbf{Keywords}: multi-party computation, threshold signatures, AI model custody, agent wallets, Zoo Network
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-background}
+\input{sections/03-zoo-mpc-architecture}
+\input{sections/04-model-weight-custody}
+\input{sections/05-research-data-access-control}
+\input{sections/06-agent-nft-wallets}
+\input{sections/07-performance-evaluation}
+\input{sections/08-related-work}
+\input{sections/09-conclusion}
+\input{sections/99-acknowledgments}
+
+\end{document}

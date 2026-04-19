@@ -1,0 +1,85 @@
+\section{Deployment Guide}
+
+
+\subsection{Running a GPU Node}
+
+\subsubsection{Prerequisites}
+\begin{itemize}
+\item NVIDIA GPU with $\geq 16$ GB VRAM
+\item CUDA 12.1+
+\item Docker 24.0+
+\item Staked KEEPER tokens ($\geq 1000$)
+\end{itemize}
+
+\subsubsection{Setup}
+\begin{verbatim}
+# Clone Zoo node repository
+git clone https://github.com/zooai/zoo-node
+cd zoo-node
+
+# Configure environment
+cp .env.example .env
+# Edit .env: set RPC_URL, STAKING_KEY, IPFS_GATEWAY
+
+# Build Docker image
+docker build -t zoo-node:latest .
+
+# Run node
+docker run -d \
+  --gpus all \
+  -p 8080:8080 \
+  -v /data:/data \
+  --env-file .env \
+  zoo-node:latest
+\end{verbatim}
+
+\subsubsection{Monitoring}
+\begin{verbatim}
+# Check node status
+curl http://localhost:8080/status
+
+# View logs
+docker logs -f <container_id>
+
+# Check earnings
+curl http://localhost:8080/earnings
+\end{verbatim}
+
+\subsection{Submitting Experiences}
+
+\subsubsection{Via Python SDK}
+\begin{verbatim}
+from zoo_sdk import ZooClient, Experience
+
+client = ZooClient(rpc_url="https://rpc.zoo.ngo")
+
+# Create experience
+exp = Experience(
+    domain="math.algebra",
+    text="When solving quadratics, check discriminant
+          first. If negative, no real solutions.",
+    examples=[
+        {"input": "x² + 2x + 5 = 0",
+         "output": "No real solutions"}
+    ]
+)
+
+# Submit for DAO review
+tx_hash = client.submit_experience(
+    experience=exp,
+    stake_amount=100  # KEEPER tokens
+)
+
+print(f"Submitted: {tx_hash}")
+\end{verbatim}
+
+\subsubsection{Via Web UI}
+\begin{enumerate}
+\item Navigate to \url{https://app.zoo.ngo}
+\item Connect wallet (MetaMask/WalletConnect)
+\item Go to "Contribute" $\rightarrow$ "Submit Experience"
+\item Fill form: domain, text, examples
+\item Approve stake (100 KEEPER)
+\item Submit for review
+\end{enumerate}
+

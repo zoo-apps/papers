@@ -1,0 +1,72 @@
+\section{Experience Format Specification}
+
+\label{sec:format}
+
+\subsection{Semantic Experience Definition}
+
+\begin{definition}[Semantic Experience]
+A semantic experience $e$ is a tuple:
+\begin{equation}
+e = (t, d, c, v, m, \sigma)
+\end{equation}
+where:
+\begin{itemize}
+    \item $t \in \Sigma^*$: Natural language text (max 256 tokens)
+    \item $d \in \mathcal{D}$: Domain taxonomy path (e.g., ``math.geometry.intersection'')
+    \item $c \in [0,1]$: Confidence score derived from validation
+    \item $v \in \mathbb{R}^{768}$: Semantic embedding vector
+    \item $m$: Metadata (timestamp, author, provenance)
+    \item $\sigma$: Digital signature (optional)
+\end{itemize}
+\end{definition}
+
+\subsection{Canonical Serialization}
+
+Experiences are serialized using CBOR (Concise Binary Object Representation) with deterministic encoding:
+
+\begin{lstlisting}[language=json,caption=Experience CBOR Schema]
+{
+  "version": 1,
+  "type": "experience/v1",
+  "content": {
+    "text": "When solving geometry problems...",
+    "domain": ["math", "geometry", "intersection"],
+    "confidence": 0.87
+  },
+  "embedding": <768-dim float16 array>,
+  "metadata": {
+    "created": 1634567890,
+    "author": "did:key:z6Mk...",
+    "source": "training_run_42"
+  },
+  "signature": <optional Ed25519 signature>
+}
+\end{lstlisting}
+
+\subsection{Content Addressing}
+
+The experience CID is computed as:
+
+\begin{equation}
+\text{CID}(e) = \text{CIDv1}(\text{dag-cbor}, \text{sha256}(\text{CBOR}(e)))
+\end{equation}
+
+This ensures:
+\begin{itemize}
+    \item \textbf{Determinism}: Same experience always produces same CID
+    \item \textbf{Integrity}: Any modification changes the CID
+    \item \textbf{Self-certification}: CID proves content authenticity
+\end{itemize}
+
+\subsection{Constraints and Validation}
+
+Valid experiences must satisfy:
+
+\begin{enumerate}
+    \item \textbf{Length}: $|\text{tokens}(t)| \leq 256$
+    \item \textbf{Structure}: Text must follow ``When [context], [action]'' pattern
+    \item \textbf{Generality}: No problem-specific constants
+    \item \textbf{Embedding Consistency}: $\|v - \text{embed}(t)\|_2 < \epsilon$
+    \item \textbf{Signature Validity}: If $\sigma$ present, must verify against author key
+\end{enumerate}
+

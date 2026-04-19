@@ -1,0 +1,43 @@
+\section{FROST Protocol}
+
+\label{sec:frost}
+
+\subsection{Overview}
+
+\FROST{} (Flexible Round-Optimized Schnorr Threshold signatures) \cite{komlo2020frost} implements $t$-of-$n$ Schnorr signing in two rounds, improving on prior schemes that required $O(n)$ rounds. \TChain{} uses \FROST{} for all Ed25519 and Schnorr-compatible chains.
+
+\subsection{Distributed Key Generation}
+
+\FROST{} DKG proceeds in two phases:
+
+\begin{enumerate}
+\item \textbf{Commitment phase}: Each participant $P_i$ samples a random polynomial $f_i(x)$ of degree $t-1$, computes commitments $C_{i,j} = g^{a_{i,j}}$ for each coefficient $a_{i,j}$, and broadcasts $(C_{i,0}, \ldots, C_{i,t-1})$ together with a proof of knowledge of $a_{i,0}$.
+\item \textbf{Share phase}: Each $P_i$ sends the evaluation $f_i(j)$ to participant $P_j$ over a confidential channel. $P_j$ verifies consistency against the commitments:
+\[
+g^{f_i(j)} = \prod_{k=0}^{t-1} C_{i,k}^{j^k}
+\]
+\end{enumerate}
+
+The group public key is $Y = \prod_{i=1}^{n} C_{i,0}$ and each participant holds secret share $s_j = \sum_{i=1}^{n} f_i(j)$.
+
+\subsection{Two-Round Signing}
+
+Given a message $m$ and signing set $S \subseteq \{1,\ldots,n\}$ with $|S| \geq t$:
+
+\begin{enumerate}
+\item \textbf{Round 1 (Nonce commitment)}: Each signer $P_i$ samples nonces $(d_i, e_i)$, computes commitments $(D_i = g^{d_i}, E_i = g^{e_i})$, and broadcasts $(D_i, E_i)$.
+\item \textbf{Round 2 (Partial signature)}: Compute binding factor $\rho_i = H(\texttt{msg\_hash}, i, D_i, E_i, B)$ where $B$ is the full commitment list. Each signer produces:
+\[
+z_i = d_i + \rho_i e_i + \lambda_i \cdot s_i \cdot c
+\]
+where $c = H(R, Y, m)$, $R = \prod_{i \in S}(D_i \cdot E_i^{\rho_i})$, and $\lambda_i$ is the Lagrange coefficient for participant $i$ in set $S$.
+\end{enumerate}
+
+The aggregated signature is $(R, z)$ where $z = \sum_{i \in S} z_i$, verifiable as a standard Schnorr signature under $Y$.
+
+\begin{theorem}[$t$-of-$n$ Unforgeability]
+\label{thm:frost-security}
+Under the Discrete Logarithm assumption in the random oracle model, no PPT adversary controlling fewer than $t$ participants can produce a valid \FROST{} signature on a message not signed by an honest quorum.
+\end{theorem}
+
+%% --------------------------------------------------------------------------

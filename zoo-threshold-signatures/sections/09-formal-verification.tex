@@ -1,0 +1,18 @@
+\section{Formal Verification}
+
+\label{sec:formal}
+
+All threshold protocols in \TChain{} are formally verified in Lean~4 as part of the Zoo Crypto library:
+
+\begin{itemize}
+\item \texttt{Crypto/FROST.lean}: Correctness of FROST DKG and 2-round signing. The key theorem states that honest aggregation of $t$ valid partial signatures yields a signature verifiable under the group public key.
+\item \texttt{Crypto/Threshold/CGGMP21.lean}: Correctness of presignature generation and online signing. Identifiable abort is proved: if any party deviates, at least one honest party can produce a proof of misbehavior.
+\item \texttt{Crypto/Threshold/LSS.lean}: $t$-privacy (fewer than $t$ shares reveal nothing) and $t$-correctness (any $t$ shares reconstruct the secret) for Shamir's scheme over arbitrary finite fields.
+\item \texttt{Crypto/Threshold/Composition.lean}: The Composition Theorem (Theorem~\ref{thm:composition}), proving that vectorized DKG preserves individual protocol guarantees.
+\end{itemize}
+
+\begin{remark}
+The Lean proofs cover functional correctness and information-theoretic secrecy. Computational hardness assumptions (DL, Strong RSA, DDH) are axiomatized as hypotheses; the proofs show that security reduces to these assumptions.
+\end{remark}
+
+%% --------------------------------------------------------------------------

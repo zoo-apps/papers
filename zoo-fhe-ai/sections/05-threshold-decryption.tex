@@ -1,0 +1,50 @@
+\section{Threshold Decryption}
+
+\label{sec:threshold}
+
+\subsection{Key Generation}
+
+Zoo FHE uses a distributed key generation protocol where $n$ committee members jointly generate a collective public key $pk$ and individual key shares $\{sk_i\}_{i=1}^n$:
+
+\begin{definition}[$(t, n)$-Threshold Decryption]
+A ciphertext $c = \text{Enc}(pk, m)$ can be decrypted only when at least $t$ of $n$ committee members contribute their partial decryptions $d_i = \text{PartDec}(sk_i, c)$.
+\end{definition}
+
+\begin{equation}
+\text{Dec}(c) = \text{Combine}(\{d_i\}_{|S| \geq t}) = m
+\end{equation}
+
+\subsection{Conservation DAO Governance}
+
+On Zoo Network, the threshold committee is governed by the conservation DAO:
+
+\begin{itemize}
+    \item \textbf{Researchers} (seats 1--3): Active conservation researchers
+    \item \textbf{DAO delegates} (seats 4--6): Elected by ZOO token holders
+    \item \textbf{Escrow nodes} (seats 7--9): Automated escrow with time-lock
+\end{itemize}
+
+A $(5, 9)$-threshold ensures that no single party---not even the researchers who trained the model---can unilaterally decrypt sensitive data.
+
+\subsection{Decryption Protocol}
+
+\begin{algorithm}[t]
+\caption{Threshold Decryption on Zoo}
+\label{alg:threshold}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Ciphertext $c$, request ID $r$, committee $C$
+\STATE \textbf{Output}: Plaintext $m$ or $\bot$
+\STATE Smart contract emits \texttt{DecryptionRequested(r, c)}
+\FOR{each committee member $i \in C$}
+    \STATE $d_i \leftarrow \text{PartDec}(sk_i, c)$
+    \STATE Submit $d_i$ on-chain with ZK proof of correctness
+\ENDFOR
+\STATE Wait until $|D| \geq t$ partial decryptions collected
+\STATE $m \leftarrow \text{Combine}(D)$
+\STATE Emit \texttt{DecryptionCompleted(r, m)}
+\RETURN $m$
+\end{algorithmic}
+\end{algorithm}
+
+Each partial decryption is accompanied by a zero-knowledge proof that $d_i$ was computed correctly from $sk_i$ and $c$, preventing malicious partial decryptions from corrupting the result.
+

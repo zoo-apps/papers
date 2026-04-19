@@ -1,0 +1,23 @@
+\section{Universal Receipt Format}
+
+
+The core interoperability object:
+
+\begin{definition}[Universal Receipt]
+A receipt $R$ consists of:
+\begin{align}
+R = (&\texttt{programId},\ \texttt{claimHash},\ \texttt{receiptHash}, \notag \\
+     &\texttt{proofSystemId},\ \texttt{version},\ \texttt{verifiedAt}, \notag \\
+     &\texttt{parentReceipt},\ \texttt{aggregationRoot}) \notag
+\end{align}
+where:
+\begin{itemize}
+\item \texttt{programId}: Hash of the verified program/circuit.
+\item \texttt{claimHash}: Hash of public inputs.
+\item \texttt{receiptHash}: Self-referential hash ($H(R \setminus \texttt{receiptHash})$).
+\item \texttt{proofSystemId}: $1$=STARK, $2$=Groth16, $3$=PLONK, $4$=Nova, $\geq 100$=research.
+\item \texttt{parentReceipt}: For recursive composition.
+\item \texttt{aggregationRoot}: Merkle root for batch receipts.
+\end{itemize}
+\end{definition}
+

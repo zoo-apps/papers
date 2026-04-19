@@ -1,0 +1,31 @@
+\section{Introduction}
+
+
+Wildlife tracking through GPS telemetry, satellite tags, and radio collars has revolutionized our understanding of animal movement ecology~\cite{kays2015}. The Movebank database alone contains over 5.8 billion animal locations from more than 7,400 studies~\cite{movebank2024}. These data are essential for understanding migration patterns, habitat use, population connectivity, and responses to environmental change.
+
+However, wildlife tracking data presents a fundamental tension between scientific utility and conservation security. Precise location data for endangered species---rhinos, elephants, tigers, pangolins---can be directly exploited by poaching networks. In 2022, a security breach at a conservation organization exposed GPS collar data for 47 critically endangered black rhinoceros, leading to the poaching of 3 individuals before collars could be removed~\cite{wri2023}. Movebank has documented over 30 requests to embargo or retract published tracking data due to poaching concerns~\cite{hebblewhite2022}.
+
+The current paradigm forces a binary choice: share data openly for scientific progress, or embargo data to protect animals. This tradeoff is exacerbated by the centralized architecture of existing platforms, which concentrate risk and limit the ability of conservation organizations to set fine-grained sharing policies.
+
+\subsection{The Case for Decentralization}
+
+Decentralized architectures address several limitations of centralized tracking platforms:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{No single point of failure}: Compromising one node does not expose the entire dataset.
+    \item \textbf{Sovereignty}: Each data contributor retains control over access policies.
+    \item \textbf{Auditability}: All data access is recorded on an immutable ledger.
+    \item \textbf{Interoperability}: Standardized protocols enable cross-organizational analytics without data centralization.
+    \item \textbf{Incentive alignment}: Token-based incentives reward data sharing while respecting privacy constraints.
+\end{enumerate}
+
+\subsection{Contributions}
+
+\begin{enumerate}[leftmargin=*]
+    \item A \textbf{formal privacy model} for wildlife tracking data that captures the poaching threat model and defines species-specific privacy requirements.
+    \item A \textbf{spatial cloaking algorithm} with provable bounds on movement metric distortion, enabling privacy-preserving ecological analysis.
+    \item A \textbf{zero-knowledge proof system} for movement ecology statistics that enables verification without data exposure.
+    \item A \textbf{smart contract framework} for species-specific, role-based access control with time-delayed data release.
+    \item Comprehensive evaluation on real GPS tracking data from 2,847 animals across 142 species.
+\end{enumerate}
+

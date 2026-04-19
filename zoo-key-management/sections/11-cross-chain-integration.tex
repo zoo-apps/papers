@@ -1,0 +1,11 @@
+\section{Cross-Chain Integration}
+
+
+\subsection{Integration with T-Chain and I-Chain}
+
+\TChain{} \cite{zoo-threshold-signatures} consumes keys managed by \KChain{}: it requests signing keys by type and threshold, \KChain{} runs DKG and returns public keys, and key rotation events trigger committee reconfiguration. \IChain{} \cite{zoo-identity-chain} uses \KChain{} for DID key management---DID creation triggers key generation, DID key rotation maps to \KChain{} rotation transactions, and credential signing keys are \KChain{}-managed for post-quantum signatures.
+
+\subsection{Lux Ecosystem Compatibility}
+
+\KChain{} implements the key management interface specified in the Lux PQ Crypto Suite \cite{lux-pq-crypto-suite}, ensuring keys generated on Zoo are usable across all Lux-compatible chains. The \texttt{did:lux:*} key references resolve to \KChain{} public keys via cross-chain state proofs.
+

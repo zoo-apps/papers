@@ -1,0 +1,50 @@
+\section{Background}
+
+
+\subsection{Proof of Useful Work}
+
+Prior attempts at useful PoW include:
+
+\begin{itemize}
+    \item \textbf{Primecoin}~\cite{king2013primecoin}: Finding prime number chains
+    \item \textbf{Gridcoin}~\cite{gridcoin2014}: BOINC scientific computing
+    \item \textbf{FoldingCoin}: Protein folding simulations
+\end{itemize}
+
+These approaches suffer from limited useful work domains and difficulty of verification. Our work extends to general AI computation.
+
+\subsection{Trusted Execution Environments}
+
+\TEE{}s provide hardware-enforced isolation:
+
+\begin{definition}[Trusted Execution Environment]
+A \TEE{} is a hardware-protected region where:
+\begin{enumerate}
+    \item Code and data are encrypted in memory
+    \item Execution cannot be observed or modified by the host OS
+    \item Remote attestation proves what code ran and its output
+\end{enumerate}
+\end{definition}
+
+Major \TEE{} implementations:
+\begin{itemize}
+    \item Intel SGX / TDX
+    \item AMD SEV-SNP
+    \item ARM TrustZone / CCA
+    \item NVIDIA Confidential Computing
+\end{itemize}
+
+\subsection{BLS Signatures}
+
+BLS signatures enable efficient aggregation:
+
+\begin{definition}[BLS Signature Aggregation]
+Given signatures $\{\sigma_i\}_{i=1}^n$ from signers $\{pk_i\}$ on message $m$:
+\begin{equation}
+\sigma_{\text{agg}} = \prod_{i=1}^n \sigma_i
+\end{equation}
+Verification: $e(\sigma_{\text{agg}}, g) = e(H(m), \sum_i pk_i)$
+\end{definition}
+
+This enables $O(1)$ verification of $n$ signatures.
+

@@ -1,0 +1,17 @@
+\section{Cross-Chain Identity}
+
+
+\subsection{Identity Portability}
+
+Zoo DIDs are resolvable across the Lux ecosystem via the \texttt{did:lux:*} method family, as specified in the Lux DID specification \cite{lux-id-did-specification}. A credential issued on Zoo can be presented and verified on any Lux-compatible chain by:
+
+\begin{enumerate}
+\item Resolving the issuer DID via cross-chain state proofs.
+\item Verifying the credential signature against the issuer's public keys.
+\item Checking revocation status via the Zoo accumulator (relayed as a cross-chain header).
+\end{enumerate}
+
+\subsection{IAM Compatibility}
+
+For systems that still use traditional IAM (as in Hanzo's OIDC-based authentication \cite{lux-id-iam}), \IChain{} provides a bridge: DID-authenticated sessions can mint short-lived OIDC tokens via a gateway, enabling backward compatibility without compromising decentralization.
+

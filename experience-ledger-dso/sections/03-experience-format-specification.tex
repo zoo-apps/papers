@@ -1,0 +1,83 @@
+\section{Experience Format Specification}
+
+\label{sec:format}
+
+\subsection{Semantic Advantage Definition}
+
+\begin{definition}[Semantic Advantage]
+A semantic advantage is a natural language statement $e \in \mathcal{E}$ that encodes a generalizable reasoning pattern extracted from comparative analysis of model trajectories. Formally, $e$ consists of:
+
+\begin{itemize}
+    \item \textbf{Text} $e.\text{text} \in \Sigma^*$: The insight itself (max 32 words)
+    \item \textbf{Domain} $e.\text{domain} \in \mathcal{D}$: Problem category (e.g., "math.geometry")
+    \item \textbf{Confidence} $e.\text{conf} \in [0,1]$: Quality score derived from advantage magnitude
+    \item \textbf{Embedding} $e.\text{emb} \in \mathbb{R}^{7680}$: Semantic vector for retrieval
+    \item \textbf{Metadata} $e.\text{meta}$: Creation timestamp, author, usage statistics
+\end{itemize}
+\end{definition}
+
+\subsection{JSON Schema}
+
+The canonical representation uses JSON with content-addressable identifiers:
+
+\begin{lstlisting}[language=json,caption=Experience JSON Schema,label=lst:schema]
+{
+  "id": "exp_sha256_abc123...",
+  "version": "1.0",
+  "domain": "math.geometry",
+  "text": "When solving geometry problems with 
+           intersections, validate solutions lie 
+           within bounded regions, not extensions.",
+  "confidence": 0.87,
+  "examples": [
+    {
+      "input": "Find intersection of line AB...",
+      "output": "Point P lies outside segment AB...",
+      "correct": false
+    },
+    {
+      "input": "Find intersection within triangle...",
+      "output": "Point Q is at (3,4) inside ABC.",
+      "correct": true
+    }
+  ],
+  "metadata": {
+    "created_at": "2025-09-15T14:30:00Z",
+    "created_by": "0x742d35Cc6634C0532925a...",
+    "votes": {"upvotes": 24, "downvotes": 2},
+    "usage_count": 156,
+    "domains_applied": ["geometry", "optimization"]
+  },
+  "embedding": [0.123, -0.456, ...],  // 7680-dim
+  "merkle_proof": "0xdef456..."
+}
+\end{lstlisting}
+
+\subsection{Constraints and Validation}
+
+Valid experiences must satisfy:
+
+\begin{enumerate}
+    \item \textbf{Length}: $|e.\text{text}| \leq 32$ words (enforced via tokenization)
+    \item \textbf{Structure}: "When [context], [action]" or "[precondition] implies [strategy]"
+    \item \textbf{Generality}: No problem-specific constants (e.g., "solve $x^2 = 4$" is invalid)
+    \item \textbf{Actionability}: Must guide reasoning, not merely state facts
+    \item \textbf{Non-Redundancy}: $\forall e' \in \mathcal{E}, \cos(e.\text{emb}, e'.\text{emb}) < 0.9$
+\end{enumerate}
+
+\subsection{Example Experience Library}
+
+\begin{example}[Mathematical Reasoning Experiences]
+\begin{enumerate}
+    \item \texttt{[G0]} "When solving geometry problems with intersections, validate solutions lie within bounded regions or segments, not on extensions, to avoid extraneous answers."
+    
+    \item \texttt{[G1]} "For expected extreme statistics in combinatorial problems, use direct enumeration for small sizes."
+    
+    \item \texttt{[G10]} "When using mathematical invariants to prove impossibility, always validate them against known achievable states or small cases."
+    
+    \item \texttt{[G21]} "For complex polynomials with real parameters, separate real and imaginary parts to find when real roots exist."
+\end{enumerate}
+\end{example}
+
+These experiences exhibit the desired properties: concise, strategic, domain-agnostic within their category, and immediately applicable.
+

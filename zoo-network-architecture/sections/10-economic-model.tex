@@ -1,0 +1,68 @@
+\section{Economic Model}
+
+
+\subsection{Token Utility: KEEPER}
+
+Zoo's native token, \textbf{KEEPER}, serves three functions:
+
+\begin{enumerate}
+\item \textbf{Governance}: 1 KEEPER = 1 vote on experience proposals, treasury allocations, protocol upgrades.
+\item \textbf{Staking}: GPU nodes must stake KEEPER as collateral. Malicious behavior results in slashing.
+\item \textbf{Fee Payment}: Users pay for inference queries in KEEPER (or wrapped native tokens).
+\end{enumerate}
+
+\subsection{Contribution-Based Rewards}
+
+Contributors earn KEEPER via:
+
+\subsubsection{Data Contribution}
+
+Users who submit datasets for Training-Free GRPO receive:
+\[
+\text{KEEPER}_{\text{data}} = \alpha \cdot |D| \cdot Q(D)
+\]
+where $|D|$ is dataset size and $Q(D)$ is quality score (based on validation accuracy improvement).
+
+\subsubsection{Experience Submission}
+
+Users who submit experiences (post-DAO approval) receive:
+\[
+\text{KEEPER}_{\text{exp}} = \beta \cdot \left(\frac{\text{upvotes}}{\text{upvotes} + \text{downvotes}}\right)^2 \cdot \log(1 + \text{usage\_count})
+\]
+This rewards both initial quality (voting) and long-term utility (usage).
+
+\subsubsection{Inference Provision}
+
+GPU nodes earn:
+\[
+\text{KEEPER}_{\text{inference}} = \gamma \cdot \text{num\_queries} \cdot \left(1 + \frac{\text{stake}}{\text{total\_stake}}\right)
+\]
+Higher stake = priority in query routing = more earnings.
+
+\subsection{Fee Structure}
+
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Model Size} & \textbf{Fee (KEEPER)} & \textbf{USD Equiv.} \\
+\midrule
+Qwen3-4B & 0.01 & \$0.005 \\
+Qwen3-7B & 0.02 & \$0.010 \\
+Qwen3-32B & 0.05 & \$0.025 \\
+Qwen3-72B & 0.10 & \$0.050 \\
+DeepSeek-V3 & 0.50 & \$0.250 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+10\% of fees burned (deflationary), 40\% to GPU nodes, 40\% to experience contributors, 10\% to treasury.
+
+\subsection{Anti-Sybil Mechanisms}
+
+To prevent fake contributions:
+\begin{itemize}
+\item \textbf{Proof of Personhood}: Integration with WorldCoin \cite{worldcoin2023whitepaper} or BrightID \cite{brightid2021whitepaper}.
+\item \textbf{Stake Requirements}: Minimum 100 KEEPER stake to submit experiences.
+\item \textbf{Reputation System}: Contributors build reputation over time; low-reputation users face higher scrutiny.
+\end{itemize}
+

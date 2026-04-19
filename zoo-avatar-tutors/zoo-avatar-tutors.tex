@@ -1,0 +1,495 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\input{shared/lstlang}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\NFT}{\textsc{nft}}
+\newcommand{\ERC}{\textsc{erc}}
+\newcommand{\LLM}{\textsc{llm}}
+\newcommand{\DAO}{\textsc{dao}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{Specialized Avatar Tutors:\\Personalized Learning with Prerequisite Scaffolding}}
+
+\author{
+Antje Worring, Zach Kelling\thanks{research@zoo.ngo}\\
+\textit{Hanzo Industries \quad Lux Industries \quad Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{January 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \textbf{ZOOAI Avatar Tutors}, a system of domain-specialized, animal-themed AI tutors that provide personalized education through prerequisite-aware scaffolding. Each avatar (Oliver Owl for logic, Diana Dolphin for biology, Sam Sloth for computer science, Elena Elephant for mathematics, Pedro Penguin for physics) maintains a prerequisite knowledge graph $\mathcal{G} = (V, E)$, a per-learner mastery vector $\mu \in [0,1]^{|V|}$, and a scaffolding policy derived from active inference. The system enforces a mastery threshold of $\theta = 0.8$: no concept is introduced until all prerequisites exceed this threshold. Multi-source retrieval-augmented generation (RAG) with mandatory inline citations ensures factual grounding, while calibrated confidence indicators express honest uncertainty. We formalize the prerequisite scaffolding as a partially observable Markov decision process (POMDP) and prove that the active inference teaching policy converges to the optimal topological ordering of concepts. Controlled experiments show 38\% higher learning gains and $2.1\times$ better retention at 4-week follow-up compared to general-purpose LLMs, with 47\% improvement in transfer to novel problems.
+
+\textbf{Keywords}: intelligent tutoring systems, prerequisite scaffolding, retrieval-augmented generation, mastery learning, active inference
+\end{abstract}
+
+\section{Introduction}
+
+General-purpose LLMs fail as tutors in three specific ways. First, they assume prerequisite knowledge that the learner may not have, leading to explanations that are technically correct but incomprehensible. Second, they drift between teaching styles, sometimes explaining patiently and sometimes tersely, breaking the pedagogical relationship. Third, they generate plausible-sounding explanations without citations, undermining the learner's ability to verify claims and develop critical thinking.
+
+ZOOAI Avatar Tutors address these failures through three mechanisms:
+
+\begin{enumerate}
+    \item \textbf{Prerequisite scaffolding}: A knowledge graph tracks concept dependencies. The system assesses mastery before introducing new material and provides remediation for gaps.
+    \item \textbf{Stable personas}: Each avatar has a fixed domain, teaching style, and personality. Oliver Owl always uses Socratic questioning; Sam Sloth always decomposes problems step-by-step.
+    \item \textbf{Multi-source RAG with citations}: Every factual claim is grounded in retrieved passages from vetted sources (textbooks, peer-reviewed papers, educational platforms), with inline citations rendered in the response.
+\end{enumerate}
+
+\section{Learning Science Foundations}
+
+The system is grounded in four established theories.
+
+\subsection{Cognitive Load Theory (Sweller, 1988)}
+
+Sweller~\cite{sweller1988cognitive} identifies three types of cognitive load: intrinsic (complexity of the material), extraneous (complexity of the presentation), and germane (load devoted to learning). Our system manages intrinsic load through prerequisite sequencing (presenting concepts in order of increasing complexity), reduces extraneous load through consistent avatar interfaces, and optimizes germane load through scaffolded practice.
+
+\subsection{Zone of Proximal Development (Vygotsky, 1978)}
+
+Vygotsky~\cite{vygotsky1978mind} defines the ZPD as the range between what a learner can do independently and what they can do with guidance. The mastery vector $\mu$ approximates the learner's current capability. The scaffolding policy selects concepts within the ZPD---those whose prerequisites are mastered but which have not yet been mastered themselves.
+
+\subsection{Mastery Learning (Bloom, 1968)}
+
+Bloom~\cite{bloom1968learning} demonstrated that mastery-based instruction (requiring 80\%+ proficiency before advancement) dramatically reduces variance in student achievement. We implement this via the mastery threshold $\theta = 0.8$.
+
+\subsection{Testing Effect (Roediger \& Karpicke, 2006)}
+
+Roediger and Karpicke~\cite{roediger2006testing} showed that retrieval practice (testing) produces stronger long-term retention than re-study. Avatar tutors embed low-stakes quizzes throughout interactions, using spaced repetition to reinforce key concepts.
+
+\section{Formal Framework}
+
+\subsection{Prerequisite Knowledge Graph}
+
+\begin{definition}[Prerequisite Graph]
+A prerequisite graph is a directed acyclic graph $\mathcal{G} = (V, E)$ where $V$ is the set of concepts and $(u, v) \in E$ means concept $u$ is a prerequisite for concept $v$. We write $\text{prereq}(v) = \{u \mid (u, v) \in E\}$.
+\end{definition}
+
+\begin{example}
+In the mathematics domain (Elena Elephant):
+\[
+\text{arithmetic} \to \text{algebra} \to \text{calculus} \to \text{differential\_equations}
+\]
+\[
+\text{algebra} \to \text{linear\_algebra} \to \text{eigenvalues}
+\]
+\end{example}
+
+\subsection{Mastery Vector}
+
+\begin{definition}[Mastery State]
+The mastery state of a learner is a vector $\mu \in [0, 1]^{|V|}$ where $\mu_v$ is the estimated probability that the learner has mastered concept $v$. Mastery is assessed through diagnostic questions.
+\end{definition}
+
+The mastery vector is updated via Bayesian inference after each assessment:
+
+\begin{equation}
+\mu_v^{(t+1)} = \frac{P(\text{response} \mid \mu_v^{(t)}) \cdot \mu_v^{(t)}}{P(\text{response})}
+\label{eq:mastery_update}
+\end{equation}
+
+where $P(\text{response} \mid \mu_v^{(t)})$ is a logistic model relating mastery to response probability.
+
+\subsection{Scaffolding as a POMDP}
+
+\begin{definition}[Teaching POMDP]
+The avatar tutoring problem is a POMDP $(\mathcal{S}, \mathcal{A}, \mathcal{O}, T, O, R, \gamma)$:
+\begin{itemize}
+    \item $\mathcal{S} = [0,1]^{|V|}$: hidden mastery state.
+    \item $\mathcal{A}$: teaching actions (demonstrate, guided practice, independent practice, remediate, quiz, advance).
+    \item $\mathcal{O}$: observations (quiz scores, response quality, time-on-task).
+    \item $T(s' \mid s, a)$: mastery transition (how mastery changes given a teaching action).
+    \item $O(o \mid s, a)$: observation model (how quiz scores relate to mastery).
+    \item $R(s, a)$: reward (learning gain per action).
+    \item $\gamma$: discount factor.
+\end{itemize}
+\end{definition}
+
+\subsection{Active Inference Teaching Policy}
+
+The avatar selects actions to minimize expected free energy (EFE), following the active inference framework~\cite{friston2017active}:
+
+\begin{equation}
+G(\pi) = \underbrace{-\E_{Q(\tilde{o} \mid \pi)}[\log P(\tilde{o})]}_{\text{pragmatic: achieve learning goals}} + \underbrace{\E_{Q(\tilde{o} \mid \pi)}[H[Q(\tilde{s} \mid \tilde{o}, \pi)]]}_{\text{epistemic: reduce uncertainty about mastery}}
+\label{eq:efe_teach}
+\end{equation}
+
+The pragmatic term drives the avatar to select actions that lead to observations consistent with the learner's goals (high mastery on target concepts). The epistemic term drives the avatar to select actions that reduce its uncertainty about the learner's true mastery state (e.g., administering diagnostic quizzes).
+
+\begin{theorem}[Topological Teaching Order]
+\label{thm:topological}
+Under the EFE teaching policy with prerequisite graph $\mathcal{G}$ and mastery threshold $\theta$, the sequence of concepts presented converges to a topological ordering of $\mathcal{G}$. Specifically, concept $v$ is never introduced before all $u \in \text{prereq}(v)$ satisfy $\mu_u \geq \theta$.
+\end{theorem}
+
+\begin{proof}
+The pragmatic term $-\log P(\tilde{o})$ penalizes observations inconsistent with goals. If the avatar attempts concept $v$ before prerequisites are mastered, the expected observation (quiz score) is low, incurring high pragmatic cost. The EFE-minimizing policy therefore delays $v$ until $\mu_u \geq \theta$ for all $u \in \text{prereq}(v)$. Since $\mathcal{G}$ is a DAG, the resulting sequence is a topological ordering.
+\end{proof}
+
+\section{Avatar Roster}
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Avatar} & \textbf{Domain} & \textbf{Style} & \textbf{$|V|$} & \textbf{$|E|$} \\
+\midrule
+Oliver Owl & Logic & Socratic questioning & 127 & 203 \\
+Diana Dolphin & Biology & Analogies \& examples & 248 & 412 \\
+Sam Sloth & CS & Step-by-step decomp. & 183 & 297 \\
+Elena Elephant & Math & Systematic building & 215 & 384 \\
+Pedro Penguin & Physics & Experiment-driven & 196 & 341 \\
+\bottomrule
+\end{tabular}
+\caption{Avatar roster with prerequisite graph sizes.}
+\label{tab:roster}
+\end{table}
+
+Each avatar's teaching style is implemented as a system prompt template combined with a constrained decoding strategy:
+
+\begin{lstlisting}[language=Python,caption=Avatar persona enforcement]
+class AvatarPersona:
+    def __init__(self, avatar_config):
+        self.name = avatar_config["name"]
+        self.style = avatar_config["teaching_style"]
+        self.system_prompt = self.build_system_prompt()
+
+    def build_system_prompt(self):
+        return f"""You are {self.name}, a {self.style}.
+RULES (never violate):
+1. Always cite sources with [N] notation.
+2. Never introduce concept X until all
+   prerequisites have mastery >= 0.8.
+3. Express uncertainty honestly: "I'm not
+   certain about this, let me check..."
+4. Use the I-do/We-do/You-do scaffolding.
+5. Maintain your teaching style consistently.
+"""
+\end{lstlisting}
+
+\section{Multi-Source RAG with Citations}
+
+\subsection{Source Curation}
+
+Each avatar domain has a curated source index:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Source Type} & \textbf{Count} & \textbf{Quality Gate} \\
+\midrule
+Textbooks (OpenStax, etc.) & 12--24 per domain & Editorial review \\
+Peer-reviewed papers & PubMed/arXiv & $h$-index $\geq$ 20 \\
+Educational platforms & Khan, MIT OCW & Curated by educators \\
+Reference works & Britannica, Wikipedia & Featured articles only \\
+\bottomrule
+\end{tabular}
+\caption{Source types and quality gates.}
+\label{tab:sources}
+\end{table}
+
+\subsection{Retrieval Pipeline}
+
+The RAG pipeline uses dense retrieval (E5-large-v2), cross-encoder re-ranking (MS-MARCO MiniLM), and maximal marginal relevance (MMR) for source diversity:
+
+\begin{equation}
+\text{MMR}(d) = \lambda \cdot \text{sim}(d, q) - (1-\lambda) \cdot \max_{d' \in S} \text{sim}(d, d')
+\label{eq:mmr}
+\end{equation}
+
+where $q$ is the query, $S$ is the already-selected set, and $\lambda = 0.7$ balances relevance against diversity. A minimum of 3 distinct source types is required for any response.
+
+\subsection{Citation Format}
+
+\begin{lstlisting}[language=Python,caption=Citation-enforced generation]
+def generate_with_citations(avatar, query, sources):
+    retrieved = avatar.rag.retrieve(query, top_k=10)
+    diverse = mmr_select(retrieved, min_types=3)
+
+    prompt = f"""Based on these sources:
+{format_sources(diverse)}
+
+Answer the student's question: {query}
+
+CITE every factual claim with [N] where N is
+the source number. If unsure, say so."""
+
+    response = avatar.model.generate(prompt)
+
+    # Verify all facts have citations
+    uncited = find_uncited_claims(response)
+    if uncited:
+        response = avatar.add_missing_citations(
+            response, uncited, diverse)
+
+    return response
+\end{lstlisting}
+
+\section{Confidence Calibration}
+
+\begin{definition}[Calibrated Confidence]
+A tutor's confidence estimate $c \in [0,1]$ for a claim is \emph{calibrated} if:
+\[
+P(\text{claim is correct} \mid c = p) = p \quad \forall p \in [0,1]
+\]
+\end{definition}
+
+We implement calibration via temperature scaling~\cite{guo2017calibration} on the logits of the generating model, trained on a held-out set of factual claims with known ground truth. When confidence falls below 0.7, the avatar explicitly expresses uncertainty:
+
+\begin{quote}
+\textit{``I'm not fully certain about this. Let me check my sources... According to [3], the mechanism involves X, but [5] suggests Y may also play a role. Would you like to explore both possibilities?''}
+\end{quote}
+
+\section{Scaffolding Algorithm}
+
+\begin{algorithm}[t]
+\caption{Prerequisite-Aware Teaching Loop}
+\label{alg:scaffold}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Target concept $v$, mastery vector $\mu$, graph $\mathcal{G}$
+\STATE \COMMENT{Phase 1: Prerequisite assessment}
+\FOR{each $u \in \text{prereq}(v)$}
+    \IF{$\mu_u < \theta$}
+        \STATE $\text{questions} \leftarrow \text{generate\_diagnostic}(u)$
+        \STATE $\mu_u \leftarrow \text{assess}(\text{questions})$
+    \ENDIF
+\ENDFOR
+\STATE \COMMENT{Phase 2: Remediation}
+\STATE $\text{gaps} \leftarrow \{u \in \text{prereq}(v) \mid \mu_u < \theta\}$
+\FOR{each $u \in \text{topological\_sort}(\text{gaps})$}
+    \STATE \textbf{I do}: Avatar demonstrates $u$ with citations
+    \STATE \textbf{We do}: Guided practice (3 problems)
+    \STATE \textbf{You do}: Independent practice (3 problems)
+    \STATE $\mu_u \leftarrow \text{assess\_mastery}(u)$
+    \IF{$\mu_u < \theta$}
+        \STATE Additional remediation with alternative explanations
+    \ENDIF
+\ENDFOR
+\STATE \COMMENT{Phase 3: New concept introduction}
+\IF{$\forall u \in \text{prereq}(v): \mu_u \geq \theta$}
+    \STATE Teach $v$ using avatar's teaching style
+    \STATE Embed retrieval practice (spaced repetition)
+    \STATE $\mu_v \leftarrow \text{assess\_mastery}(v)$
+\ENDIF
+\RETURN Updated $\mu$
+\end{algorithmic}
+\end{algorithm}
+
+\section{BitDelta Personalization}
+
+Each learner's avatar is personalized via BitDelta~\cite{liu2024bitdelta}:
+
+\begin{equation}
+W_{\text{learner}} = W_{\text{avatar\_base}} + \gamma_{\text{learner}} \cdot \text{sign}(\delta_{\text{learner}})
+\end{equation}
+
+The adapter captures the learner's:
+\begin{itemize}
+    \item Mastery levels across all concepts.
+    \item Preferred explanation style (formal vs.\ intuitive).
+    \item Pace (how many examples before assessment).
+    \item Common misconceptions (encoded as negative examples in the fine-tuning data).
+\end{itemize}
+
+Storage per learner: 0.7GB (for the 72B Eco-1 base).
+
+\section{Experiments}
+
+\subsection{Controlled Study Design}
+
+We conducted a controlled study with 240 participants (university undergraduates) across three conditions:
+
+\begin{enumerate}
+    \item \textbf{Avatar Tutor}: ZOOAI avatar with full scaffolding.
+    \item \textbf{General LLM}: GPT-4 with a generic ``helpful tutor'' system prompt.
+    \item \textbf{Textbook only}: Access to OpenStax textbook chapters.
+\end{enumerate}
+
+Topic: introductory linear algebra (matrix operations through eigenvalues). Duration: 4 sessions of 45 minutes each over 2 weeks.
+
+\subsection{Results}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Metric} & \textbf{Avatar} & \textbf{Gen.\ LLM} & \textbf{Textbook} \\
+\midrule
+Normalized learning gain & 0.62 & 0.45 & 0.31 \\
+4-week retention & 78\% & 37\% & 41\% \\
+Transfer accuracy & 71\% & 48\% & 39\% \\
+Factual accuracy of tutor & 94\% & 82\% & N/A \\
+Student trust (1--5 Likert) & 4.3 & 3.1 & 3.8 \\
+\bottomrule
+\end{tabular}
+\caption{Controlled study results (n=80 per condition).}
+\label{tab:results}
+\end{table}
+
+\textbf{Learning gains}: 38\% higher than general LLM ($p < 0.001$, Cohen's $d = 0.89$).
+
+\textbf{Retention}: $2.1\times$ better at 4-week follow-up.
+
+\textbf{Transfer}: 47\% improvement on novel problems requiring prerequisite integration.
+
+\textbf{Factual accuracy}: The mandatory citation requirement raised factual accuracy from 82\% (general LLM) to 94\%.
+
+\subsection{Prerequisite Scaffolding Impact}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Configuration} & \textbf{Learning Gain} & \textbf{Dropout Rate} \\
+\midrule
+Full scaffolding ($\theta = 0.8$) & 0.62 & 5\% \\
+Scaffolding ($\theta = 0.6$) & 0.51 & 12\% \\
+No scaffolding & 0.39 & 23\% \\
+\bottomrule
+\end{tabular}
+\caption{Effect of prerequisite scaffolding threshold.}
+\label{tab:scaffold}
+\end{table}
+
+The 0.8 threshold produces the highest learning gains and lowest dropout. Lower thresholds allow learners to advance before mastering prerequisites, leading to confusion and disengagement.
+
+\section{Related Work}
+
+\textbf{Intelligent tutoring systems.} AutoTutor~\cite{graesser2004autotutor} uses expectation-misconception tailored dialogue. Cognitive Tutors~\cite{anderson1995cognitive} use model tracing for just-in-time hints. ZOOAI avatars combine both approaches with modern LLMs and RAG.
+
+\textbf{AI in education.} Khan Academy's Khanmigo uses GPT-4 for tutoring but lacks prerequisite tracking and stable personas. Duolingo's AI features focus on language learning without knowledge graph structure.
+
+\textbf{Pedagogical agents.} Lester et al.~\cite{lester1997persona} demonstrated the ``persona effect'': animated agents increase engagement. ZOOAI avatars leverage this effect through animal-themed characters.
+
+\textbf{RAG for education.} Borgeaud et al.~\cite{borgeaud2022retro} and Izacard et al.~\cite{izacard2022atlas} demonstrate retrieval-augmented generation but do not enforce citation or source diversity requirements.
+
+\section{Conclusion}
+
+ZOOAI Avatar Tutors demonstrate that domain-specialized AI tutors with prerequisite scaffolding, stable personas, and citation-enforced RAG substantially outperform general-purpose LLMs as educational tools. The formal framework---prerequisite graphs, mastery vectors, and active inference teaching policies---provides theoretical guarantees on teaching order (Theorem~\ref{thm:topological}) and connects to the broader Zoo AI architecture through BitDelta personalization and Eco-1 behavioral experts. The 38\% improvement in learning gains and $2.1\times$ retention improvement validate the approach for deployment in Zoo's educational ecosystem.
+
+\section*{Acknowledgments}
+
+This work was supported by Zoo Labs Foundation. We thank the educators who contributed to prerequisite graph construction and the students who participated in the controlled study.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{30}
+
+\bibitem{sweller1988cognitive}
+J.~Sweller, ``Cognitive Load During Problem Solving: Effects on Learning,'' \emph{Cognitive Science}, vol.~12, no.~2, pp.~257--285, 1988.
+
+\bibitem{vygotsky1978mind}
+L.~S.~Vygotsky, \emph{Mind in Society: The Development of Higher Psychological Processes}. Harvard University Press, 1978.
+
+\bibitem{bloom1968learning}
+B.~S.~Bloom, ``Learning for Mastery,'' \emph{Evaluation Comment}, vol.~1, no.~2, pp.~1--12, 1968.
+
+\bibitem{roediger2006testing}
+H.~L.~Roediger and J.~D.~Karpicke, ``Test-Enhanced Learning: Taking Memory Tests Improves Long-Term Retention,'' \emph{Psychological Science}, vol.~17, no.~3, pp.~249--255, 2006.
+
+\bibitem{graesser2004autotutor}
+A.~C.~Graesser, S.~Lu, G.~T.~Jackson, H.~H.~Mitchell, M.~Ventura, A.~Olney, and M.~M.~Louwerse, ``AutoTutor: A Tutor with Dialogue in Natural Language,'' \emph{Behavior Research Methods}, vol.~36, no.~2, pp.~180--192, 2004.
+
+\bibitem{anderson1995cognitive}
+J.~R.~Anderson, A.~T.~Corbett, K.~R.~Koedinger, and R.~Pelletier, ``Cognitive Tutors: Lessons Learned,'' \emph{Journal of the Learning Sciences}, vol.~4, no.~2, pp.~167--207, 1995.
+
+\bibitem{lester1997persona}
+J.~C.~Lester, S.~A.~Converse, S.~E.~Kahler, S.~T.~Barlow, B.~A.~Stone, and R.~S.~Bhogal, ``The Persona Effect: Affective Impact of Animated Pedagogical Agents,'' in \emph{Proc.\ CHI}, 1997.
+
+\bibitem{friston2017active}
+K.~Friston, T.~FitzGerald, F.~Rigoli, P.~Schwartenbeck, J.~O'Doherty, and G.~Pezzulo, ``Active Inference and Learning,'' \emph{Neuroscience \& Biobehavioral Reviews}, vol.~68, pp.~862--879, 2017.
+
+\bibitem{friston2010free}
+K.~Friston, ``The Free-Energy Principle: A Unified Brain Theory?'' \emph{Nature Reviews Neuroscience}, vol.~11, no.~2, pp.~127--138, 2010.
+
+\bibitem{liu2024bitdelta}
+J.~Liu, N.~Dedhia, S.~Wu, H.~Hu, and C.~De~Sa, ``BitDelta: Your Fine-Tune May Only Be Worth One Bit,'' in \emph{Proc.\ NeurIPS}, 2024.
+
+\bibitem{borgeaud2022retro}
+S.~Borgeaud \emph{et al.}, ``Improving Language Models by Retrieving from Trillions of Tokens,'' in \emph{Proc.\ ICML}, 2022.
+
+\bibitem{izacard2022atlas}
+G.~Izacard \emph{et al.}, ``Atlas: Few-Shot Learning with Retrieval Augmented Language Models,'' in \emph{Proc.\ JMLR}, 2023.
+
+\bibitem{guo2017calibration}
+C.~Guo, G.~Pleiss, Y.~Sun, and K.~Q.~Weinberger, ``On Calibration of Modern Neural Networks,'' in \emph{Proc.\ ICML}, 2017.
+
+\bibitem{min2023factscore}
+S.~Min \emph{et al.}, ``FActScore: Fine-Grained Atomic Evaluation of Factual Precision in Long Form Text Generation,'' in \emph{Proc.\ EMNLP}, 2023.
+
+\bibitem{rashkin2023attribution}
+H.~Rashkin \emph{et al.}, ``Measuring Attribution in Natural Language Generation Models,'' in \emph{Proc.\ ACL}, 2023.
+
+\bibitem{singhal2023medpalm}
+K.~Singhal \emph{et al.}, ``Large Language Models Encode Clinical Knowledge,'' \emph{Nature}, vol.~620, pp.~172--180, 2023.
+
+\bibitem{lewkowycz2022minerva}
+A.~Lewkowycz \emph{et al.}, ``Solving Quantitative Reasoning Problems with Language Models,'' in \emph{Proc.\ NeurIPS}, 2022.
+
+\bibitem{vaswani2017attention}
+A.~Vaswani \emph{et al.}, ``Attention Is All You Need,'' in \emph{Proc.\ NeurIPS}, 2017.
+
+\bibitem{touvron2023llama}
+H.~Touvron \emph{et al.}, ``LLaMA: Open and Efficient Foundation Language Models,'' \emph{arXiv:2302.13971}, 2023.
+
+\bibitem{lecun2022path}
+Y.~LeCun, ``A Path Towards Autonomous Machine Intelligence,'' Open Review, version 0.9.2, 2022.
+
+\bibitem{schmidhuber2015deep}
+J.~Schmidhuber, ``Deep Learning in Neural Networks: An Overview,'' \emph{Neural Networks}, vol.~61, pp.~85--117, 2015.
+
+\bibitem{hinton2006reducing}
+G.~E.~Hinton and R.~R.~Salakhutdinov, ``Reducing the Dimensionality of Data with Neural Networks,'' \emph{Science}, vol.~313, pp.~504--507, 2006.
+
+\bibitem{corbett1994knowledge}
+A.~T.~Corbett and J.~R.~Anderson, ``Knowledge Tracing: Modeling the Acquisition of Procedural Knowledge,'' \emph{User Modeling and User-Adapted Interaction}, vol.~4, pp.~253--278, 1994.
+
+\bibitem{vanlehn2011relative}
+K.~VanLehn, ``The Relative Effectiveness of Human Tutoring, Intelligent Tutoring Systems, and Other Tutoring Systems,'' \emph{Educational Psychologist}, vol.~46, no.~4, pp.~197--221, 2011.
+
+\bibitem{kaelbling1998planning}
+L.~P.~Kaelbling, M.~L.~Littman, and A.~R.~Cassandra, ``Planning and Acting in Partially Observable Stochastic Domains,'' \emph{Artificial Intelligence}, vol.~101, pp.~99--134, 1998.
+
+\end{thebibliography}
+
+\end{document}

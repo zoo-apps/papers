@@ -1,0 +1,29 @@
+\section{Introduction}
+
+
+Blockchain consensus protocols serve two functions: ordering transactions and verifying their validity. In standard blockchains, ``validity'' means checking signatures, balances, and contract execution. On an AI-focused network like Zoo, validity extends to a third dimension: \emph{compute correctness}. Did the validator actually perform the claimed inference? Was the training step executed correctly? Is the model output genuine?
+
+Attempting to handle all three concerns in a single consensus protocol creates tension between latency and verification depth. Fast consensus (10ms finality) demands lightweight verification. Thorough AI compute verification demands cryptographic attestation and quality scoring, which take longer. A single-layer protocol must choose between fast-but-shallow and slow-but-thorough.
+
+Zoo Network resolves this tension with a dual-layer architecture:
+
+\begin{enumerate}
+    \item \textbf{Layer 1 --- \Quasar{}}: Handles transaction ordering, block production, and state finality. Optimized for speed: 10ms deterministic finality.
+
+    \item \textbf{Layer 2 --- \PoAI{}}: Handles AI compute verification, quality scoring, and reward distribution. Operates on an epoch basis (every 100 blocks), allowing thorough evaluation without blocking consensus.
+\end{enumerate}
+
+\subsection{Contributions}
+
+\begin{enumerate}
+    \item \textbf{Dual-Layer Design}: Formal specification of the \Quasar{} + \PoAI{} composition with safety and liveness proofs (Section~\ref{sec:design}).
+
+    \item \textbf{\Quasar{} Benchmarks}: Detailed performance measurements of \Quasar{} on Zoo testnet (Section~\ref{sec:quasar-bench}).
+
+    \item \textbf{\PoAI{} Overhead Analysis}: Quantification of the compute verification overhead and its impact on consensus performance (Section~\ref{sec:poai-overhead}).
+
+    \item \textbf{TEE Attestation}: Integration of Trusted Execution Environment attestation for GPU compute providers (Section~\ref{sec:tee}).
+
+    \item \textbf{Comparative Evaluation}: Head-to-head comparison with single-layer alternatives (Section~\ref{sec:comparison}).
+\end{enumerate}
+

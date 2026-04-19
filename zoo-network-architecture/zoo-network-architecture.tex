@@ -1,0 +1,50 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{cite}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{authblk}
+
+\title{\textbf{Zoo Network: Decentralized AI Training and Inference Layer with Semantic Optimization}}
+
+\author[1]{Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}}
+\affil[1]{\textit{Hanzo Industries \quad Lux Industries \quad Zoo Labs Foundation}, \texttt{research@zoo.ngo}}
+
+\date{September 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \textbf{Zoo Network}, a specialized Layer 2 blockchain infrastructure for decentralized artificial intelligence training, inference, and governance. Built atop the Hanzo compute layer, Zoo extends base blockchain capabilities with AI/ML-specific primitives including the Hamiltonian Large Language Model (HLLM) framework, Training-Free Group Relative Policy Optimization (GRPO), and the Experience Ledger—a content-addressable, cryptographically verifiable repository of semantic optimization knowledge. Unlike centralized AI platforms, Zoo enables community-driven model evolution through DAO governance, privacy-preserving federated learning, and a novel economic model where data contributors earn inference credits and governance rights. By operating in the context space rather than parameter space, Zoo achieves 99.8\% cost reduction compared to traditional fine-tuning while maintaining transparency and auditability. We demonstrate Zoo's architecture across storage (IPFS/Arweave), computation (Hanzo GPU nodes), and consensus (Lux multi-consensus base), providing a complete stack for decentralized AI infrastructure. This work represents a fundamental shift from corporate-controlled AI toward community-owned, verifiable, and composable intelligence systems.
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-layered-architecture}
+\input{sections/04-hamiltonian-large-language-models-hllm}
+\input{sections/05-experience-ledger}
+\input{sections/06-decentralized-model-training}
+\input{sections/07-semantic-context-manager}
+\input{sections/08-inference-router}
+\input{sections/09-gpu-compute-nodes}
+\input{sections/10-economic-model}
+\input{sections/11-security-and-byzantine-robustness}
+\input{sections/12-comparison-with-centralized-platforms}
+\input{sections/13-future-work}
+\input{sections/14-conclusion}
+\input{sections/16-experience-library-examples}
+\input{sections/17-deployment-guide}
+\input{sections/18-governance-parameters}
+\input{sections/99-acknowledgments}
+
+\end{document}

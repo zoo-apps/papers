@@ -1,0 +1,60 @@
+\section{Discussion}
+
+\label{sec:discussion}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Why Adaptive Gamification Works}
+
+The key insight is that gamification should optimize for scientific value,
+not just engagement. Standard gamification (leaderboards, streaks)
+increases observation volume but not necessarily data value. Adaptive
+gamification using RL-generated challenges aligns individual reward
+structures with collective scientific needs.
+
+The reinforcement learning formulation is crucial: it balances the
+exploration-exploitation tradeoff between directing users to known data
+gaps (exploitation) and discovering new user preferences and capabilities
+(exploration). Thompson sampling naturally manages this tradeoff through
+posterior uncertainty.
+
+\subsection{The Role of AI Assistance}
+
+AI-assisted identification increases accuracy from 78.4\% to 91.3\%,
+but the anchoring mitigation strategies are essential. Without delayed
+display and disagreement incentives, AI assistance reduces identification
+diversity---users simply accept the AI suggestion without independent
+judgment. Our design preserves the ``human in the loop'' while leveraging
+AI to support novice observers.
+
+\subsection{Token Incentives vs.\ Intrinsic Motivation}
+
+A central concern with token incentives is that extrinsic rewards may
+crowd out intrinsic motivation \citep{deci1999meta}. Our user surveys
+indicate that token incentives primarily attract new users (42\% cite
+tokens as initial motivation), while retained users are primarily
+motivated by learning (67\%), contribution to science (54\%), and
+community belonging (48\%). Tokens serve as an on-ramp to intrinsic
+engagement rather than a sustained motivator.
+
+\subsection{Limitations}
+
+\begin{enumerate}
+  \item \textbf{Smartphone dependency}: ZooPlatform requires a
+    smartphone with GPS and camera, excluding potential contributors
+    in low-connectivity regions.
+  \item \textbf{Species coverage}: Despite taxonomic bias reduction,
+    invertebrates and fungi remain underrepresented due to
+    identification difficulty.
+  \item \textbf{Night observations}: The platform underperforms for
+    nocturnal species despite Night Watch challenges, as photo quality
+    in low light is poor.
+  \item \textbf{Token speculation}: If ZooRep became tradeable (it is
+    currently non-transferable), gaming incentives would increase
+    substantially.
+  \item \textbf{Privacy}: GPS-tagged observations may reveal observer
+    location patterns. We implement location fuzzing for human activity
+    but not for biodiversity observations.
+\end{enumerate}
+
+
+% ══════════════════════════════════════════════════════════════════════════════

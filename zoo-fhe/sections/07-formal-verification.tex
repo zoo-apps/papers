@@ -1,0 +1,44 @@
+\section{Formal Verification}
+
+\label{sec:formal}
+%----------------------------------------------------------------------
+
+\Zoo{} maintains Lean~4 proofs for critical FHE subsystems, following the broader \Zoo{} formal verification initiative~\cite{zoo-network-architecture}.
+
+\subsection{CKKS Correctness}
+
+The file \texttt{Crypto/FHE/CKKS.lean} proves:
+
+\begin{theorem}[Rescaling Precision]
+For a \CKKS{} ciphertext at level $\ell$ with scaling factor $\Delta$ and modulus $q_\ell$, rescaling to level $\ell - 1$ introduces approximation error bounded by:
+\begin{equation}
+  \|\epsilon_{\mathrm{rescale}}\|_\infty \leq \frac{N \cdot B_{\mathrm{key}}}{p_\ell}
+\end{equation}
+where $B_{\mathrm{key}}$ bounds the secret key coefficients and $p_\ell$ is the dropped prime.
+\end{theorem}
+
+\subsection{TFHE Noise Tracking}
+
+The file \texttt{Crypto/FHE/TFHE.lean} verifies:
+
+\begin{theorem}[Bootstrap Noise Bound]
+After programmable bootstrapping with parameters $(n, N, q, \sigma, B_g, d_g)$, the output noise satisfies:
+\begin{equation}
+  \|e_{\mathrm{out}}\| \leq n \cdot d_g \cdot (N+1) \cdot B_g \cdot \sigma_{\mathrm{bsk}} + (1 + N \cdot \|\mathbf{s}\|_1) \cdot \frac{B_g^{d_g}}{2}
+\end{equation}
+This bound is strictly less than $q/4$ for \Zoo{}'s parameter choices, guaranteeing correct decryption.
+\end{theorem}
+
+\subsection{GPU Scaling}
+
+The file \texttt{GPU/FHEScaling.lean} proves:
+
+\begin{proposition}[NTT Parallelism]
+The $\log_2 N$-stage butterfly network for degree-$N$ NTT admits a work-depth decomposition with:
+\begin{equation}
+  W = \frac{N}{2} \log_2 N, \quad D = \log_2 N
+\end{equation}
+Given $P \geq N/2$ parallel processors, the time complexity is $\Theta(\log_2 N)$, achieving linear speedup up to $P = N/2$.
+\end{proposition}
+
+%----------------------------------------------------------------------

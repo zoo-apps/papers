@@ -1,0 +1,39 @@
+\section{Introduction}
+
+
+Blockchain consensus mechanisms face a fundamental challenge: how to fairly allocate block production rights and rewards. Proof of Work (PoW) solves this by requiring computational effort, but the computation serves no purpose beyond securing the chain---an estimated 150 TWh annually for Bitcoin alone. Proof of Stake (PoS) reduces energy waste but creates plutocratic dynamics where the wealthy accumulate more wealth.
+
+The rise of AI compute networks presents an opportunity to align consensus with useful work. AI training and inference require substantial compute resources; if this compute could simultaneously secure a blockchain, we would achieve both useful work and decentralized consensus.
+
+\subsection{Challenges}
+
+Designing \PoAI{} requires solving several challenges:
+
+\begin{enumerate}
+    \item \textbf{Verification}: How can validators confirm that claimed AI work was actually performed?
+
+    \item \textbf{Quality Assessment}: Not all AI compute is equally valuable---training a useful model differs from generating noise.
+
+    \item \textbf{Sybil Resistance}: Without proof of identity, adversaries could claim credit for others' work.
+
+    \item \textbf{Efficiency}: Verification must be cheaper than the original computation.
+
+    \item \textbf{Incentive Compatibility}: Rational nodes must be incentivized to perform high-quality work.
+\end{enumerate}
+
+\subsection{Contributions}
+
+This paper makes the following contributions:
+
+\begin{enumerate}
+    \item \textbf{\PoAI{} Protocol}: A complete consensus mechanism combining \TEE{} attestation, quality scoring, and BLS aggregation (Section~\ref{sec:protocol})
+
+    \item \textbf{Compute Verification}: Novel techniques for verifying AI workloads without re-executing them (Section~\ref{sec:verification})
+
+    \item \textbf{Quality Scoring}: Multi-party evaluation protocol for assessing AI output value (Section~\ref{sec:quality})
+
+    \item \textbf{Security Analysis}: Proofs of Byzantine fault tolerance and incentive compatibility (Section~\ref{sec:security})
+
+    \item \textbf{Evaluation}: Experimental results demonstrating scalability and efficiency (Section~\ref{sec:evaluation})
+\end{enumerate}
+

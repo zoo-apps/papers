@@ -1,0 +1,102 @@
+\section{Implementation in Gym Platform}
+
+\label{sec:implementation}
+
+Training-Free GRPO is fully integrated into the open-source Gym platform (\url{https://github.com/zooai/gym}), a comprehensive AI model training and fine-tuning system developed by Zoo Labs Foundation.
+
+\subsection{Gym Architecture}
+
+Gym supports 100+ models (Qwen, LLaMA, Mistral, DeepSeek, etc.) with multiple training methods:
+\begin{itemize}
+    \item \textbf{Full Fine-tuning}: Complete parameter updates
+    \item \textbf{LoRA/QLoRA}: Low-rank adaptation with optional quantization
+    \item \textbf{RLHF Methods}: PPO, DPO, KTO, ORPO, SimPO
+    \item \textbf{GRPO}: Group Relative Policy Optimization
+    \item \textbf{TF-GRPO (new)}: Training-Free GRPO with semantic advantages
+\end{itemize}
+
+\subsection{TF-GRPO Components}
+
+\subsubsection{Experience Manager}
+\texttt{src/gym/train/grpo/experience\_manager.py} handles all experience CRUD operations:
+\begin{itemize}
+    \item Add, modify, delete, merge experiences
+    \item JSON persistence with versioning
+    \item Embedding generation and similarity search
+    \item Context formatting for prompt injection
+\end{itemize}
+
+\subsubsection{Semantic Extractor}
+\texttt{src/gym/train/grpo/semantic\_extractor.py} implements the 3-stage LLM pipeline:
+\begin{itemize}
+    \item Stage 1: Trajectory summarization
+    \item Stage 2: Group advantage extraction
+    \item Stage 3: Batch consolidation
+    \item JSON parsing with error handling
+\end{itemize}
+
+\subsubsection{API Model Adapter}
+\texttt{src/gym/train/grpo/api\_model\_adapter.py} enables training on black-box API models (OpenAI, DeepSeek, etc.) where parameter access is unavailable—perfect for Training-Free GRPO since no gradients are needed.
+
+\subsubsection{Modified GRPOTrainer}
+\texttt{src/gym/train/grpo/trainer.py} extended with:
+\begin{itemize}
+    \item Context injection before inference
+    \item Semantic advantage extraction after rollouts
+    \item Experience library update after each epoch
+    \item Checkpoint integration (save experiences with model state)
+\end{itemize}
+
+\subsection{Usage Example}
+
+\textbf{Command Line:}
+\begin{verbatim}
+gym train \
+  --model_name_or_path Qwen/Qwen3-32B-Instruct \
+  --template qwen3 \
+  --dataset aime_train \
+  --finetuning_type grpo \
+  --training_free_grpo \
+  --group_size 5 \
+  --num_train_epochs 3 \
+  --output_dir ./output/qwen3-tfgrpo
+\end{verbatim}
+
+\textbf{Python API:}
+\begin{verbatim}
+from gym.train.grpo import GRPOTrainer
+from gym.train.grpo.experience_manager import ExperienceManager
+
+# Initialize experience library
+exp_manager = ExperienceManager(
+    library_path="./experience_lib",
+    max_size=100
+)
+
+# Configure trainer
+trainer = GRPOTrainer(
+    model=model,
+    tokenizer=tokenizer,
+    args=training_args,
+    finetuning_args=finetuning_args,
+    experience_manager=exp_manager,
+    training_free=True
+)
+
+# Run training (no parameter updates)
+trainer.train()
+
+# Save experience library
+exp_manager.save("./experience_lib/final.json")
+\end{verbatim}
+
+\subsection{Deployment Options}
+
+\begin{enumerate}
+    \item \textbf{Local Training}: Run on local GPU or CPU (QLoRA for efficiency)
+    \item \textbf{API-Based Training}: Use DeepSeek/OpenAI APIs (no GPU required)
+    \item \textbf{Distributed Training}: Multi-node training on Hanzo GPU cluster
+    \item \textbf{Cloud Deployment}: Kubernetes/Docker on AWS/GCP/Azure
+    \item \textbf{Hugging Face Spaces}: One-click deployment with Gradio UI
+\end{enumerate}
+

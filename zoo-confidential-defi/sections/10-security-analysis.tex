@@ -1,0 +1,44 @@
+\section{Security Analysis}
+
+\label{sec:security}
+%----------------------------------------------------------------------
+
+\subsection{Threat Model}
+
+We consider an adversary who:
+\begin{enumerate}
+    \item Controls up to $t - 1 = 66$ of 100 \TChain{} validators.
+    \item Observes all network traffic (encrypted mempool, block contents).
+    \item Can submit arbitrary orders (including adversarial ones).
+    \item Has unbounded computational power \emph{except} for breaking \textsc{RLWE} or \textsc{LWE}.
+\end{enumerate}
+
+\subsection{Properties}
+
+\begin{theorem}[Orderflow Privacy]
+Under the \textsc{RLWE} assumption, an adversary controlling fewer than $t$ validators learns nothing about the price or quantity of any order beyond what is revealed by the match outcome.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Order prices and quantities are encrypted under the collective \FHE{} key. Decryption requires $t$ key shares. An adversary with $< t$ shares cannot decrypt (information-theoretic for Shamir sharing with $< t$ shares). The matching engine operates on ciphertexts; intermediate values are also encrypted. Only matched pairs are decrypted, revealing only the fill price and quantity.
+\end{proof}
+
+\begin{theorem}[MEV Elimination]
+If orderflow privacy holds, then for any block producer strategy $\sigma$, the \MEV{} extractable from reordering, inserting, or censoring encrypted orders is zero.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+\MEV{} extraction requires observing order content (price, quantity) before execution. Under orderflow privacy, this content is hidden. Reordering encrypted orders of the same side has no effect on batch matching. Inserting orders without knowledge of existing order prices cannot systematically extract value. Censoring orders is detectable (missing from the block) and punishable via slashing.
+\end{proof}
+
+\subsection{Side-Channel Mitigation}
+
+Potential information leakage:
+
+\begin{itemize}
+    \item \textbf{Order count per block.} Mitigated by padding: each block contains a fixed number of order slots, with dummy encrypted orders filling empty slots.
+    \item \textbf{Ciphertext size.} Uniform: all encrypted orders have identical byte length regardless of price/quantity magnitude.
+    \item \textbf{Timing.} Batch processing ensures all orders in a block are matched simultaneously; no timing side-channel from sequential processing.
+\end{itemize}
+
+%----------------------------------------------------------------------

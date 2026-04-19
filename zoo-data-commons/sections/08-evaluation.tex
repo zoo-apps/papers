@@ -1,0 +1,136 @@
+\section{Evaluation}
+
+\label{sec:evaluation}
+
+\subsection{Deployment Statistics}
+
+Over 12 months of operation (January 2025 -- January 2026), ZDC accumulated:
+
+\begin{table}[H]
+\centering
+\caption{Zoo Data Commons operational statistics.}
+\label{tab:stats}
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Total biodiversity records & 2,412,847 \\
+Unique species represented & 14,237 \\
+Contributing organizations & 847 \\
+Geographic coverage (countries) & 94 \\
+Total storage (IPFS) & 4.7 TB \\
+Zoo Data Objects & 18,421 \\
+Provenance records & 127,834 \\
+Active validators & 312 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Data Quality Comparison}
+
+We compared data quality scores between ZDC and three major centralized repositories using a standardized assessment framework applied to overlapping datasets:
+
+\begin{table}[H]
+\centering
+\caption{Data quality comparison (mean scores, 0--1 scale).}
+\label{tab:quality_comparison}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Quality Dimension} & \textbf{ZDC} & \textbf{GBIF} & \textbf{iDigBio} & \textbf{iNaturalist} \\
+\midrule
+Metadata Completeness & 0.87 & 0.71 & 0.76 & 0.62 \\
+Spatial Precision & 0.82 & 0.74 & 0.69 & 0.78 \\
+Taxonomic Consistency & 0.91 & 0.83 & 0.87 & 0.71 \\
+Temporal Resolution & 0.79 & 0.68 & 0.72 & 0.84 \\
+Provenance Completeness & 0.94 & 0.42 & 0.51 & 0.33 \\
+\midrule
+\textbf{Overall} & \textbf{0.87} & 0.68 & 0.71 & 0.66 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+ZDC achieves 23.3\% higher overall quality than GBIF, with the largest advantage in provenance completeness (124\% higher), reflecting the architectural enforcement of provenance tracking.
+
+\subsection{FAIR Assessment}
+
+We evaluated FAIR compliance using the FAIRsFAIR assessment tool \citep{devaraju2021fairsfair}:
+
+\begin{table}[H]
+\centering
+\caption{FAIR compliance scores (0--1 scale, assessed by FAIRsFAIR).}
+\label{tab:fair}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Principle} & \textbf{ZDC} & \textbf{GBIF} & \textbf{iDigBio} & \textbf{Dryad} \\
+\midrule
+Findable & 0.92 & 0.84 & 0.78 & 0.81 \\
+Accessible & 0.88 & 0.91 & 0.83 & 0.87 \\
+Interoperable & 0.85 & 0.79 & 0.74 & 0.72 \\
+Reusable & 0.90 & 0.72 & 0.68 & 0.76 \\
+\midrule
+\textbf{Overall} & \textbf{0.89} & 0.82 & 0.76 & 0.79 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+ZDC scores highest on Findability (content-addressed identifiers) and Reusability (comprehensive provenance and licensing metadata), while GBIF maintains a slight edge on Accessibility due to its established API ecosystem.
+
+\subsection{Access Control Efficacy}
+
+During the evaluation period, 127 datasets used sovereign governance, managed by 23 Data Governance Councils representing indigenous and local communities.
+Key metrics:
+
+\begin{table}[H]
+\centering
+\caption{Sovereign access control statistics.}
+\label{tab:sovereign}
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Sovereign datasets & 127 \\
+Data Governance Councils & 23 \\
+Access requests processed & 412 \\
+Requests approved & 287 (69.7\%) \\
+Median response time & 4.2 days \\
+Benefit-sharing agreements executed & 34 \\
+TK labels applied & 89 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The 69.7\% approval rate indicates that communities actively exercise governance authority rather than defaulting to open access, validating the need for the sovereign tier.
+
+\subsection{Curation Market}
+
+The curation market distributed 284,700 ZOO tokens during the evaluation period:
+
+\begin{table}[H]
+\centering
+\caption{Curation market token distribution.}
+\label{tab:market}
+\begin{tabular}{@{}lrc@{}}
+\toprule
+\textbf{Activity} & \textbf{ZOO Distributed} & \textbf{Participants} \\
+\midrule
+Data Contribution & 142,300 & 847 \\
+Validation & 67,400 & 312 \\
+Annotation & 38,200 & 189 \\
+Integration & 28,100 & 67 \\
+Translation & 8,700 & 43 \\
+\midrule
+\textbf{Total} & 284,700 & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The underserved region bonding curve directed 41\% of contribution rewards to data from Sub-Saharan Africa, Southeast Asia, and South America, regions historically underrepresented in global biodiversity databases.
+
+\subsection{Cross-Institutional Reuse}
+
+ZDC facilitated 312 cross-institutional data reuse events over 12 months, compared to an estimated 89 events that would have occurred through traditional channels (based on pre-deployment reuse rates for the same research groups).
+These reuse events supported 47 peer-reviewed publications, 12 conservation management plans, and 8 environmental impact assessments.
+
+% ============================================================
+% 9. Discussion
+% ============================================================

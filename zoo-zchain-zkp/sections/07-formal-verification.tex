@@ -1,0 +1,19 @@
+\section{Formal Verification}
+
+
+All critical Z-Chain components are verified in Lean 4:
+
+\begin{theorem}[STARK Soundness]
+For any polynomial commitment scheme $\Pi$ over the Goldilocks field with security parameter $\lambda$, the probability of a computationally bounded adversary producing a valid STARK proof for a false statement is at most $2^{-\lambda}$.
+\end{theorem}
+
+\begin{theorem}[Receipt Integrity]
+For any receipt $R$ with valid ML-DSA threshold signature from $\geq 67\%$ of validators, the probability that $R.\texttt{claimHash}$ does not correspond to a correctly verified proof is at most $2^{-128}$.
+\end{theorem}
+
+\begin{theorem}[PQZ Composition]
+If the inner STARK proof is sound and the outer Groth16 wrapper is sound, then the composed PQZ proof is sound. The zero-knowledge property is preserved through both layers.
+\end{theorem}
+
+The full proofs are available at \texttt{zoo-formal/lean/ZK/} in the Zoo formal verification repository.
+

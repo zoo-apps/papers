@@ -1,0 +1,74 @@
+\section{Experimental Setup}
+
+
+\subsection{Datasets}
+
+We evaluate Training-Free GRPO on three domains:
+
+\begin{enumerate}
+    \item \textbf{Mathematics}: AIME 2024 and AIME 2025 competition problems
+    \begin{itemize}
+        \item 30 problems per year
+        \item Multiple-choice and free-response
+        \item Topics: algebra, geometry, number theory, combinatorics
+        \item Difficulty: Top 0.1\% of high school students
+    \end{itemize}
+
+    \item \textbf{Web Navigation}: WebWalker benchmark
+    \begin{itemize}
+        \item 200 web navigation tasks
+        \item Multi-step interactions with websites
+        \item Evaluation metric: Task success rate
+    \end{itemize}
+
+    \item \textbf{Coding}: HumanEval and MBPP benchmarks
+    \begin{itemize}
+        \item 164 (HumanEval) and 500 (MBPP) programming problems
+        \item Evaluation metric: pass@1 accuracy
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Models}
+
+\begin{itemize}
+    \item \textbf{Primary Model}: DeepSeek-V3.1-Terminus (671B parameters)
+    \item \textbf{Ablation Models}: Qwen3-32B-Instruct, QwQ-32B-Preview
+    \item \textbf{Baselines}: Fine-tuned variants (ReTool, MiroThinker)
+\end{itemize}
+
+All models are kept frozen (no parameter updates) during Training-Free GRPO.
+
+\subsection{Training Configuration}
+
+\begin{itemize}
+    \item \textbf{Training Samples}: 100 per domain (unless otherwise specified)
+    \item \textbf{Group Size}: $G = 5$ (unless ablated)
+    \item \textbf{Epochs}: 3
+    \item \textbf{Temperature}: 0.7 for rollout generation
+    \item \textbf{Max Experiences}: 100 per library
+    \item \textbf{Embedding Model}: \texttt{all-MiniLM-L6-v2}
+    \item \textbf{Top-k Retrieval}: 5 experiences per query
+    \item \textbf{LLM for Introspection}: Same as base model (self-introspection)
+\end{itemize}
+
+\subsection{Baselines}
+
+\begin{enumerate}
+    \item \textbf{Zero-shot}: Base model with no additional training or context
+    \item \textbf{Few-shot}: Base model with 5 hand-crafted examples in context
+    \item \textbf{Vanilla GRPO}: Standard GRPO with parameter updates (5 epochs, LoRA rank 64)
+    \item \textbf{DPO}: Direct Preference Optimization on pairwise comparisons
+    \item \textbf{ReTool} \cite{retool}: Fine-tuned agent model specialized for mathematics
+    \item \textbf{MiroThinker}: Fine-tuned model specialized for web navigation
+\end{enumerate}
+
+\subsection{Evaluation Metrics}
+
+\begin{itemize}
+    \item \textbf{Accuracy}: Percentage of correct answers on test set
+    \item \textbf{Cost}: Total compute cost in USD (API calls + GPU time)
+    \item \textbf{Data Efficiency}: Number of training examples required
+    \item \textbf{Cross-Domain Transfer}: Performance on held-out domains
+    \item \textbf{Experience Quality}: Human evaluation of interpretability and usefulness
+\end{itemize}
+

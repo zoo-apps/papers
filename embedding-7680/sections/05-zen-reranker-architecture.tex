@@ -1,0 +1,79 @@
+\section{Zen Reranker Architecture}
+
+\label{sec:architecture}
+
+\subsection{Model Design}
+
+Zen Reranker builds on Qwen3-8B with a custom projection head:
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=1cm,
+    box/.style={rectangle, draw, minimum width=3cm, minimum height=0.7cm, align=center, font=\small},
+    arrow/.style={->, thick}
+]
+    \node[box] (input) {Input Text};
+    \node[box, below=of input] (encoder) {Qwen3-8B Encoder\\(8192-dim hidden)};
+    \node[box, below=of encoder] (pool) {Mean Pooling};
+    \node[box, below=of pool] (proj) {Projection Head\\$W \in \mathbb{R}^{8192 \times 7680}$};
+    \node[box, below=of proj] (norm) {L2 Normalization};
+    \node[box, below=of norm] (output) {7680-dim Embedding};
+
+    \draw[arrow] (input) -- (encoder);
+    \draw[arrow] (encoder) -- (pool);
+    \draw[arrow] (pool) -- (proj);
+    \draw[arrow] (proj) -- (norm);
+    \draw[arrow] (norm) -- (output);
+\end{tikzpicture}
+\caption{Zen Reranker architecture}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{Projection Head Design}
+
+The projection head maps from 8192 to 7680 dimensions:
+
+\begin{equation}
+\phi(x) = \frac{Wh + b}{\|Wh + b\|_2}
+\end{equation}
+
+where $h \in \mathbb{R}^{8192}$ is the pooled encoder output and $W \in \mathbb{R}^{7680 \times 8192}$.
+
+Key design choices:
+\begin{itemize}
+    \item \textbf{Linear projection}: Preserves semantic structure (no nonlinearities)
+    \item \textbf{Orthogonal initialization}: Minimizes information loss
+    \item \textbf{L2 normalization}: Enables cosine similarity as inner product
+\end{itemize}
+
+\subsection{Training Protocol}
+
+Three-stage training:
+
+\begin{enumerate}
+    \item \textbf{Stage 1: Projection Warmup} (1 epoch)
+    \begin{itemize}
+        \item Freeze encoder, train projection head only
+        \item Loss: MSE to Qwen3-Embedding-8B outputs (dimension-matched)
+        \item Learning rate: 1e-4
+    \end{itemize}
+
+    \item \textbf{Stage 2: Contrastive Fine-tuning} (3 epochs)
+    \begin{itemize}
+        \item Unfreeze encoder, train end-to-end
+        \item Loss: InfoNCE with in-batch negatives
+        \item Data: MS-MARCO, NQ, HotpotQA
+        \item Learning rate: 2e-5
+    \end{itemize}
+
+    \item \textbf{Stage 3: Reranking Optimization} (2 epochs)
+    \begin{itemize}
+        \item Loss: ListMLE for reranking
+        \item Data: Reranking datasets (TREC, BEIR)
+        \item Learning rate: 1e-5
+    \end{itemize}
+\end{enumerate}
+
+Total training cost: approximately \$10,800 on cloud GPUs.
+

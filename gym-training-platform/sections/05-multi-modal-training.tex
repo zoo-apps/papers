@@ -1,0 +1,103 @@
+\section{Multi-Modal Training}
+
+
+\subsection{Vision-Language Models}
+
+Gym supports major VLM architectures:
+
+\subsubsection{LLaVA Architecture}
+
+LLaVA~\citep{liu2023llava} connects vision encoder (CLIP ViT) to LLM via projection layer:
+
+\begin{equation}
+h_v = W \cdot \text{CLIP}(I), \quad h = [h_v; h_t]
+\end{equation}
+
+Training stages:
+\begin{enumerate}
+\item \textbf{Stage 1}: Freeze LLM, train projection on image-caption pairs
+\item \textbf{Stage 2}: LoRA on LLM with full instruction data
+\end{enumerate}
+
+\subsubsection{Qwen-VL Architecture}
+
+Qwen-VL~\citep{bai2023qwenvl} uses cross-attention between image/text tokens:
+
+\begin{equation}
+\text{Attention}(Q_t, K_{[v,t]}, V_{[v,t]})
+\end{equation}
+
+where subscript $v$ denotes vision tokens, $t$ text tokens.
+
+\textbf{Key Features}:
+\begin{itemize}
+\item Multi-image support (up to 8 images)
+\item Bounding box grounding
+\item High-resolution images (448x448, 672x672)
+\end{itemize}
+
+\subsubsection{Qwen2-VL Enhancements}
+
+Qwen2-VL~\citep{wang2024qwen2vl} adds:
+\begin{itemize}
+\item Dynamic resolution (1-16 tiles per image)
+\item Temporal modeling for video (frame embeddings)
+\item Multilinguality (30+ languages)
+\end{itemize}
+
+\subsection{Audio-Language Models}
+
+\subsubsection{Qwen2-Audio}
+
+Qwen2-Audio~\citep{chu2024qwen2audio} processes audio via Whisper encoder:
+
+\begin{equation}
+h_a = \text{Whisper}(A), \quad h = [h_a; h_t]
+\end{equation}
+
+Supports:
+\begin{itemize}
+\item Speech recognition (ASR)
+\item Audio captioning
+\item Sound event detection
+\item Music understanding
+\end{itemize}
+
+\subsubsection{Qwen3-Omni}
+
+Qwen3-Omni~\citep{qwen2025qwen3} unifies text, vision, and audio:
+
+\begin{equation}
+h = [h_t; h_v; h_a], \quad \text{Attention}(Q, K_{[t,v,a]}, V_{[t,v,a]})
+\end{equation}
+
+Novel A3B (Audio-Augmented-Attention-Before) architecture processes audio before text attention, enabling:
+\begin{itemize}
+\item Real-time audio understanding
+\item Cross-modal reasoning
+\item Audio-conditioned generation
+\end{itemize}
+
+\subsection{Training Configuration}
+
+Multi-modal training requires specialized data collators:
+
+\begin{verbatim}
+{
+  "instruction": "Describe the scene",
+  "input": "",
+  "output": "A bustling city street...",
+  "images": ["path/to/image1.jpg"],
+  "audio": ["path/to/audio1.wav"],
+  "video": ["path/to/video1.mp4"]
+}
+\end{verbatim}
+
+Gym automatically:
+\begin{itemize}
+\item Loads and preprocesses media files
+\item Inserts special tokens (<image>, <audio>) at correct positions
+\item Handles variable-length sequences
+\item Caches embeddings for repeated media
+\end{itemize}
+

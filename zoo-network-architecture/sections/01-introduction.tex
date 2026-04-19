@@ -1,0 +1,29 @@
+\section{Introduction}
+
+
+The contemporary artificial intelligence landscape is characterized by extreme centralization. A handful of corporations control foundation models, training infrastructure, and inference APIs, creating critical dependencies and single points of failure \cite{bender2021dangers}. Users contribute data but receive no ownership, researchers cannot audit model behavior, and improvements remain locked behind proprietary walls.
+
+\subsection{Motivation}
+
+Three fundamental problems plague centralized AI:
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Opacity}: Model weights, training data, and fine-tuning methodologies are proprietary black boxes. Even when APIs are available, the underlying system state is unknowable.
+\item \textbf{Lock-in}: Users who contribute feedback improve models owned by corporations. There is no portability, interoperability, or long-term access guarantee.
+\item \textbf{Cost Barriers}: Fine-tuning a 32B parameter model costs \$10,000+ and requires specialized infrastructure \cite{tencent2025grpo}. This excludes academic researchers, non-profits, and developing nations.
+\end{enumerate}
+
+\subsection{Our Contribution}
+
+Zoo Network addresses these challenges through:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Layered Architecture}: Building on Lux (L0 consensus) and Hanzo (L1 compute), Zoo provides an AI-specialized L2 with smart contract coordination and decentralized storage.
+\item \textbf{Training-Free Optimization}: Via HLLM and Training-Free GRPO, models improve by curating semantic experiences in context space—not updating billions of parameters. Cost drops from \$10K to \$18 per task \cite{tencent2025grpo}.
+\item \textbf{Experience Ledger}: A Merkle-tree-verified, content-addressable repository of human-readable optimization insights. All changes are auditable, governable, and composable.
+\item \textbf{Economic Incentives}: Contributors earn inference credits, governance votes, and revenue shares proportional to their data/experience contributions.
+\item \textbf{Privacy Preservation}: Federated learning and optional zero-knowledge proofs enable private model training without exposing sensitive data.
+\end{itemize}
+
+This paper is organized as follows: Section 2 surveys related work. Section 3 details Zoo's layered architecture. Section 4 explains HLLM and Training-Free GRPO. Section 5 describes the Experience Ledger. Sections 6-8 cover training, inference, and economics. Section 9 addresses security. Section 10 compares Zoo to centralized platforms. Section 11 concludes with future work.
+

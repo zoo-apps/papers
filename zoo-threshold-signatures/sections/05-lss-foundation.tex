@@ -1,0 +1,40 @@
+\section{LSS Foundation}
+
+\label{sec:lss}
+
+\subsection{Linear Secret Sharing}
+
+All threshold protocols in \TChain{} rest on a common Linear Secret Sharing (\LSS{}) layer. A $(t, n)$-\LSS{} scheme distributes a secret $s$ into shares $(s_1, \ldots, s_n)$ via a degree-$(t{-}1)$ polynomial over $\mathbb{Z}_q$:
+
+\begin{equation}
+f(x) = s + a_1 x + a_2 x^2 + \cdots + a_{t-1} x^{t-1}, \quad s_i = f(i)
+\end{equation}
+
+Any $t$ shares reconstruct $s$ via Lagrange interpolation; fewer than $t$ shares reveal no information about $s$ (information-theoretic secrecy).
+
+\subsection{The Composition Theorem}
+
+The key insight enabling \TChain{}'s multi-protocol architecture is that protocols built on compatible \LSS{} instances can share the same access structure and secret shares.
+
+\begin{theorem}[LSS Composition]
+\label{thm:composition}
+Let $\Pi_1, \ldots, \Pi_m$ be threshold cryptographic protocols, each requiring a $(t, n)$-\LSS{} over the same finite field $\mathbb{F}_q$. If each $\Pi_j$ uses shares of the form $s_i^{(j)} = f^{(j)}(i)$ for independent polynomials $f^{(j)}$ but the same evaluation points $\{1, \ldots, n\}$, then a single keygen ceremony can produce correlated shares for all protocols simultaneously via a vector polynomial:
+\[
+\mathbf{f}(x) = (f^{(1)}(x), \ldots, f^{(m)}(x))
+\]
+The resulting combined scheme preserves the $t$-privacy and $t$-correctness guarantees of each individual protocol.
+\end{theorem}
+
+This theorem is formally verified in \texttt{Crypto/Threshold/Composition.lean} and underpins the following protocol combinations in \TChain{}:
+
+\begin{itemize}
+\item \textbf{FROST}: Schnorr threshold signatures (Ed25519, Ristretto)
+\item \textbf{CMP} (CGGMP21): ECDSA threshold signatures (secp256k1, secp256r1)
+\item \textbf{TFHE}: Threshold fully-homomorphic encryption decryption
+\item \textbf{Corona}: Ring signature scheme with threshold key generation
+\item \textbf{BLS}: BLS threshold signatures for beacon chain compatibility
+\end{itemize}
+
+All five protocols derive their shares from a single DKG ceremony, reducing validator coordination overhead from $O(m)$ independent DKGs to a single vectorized DKG.
+
+%% --------------------------------------------------------------------------

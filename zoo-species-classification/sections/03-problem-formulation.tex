@@ -1,0 +1,41 @@
+\section{Problem Formulation}
+
+\label{sec:problem}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Task Definition}
+
+We consider the standard $N$-way $K$-shot classification problem. Given a
+\emph{support set} $\Support = \{(x_i, y_i)\}_{i=1}^{N \times K}$
+containing $K$ labeled images for each of $N$ novel species, and a
+\emph{query set} $\Query = \{x_j\}_{j=1}^{Q}$ of unlabeled images, the
+goal is to classify each query into one of the $N$ species.
+
+\subsection{Taxonomic Structure}
+
+Each species $s$ belongs to a taxonomic hierarchy:
+\begin{equation}
+  \text{Kingdom} \supset \text{Phylum} \supset \text{Class} \supset
+  \text{Order} \supset \text{Family} \supset \text{Genus} \supset
+  \text{Species}
+\end{equation}
+
+We denote the taxonomic label of species $s$ at rank $r$ as $t_r(s)$.
+Two species in the same genus share $t_r$ for $r \in
+\{\text{kingdom}, \ldots, \text{genus}\}$ but differ at species rank.
+
+\subsection{Incorporating Priors}
+
+For practical deployment, geographic coordinates $(\text{lat},
+\text{lon})$ and observation date $d$ provide strong priors on which
+species are plausible at a given location and time. We define the
+candidate set:
+\begin{equation}
+  \mathcal{C}(\text{lat}, \text{lon}, d) = \{s : s \text{ has recorded
+    occurrence within } r \text{ km and } \pm \Delta d \text{ days}\}
+\end{equation}
+which restricts the $N$-way classification to geographically and
+temporally plausible species.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,52 @@
+\section{Introduction}
+
+\label{sec:intro}
+%----------------------------------------------------------------------
+
+\subsection{The Amnesia Problem}
+
+Every major AI system today---GPT-4, Claude, Gemini---operates without durable memory. Context windows provide the illusion of continuity, but the moment a session ends, accumulated knowledge vanishes. Provider-side workarounds (conversation history, retrieval-augmented generation, user preference stores) do not solve the fundamental problem; they merely move it behind an API boundary controlled by the provider.
+
+Three failures characterize the current state:
+
+\begin{enumerate}
+    \item \textbf{No Persistence Across Sessions.} An agent that spent hours learning a user's codebase starts from scratch the next morning. Knowledge invested is knowledge lost.
+    \item \textbf{No Privacy From Providers.} When memory exists (e.g., OpenAI's memory feature), the provider stores it in plaintext, indexes it for product improvement, and retains the right to inspect, modify, or delete it.
+    \item \textbf{No Portability Across Models.} A user who switches from Claude to GPT cannot bring accumulated context. Memory is locked to a single vendor, creating switching costs that have nothing to do with model quality.
+\end{enumerate}
+
+These are not engineering oversights. They are structural consequences of a centralized architecture where the model provider controls the memory layer.
+
+\subsection{Memory as Sovereignty}
+
+We reframe AI memory as a sovereignty problem with three requirements:
+
+\begin{definition}[Sovereign AI Memory]
+A memory system is \emph{sovereign} if and only if:
+\begin{enumerate}
+    \item The agent (or its owner) holds the encryption keys---not the inference provider.
+    \item The memory persists independently of any single model, provider, or session.
+    \item The owner can grant, revoke, and scope access without provider cooperation.
+\end{enumerate}
+\end{definition}
+
+No existing system satisfies all three conditions. Vector databases (Pinecone, Weaviate, Chroma) satisfy none: the operator holds keys, persistence depends on the operator's infrastructure, and access control is coarse-grained ACLs.
+
+\subsection{Contribution}
+
+This paper presents the Memory Capsule architecture on \Zoo{} Network. Our contributions:
+
+\begin{enumerate}
+    \item \textbf{Memory Capsule Specification.} A formal model for encrypted, content-addressed, append-only agent memory with \DID{}-bound ownership (Section~\ref{sec:architecture}).
+    \item \textbf{Capability-Based Access Control.} Fine-grained, delegable, revocable access tokens authenticated via \IChain{} \DID{}s and enforced by \TChain{} threshold decryption (Section~\ref{sec:access}).
+    \item \textbf{Memory Type Taxonomy.} Four memory types (episodic, semantic, procedural, preference) with distinct storage, encryption, and retention policies (Section~\ref{sec:types}).
+    \item \textbf{FHE-Encrypted Memory Reasoning.} \CKKS{}-based homomorphic computation over encrypted memory on \AChain{}, enabling agents to reason over state they cannot decrypt (Section~\ref{sec:fhe}).
+    \item \textbf{Cross-Agent Knowledge Transfer.} Zero-knowledge selective disclosure for sharing knowledge between agents without revealing private state (Section~\ref{sec:sharing}).
+    \item \textbf{Benchmarks.} End-to-end measurements on \Zoo{} Network testnet (Section~\ref{sec:benchmarks}).
+\end{enumerate}
+
+\subsection{Paper Organization}
+
+Section~\ref{sec:why} motivates sovereign memory. Section~\ref{sec:architecture} defines the capsule architecture. Section~\ref{sec:access} covers access control. Section~\ref{sec:types} formalizes memory types. Section~\ref{sec:fhe} presents FHE-encrypted reasoning. Section~\ref{sec:sharing} describes cross-agent transfer. Section~\ref{sec:economics} analyzes memory economics. Section~\ref{sec:implementation} details implementation on \Zoo{}'s multi-chain architecture. Section~\ref{sec:benchmarks} presents benchmarks. Section~\ref{sec:related} surveys related work. Section~\ref{sec:conclusion} concludes.
+
+%----------------------------------------------------------------------

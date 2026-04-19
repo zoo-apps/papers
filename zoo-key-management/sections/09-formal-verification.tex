@@ -1,0 +1,51 @@
+\section{Formal Verification}
+
+
+\subsection{Lean 4 Proof Architecture}
+
+Cryptographic correctness is formally verified across four Lean 4 modules:
+
+\textbf{Crypto/MLKEM.lean} --- Proves correctness of the ML-KEM encapsulation/decapsulation cycle and threshold adaptation:
+
+\begin{theorem}[ML-KEM Decapsulation Correctness]
+For any keypair $(pk, sk) \leftarrow \text{ML-KEM.KeyGen}()$ and any encapsulation $(ct, ss) \leftarrow \text{ML-KEM.Encaps}(pk)$:
+\[
+\Pr[\text{ML-KEM.Decaps}(sk, ct) = ss] \geq 1 - 2^{-138}
+\]
+\end{theorem}
+
+\textbf{Crypto/MLDSA.lean} --- Proves EUF-CMA security of ML-DSA under MLWE and MSIS hardness, and correctness of the threshold adaptation:
+
+\begin{theorem}[Threshold ML-DSA Correctness]
+For threshold parameters $(t, n)$ and any message $m$, if $t$ honest signers produce partial signatures, the aggregated signature $\sigma$ satisfies $\text{ML-DSA.Verify}(pk, m, \sigma) = \text{true}$.
+\end{theorem}
+
+\textbf{Crypto/SLHDSA.lean} --- Proves SLH-DSA is EUF-CMA secure relying only on hash function second-preimage resistance and WOTS+ security (no lattice assumptions), providing a conservative fallback.
+
+\textbf{GPU/ConsensusScaling.lean} --- Proves GPU NTT output equivalence and constant-time properties as described in Section~7.4.
+
+\subsection{Verification Coverage}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llc}
+\toprule
+\textbf{Module} & \textbf{Property} & \textbf{Status} \\
+\midrule
+Crypto/MLKEM.lean & Decapsulation correctness & Verified \\
+Crypto/MLKEM.lean & Threshold key reconstruction & Verified \\
+Crypto/MLKEM.lean & IND-CCA2 reduction to MLWE & Verified \\
+Crypto/MLDSA.lean & Signature correctness & Verified \\
+Crypto/MLDSA.lean & Threshold aggregation & Verified \\
+Crypto/MLDSA.lean & EUF-CMA reduction to MSIS & Verified \\
+Crypto/SLHDSA.lean & Hash-based security & Verified \\
+Crypto/SLHDSA.lean & Stateless operation & Verified \\
+GPU/ConsensusScaling.lean & NTT output equivalence & Verified \\
+GPU/ConsensusScaling.lean & Constant-time execution & Verified \\
+GPU/ConsensusScaling.lean & Memory bounds safety & Verified \\
+\bottomrule
+\end{tabular}
+\caption{Formal verification status}
+\label{tab:verification}
+\end{table}
+

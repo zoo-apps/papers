@@ -1,0 +1,55 @@
+\section{GPU Acceleration}
+
+\label{sec:gpu}
+%----------------------------------------------------------------------
+
+\subsection{NTT Butterfly Parallelism}
+
+The computational bottleneck in both \TFHE{} and \CKKS{} is polynomial multiplication in $R_q$, implemented via the Number Theoretic Transform (\NTT{}). The \NTT{} butterfly network of depth $\log_2 N$ maps naturally to GPU thread blocks:
+
+\begin{itemize}
+  \item Each butterfly stage is a parallel map over $N/2$ independent pairs.
+  \item Stages synchronize via \texttt{\_\_syncthreads()} within a block or global barrier across blocks.
+  \item For $N = 2^{14} = 16384$ (Zoo's default polynomial degree), a single SM processes 8192 butterflies per stage.
+\end{itemize}
+
+\subsection{TFHE Bootstrap on GPU}
+
+A single \TFHE{} bootstrap consists of:
+
+\begin{enumerate}
+  \item \textbf{Blind rotation}: $n = 630$ external products, each requiring two \NTT{} forward/inverse transforms on degree-$N$ polynomials.
+  \item \textbf{Key switching}: one matrix--vector product in $\mathbb{Z}_q^{n' \times n}$.
+  \item \textbf{Modulus switching}: rounding from $q$ to $q'$.
+\end{enumerate}
+
+On CPU (single-threaded, AVX-512), one bootstrap takes $\sim$12\,ms. On an NVIDIA H100 GPU:
+
+\begin{itemize}
+  \item Blind rotation: 630 external products execute as a batched \NTT{} kernel, 0.22\,ms.
+  \item Key switching: cuBLAS GEMV, 0.05\,ms.
+  \item Modulus switching: element-wise kernel, 0.03\,ms.
+  \item \textbf{Total: 0.3\,ms} (40$\times$ speedup).
+\end{itemize}
+
+\subsection{Batch Amortization}
+
+When multiple independent bootstraps are required (e.g., evaluating a 256-bit comparison circuit), \Zoo{} batches them into a single GPU dispatch:
+
+\begin{equation}
+  T_{\mathrm{batch}}(k) = T_{\mathrm{single}} + \alpha \cdot k, \quad \alpha \approx 0.015\,\text{ms per additional bootstrap}
+\end{equation}
+
+\noindent for $k \leq 4096$ bootstraps. Beyond this, L2 cache pressure causes throughput degradation. At $k = 256$ (a typical 8-bit integer comparison), total latency is $\sim$4.1\,ms.
+
+\subsection{Memory Bounds}
+
+FHE ciphertexts are large. A single \CKKS{} ciphertext at level $\ell = 15$ with $N = 16384$ occupies:
+
+\begin{equation}
+  |\mathsf{ct}| = 2 \cdot N \cdot \ell \cdot 8 = 2 \cdot 16384 \cdot 15 \cdot 8 \approx 3.75\,\text{MB}
+\end{equation}
+
+An H100 with 80\,GB HBM3 can hold $\sim$21{,}000 such ciphertexts simultaneously. \Zoo{} validators must provision at least 40\,GB GPU memory for FHE workloads. The VM enforces per-contract ciphertext storage limits via gas metering.
+
+%----------------------------------------------------------------------

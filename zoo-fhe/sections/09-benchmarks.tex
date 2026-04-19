@@ -1,0 +1,84 @@
+\section{Benchmarks}
+
+\label{sec:bench}
+%----------------------------------------------------------------------
+
+All benchmarks run on \Zoo{} testnet validators equipped with NVIDIA H100 80\,GB GPUs, AMD EPYC 9654 CPUs (96 cores), and 512\,GB DDR5.
+
+\subsection{Bootstrap Latency}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Operation} & \textbf{CPU (ms)} & \textbf{GPU (ms)} & \textbf{Speedup} \\
+\midrule
+Single TFHE bootstrap & 12.0 & 0.30 & 40$\times$ \\
+8-bit integer comparison & 96.0 & 4.10 & 23$\times$ \\
+256-bit comparison circuit & 3{,}072 & 52.0 & 59$\times$ \\
+Batch 4096 bootstraps & 49{,}152 & 62.0 & 793$\times$ \\
+\bottomrule
+\end{tabular}
+\caption{TFHE bootstrap latency: CPU vs GPU}
+\label{tab:bootstrap}
+\end{table}
+
+Batch amortization yields superlinear speedup because GPU occupancy increases with batch size until the 4096-element sweet spot.
+
+\subsection{CKKS Multiplication Throughput}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrr}
+\toprule
+\textbf{Metric} & \textbf{CPU} & \textbf{GPU} \\
+\midrule
+Single ciphertext multiply + relin (ms) & 8.5 & 0.6 \\
+Throughput (multiplications/sec) & 118 & 1{,}667 \\
+Rescale (ms) & 2.1 & 0.15 \\
+Slot rotation (ms) & 6.2 & 0.45 \\
+\bottomrule
+\end{tabular}
+\caption{CKKS operation throughput at $N = 16384$, $L = 15$}
+\label{tab:ckks}
+\end{table}
+
+\subsection{Threshold Decryption Latency}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lr}
+\toprule
+\textbf{Phase} & \textbf{Latency (ms)} \\
+\midrule
+Partial decryption (per validator) & 0.8 \\
+Network collection (67 shares, p95) & 180 \\
+Lagrange aggregation & 2.1 \\
+Smudging noise verification & 0.3 \\
+\textbf{Total end-to-end} & \textbf{$\sim$183} \\
+\bottomrule
+\end{tabular}
+\caption{Threshold decryption latency for LWE ciphertext (67-of-100)}
+\label{tab:threshold}
+\end{table}
+
+The dominant cost is network latency for collecting 67 partial decryptions. Computation is negligible relative to communication.
+
+\subsection{End-to-End Application Benchmarks}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrr}
+\toprule
+\textbf{Application} & \textbf{Latency (ms)} & \textbf{Gas Cost} \\
+\midrule
+Encrypted order match (2 orders) & 48 & 1.8M \\
+Sealed-bid auction (64 bids) & 312 & 42M \\
+4-layer NN inference (CKKS) & 580 & 68M \\
+\bottomrule
+\end{tabular}
+\caption{End-to-end application benchmarks on GPU-enabled validators}
+\label{tab:e2e}
+\end{table}
+
+%----------------------------------------------------------------------

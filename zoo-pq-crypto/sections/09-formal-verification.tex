@@ -1,0 +1,26 @@
+\section{Formal Verification}
+
+
+All implementations are formally verified in Lean~4:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lp{6.5cm}c}
+\toprule
+\textbf{File} & \textbf{Property} & \textbf{Lines} \\
+\midrule
+\texttt{Crypto/MLKEM.lean} & IND-CCA2 security; encaps/decaps correctness; NTT equivalence & 1,842 \\
+\texttt{Crypto/MLDSA.lean} & EUF-CMA security; rejection sampling correctness; no key leakage & 2,156 \\
+\texttt{Crypto/SLHDSA.lean} & EUF-CMA from hash second-preimage resistance; hypertree correctness & 1,534 \\
+\texttt{Crypto/Corona.lean} & Threshold unforgeability; DKG correctness; share verification & 2,403 \\
+\texttt{Crypto/Hybrid.lean} & Security holds if either component is secure & 687 \\
+\bottomrule
+\end{tabular}
+\caption{Lean~4 formal verification modules}
+\label{tab:lean-crypto}
+\end{table}
+
+\begin{theorem}[Hybrid Composition Security]
+The hybrid scheme $\Pi_H = (\Pi_C, \Pi_{PQ})$ with conjunctive verification is EUF-CMA secure if either $\Pi_C$ or $\Pi_{PQ}$ is EUF-CMA secure. Proof: a forger of $\Pi_H$ must forge both components, so $\text{Adv}[\mathcal{A}] \leq \text{Adv}[\mathcal{B}_C] + \text{Adv}[\mathcal{B}_{PQ}]$. Full proof in \texttt{Crypto/Hybrid.lean}.
+\end{theorem}
+

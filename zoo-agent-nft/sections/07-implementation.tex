@@ -1,0 +1,91 @@
+\section{Implementation}
+
+
+\subsection{Smart Contract Architecture}
+
+\begin{lstlisting}[language=Solidity,caption=AgentNFT Contract (Simplified)]
+contract AgentNFT is ERC721, IAgentNFT {
+    mapping(uint256 => Agent) public agents;
+
+    function mint(bytes32 modelHash,
+        AutonomyParams memory params)
+        external returns (uint256) {
+        uint256 tokenId = _nextTokenId++;
+        address wallet = _deployAgentWallet(tokenId);
+
+        agents[tokenId] = Agent({
+            tokenId: tokenId,
+            modelHash: modelHash,
+            wallet: wallet,
+            autonomy: params,
+            totalYield: 0,
+            reputation: 100  // Starting reputation
+        });
+
+        _mint(msg.sender, tokenId);
+        return tokenId;
+    }
+
+    function executeAction(uint256 tokenId,
+        bytes calldata action) external {
+        require(_isAuthorized(tokenId, action),
+            "Unauthorized");
+        Agent storage agent = agents[tokenId];
+        require(_checkAutonomy(agent, action),
+            "Exceeds autonomy");
+
+        (bool success, ) =
+            agent.wallet.call(action);
+        emit ActionExecuted(tokenId,
+            keccak256(action), success);
+    }
+
+    function claimYield(uint256 tokenId)
+        external returns (uint256) {
+        require(ownerOf(tokenId) == msg.sender,
+            "Not owner");
+        Agent storage agent = agents[tokenId];
+        uint256 yield = _calculateYield(agent);
+        agent.totalYield = 0;
+        payable(msg.sender).transfer(yield);
+        emit YieldClaimed(tokenId, yield);
+        return yield;
+    }
+}
+\end{lstlisting}
+
+\subsection{Off-Chain Agent Runtime}
+
+The agent's AI component runs off-chain:
+
+\begin{lstlisting}[language=python,caption=Agent Runtime]
+class AgentRuntime:
+    def __init__(self, token_id, model_path):
+        self.token_id = token_id
+        self.model = load_model(model_path)
+        self.wallet = AgentWallet(token_id)
+
+    async def run(self):
+        while True:
+            # Observe environment
+            state = await self.observe()
+
+            # Reason about actions
+            action = self.model.decide(state)
+
+            # Check autonomy bounds
+            if self.wallet.within_bounds(action):
+                # Execute on-chain
+                await self.wallet.execute(action)
+
+            await asyncio.sleep(POLL_INTERVAL)
+
+    async def observe(self):
+        return {
+            'wallet_balance': await self.wallet.balance(),
+            'positions': await self.get_positions(),
+            'market_data': await self.fetch_markets(),
+            'pending_tasks': await self.get_tasks()
+        }
+\end{lstlisting}
+

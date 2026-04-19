@@ -1,0 +1,89 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+
+% ============================================================
+% Preamble
+% ============================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,fit}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{fancyhdr}
+\usepackage{authblk}
+\usepackage{abstract}
+\usepackage{natbib}
+\bibliographystyle{plainnat}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    citecolor=green!50!black,
+    urlcolor=blue!80!black
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Antje Worring, Zach Kelling}
+\lhead{Mobile Inference for Field Conservation}
+\rfoot{Page \thepage}
+
+% ============================================================
+\title{\textbf{Mobile Inference for Field Conservation: On-Device Species Recognition} \\[0.5em]
+\large Model Compression, Quantization, and Offline-First Deployment for Edge Biodiversity Monitoring}
+
+\author[1]{Antje Worring, Zach Kelling}
+\affil[1]{Antje Worring, Zach Kelling, Research Division \\ \texttt{research@zoo.ngo}}
+
+\date{December 2024}
+
+\begin{document}
+
+\zoocoverpage
+
+% ============================================================
+% Abstract
+% ============================================================
+\begin{abstract}
+\noindent
+Automated species recognition has achieved remarkable accuracy in laboratory settings, but deploying these models to the field---where connectivity is absent, hardware is constrained, and real-time identification drives conservation decisions---remains an open challenge.
+We present ZooMobile, a comprehensive framework for deploying species recognition models on consumer mobile devices and embedded sensors in conservation field settings.
+ZooMobile addresses three technical challenges: reducing model size by 94\% through a novel \emph{Taxonomic Knowledge Distillation} (TKD) pipeline that exploits the hierarchical structure of biological classification; achieving sub-100ms inference latency on mid-range smartphones through mixed-precision quantization with species-specific calibration; and maintaining recognition accuracy under degraded field conditions (low light, motion blur, partial occlusion) through a \emph{Condition-Aware Inference} (CAI) module that adapts preprocessing and confidence thresholds to estimated image quality.
+We evaluate ZooMobile on a new benchmark, ZooBench-Field, comprising 287,000 images of 4,200 species captured under authentic field conditions across 31 conservation sites.
+On this benchmark, ZooMobile achieves 87.3\% top-1 accuracy and 96.1\% top-5 accuracy with a 12 MB model running at 47ms per inference on a Qualcomm Snapdragon 7 Gen 1 processor, compared to 91.8\% top-1 accuracy for a 203 MB cloud-based baseline.
+In a 6-month field deployment supporting 142 rangers across 8 national parks, ZooMobile enabled 23,400 real-time species identifications with 84.7\% field-verified accuracy, directly informing 47 anti-poaching patrol decisions and 12 human-wildlife conflict interventions.
+\end{abstract}
+
+\vspace{0.5em}
+\noindent\textbf{Keywords:} species recognition, model compression, quantization, edge inference, mobile deployment, conservation technology
+
+% ============================================================
+% 1. Introduction
+% ============================================================
+
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-taxonomic-knowledge-distillation}
+\input{sections/04-species-specific-mixed-precision-quantiz}
+\input{sections/05-condition-aware-inference}
+\input{sections/06-zoobench-field-benchmark}
+\input{sections/07-offline-first-architecture}
+\input{sections/08-field-deployment}
+\input{sections/09-discussion}
+\input{sections/99-conclusion}
+
+\end{document}

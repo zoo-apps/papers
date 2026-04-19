@@ -1,0 +1,35 @@
+\section{The \texttt{did:lux:zoo}
+ Method}
+
+\subsection{DID Syntax}
+
+Zoo DIDs follow W3C DID Core v1.0 \cite{w3c-did-core} with the method-specific identifier:
+
+\begin{verbatim}
+did:lux:zoo:<network>:<identifier>
+\end{verbatim}
+
+where \texttt{<network>} $\in \{\texttt{mainnet}, \texttt{testnet}, \texttt{devnet}\}$ and \texttt{<identifier>} is the Base58-encoded Blake2b-256 hash of the initial public key.
+
+\begin{definition}[Zoo DID Document]
+A Zoo DID Document $D$ is a tuple $(id, V, S, A, M)$ where:
+\begin{itemize}
+\item $id$ is the DID string,
+\item $V = \{vk_1, \ldots, vk_m\}$ is the set of verification methods (public keys),
+\item $S = \{s_1, \ldots, s_k\}$ is the set of service endpoints,
+\item $A \subseteq V$ is the authentication key set,
+\item $M$ is metadata including creation time, update history, and deactivation status.
+\end{itemize}
+\end{definition}
+
+\subsection{CRUD Operations}
+
+All DID operations are \IdentityVM{} transactions validated by consensus:
+
+\begin{itemize}
+\item \textbf{Create}: Initial document signed by genesis key. Valid if DID is unused, signature verifies, and document conforms to schema.
+\item \textbf{Read}: Resolution queries the state trie with Merkle inclusion proofs for trustless light-client verification.
+\item \textbf{Update}: Signed by a key in the document's \texttt{capabilityInvocation} set. Key rotation is atomic---old key authorizes new key in a single transaction.
+\item \textbf{Deactivate}: Sets \texttt{deactivated} flag (irreversible). Document remains resolvable for credential verification but cannot authorize new operations.
+\end{itemize}
+

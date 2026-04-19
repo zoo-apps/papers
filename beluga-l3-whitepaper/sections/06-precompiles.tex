@@ -1,0 +1,77 @@
+\section{Precompiles}
+\label{sec:precompiles}
+%% ============================================================
+
+\Beluga{} introduces three custom EVM precompiles in the \texttt{0x03xx} address range, following the \Lux{} precompile addressing standard \cite{lux-precompiles}.
+
+\subsection{Inference Pricing Precompile (0x0300)}
+
+The core pricing oracle that computes inference fees in real time.
+
+\begin{table}[h]
+\centering
+\caption{Inference pricing precompile specification.}
+\label{tab:precompile-0300}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Field & Value \\
+\midrule
+Address & \texttt{0x0000000000000000000000000000000000000300} \\
+Gas cost & 5,000 (read) / 25,000 (write) \\
+Input & \texttt{(uint256 modelId, uint256 seqLen, uint256 batchSize)} \\
+Output & \texttt{(uint256 priceWei, uint256 estimatedLatencyMs)} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The pricing function considers four factors:
+
+\begin{equation}
+\text{price}(m, s, b) = \underbrace{p_m}_{\text{model base}} \cdot \underbrace{\left(\frac{s}{2048}\right)^{1.2}}_{\text{seq scaling}} \cdot \underbrace{b^{0.9}}_{\text{batch discount}} \cdot \underbrace{(1 + \beta \cdot u)}_{\text{demand surge}}
+\end{equation}
+
+where $p_m$ is the model's registered base price, $s$ is the sequence length, $b$ is the batch size, $u$ is the current utilization ratio (requests in flight / capacity), and $\beta = 0.5$ is the surge coefficient. The super-linear sequence scaling ($s^{1.2}$) reflects the quadratic attention cost, while the sub-linear batch discount ($b^{0.9}$) incentivizes batching.
+
+\subsection{Model Marketplace Precompile (0x0301)}
+
+A read-optimized precompile for querying model metadata without the overhead of storage reads.
+
+\begin{table}[h]
+\centering
+\caption{Model marketplace precompile specification.}
+\label{tab:precompile-0301}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Field & Value \\
+\midrule
+Address & \texttt{0x0000000000000000000000000000000000000301} \\
+Gas cost & 2,000 (single query) / 10,000 (range query) \\
+Functions & \texttt{getModel}, \texttt{listModels}, \texttt{searchByArch} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The precompile maintains an in-memory index of all registered models, updated atomically as \texttt{ModelRegistry} state changes. This enables $O(\log n)$ lookup by weights hash, architecture, or price range without EVM storage access patterns.
+
+\subsection{Training Bounty Precompile (0x0302)}
+
+Accelerates bounty matching by maintaining a priority queue of open bounties sorted by reward size and deadline proximity.
+
+\begin{table}[h]
+\centering
+\caption{Training bounty precompile specification.}
+\label{tab:precompile-0302}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Field & Value \\
+\midrule
+Address & \texttt{0x0000000000000000000000000000000000000302} \\
+Gas cost & 3,000 (query) / 50,000 (verify attestation) \\
+Functions & \texttt{matchBounty}, \texttt{verifyAttestation}, \texttt{rankBounties} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The \texttt{verifyAttestation} function deserializes and validates \TEE{} attestations natively, avoiding the gas cost of doing ECDSA verification and certificate chain parsing in Solidity. This reduces attestation verification from approximately 500,000 gas in pure EVM to 50,000 gas via the precompile.
+
+%% ============================================================

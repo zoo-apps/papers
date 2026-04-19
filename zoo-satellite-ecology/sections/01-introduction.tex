@@ -1,0 +1,39 @@
+\section{Introduction}
+
+\label{sec:introduction}
+
+The conversion of natural habitats to human-dominated land uses is the single largest driver of biodiversity decline, responsible for more species extinctions than climate change, pollution, and overexploitation combined \citep{maxwell2016biodiversity}.
+Tropical deforestation alone eliminates an estimated 10 million hectares of forest annually \citep{fao2020global}, while less conspicuous forms of habitat degradation---selective logging, agricultural intensification, infrastructure development---erode ecosystem integrity across all biomes \citep{watson2018decline}.
+
+Satellite remote sensing provides the only feasible means of monitoring land use change at scales relevant to global biodiversity conservation.
+The Landsat archive offers 50 years of multispectral imagery at 30-meter resolution \citep{wulder2019current}.
+The Sentinel-2 constellation provides 10-meter resolution with 5-day revisit frequency \citep{drusch2012sentinel}.
+Commercial constellations (Planet, Maxar) achieve sub-meter resolution with daily coverage.
+
+Despite abundant data, three challenges limit the effectiveness of satellite-based ecological monitoring.
+
+First, \emph{change detection accuracy}.
+Traditional approaches based on vegetation indices (NDVI differencing) or pixel-level classification comparison produce high false-positive rates due to phenological variation, atmospheric artifacts, and cloud contamination \citep{zhu2017change}.
+Deep learning methods have improved accuracy but require extensive labeled training data that is expensive to produce for diverse global ecosystems \citep{yuan2021deep}.
+
+Second, \emph{ecological interpretation}.
+Raw change detection identifies where land cover has changed but not what the change means for biodiversity.
+A detected change could represent catastrophic deforestation, natural seasonal variation, prescribed burning, or sustainable agriculture---outcomes with vastly different conservation implications \citep{redford2003empty}.
+Translating remote sensing signals into ecologically meaningful assessments requires integration with landscape ecology principles.
+
+Third, \emph{actionable timeliness}.
+Global forest monitoring systems such as Global Forest Watch \citep{hansen2013high} provide monthly to annual updates.
+For conservation enforcement, this latency is often too slow: illegal deforestation operations can clear hundreds of hectares within days, and by the time satellite-based alerts arrive, irreversible damage has occurred \citep{finer2018combating}.
+
+We present ZooSat, a deep learning pipeline for continuous ecological monitoring that addresses all three challenges.
+Our contributions are:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Temporal Siamese Network (TSN):} A deep architecture that processes paired sequences of multi-spectral satellite images to detect and classify ecological change events with 94.2\% accuracy, handling cloud contamination and phenological variation through temporal attention mechanisms (\Cref{sec:tsn}).
+    \item \textbf{Habitat Fragmentation Index (HFI):} A landscape-scale metric computed from detected changes that quantifies habitat connectivity degradation in real-time, providing a leading indicator of biodiversity decline (\Cref{sec:fragmentation}).
+    \item \textbf{Conservation Alert System (CAS):} A priority-ranked alert pipeline that translates change detections into actionable conservation intelligence, delivering alerts an average of 11.2 days faster than existing systems (\Cref{sec:alerts}).
+\end{enumerate}
+
+% ============================================================
+% 2. Related Work
+% ============================================================

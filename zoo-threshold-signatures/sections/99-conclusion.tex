@@ -1,0 +1,113 @@
+\section{Conclusion}
+
+\label{sec:conclusion}
+
+\TChain{} demonstrates that threshold signature protocols belong inside the consensus layer, not beside it. By making validators the MPC parties, Zoo Network achieves:
+
+\begin{enumerate}
+\item \textbf{Unified security}: The MPC quorum and the consensus quorum are identical. No separate trust boundary exists for custody.
+\item \textbf{Operational simplicity}: No sidecar deployments, no independent key rotation schedules, no separate monitoring.
+\item \textbf{Economic alignment}: MPC failures trigger the same slashing penalties as consensus failures, eliminating free-rider incentives.
+\item \textbf{Protocol composability}: The \LSS{} Composition Theorem enables a single DKG ceremony to provision shares for FROST, CGGMP21, TFHE, Corona, and BLS simultaneously.
+\item \textbf{Verified correctness}: All protocols are formally verified in Lean~4, with computational security reducing to standard hardness assumptions.
+\end{enumerate}
+
+The migration path from external MPC to \TChain{} is incremental: parallel operation, key reshare, decommission. Existing bridge integrations continue to function through the HTTP compatibility layer. GPU acceleration ensures that even computationally heavy operations (threshold FHE decryption) complete within consensus block times.
+
+\TChain{} establishes the foundation for chain-native cryptographic services on Zoo Network, enabling future extensions including threshold decryption for privacy-preserving inference \cite{zoo-fhe}, DID-bound threshold keys for decentralized identity \cite{zoo-identity-chain}, and cross-chain atomic swaps without trusted bridges.
+
+%% --------------------------------------------------------------------------
+\begin{thebibliography}{99}
+
+\bibitem{komlo2020frost}
+Chelsea Komlo and Ian Goldberg.
+\textit{FROST: Flexible Round-Optimized Schnorr Threshold Signatures}.
+Selected Areas in Cryptography (SAC), 2020.
+
+\bibitem{canetti2021cggmp}
+Ran Canetti, Rosario Gennaro, Steven Goldfeder, Nikolaos Makriyannis, and Udi Peled.
+\textit{UC Non-Interactive, Proactive, Threshold ECDSA with Identifiable Aborts}.
+ACM CCS, 2020.
+
+\bibitem{shamir1979share}
+Adi Shamir.
+\textit{How to Share a Secret}.
+Communications of the ACM, 22(11):612--613, 1979.
+
+\bibitem{feldman1987practical}
+Paul Feldman.
+\textit{A Practical Scheme for Non-Interactive Verifiable Secret Sharing}.
+FOCS, 1987.
+
+\bibitem{pedersen1991non}
+Torben Pryds Pedersen.
+\textit{Non-Interactive and Information-Theoretic Secure Verifiable Secret Sharing}.
+CRYPTO, 1991.
+
+\bibitem{gennaro2007secure}
+Rosario Gennaro, Stanislaw Jarecki, Hugo Krawczyk, and Tal Rabin.
+\textit{Secure Distributed Key Generation for Discrete-Log Based Cryptosystems}.
+Journal of Cryptology, 20(1):51--83, 2007.
+
+\bibitem{lindell2017fast}
+Yehuda Lindell.
+\textit{Fast Secure Two-Party ECDSA Signing}.
+CRYPTO, 2017.
+
+\bibitem{fireblocks2023mpc}
+Fireblocks.
+\textit{MPC-CMP: Next Generation MPC for Digital Asset Security}.
+Fireblocks Technical Paper, 2023.
+
+\bibitem{lit2023threshold}
+Lit Protocol.
+\textit{Threshold Cryptography for Decentralized Access Control}.
+Lit Protocol Whitepaper, 2023.
+
+\bibitem{thorchain2023tss}
+THORChain.
+\textit{TSS: Threshold Signature Scheme Implementation}.
+THORChain Documentation, 2023.
+
+\bibitem{dfinity2022tecdsa}
+DFINITY Foundation.
+\textit{Chain-Key Threshold ECDSA on the Internet Computer}.
+DFINITY Technical Report, 2022.
+
+\bibitem{zoo-network-architecture}
+Zach Kelling.
+\textit{Zoo Network Architecture: A Multi-Chain AI Infrastructure}.
+Zoo Labs Foundation, 2025.
+
+\bibitem{zoo-tokenomics}
+Zach Kelling.
+\textit{Zoo Network Tokenomics: Fair Distribution Through Complete Airdrop}.
+Zoo Labs Foundation, 2025.
+
+\bibitem{zoo-fhe}
+Zach Kelling.
+\textit{Fully Homomorphic Encryption on Zoo Network}.
+Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-identity-chain}
+Zach Kelling.
+\textit{Zoo Identity Chain: Decentralized Identity and DID Management}.
+Zoo Labs Foundation, 2026.
+
+\bibitem{zoo-key-management}
+Zach Kelling.
+\textit{Zoo Hierarchical Key Management}.
+Zoo Labs Foundation, 2026.
+
+\bibitem{lux-threshold-sigs}
+Lux Partners.
+\textit{Universal Threshold Signatures for Multi-Consensus Networks}.
+Lux Technical Report, 2025.
+
+\bibitem{lux-mchain-mpc}
+Lux Partners.
+\textit{Multi-Chain MPC Signing on Lux Network}.
+Lux Technical Report, 2025.
+
+\end{thebibliography}
+

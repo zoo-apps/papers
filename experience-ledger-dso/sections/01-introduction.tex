@@ -1,0 +1,33 @@
+\section{Introduction}
+
+
+The democratization of artificial intelligence remains an unfulfilled promise. While open-source Large Language Models (\LLM{}s) have proliferated, their effective deployment requires fine-tuning—a process dominated by well-resourced institutions with access to specialized hardware, proprietary datasets, and ML engineering expertise. This centralization creates multiple failure modes: opaque model behavior, catastrophic forgetting across domains, high computational costs (\$10,000+ per task), and the impossibility of community-driven model evolution.
+
+Consider the typical fine-tuning workflow: A research lab collects thousands of task-specific examples, performs gradient-based parameter updates over days of GPU time, and publishes the resulting model weights. Users must trust that the updates improve performance without introducing biases or vulnerabilities. If the model fails on edge cases, there is no mechanism for incremental correction beyond complete retraining. Cross-domain applications require separate fine-tuned variants, fragmenting the ecosystem. Most critically, the knowledge encoded during fine-tuning remains locked within billions of parameters—inaccessible to inspection, debate, or collaborative refinement.
+
+\subsection{The Alchemical Transformation}
+
+We propose a radical alternative: \textit{Decentralized Semantic Optimization} (\DSO{}). Rather than transmuting model parameters through gradient descent—a black-box process akin to medieval alchemy's futile pursuit of metallic transformation—we extract and curate \textit{semantic advantages}: explicit, human-readable insights that capture effective reasoning patterns. These experiences form a public knowledge commons, verified through cryptography, stored via decentralized protocols, and governed by community consensus.
+
+The Experience Ledger serves as the philosophical stone of this transformation, converting the base metal of raw computational trajectories into the gold of distilled wisdom. Each experience represents a crystallized insight—"When solving geometry problems with intersections, validate solutions lie within bounded regions, not on extensions"—that can be inspected, debated, improved, and composed with others. The model itself remains frozen, a universal reasoning engine, while its behavior adapts through the accretion of verified experiences.
+
+\subsection{Core Contributions}
+
+This paper establishes the theoretical foundations and practical implementation of the Experience Ledger:
+
+\begin{enumerate}
+    \item \textbf{Semantic Advantage Format}: A rigorous specification for encoding reasoning insights as natural language statements with cryptographic commitments (Section~\ref{sec:format}).
+    
+    \item \textbf{Three-Layer Storage Architecture}: Integration of on-chain Merkle roots (\Zoo{} Network L2), mutable content-addressing (\IPFS{}), and permanent archival (Arweave) that balances efficiency, verifiability, and permanence (Section~\ref{sec:storage}).
+    
+    \item \textbf{Embedding-Based Retrieval}: A 7680-dimensional semantic space enabling sub-linear retrieval of relevant experiences via cosine similarity, with provable coverage guarantees (Section~\ref{sec:retrieval}).
+    
+    \item \textbf{\DAO{}-Based Curation Protocol}: Game-theoretic mechanisms for Byzantine-robust aggregation of community improvements, including reputation systems and quadratic voting (Section~\ref{sec:curation}).
+    
+    \item \textbf{\DSO{} Algorithm}: Formal specification of Add/Modify/Delete operations with convergence proofs and conflict resolution strategies (Section~\ref{sec:dso}).
+    
+    \item \textbf{Empirical Validation}: Comparative evaluation against fine-tuning, RLHF, and prompt engineering across mathematical reasoning (AIME) and web navigation (WebWalker) tasks, demonstrating 99.8\% cost reduction and superior cross-domain transfer (Section~\ref{sec:evaluation}).
+\end{enumerate}
+
+The Experience Ledger is not merely a technical system but a \textit{political} architecture—a democratic alternative to AI feudalism where model capabilities are controlled by those with capital. By making knowledge explicit, cryptographically verifiable, and collectively owned, we enable true AI commons.
+

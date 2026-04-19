@@ -1,0 +1,100 @@
+\section{Retrieval System}
+
+\label{sec:retrieval}
+
+\subsection{Embedding Space}
+
+Each experience $e \in \mathcal{E}$ is embedded into $\mathbb{R}^{7680}$ via the Zen-Reranker model~\cite{zoo2025zen}:
+
+\begin{equation}
+e.\text{emb} = \text{ZenEmbed}(e.\text{text})
+\end{equation}
+
+\textbf{Zen-Reranker Properties}:
+\begin{itemize}
+    \item Architecture: Dense retrieval with cross-attention
+    \item Dimension: 7680 (vs. 1536 for OpenAI, 4096 for Nomic)
+    \item Training: Multilingual, cross-modal (text/code/math)
+    \item Precision: FP16 (15 KB per embedding)
+\end{itemize}
+
+\subsection{Similarity Search}
+
+Given query $q$, we retrieve top-$k$ relevant experiences via cosine similarity:
+
+\begin{equation}
+\text{sim}(q, e) = \frac{q.\text{emb} \cdot e.\text{emb}}{\|q.\text{emb}\| \|e.\text{emb}\|}
+\end{equation}
+
+\begin{algorithm}[t]
+\caption{Top-k Experience Retrieval}
+\label{alg:retrieval}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Query $q$, library $\mathcal{E}$, $k$
+\STATE \textbf{Output}: Top-$k$ experiences $\mathcal{E}_k$
+\STATE $q.\text{emb} \leftarrow \text{ZenEmbed}(q)$
+\STATE $\text{scores} \leftarrow [\text{sim}(q, e) \mid e \in \mathcal{E}]$
+\STATE $\text{indices} \leftarrow \text{argsort}(\text{scores}, \text{descending})$
+\RETURN $\{e_{\text{indices}[i]} \mid i < k\}$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Optimization}: For large libraries ($|\mathcal{E}| > 1000$), we use FAISS~\cite{johnson2019billion} with HNSW indexing to reduce complexity from $O(n)$ to $O(\log n)$.
+
+\subsection{Context Injection Protocol}
+
+Retrieved experiences are formatted as a prompt prefix:
+
+\begin{lstlisting}[caption=Context Injection Template]
+# Learned Experiences
+
+1. When solving geometry problems with 
+   intersections, validate solutions lie within 
+   bounded regions, not extensions.
+
+2. For expected extreme statistics in 
+   combinatorial problems, use direct enumeration 
+   for small sizes.
+
+[... top-k experiences ...]
+
+---
+
+# Problem
+
+{user_query}
+\end{lstlisting}
+
+\textbf{Hyperparameters}:
+\begin{itemize}
+    \item $k = 5$ (empirically optimal, Section~\ref{sec:evaluation})
+    \item Similarity threshold: $\text{sim} > 0.6$ (filter irrelevant)
+    \item Max context length: 2048 tokens (balance relevance vs. cost)
+\end{itemize}
+
+\subsection{Coverage Analysis}
+
+\begin{definition}[Experience Coverage]
+The coverage $C(\mathcal{E}, \mathcal{Q})$ of library $\mathcal{E}$ over query set $\mathcal{Q}$ is:
+
+\begin{equation}
+C(\mathcal{E}, \mathcal{Q}) = \frac{1}{|\mathcal{Q}|} \sum_{q \in \mathcal{Q}} \mathbb{1}[\max_{e \in \mathcal{E}} \text{sim}(q, e) > \tau]
+\end{equation}
+
+where $\tau = 0.6$ is the relevance threshold.
+\end{definition}
+
+\begin{theorem}[Coverage Growth]
+Given library size $n = |\mathcal{E}|$ and uniform distribution over $d$ domains, expected coverage satisfies:
+
+\begin{equation}
+\mathbb{E}[C(\mathcal{E}, \mathcal{Q})] \geq 1 - e^{-n/d}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Each experience covers an expected fraction $1/d$ of queries (assuming uniform domain distribution). The probability a query is uncovered after $n$ experiences is $(1 - 1/d)^n \approx e^{-n/d}$ for large $d$. Thus coverage is $1 - e^{-n/d}$.
+\end{proof}
+
+\textbf{Implication}: To achieve 95\% coverage over $d=20$ domains requires $n \approx 60$ experiences, consistent with empirical observations (Section~\ref{sec:evaluation}).
+

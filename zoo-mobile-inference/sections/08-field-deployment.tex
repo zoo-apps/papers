@@ -1,0 +1,96 @@
+\section{Field Deployment}
+
+\label{sec:deployment}
+
+\subsection{Deployment Sites}
+
+We deployed ZooMobile across 8 national parks in 5 countries over 6 months (July 2025 -- January 2026):
+
+\begin{table}[H]
+\centering
+\caption{Field deployment sites and statistics.}
+\label{tab:deployment}
+\begin{tabularx}{\textwidth}{@{}llccr@{}}
+\toprule
+\textbf{Site} & \textbf{Country} & \textbf{Rangers} & \textbf{Target Species} & \textbf{IDs Made} \\
+\midrule
+Serengeti NP & Tanzania & 24 & 847 & 4,210 \\
+Kaziranga NP & India & 18 & 612 & 3,470 \\
+Yasun\'{i} NP & Ecuador & 14 & 1,234 & 2,890 \\
+Taman Negara NP & Malaysia & 16 & 978 & 2,640 \\
+Kruger NP & South Africa & 22 & 724 & 3,180 \\
+Manu NP & Peru & 12 & 1,087 & 2,340 \\
+Chitwan NP & Nepal & 20 & 543 & 2,710 \\
+Cat Tien NP & Vietnam & 16 & 689 & 1,960 \\
+\midrule
+\textbf{Total} & & 142 & & 23,400 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Field Accuracy}
+
+Of 23,400 identifications, 19,818 (84.7\%) were verified as correct by expert review.
+Accuracy varied by taxonomic group:
+
+\begin{table}[H]
+\centering
+\caption{Field accuracy by taxonomic group.}
+\label{tab:field_accuracy}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Group} & \textbf{IDs} & \textbf{Correct (\%)} & \textbf{Top-3 (\%)} & \textbf{Declined (\%)} \\
+\midrule
+Large mammals & 5,420 & 91.2 & 97.4 & 3.1 \\
+Birds & 6,180 & 84.3 & 93.8 & 8.4 \\
+Reptiles & 3,240 & 86.7 & 94.1 & 6.2 \\
+Amphibians & 2,140 & 79.4 & 90.3 & 11.7 \\
+Insects & 3,870 & 78.2 & 89.4 & 14.3 \\
+Plants & 2,550 & 87.1 & 95.2 & 5.8 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ``Declined'' column shows the percentage of identifications where the model's confidence was below $\tau_{\text{low}}$ and it provided guidance rather than an identification.
+Higher decline rates for insects and amphibians reflect genuine difficulty (small body size, variable coloration) rather than model failure.
+
+\subsection{Conservation Impact}
+
+During the deployment, ZooMobile directly contributed to conservation actions:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Anti-poaching:} 47 patrol decisions were informed by species identifications, including 12 instances where identification of critically endangered species triggered immediate alert protocols.
+    \item \textbf{Human-wildlife conflict:} 12 interventions were supported by rapid species identification, enabling appropriate response protocols (e.g., distinguishing between venomous and non-venomous snake species encountered in villages).
+    \item \textbf{Biodiversity surveys:} Rangers contributed 8,740 verified occurrence records to the Zoo Data Commons, representing a 340\% increase in data collection rate compared to manual survey methods.
+    \item \textbf{Invasive species detection:} 23 observations of invasive species outside their known range were flagged, triggering early-response protocols at 4 sites.
+\end{itemize}
+
+\subsection{User Experience}
+
+Ranger satisfaction was assessed through structured interviews at the end of the deployment:
+
+\begin{table}[H]
+\centering
+\caption{Ranger satisfaction survey results (5-point Likert scale).}
+\label{tab:satisfaction}
+\begin{tabular}{@{}lc@{}}
+\toprule
+\textbf{Dimension} & \textbf{Mean Score} \\
+\midrule
+Ease of use & 4.3 \\
+Identification accuracy (perceived) & 3.9 \\
+Response speed & 4.6 \\
+Battery life impact & 3.4 \\
+Usefulness for patrol decisions & 4.1 \\
+Overall satisfaction & 4.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Battery life impact received the lowest score.
+Post-deployment analysis showed that intensive use (50+ identifications per day) reduced battery life by approximately 30\%.
+The adaptive computation budget helped but did not fully address the concern for multi-day patrols without charging infrastructure.
+
+% ============================================================
+% 9. Discussion
+% ============================================================

@@ -1,0 +1,61 @@
+\section{Related Work}
+
+
+\subsection{Reinforcement Learning from Human Feedback}
+
+Reinforcement Learning from Human Feedback (RLHF) has become the dominant paradigm for aligning LLMs with human preferences \cite{ouyang2022training,bai2022constitutional}. Traditional approaches use Proximal Policy Optimization (PPO) \cite{schulman2017proximal} with a learned value function, but suffer from training instability, high computational costs, and the need for extensive reward modeling infrastructure.
+
+Recent advances simplify RLHF:
+\begin{itemize}
+    \item \textbf{Direct Preference Optimization (DPO)} \cite{rafailov2023direct} eliminates reward models by optimizing directly on preference pairs.
+    \item \textbf{Group Relative Policy Optimization (GRPO)} \cite{shao2024deepseekmath} removes value networks by computing advantages through group comparisons.
+    \item \textbf{Simple Preference Optimization (SimPO)} \cite{meng2024simpo} further simplifies by using length-normalized rewards.
+\end{itemize}
+
+However, all these methods still require gradient-based parameter updates, incurring substantial computational costs and producing opaque black-box models. Our Training-Free GRPO represents a fundamental departure: \textit{no parameter updates whatsoever}.
+
+\subsection{In-Context Learning and Few-Shot Prompting}
+
+GPT-3 demonstrated remarkable few-shot learning capabilities through in-context examples \cite{brown2020language}. Subsequent work has explored:
+\begin{itemize}
+    \item \textbf{Chain-of-Thought (CoT)} \cite{wei2022chain}: Intermediate reasoning steps improve complex problem solving.
+    \item \textbf{Tree-of-Thoughts (ToT)} \cite{yao2023tree}: Exploring multiple reasoning paths in a tree structure.
+    \item \textbf{Automatic Prompt Engineering} \cite{zhou2022large}: Using LLMs to optimize their own prompts.
+    \item \textbf{Retrieval-Augmented Generation (RAG)} \cite{lewis2020retrieval}: Dynamically retrieving relevant documents for context.
+\end{itemize}
+
+Our work extends this paradigm by systematically \textit{learning} what context to provide through reinforcement learning, rather than manually engineering prompts or retrieving static documents.
+
+\subsection{Training-Free Model Adaptation}
+
+Several recent works explore model adaptation without parameter updates:
+\begin{itemize}
+    \item \textbf{Prefix-Tuning} \cite{li2021prefix}: Prepending learned continuous vectors to input sequences.
+    \item \textbf{Prompt-Tuning} \cite{lester2021power}: Learning soft prompts while keeping model frozen.
+    \item \textbf{In-Context Reinforcement Learning} \cite{laskin2022context}: Using transformers for in-context RL without updating weights.
+\end{itemize}
+
+However, these approaches still require optimization (learning prefix/prompt parameters) and lack interpretability. Our semantic experiences are fully human-readable and require no gradient computation.
+
+\subsection{Physics-Inspired Machine Learning}
+
+Applying physical principles to machine learning has a rich history:
+\begin{itemize}
+    \item \textbf{Hamiltonian Neural Networks} \cite{greydanus2019hamiltonian}: Modeling physical systems with energy conservation.
+    \item \textbf{Lagrangian Neural Networks} \cite{cranmer2020lagrangian}: Learning dynamics from constrained optimization.
+    \item \textbf{Thermodynamic AI} \cite{opper2009variational}: Variational inference as minimizing free energy.
+\end{itemize}
+
+To our knowledge, this is the first application of Hamiltonian mechanics to large language model optimization, providing a principled framework for balancing context expansion against inference cost.
+
+\subsection{Decentralized and Verifiable AI}
+
+Growing concerns about AI centralization have motivated decentralized approaches:
+\begin{itemize}
+    \item \textbf{Federated Learning} \cite{mcmahan2017communication}: Training models across distributed devices without centralizing data.
+    \item \textbf{Blockchain-Based AI} \cite{salah2019blockchain}: Using distributed ledgers for model provenance and governance.
+    \item \textbf{Zero-Knowledge Proofs for ML} \cite{ghodsi2017safetynets}: Cryptographically verifying model outputs without revealing weights.
+\end{itemize}
+
+Our Experience Library architecture leverages content-addressable storage (IPFS/Arweave) and Merkle trees to create a transparent, auditable, and decentralized system for AI improvement—critical for democratic AI governance.
+

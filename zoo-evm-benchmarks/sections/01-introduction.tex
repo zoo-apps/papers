@@ -1,0 +1,23 @@
+\section{Introduction}
+
+
+Blockchain virtual machines have historically been the performance bottleneck in transaction processing. The Ethereum Virtual Machine (EVM), while battle-tested, processes opcodes sequentially on a single CPU core, limiting throughput to roughly 15--30 TPS on Ethereum L1 and 2,000--4,000 TPS on optimistic rollups. This sequential bottleneck is particularly problematic for AI workloads---inference, training, and data processing---that require high computational throughput.
+
+The Zoo Network addresses this bottleneck by inheriting the Lux C++ EVM, which replaces the sequential interpreter with GPU-parallel opcode execution using compute shaders. Each transaction's opcode sequence is compiled to a GPU dispatch, enabling thousands of transactions to execute simultaneously across GPU cores.
+
+Zoo Network is a non-profit L2 on Lux Network dedicated to AI/ML research, conservation, and decentralized science. Its workloads differ fundamentally from typical DeFi chains: AI inference calls, federated learning gradient aggregation, and encrypted genomic computation demand sustained high throughput that sequential EVMs cannot provide.
+
+\subsection{Contributions}
+
+\begin{enumerate}
+    \item \textbf{Architecture Analysis}: Detailed description of the GPU-accelerated EVM as deployed on Zoo Network (Section~\ref{sec:architecture}).
+
+    \item \textbf{Comprehensive Benchmarks}: Five workload categories measured on Zoo testnet with gas, latency, and throughput metrics (Section~\ref{sec:benchmarks}).
+
+    \item \textbf{PoAI Overhead}: Quantification of the Proof of AI consensus layer overhead (Section~\ref{sec:poai}).
+
+    \item \textbf{L2 Comparison}: Head-to-head comparison with Arbitrum, Optimism, and Base (Section~\ref{sec:comparison}).
+
+    \item \textbf{AI Workload Profiling}: Characterization of conservation AI workloads and their EVM resource requirements (Section~\ref{sec:ai-workloads}).
+\end{enumerate}
+

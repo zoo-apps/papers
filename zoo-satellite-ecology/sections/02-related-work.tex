@@ -1,0 +1,44 @@
+\section{Related Work}
+
+\label{sec:related}
+
+\subsection{Satellite-Based Change Detection}
+
+Change detection from satellite imagery has evolved through three generations.
+First-generation methods used algebraic operations on spectral bands: image differencing, image ratioing, and change vector analysis \citep{singh1989review}.
+Second-generation methods employed machine learning classifiers (random forests, SVMs) on hand-engineered features \citep{zhu2017change}.
+Third-generation methods use deep learning for end-to-end change detection.
+
+Among deep learning approaches, \citet{daudt2018fully} introduced fully convolutional Siamese networks for change detection.
+\citet{chen2020spatial} proposed a spatial-temporal attention network for bi-temporal change detection.
+\citet{zheng2021change} demonstrated that transformer architectures achieve state-of-the-art change detection accuracy.
+However, most work focuses on urban change detection rather than ecological monitoring, and processes image pairs rather than temporal sequences.
+
+\subsection{Deforestation Monitoring}
+
+Global Forest Watch \citep{hansen2013high} provides the most widely used deforestation monitoring, based on Landsat-derived tree cover change maps updated annually.
+GLAD alerts \citep{hansen2016humid} improved timeliness to monthly updates using Landsat-8 data.
+Planet-NICFI \citep{planet2020nicfi} provides high-resolution basemaps for tropical forest monitoring but relies on visual interpretation rather than automated detection.
+
+\citet{maretto2020spatio} applied deep learning to Sentinel-2 for Amazon deforestation detection, achieving 88\% accuracy.
+\citet{ortega2021near} developed near-real-time deforestation detection using Sentinel-1 SAR data, robust to cloud cover but at lower spatial resolution.
+None of these systems integrate change detection with ecological impact assessment or conservation-prioritized alerting.
+
+\subsection{Landscape Ecology Metrics}
+
+Landscape ecology quantifies habitat pattern through metrics such as patch area, edge density, connectivity indices, and fragmentation measures \citep{mcgarigal2012fragstats}.
+\citet{haddad2015habitat} demonstrated that habitat fragmentation reduces biodiversity by 20--75\% depending on scale and ecosystem type.
+\citet{fahrig2017ecological} analyzed the relative effects of habitat loss versus fragmentation per se, finding that loss is the dominant driver but fragmentation contributes additional negative effects through edge effects and isolation.
+
+Remote sensing-based fragmentation assessment has been limited to static analyses \citep{vogt2007mapping} rather than continuous monitoring.
+Our HFI provides the first real-time fragmentation metric derived from change detection.
+
+\subsection{Conservation Alert Systems}
+
+Early warning systems for conservation include the FIRMS fire detection system \citep{giglio2016active}, which detects active fires from MODIS and VIIRS data within 3 hours.
+\citet{finer2018combating} developed the Real-Time Deforestation Alert System (RAISG) for the Amazon using Sentinel-1 radar data.
+\citet{brancalion2020global} proposed a prioritization framework for forest restoration but not for active threat response.
+
+% ============================================================
+% 3. Temporal Siamese Network
+% ============================================================

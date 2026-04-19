@@ -1,0 +1,62 @@
+\section{Incentive Analysis}
+
+\label{sec:incentives}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Implementer Incentives}
+
+\begin{theorem}[Incentive Compatibility]
+Under the BIB mechanism, an implementer's expected payoff is maximized
+by allocating conservation effort to genuinely achieve outcomes, provided
+the oracle network has detection probability $\delta > 0.5$ for outcome
+manipulation.
+\end{theorem}
+
+\begin{proof}
+Let $e \in [0, E]$ be the implementer's effort level and $c(e)$ the
+convex cost function. The probability of achieving the outcome target
+$O^*$ is $p(e)$, monotonically increasing in $e$. Under honest effort:
+\begin{equation}
+  U_H(e) = p(e) \cdot (\pi_{\text{base}} + \pi_{\text{bonus}}) - c(e)
+\end{equation}
+
+Under manipulation (faking outcomes):
+\begin{equation}
+  U_M = (1 - \delta) \cdot (\pi_{\text{base}} + \pi_{\text{bonus}})
+  - \delta \cdot \psi - c_m
+\end{equation}
+where $\psi$ is the penalty for detected manipulation and $c_m$ is the
+cost of manipulation.
+
+For incentive compatibility, we require $\max_e U_H(e) > U_M$. This
+holds when:
+\begin{equation}
+  \delta > \frac{\pi_{\text{base}} + \pi_{\text{bonus}} - c_m}
+  {\pi_{\text{base}} + \pi_{\text{bonus}} + \psi}
+\end{equation}
+
+Since $\psi$ includes stake slashing and reputational cost, typically
+$\psi \gg \pi_{\text{bonus}}$, making the right-hand side less than
+0.5. Thus $\delta > 0.5$ suffices.
+\end{proof}
+
+\subsection{Investor Incentives}
+
+Investors face outcome risk and market risk. We model participation as:
+\begin{equation}
+  U_I = \E[\text{Return}] - \gamma \cdot \text{Var}[\text{Return}]
+  + \alpha \cdot \text{ImpactUtility}
+\end{equation}
+where $\gamma$ is risk aversion and $\alpha$ captures impact investor
+``warm glow'' utility. The term $\alpha > 0$ allows BIBs to offer
+below-market risk-adjusted returns while still attracting capital.
+
+\subsection{Oracle Incentives}
+
+Verifiers stake tokens and earn fees for accurate verification.
+Inaccurate reporting results in stake slashing. The mechanism follows a
+Schelling point design \citep{buterin2014schellingcoin}: verifiers are
+rewarded when their assessments agree with consensus.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

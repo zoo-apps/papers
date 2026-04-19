@@ -1,0 +1,64 @@
+\section{Comparison with Alternative Approaches}
+
+
+\subsection{Fine-Tuning}
+
+\textbf{Advantages of Fine-Tuning}:
+\begin{itemize}
+    \item Optimal performance on single domain (if sufficient data)
+    \item No inference-time overhead (parameters encode all knowledge)
+\end{itemize}
+
+\textbf{Disadvantages}:
+\begin{itemize}
+    \item Cost: 667× more expensive (\$12K vs. \$18)
+    \item Catastrophic forgetting across domains (Table~\ref{tab:transfer})
+    \item Opacity: No interpretability of parameter changes
+    \item Non-composable: Cannot combine multiple fine-tunes
+\end{itemize}
+
+\subsection{RLHF and GRPO}
+
+\textbf{Vanilla GRPO} improves upon RLHF by eliminating value networks, reducing training instability. However:
+
+\begin{itemize}
+    \item Still updates parameters ($\theta \neq \theta_0$)
+    \item Advantages are numerical, not semantic
+    \item No audit trail for why performance changed
+\end{itemize}
+
+\textbf{\DSO{}} extends GRPO into the semantic realm: advantages become human-readable experiences, enabling decentralized curation.
+
+\subsection{Prompt Engineering}
+
+Manual prompt crafting is effective but:
+
+\begin{itemize}
+    \item Requires expert knowledge (not scalable)
+    \item Static (does not improve with model usage)
+    \item No mechanism for community contributions
+\end{itemize}
+
+\textbf{\DSO{}} automates prompt refinement via introspection and scales via decentralized governance.
+
+\subsection{RAG}
+
+RAG retrieves factual documents, while \DSO{} retrieves \textit{strategic insights}. Key differences:
+
+\begin{table}[t]
+\centering
+\caption{RAG vs. \DSO{}}
+\label{tab:rag-vs-dso}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Aspect} & \textbf{RAG} & \textbf{\DSO{}} \\
+\midrule
+Retrieval target & Facts & Strategies \\
+Source & External corpus & Model introspection \\
+Update mechanism & Manual corpus edit & Automated extraction \\
+Governance & Centralized & Decentralized \DAO{} \\
+Performance gain & +2--5\% & +10--15\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+

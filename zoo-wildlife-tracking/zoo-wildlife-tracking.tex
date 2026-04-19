@@ -1,0 +1,81 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+\usepackage{multirow}
+\usepackage{enumitem}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\WildTrack}{\textsc{WildTrack}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title
+\title{\textbf{Decentralized Wildlife Tracking: Privacy-Preserving\\Animal Movement Analytics on Blockchain}\\
+\large Antje Worring, Zach Kelling Paper ZOO-2026-002}
+
+\author{
+Antje Worring, Zach Kelling\\
+\texttt{research@zoo.ngo}\\[6pt]
+\textit{Antje Worring, Zach Kelling (501c3)}\\
+\url{https://zoo.ngo}
+}
+
+\date{May 2023}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+Wildlife tracking generates sensitive geospatial data that, if exposed, can be exploited by poachers targeting endangered species. Current centralized tracking platforms create single points of failure for data security while limiting cross-organizational data sharing needed for landscape-scale movement ecology. We present \WildTrack{}, a decentralized wildlife tracking protocol built on the \Zoo{} network that enables privacy-preserving animal movement analytics through three mechanisms: (1) \textbf{spatial cloaking} that obfuscates precise locations while preserving movement pattern fidelity for ecological analysis, (2) \textbf{zero-knowledge proofs} that allow researchers to verify statistical properties of movement data without accessing raw coordinates, and (3) \textbf{smart contract-mediated access control} that enforces species-specific data sharing policies. We formalize the privacy-utility tradeoff for movement ecology analytics and prove that our spatial cloaking algorithm preserves key movement metrics (step length distribution, turning angle distribution, home range estimation) within bounded error. Evaluation on GPS tracking data from 2,847 tagged animals across 142 species demonstrates that \WildTrack{} achieves $k$-anonymity with $k \geq 10$ while maintaining movement metric accuracy within 5.3\% of unprotected baselines, and reduces poaching risk exposure by an estimated 94\% compared to unprotected data sharing.
+
+\textbf{Keywords}: wildlife tracking, movement ecology, blockchain, privacy-preserving analytics, zero-knowledge proofs, anti-poaching
+\end{abstract}
+
+\tableofcontents
+
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-threat-model-and-privacy-requirements}
+\input{sections/04-spatial-cloaking-for-movement-ecology}
+\input{sections/05-zero-knowledge-movement-analytics}
+\input{sections/06-smart-contract-access-control}
+\input{sections/07-evaluation}
+\input{sections/08-case-study-cross-border-elephant-corrido}
+\input{sections/09-movement-pattern-analysis-algorithms}
+\input{sections/10-discussion}
+\input{sections/11-conclusion}
+\input{sections/99-acknowledgments}
+
+\end{document}

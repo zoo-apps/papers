@@ -1,0 +1,81 @@
+\section{Zoo DEX Architecture}
+
+\label{sec:architecture}
+
+\subsection{Hybrid AMM + CLOB}
+
+Zoo DEX operates as a hybrid exchange with two execution venues:
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=1.5cm,
+    box/.style={rectangle, draw, minimum width=2.5cm, minimum height=0.9cm, align=center, fill=blue!10, font=\small},
+    arrow/.style={->, thick}
+]
+    \node[box] (order) {User Order};
+    \node[box, below left=1.5cm and 0.5cm of order] (amm) {AMM Pools\\(LP-9010)};
+    \node[box, below right=1.5cm and 0.5cm of order] (clob) {CLOB\\(LP-9020)};
+    \node[box, below=3.5cm of order] (router) {Smart Router\\(LP-9012)};
+    \node[box, below=of router] (settle) {Settlement\\(LP-9030 Vault)};
+
+    \draw[arrow] (order) -- (amm) node[midway, left, font=\tiny] {Liquidity};
+    \draw[arrow] (order) -- (clob) node[midway, right, font=\tiny] {Price discovery};
+    \draw[arrow] (amm) -- (router);
+    \draw[arrow] (clob) -- (router);
+    \draw[arrow] (router) -- (settle);
+\end{tikzpicture}
+\caption{Zoo DEX hybrid architecture. The smart router splits orders across AMM pools and the CLOB for optimal execution.}
+\label{fig:architecture}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{AMM Pools} (LP-9010): Concentrated liquidity pools (Uniswap V3-style) for deep, passive liquidity. Liquidity providers deposit token pairs and earn fees.
+
+    \item \textbf{CLOB} (LP-9020): GPU-accelerated order book for active market makers. Supports limit orders, market orders, and stop-loss orders.
+
+    \item \textbf{Smart Router} (LP-9012): Splits orders across both venues to minimize slippage. The router evaluates:
+    \begin{equation}
+    \text{split}^* = \arg\min_{x \in [0, 1]} \text{Slippage}(x \cdot \text{order}, \text{AMM}) + \text{Slippage}((1-x) \cdot \text{order}, \text{CLOB})
+    \end{equation}
+\end{itemize}
+
+\subsection{Trading Pairs}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Pair} & \textbf{AMM Pool} & \textbf{CLOB} & \textbf{Daily Vol} & \textbf{TVL} \\
+\midrule
+ZOO/LUX & \checkmark & \checkmark & \$3.4M & \$12.1M \\
+ZOO/LUSDC & \checkmark & \checkmark & \$2.8M & \$8.7M \\
+BLG/ZOO & \checkmark & \checkmark & \$1.2M & \$3.4M \\
+ZINF/ZOO & \checkmark & $\times$ & \$0.5M & \$1.8M \\
+Model-NFT/ZOO & $\times$ & \checkmark & \$0.3M & --- \\
+\bottomrule
+\end{tabular}
+\caption{Zoo DEX trading pairs with daily volume and TVL (February 2026).}
+\label{tab:pairs}
+\end{table}
+
+\subsection{Pool Configuration}
+
+AMM pools use concentrated liquidity with configurable fee tiers:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Fee Tier} & \textbf{Tick Spacing} & \textbf{Use Case} \\
+\midrule
+0.01\% & 1 & Stablecoin pairs \\
+0.05\% & 10 & Correlated pairs (ZOO/LUX) \\
+0.30\% & 60 & Standard pairs \\
+1.00\% & 200 & Volatile / AI asset pairs \\
+\bottomrule
+\end{tabular}
+\caption{AMM fee tiers on Zoo DEX.}
+\label{tab:fees}
+\end{table}
+

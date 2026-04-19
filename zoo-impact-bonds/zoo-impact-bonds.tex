@@ -1,0 +1,127 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+\usepackage{cleveref}
+\usepackage{natbib}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage{abstract}
+\usepackage{multirow}
+\usepackage{listings}
+
+% ── Listings ──────────────────────────────────────────────────────────────────
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{green!50!black},
+  stringstyle=\color{red!60!black}
+}
+
+% ── Page Style ────────────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Antje Worring, Zach Kelling}
+\fancyhead[R]{\small Biodiversity Impact Bonds}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Metadata ──────────────────────────────────────────────────────────────────
+\title{%
+  \textbf{Biodiversity Impact Bonds: Tokenized\\Conservation Finance}\\[0.5em]
+  \large Antje Worring, Zach Kelling Paper ZOO-BIB-2026
+}
+
+\author{
+  Antje Worring, Zach Kelling\\
+  \texttt{research@zoo.ngo}\\[0.5em]
+  \small With contributions from the Zoo Open Science Network
+}
+
+\date{July 2025}
+
+% ── Macros ────────────────────────────────────────────────────────────────────
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\BIB}{\textsc{BIB}}
+\newcommand{\BIBT}{\textsc{BIB-T}}
+
+\begin{document}
+
+\zoocoverpage
+
+% ── Abstract ──────────────────────────────────────────────────────────────────
+\begin{abstract}
+\noindent
+Conservation finance faces a persistent funding gap estimated at
+\$700 billion annually. Traditional funding mechanisms---government
+grants, philanthropic donations, and environmental levies---are
+insufficient in scale and poorly aligned with measurable outcomes. We
+propose \textbf{Biodiversity Impact Bonds (BIBs)}, a tokenized
+outcome-based financing instrument that connects conservation outcomes
+to financial returns through on-chain smart contracts and decentralized
+verification. BIBs encode conservation targets (species population
+thresholds, habitat area maintenance, ecosystem service delivery) as
+programmable conditions. Capital providers purchase BIB tokens, which
+accrue value as conservation milestones are verified by a decentralized
+oracle network combining satellite imagery, acoustic monitoring, and
+citizen science observations. Upon outcome verification, smart contracts
+automatically release payments to conservation implementers and returns
+to token holders. We formalize the BIB mechanism design, prove incentive
+compatibility under rational agent assumptions, and analyze risk-return
+profiles across 12 conservation project archetypes. Simulation results
+demonstrate that tokenized BIBs reduce transaction costs by 62\%
+compared to traditional conservation trust funds while maintaining
+equivalent conservation outcomes. The framework is implemented on the
+Zoo Network and governed through Zoo DAO governance processes.
+
+\medskip
+\noindent\textbf{Keywords:} biodiversity credits, impact bonds,
+conservation finance, tokenization, smart contracts, outcome-based
+payment, decentralized verification
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════════════════════════
+
+\input{sections/01-introduction}
+\input{sections/02-background}
+\input{sections/03-mechanism-design}
+\input{sections/04-incentive-analysis}
+\input{sections/05-smart-contract-architecture}
+\input{sections/06-verification-oracle-network}
+\input{sections/07-risk-return-analysis}
+\input{sections/08-case-study-coral-triangle-reef-restorati}
+\input{sections/09-regulatory-considerations}
+\input{sections/10-discussion}
+\input{sections/11-future-work}
+\input{sections/99-conclusion}
+
+\end{document}

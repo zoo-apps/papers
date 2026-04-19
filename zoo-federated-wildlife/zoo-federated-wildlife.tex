@@ -1,0 +1,91 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+
+% ============================================================
+% Preamble
+% ============================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,fit}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{fancyhdr}
+\usepackage{authblk}
+\usepackage{abstract}
+\usepackage{natbib}
+\bibliographystyle{plainnat}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    citecolor=green!50!black,
+    urlcolor=blue!80!black
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Antje Worring, Zach Kelling}
+\lhead{Federated Learning for Wildlife Monitoring}
+\rfoot{Page \thepage}
+
+% ============================================================
+\title{\textbf{Federated Learning for Wildlife Monitoring: Privacy-Preserving Multi-Site Analysis} \\[0.5em]
+\large Cross-Institutional Data Collaboration with Differential Privacy and Heterogeneous Sensor Fusion}
+
+\author[1]{Antje Worring, Zach Kelling}
+\affil[1]{Antje Worring, Zach Kelling, Research Division \\ \texttt{research@zoo.ngo}}
+
+\date{January 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+% ============================================================
+% Abstract
+% ============================================================
+\begin{abstract}
+\noindent
+Wildlife monitoring generates vast quantities of sensitive data across geographically distributed sites managed by independent institutions with heterogeneous sensor deployments and conflicting data-sharing policies.
+Training unified machine learning models on this fragmented landscape traditionally requires centralizing raw data---a process that is often legally prohibited, ethically problematic, and logistically impractical.
+We present ZooFed, a federated learning framework purpose-built for cross-institutional wildlife monitoring that enables collaborative model training without sharing raw sensor data.
+ZooFed introduces three innovations: a \emph{Heterogeneous Sensor Adapter} (HSA) that normalizes inputs from camera traps, acoustic recorders, GPS collars, eDNA samplers, and satellite imagery into a shared feature space compatible with federated aggregation; a \emph{Conservation-Calibrated Differential Privacy} (CCDP) mechanism that allocates privacy budgets based on species sensitivity rather than uniform noise injection, providing stronger protection for endangered species locations; and a \emph{Non-IID Robust Aggregation} (NIRA) algorithm that handles the extreme statistical heterogeneity of ecological data across sites with different species assemblages, climatic conditions, and sensor configurations.
+We evaluate ZooFed on a consortium of 18 wildlife monitoring sites across 9 countries, encompassing 4.2 million sensor events from 847 species.
+ZooFed achieves 89.4\% species detection accuracy, within 2.1 percentage points of a centralized oracle with full data access, while providing $(\epsilon, \delta)$-differential privacy guarantees with $\epsilon = 2.0$ for common species and $\epsilon = 0.5$ for critically endangered species.
+Compared to local-only models, ZooFed improves detection accuracy by 18.7\% on average and by 31.2\% for rare species that benefit most from cross-site knowledge transfer.
+\end{abstract}
+
+\vspace{0.5em}
+\noindent\textbf{Keywords:} federated learning, wildlife monitoring, differential privacy, sensor fusion, cross-institutional collaboration, conservation AI
+
+% ============================================================
+% 1. Introduction
+% ============================================================
+
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-problem-formulation}
+\input{sections/04-heterogeneous-sensor-adapter}
+\input{sections/05-conservation-calibrated-differential-pri}
+\input{sections/06-non-iid-robust-aggregation}
+\input{sections/07-implementation}
+\input{sections/08-evaluation}
+\input{sections/09-case-studies}
+\input{sections/10-discussion}
+\input{sections/99-conclusion}
+
+\end{document}

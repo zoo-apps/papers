@@ -1,0 +1,43 @@
+\section{Economic Analysis}
+
+\label{sec:economics}
+
+\subsection{Token Flow}
+
+During the 9-month deployment, the ZooCoord economy processed:
+
+\begin{table}[H]
+\centering
+\caption{Token economy metrics for the deployment period.}
+\label{tab:economics}
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Total verification bounties posted & 47,200 ZOO \\
+Total bounties claimed & 38,400 ZOO \\
+Average bounty per experiment & 64.9 ZOO \\
+Average verifier earnings per month & 142.3 ZOO \\
+Staking deposits & 124,000 ZOO \\
+Slashed stakes (dishonesty) & 0 ZOO \\
+Data sharing rewards & 18,700 ZOO \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The zero slashing events suggest either effective deterrence or insufficient adversarial pressure during the initial deployment period.
+We plan to conduct incentivized red-team exercises to stress-test the economic security model.
+
+\subsection{Cost Comparison}
+
+We compare the total cost of reproducibility assurance under ZooCoord versus traditional approaches:
+
+\begin{equation}
+    C_{\text{ZooCoord}} = C_{\text{commitment}} + C_{\text{execution}} + C_{\text{verification}} + C_{\text{storage}}
+\end{equation}
+
+For a medium-complexity experiment (10 FEG nodes, 50 GB data), the median cost was 23.4 ZOO (approximately \$47 at deployment-period exchange rates), compared to an estimated \$2,800--\$8,400 for manual reproduction by a trained researcher \citep{freedman2015economics}.
+
+% ============================================================
+% 10. Discussion
+% ============================================================

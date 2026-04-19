@@ -1,0 +1,96 @@
+\section{Conclusion}
+\label{sec:conclusion}
+%% ============================================================
+
+\Beluga{} demonstrates that AI model economics benefit from application-specific blockchain infrastructure. By graduating from smart contracts on a general-purpose L2 to a sovereign L3 with custom precompiles, \Beluga{} achieves three properties simultaneously:
+
+\begin{enumerate}
+    \item \textbf{Performance}: Native precompiles reduce inference pricing from $\sim$500K gas to 5K gas, enable real-time pricing updates, and support 2,400 TPS for inference transactions.
+    \item \textbf{Specialization}: Every transaction type (model registration, inference request, training bounty, data contribution, evaluation) has dedicated on-chain support with appropriate fee structures.
+    \item \textbf{Composability}: Full EVM compatibility and Teleport bridging maintain interoperability with the Zoo DeFi ecosystem, enabling model-backed lending, inference derivatives, and cross-chain data markets.
+\end{enumerate}
+
+The migration path from Phase 1 (Zoo contracts) to Phase 3 (sovereign L3) provides a practical roadmap that validates each component before committing to independent block production. The fixed 100M \BLG{} supply, allocated across DAO treasury, inference rewards, training bounties, and DEX liquidity, creates a sustainable economy where value flows to participants who train models, curate data, host inference, evaluate outputs, and govern the network.
+
+\Beluga{} is not an isolated experiment. It is one component of the Zoo ecosystem---alongside Proof of AI consensus, the Experience Ledger, Gym training infrastructure, and Agent NFTs---that collectively builds an open, community-owned AI economy on the \Lux{} Network.
+
+%% ============================================================
+%% References
+%% ============================================================
+
+\begin{thebibliography}{99}
+
+% Zoo papers
+\bibitem{zoo-poai}
+Z.~Kelling, ``Proof of AI: A Consensus Mechanism for Verifiable Compute Contribution,'' Zoo Labs Foundation, 2024.
+
+\bibitem{zoo-dso}
+Z.~Kelling, ``Experience Ledger: Decentralized Semantic Optimization for Large Language Models,'' Zoo Labs Foundation, 2025.
+
+\bibitem{zoo-experience-ledger}
+Z.~Kelling, ``Experience Ledger: Content-Addressable Semantic Memory for AI Systems,'' Zoo Labs Foundation, 2025.
+
+\bibitem{zoo-gym}
+Z.~Kelling, ``Gym: Democratizing AI Model Training Through Comprehensive Open-Source Infrastructure,'' Zoo Labs Foundation, 2025.
+
+\bibitem{zoo-agent-nft}
+Z.~Kelling, ``Agent NFTs: A Token Standard for Autonomous AI Agents with Economic Agency,'' Zoo Labs Foundation, 2021.
+
+\bibitem{zoo-tokenomics}
+Z.~Kelling, ``Zoo Network Tokenomics: Fair Distribution Through Complete Airdrop,'' Zoo Labs Foundation, 2025.
+
+% Lux papers
+\bibitem{lux-quasar}
+Lux Industries, ``Quasar: Post-HotStuff BFT Consensus with Sub-Second Finality,'' Lux Network Technical Report, 2024.
+
+\bibitem{lux-teleport}
+Lux Industries, ``Teleport: Trustless Cross-Chain Token Transfers via BLS Aggregate Signatures,'' Lux Network Technical Report, 2024.
+
+\bibitem{lux-precompiles}
+Lux Industries, ``Lux Precompile Addressing Standard (LP-9000),'' Lux Improvement Proposal, 2024.
+
+\bibitem{lux-standard}
+Lux Industries, ``@luxfi/standard: Smart Contract Library for Lux Network,'' \url{https://github.com/luxfi/standard}, 2024.
+
+% Training methods
+\bibitem{hu2021lora}
+E.~J.~Hu et al., ``LoRA: Low-Rank Adaptation of Large Language Models,'' \textit{arXiv:2106.09685}, 2021.
+
+\bibitem{dettmers2023qlora}
+T.~Dettmers et al., ``QLoRA: Efficient Finetuning of Quantized Language Models,'' \textit{NeurIPS}, 2023.
+
+\bibitem{shao2024deepseekmath}
+Z.~Shao et al., ``DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models,'' \textit{arXiv:2402.03300}, 2024.
+
+% AI compute networks
+\bibitem{bittensor2023}
+Opentensor Foundation, ``Bittensor: A Peer-to-Peer Intelligence Market,'' Whitepaper, 2023.
+
+\bibitem{render2023}
+Render Network, ``The Render Network Whitepaper,'' 2023.
+
+\bibitem{akash2020}
+Akash Network, ``Akash: The Decentralized Cloud,'' Whitepaper, 2020.
+
+\bibitem{ocean2019}
+Ocean Protocol Foundation, ``Ocean Protocol: Tools for the Web3 Data Economy,'' Whitepaper, 2019.
+
+\bibitem{singularitynet2019}
+SingularityNET, ``SingularityNET: A Decentralized, Open Market and Inter-Network for AIs,'' Whitepaper, 2019.
+
+% App-chain precedent
+\bibitem{dydx2023}
+dYdX Foundation, ``dYdX v4: An Open-Source Protocol for Decentralized Perpetual Trading,'' 2023.
+
+% Cryptography
+\bibitem{boneh2001bls}
+D.~Boneh et al., ``Short Signatures from the Weil Pairing,'' \textit{ASIACRYPT}, 2001.
+
+\bibitem{lux-fhe}
+Lux Industries, ``Fully Homomorphic Encryption on Lux K-Chain,'' Lux Network Technical Report, 2025.
+
+\bibitem{lux-mpc}
+Lux Industries, ``Threshold Multi-Party Computation for Lux Validator Sets,'' Lux Network Technical Report, 2025.
+
+\end{thebibliography}
+

@@ -1,0 +1,99 @@
+\section{Specification}
+
+
+\subsection{Replicate Configuration}
+
+\begin{lstlisting}[language=yaml,caption={replicate-config ConfigMap}]
+dbs:
+  - path: /app/data/data.db
+    replicas:
+      - type: s3
+        bucket: zoo-data
+        path: ${POD_NAME}
+        endpoint: ${LITESTREAM_S3_ENDPOINT}
+        region: sfo3
+        force-path-style: true
+        sync-interval: 1s
+        snapshot-interval: 1h
+\end{lstlisting}
+
+\begin{itemize}
+\item \texttt{sync-interval: 1s} --- WAL frames shipped every
+  second, achieving $\leq 1$\,s RPO.
+\item \texttt{snapshot-interval: 1h} --- Full snapshot every hour
+  bounds restore time (restore replays at most 1 hour of WAL).
+\item \texttt{force-path-style: true} --- Required for
+  DigitalOcean Spaces and MinIO.
+\end{itemize}
+
+\subsection{Encryption}
+
+WAL segments and snapshots are encrypted at rest using
+\texttt{hanzoai/age} with per-environment X25519 key pairs:
+
+\begin{lstlisting}[language=yaml,caption={Encryption configuration}]
+dbs:
+  - path: /app/data/data.db
+    replicas:
+      - type: s3
+        bucket: zoo-data
+        path: ${POD_NAME}
+        encryption:
+          type: age
+          key: ${AGE_SECRET_KEY}
+\end{lstlisting}
+
+Key management:
+\begin{itemize}
+\item Encryption keys stored in Zoo KMS (K-Chain) or
+  Kubernetes secrets (bootstrapping).
+\item One key pair per environment (devnet, testnet, mainnet).
+\item Key rotation: generate new pair, re-snapshot with new key,
+  update secret.  Old WAL segments remain readable with old key
+  until next snapshot.
+\end{itemize}
+
+\subsection{Service Applicability}
+
+\begin{table}[h]
+\centering
+\caption{Zoo services and replication targets}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Service & Kind & Data & Replicate \\
+\midrule
+zoo-bridge & Deployment & SQLite (future) & Yes \\
+zoo-gateway & CRD (ZooGateway) & Stateless & No \\
+zoo-explorer & Deployment & PostgreSQL & No \\
+zoo-chain & StatefulSet & Node data (PVC) & No\footnotemark \\
+zoo-operator & Deployment & Stateless & No \\
+sql & StatefulSet & PostgreSQL & No \\
+kv & StatefulSet & Valkey & No \\
+ingress & Deployment & Stateless & No \\
+\bottomrule
+\end{tabular}
+\end{table}
+\footnotetext{Chain node data replication uses PVC snapshots and
+  chain sync, not WAL streaming.  Replicate is for SQLite only.}
+
+As services migrate from PostgreSQL to Base/SQLite, they gain
+replicate sidecars with zero code changes --- only a K8s patch.
+
+\subsection{Recovery Guarantees}
+
+\begin{description}
+\item[RPO $\leq 1$\,s] WAL frames synced every second.
+  In the worst case, the last second of writes is lost.
+
+\item[RTO $\approx$ seconds] Init container restores latest
+  snapshot ($\leq 1$ hour old) plus WAL replay.  Typical
+  restore: 2--5 seconds for databases under 1\,GB.
+
+\item[Durability] S3 provides 11 nines of durability.
+  Snapshots are LZ4-compressed and optionally age-encrypted.
+
+\item[Consistency] SQLite WAL mode guarantees atomic commits.
+  Replicate ships complete WAL frames, preserving transaction
+  boundaries.
+\end{description}
+

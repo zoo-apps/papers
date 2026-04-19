@@ -1,0 +1,31 @@
+\section{Introduction}
+
+
+The Zoo ecosystem spans three chains with distinct purposes:
+
+\begin{itemize}
+    \item \textbf{Lux L0} (chain ID 96369): The base layer providing consensus, security, and native token economics. LUX is the gas token.
+
+    \item \textbf{Zoo L2} (chain ID 200200): A conservation-focused chain for AI/ML workloads, decentralized science, and conservation finance. ZOO is the native token.
+
+    \item \textbf{Beluga L3} (chain ID 420420): A specialized chain for AI model economics---model licensing, inference markets, and compute credit trading~\cite{beluga-l3-whitepaper}. BLG is the native token.
+\end{itemize}
+
+Cross-chain asset transfer is essential for this ecosystem: researchers stake LUX on Lux L0, train models on Zoo L2, and monetize them on Beluga L3. Each transfer involves not just fungible tokens but also AI-specific assets (model NFTs, data commitments, inference credits) that require semantic bridging beyond simple lock-and-mint.
+
+Existing bridge designs (lock-and-mint, liquidity pools, optimistic verification) were designed for fungible token transfers. AI assets present unique challenges: model NFTs must preserve metadata integrity, data commitments must maintain cryptographic binding, and inference credits must be atomically converted between chain-specific denominations.
+
+\subsection{Contributions}
+
+\begin{enumerate}
+    \item \textbf{Asset Taxonomy}: Four bridgeable asset classes with chain-specific representations (Section~\ref{sec:assets}).
+
+    \item \textbf{Warp Bridge}: Verified cross-chain messaging with PQ-safe BLS signatures for model NFTs and data commitments (Section~\ref{sec:warp}).
+
+    \item \textbf{Teleport Bridge}: Instant token transfers for ZOO $\leftrightarrow$ LUX with sub-second finality (Section~\ref{sec:teleport}).
+
+    \item \textbf{Beluga Relay}: Chained Warp messages for L0 $\to$ L2 $\to$ L3 transfers (Section~\ref{sec:beluga}).
+
+    \item \textbf{Security Analysis}: Reduction of bridge safety to Warp protocol safety (Section~\ref{sec:security}).
+\end{enumerate}
+

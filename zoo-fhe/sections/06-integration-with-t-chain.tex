@@ -1,0 +1,51 @@
+\section{Integration with T-Chain}
+
+\label{sec:tchain}
+%----------------------------------------------------------------------
+
+\Zoo{} \TChain{} (Threshold Chain) combines threshold signing~\cite{zoo-threshold-signatures} with FHE in a unified VM execution environment.
+
+\subsection{FHE Opcodes}
+
+The \TChain{} VM extends the EVM with FHE-specific opcodes:
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Opcode} & \textbf{Operation} & \textbf{Gas Cost} \\
+\midrule
+\texttt{FHE\_ENC} & Encrypt plaintext to \TFHE{}/\CKKS{} ciphertext & 50{,}000 \\
+\texttt{FHE\_ADD} & Homomorphic addition & 10{,}000 \\
+\texttt{FHE\_MUL} & Homomorphic multiplication (+ relin) & 200{,}000 \\
+\texttt{FHE\_BOOT} & Programmable bootstrap (\TFHE{}) & 500{,}000 \\
+\texttt{FHE\_RESCALE} & Rescale \CKKS{} ciphertext & 80{,}000 \\
+\texttt{FHE\_ROTATE} & Rotate \CKKS{} slots & 150{,}000 \\
+\texttt{FHE\_DEC\_REQ} & Request threshold decryption & 1{,}000{,}000 \\
+\bottomrule
+\end{tabular}
+\caption{FHE opcodes added to the \TChain{} VM}
+\label{tab:opcodes}
+\end{table}
+
+Gas costs reflect computational load. \texttt{FHE\_DEC\_REQ} is the most expensive because it triggers a multi-round threshold decryption protocol across 67+ validators.
+
+\subsection{GPU Acceleration Configuration}
+
+Validators configure GPU FHE acceleration in their node configuration:
+
+\begin{itemize}
+  \item \texttt{fhe.gpu.enabled}: boolean, default \texttt{true} for \TChain{} validators.
+  \item \texttt{fhe.gpu.device}: CUDA device index (supports multi-GPU).
+  \item \texttt{fhe.gpu.max\_batch}: maximum bootstrap batch size (default 4096).
+  \item \texttt{fhe.gpu.memory\_limit}: GPU memory reserved for FHE (default 40\,GB).
+\end{itemize}
+
+Validators without GPU support may still participate in consensus and threshold decryption but cannot execute FHE opcodes. Block producers for FHE-heavy blocks are selected preferentially from the GPU-enabled validator subset.
+
+\subsection{Ciphertext Storage}
+
+\TFHE{} ciphertexts (LWE, $\sim$5\,KB each) and \CKKS{} ciphertexts ($\sim$3.75\,MB at full level) are stored in a dedicated ciphertext trie separate from the account state trie. Content-addressing (Blake3 hash) enables deduplication. State rent is charged per ciphertext per epoch to bound storage growth.
+
+%----------------------------------------------------------------------

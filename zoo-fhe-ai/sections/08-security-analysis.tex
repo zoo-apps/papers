@@ -1,0 +1,30 @@
+\section{Security Analysis}
+
+
+\subsection{Encryption Security}
+
+\begin{theorem}[Semantic Security]
+Zoo FHE achieves IND-CPA security under the Ring-LWE assumption with parameters providing 128-bit post-quantum security.
+\end{theorem}
+
+The parameters ($N = 2^{14}$, $\log Q = 438$) are chosen according to the Homomorphic Encryption Standard~\cite{albrecht2018hes} and provide security against both classical and quantum adversaries.
+
+\subsection{Threshold Security}
+
+\begin{theorem}[Threshold Robustness]
+Under the $(5, 9)$-threshold scheme, an adversary controlling up to 4 committee members cannot decrypt any ciphertext.
+\end{theorem}
+
+\begin{proof}
+Shamir secret sharing over the key space ensures that fewer than $t = 5$ shares reveal no information about the secret key. Each partial decryption is verified by a zero-knowledge proof, preventing malicious shares from corrupting the reconstruction.
+\end{proof}
+
+\subsection{Data Privacy Guarantees}
+
+\begin{enumerate}
+    \item \textbf{Input privacy}: Data providers encrypt locally; the Zoo network never sees plaintext inputs.
+    \item \textbf{Model privacy}: Model weights are encrypted; neither validators nor users learn the model parameters.
+    \item \textbf{Output privacy}: Inference results remain encrypted until threshold decryption is authorized.
+    \item \textbf{Gradient privacy}: Individual training contributions are encrypted; only the aggregate is revealed.
+\end{enumerate}
+

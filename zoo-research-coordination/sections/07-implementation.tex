@@ -1,0 +1,59 @@
+\section{Implementation}
+
+\label{sec:implementation}
+
+\subsection{Protocol Stack}
+
+ZooCoord is implemented as a layered protocol stack on the Zoo Network:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=0.5cm,
+    layer/.style={rectangle, draw, minimum width=10cm, minimum height=0.8cm, text centered, font=\small},
+]
+    \node[layer, fill=red!10] (app) {Application Layer: Experiment Dashboard, CLI Tools, IDE Plugins};
+    \node[layer, fill=orange!10, below=of app] (coord) {Coordination Layer: Commitment Manager, FEG Scheduler, Verification Market};
+    \node[layer, fill=yellow!10, below=of coord] (exec) {Execution Layer: Container Runtime, Provenance Logger, Secure Aggregation};
+    \node[layer, fill=green!10, below=of exec] (storage) {Storage Layer: IPFS/Filecoin (Data), Zoo Chain (Commitments, Proofs, Tokens)};
+    \node[layer, fill=blue!10, below=of storage] (network) {Network Layer: libp2p (P2P), Zoo Network Consensus};
+\end{tikzpicture}
+\caption{ZooCoord protocol stack architecture.}
+\label{fig:stack}
+\end{figure}
+
+\subsection{Key Software Components}
+
+\begin{table}[H]
+\centering
+\caption{ZooCoord software components and implementation details.}
+\label{tab:components}
+\begin{tabularx}{\textwidth}{@{}llcX@{}}
+\toprule
+\textbf{Component} & \textbf{Language} & \textbf{Lines} & \textbf{Description} \\
+\midrule
+Commitment Manager & Rust & 8,400 & Commitment creation, signing, deviation tracking \\
+FEG Engine & Rust & 12,100 & Graph construction, scheduling, execution orchestration \\
+Provenance Logger & Rust & 4,200 & Merkle DAG construction, attestation verification \\
+Verification Runtime & Go & 6,800 & Sandboxed re-execution, output comparison \\
+Market Smart Contracts & Solidity & 3,100 & Bounties, staking, dispute resolution \\
+CLI Tools & Python & 5,600 & Researcher-facing experiment management \\
+Dashboard & TypeScript & 9,200 & Web interface for experiment monitoring \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Integration with Existing Tools}
+
+ZooCoord integrates with established research tools through adapters:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Jupyter:} A kernel extension automatically captures cell execution provenance and generates FEG nodes from notebook cells.
+    \item \textbf{R/RStudio:} An R package wraps common analysis functions with provenance logging and commitment checking.
+    \item \textbf{Nextflow/Snakemake:} Bidirectional translators convert existing workflow definitions into FEGs and vice versa.
+    \item \textbf{Git:} A Git hook automatically updates the commitment record when analysis code changes, classifying modifications by deviation severity.
+\end{itemize}
+
+% ============================================================
+% 8. Evaluation
+% ============================================================

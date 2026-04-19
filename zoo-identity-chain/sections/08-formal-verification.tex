@@ -1,0 +1,50 @@
+\section{Formal Verification}
+
+
+\subsection{Lean 4 Proof Architecture}
+
+The trust semantics of \IChain{} are formally verified in Lean 4 across three modules:
+
+\textbf{Trust/Authority.lean} --- Proves that authority delegation is transitive but bounded. A DID with authority level $\ell$ can delegate to another DID at level $\leq \ell - 1$. This prevents authority inflation.
+
+\begin{theorem}[Authority Non-Inflation]
+For any chain of authority delegations $d_0 \to d_1 \to \cdots \to d_k$, the authority level is strictly decreasing:
+\[
+\text{auth}(d_0) > \text{auth}(d_1) > \cdots > \text{auth}(d_k)
+\]
+\end{theorem}
+
+\textbf{Trust/Vouch.lean} --- Proves that the vouching system is Sybil-resistant under the assumption that at most $f < k/2$ of the vouching DIDs are controlled by a single entity. The proof establishes that forging a Level 1 credential requires controlling $\geq k/2 + 1$ independent DIDs.
+
+\begin{theorem}[Vouch Sybil Resistance]
+If an adversary controls at most $f$ DIDs where $f < \lfloor k/2 \rfloor + 1$, then the adversary cannot produce a valid vouch chain for a Level 1 credential.
+\end{theorem}
+
+\textbf{Trust/Revocation.lean} --- Proves that revocation is:
+\begin{enumerate}
+\item \textbf{Immediate}: A revoked credential fails verification in the next block.
+\item \textbf{Irreversible}: Once revoked, a credential cannot be un-revoked (the accumulator update is one-way).
+\item \textbf{Non-interfering}: Revoking one credential does not affect the validity of others.
+\end{enumerate}
+
+\subsection{Verification Coverage}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llc}
+\toprule
+\textbf{Module} & \textbf{Property} & \textbf{Status} \\
+\midrule
+Trust/Authority.lean & Non-inflation & Verified \\
+Trust/Authority.lean & Bounded delegation depth & Verified \\
+Trust/Vouch.lean & Sybil resistance & Verified \\
+Trust/Vouch.lean & Convergence (finite vouching) & Verified \\
+Trust/Revocation.lean & Immediate revocation & Verified \\
+Trust/Revocation.lean & Irreversibility & Verified \\
+Trust/Revocation.lean & Non-interference & Verified \\
+\bottomrule
+\end{tabular}
+\caption{Formal verification status}
+\label{tab:verification}
+\end{table}
+

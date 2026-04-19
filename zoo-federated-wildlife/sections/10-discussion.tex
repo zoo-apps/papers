@@ -1,0 +1,25 @@
+\section{Discussion}
+
+\label{sec:discussion}
+
+\subsection{Implications for Conservation}
+
+ZooFed demonstrates that federated learning can bridge the institutional fragmentation of wildlife monitoring data without requiring data centralization.
+The 18.7\% average accuracy improvement over local-only models translates to earlier detection of population declines, more accurate occupancy estimates, and better-informed conservation decisions.
+
+\subsection{Limitations}
+
+Several limitations constrain the current system.
+First, the HSA architecture requires at least some sites with overlapping sensor types for cross-modal alignment; purely disjoint sensor deployments cannot leverage cross-modal transfer.
+Second, the CCDP mechanism requires IUCN Red List assessments, which may lag actual conservation status.
+Third, asynchronous participation introduces staleness in gradient updates from intermittently connected sites, partially addressed by learning rate decay for stale updates.
+
+\subsection{Scalability}
+
+The current deployment supports 18 sites.
+The NIRA clustering approach scales as $O(K^2)$ for pairwise similarity computation, which becomes expensive beyond $K \approx 100$.
+We are investigating approximate nearest-neighbor methods for scalable clustering.
+
+% ============================================================
+% 11. Conclusion
+% ============================================================

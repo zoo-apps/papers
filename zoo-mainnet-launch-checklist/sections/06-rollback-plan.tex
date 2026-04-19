@@ -1,0 +1,62 @@
+\section{Rollback Plan}
+
+
+If mainnet exhibits critical failures (consensus divergence, bridge exploit,
+data corruption), the following rollback procedure activates.
+
+\subsection{Chain Halt Conditions}
+
+A chain halt is triggered if \textbf{any} of the following occur:
+
+\begin{enumerate}[nosep]
+  \item Consensus divergence: two or more validators on different forks for $>$60s.
+  \item Bridge exploit: unauthorized mint or release detected.
+  \item Data corruption: state root mismatch across $>$1 validator.
+  \item Critical vulnerability: zero-day with active exploitation.
+\end{enumerate}
+
+\subsection{Halt Procedure}
+
+\begin{tabularx}{\textwidth}{@{}l X l@{}}
+\toprule
+\textbf{\#} & \textbf{Action} & \textbf{Owner} \\
+\midrule
+1 & CTO authorizes chain halt                                          & CTO    \\
+2 & Disable bridge (freeze lock/mint contracts on both sides)          & Bridge \\
+3 & Coordinate validator shutdown via authenticated channel             & DevOps \\
+4 & All 5 founding validators stop block production                    & DevOps \\
+5 & Public status page updated: \texttt{status.zoo.ngo}                & Comms  \\
+6 & Post-mortem investigation begins (target: root cause within 4h)    & Core   \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Genesis Reset (Last Resort)}
+
+If the chain state is unrecoverable:
+
+\begin{enumerate}[nosep]
+  \item Export last-known-good state snapshot from all validators.
+  \item Generate new genesis from snapshot (preserving balances and contract state).
+  \item Validators re-key via K-Chain key ceremony.
+  \item Re-execute bootstrap sequence (Section~3.1).
+  \item Bridge re-activation with fresh MPC keys via T-Chain.
+  \item Independent audit of new genesis state before restart.
+\end{enumerate}
+
+\noindent This procedure destroys transaction history after the snapshot.
+It is used only when all other recovery options are exhausted.
+
+\subsection{Communication Plan}
+
+\begin{tabularx}{\textwidth}{@{}l X l@{}}
+\toprule
+\textbf{\#} & \textbf{Action} & \textbf{Owner} \\
+\midrule
+1 & Status page updated within 5 minutes of halt decision         & Comms  \\
+2 & Community notification via Discord, Twitter, blog              & Comms  \\
+3 & Hourly updates until resolution                                & Comms  \\
+4 & Post-mortem published within 72 hours                          & Core   \\
+\bottomrule
+\end{tabularx}
+
+%% ---------------------------------------------------------------------------

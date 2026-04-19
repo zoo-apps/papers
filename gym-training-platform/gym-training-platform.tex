@@ -1,0 +1,51 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{natbib}
+\usepackage{doi}
+% geometry loaded by zoocover
+
+\title{Gym: Democratizing AI Model Training Through\\Comprehensive Open-Source Infrastructure}
+
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Hanzo Industries \quad Lux Industries \quad Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{September 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+The democratization of artificial intelligence remains hindered by the substantial computational costs and technical complexity of model training. We present \textbf{Gym}, an open-source AI model training platform designed to lower these barriers through comprehensive infrastructure supporting 100+ model architectures, efficient training algorithms, and accessible interfaces. Originally forked from LLaMA Factory in May 2023, Gym has evolved over 2.5 years into a production-ready system incorporating state-of-the-art methods including full fine-tuning, Low-Rank Adaptation (LoRA), Reinforcement Learning from Human Feedback (RLHF), and recently Group Relative Policy Optimization (GRPO). Our Training-Free GRPO implementation achieves comparable performance to gradient-based methods at 99.8\% cost reduction (\$18 vs \$10,000+ for domain adaptation), demonstrating that democratization need not compromise capability. Gym has enabled researchers worldwide to fine-tune models ranging from 0.5B to 72B parameters on consumer hardware, facilitated educational initiatives across 50+ institutions, and powered production deployments serving millions of users. As a 501(c)(3) non-profit project, Gym embodies the principle that advanced AI should be accessible to all, not just well-resourced laboratories. Code, documentation, and pre-trained models are available at \url{https://github.com/zooai/gym}.
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-background-and-motivation}
+\input{sections/03-architecture-overview}
+\input{sections/04-training-methods}
+\input{sections/05-multi-modal-training}
+\input{sections/06-performance-optimizations}
+\input{sections/07-distributed-training}
+\input{sections/08-educational-impact}
+\input{sections/09-integration-with-zoo-ecosystem}
+\input{sections/10-evaluation-and-benchmarks}
+\input{sections/11-comparison-with-related-work}
+\input{sections/12-future-work}
+\input{sections/13-conclusion}
+\input{sections/99-acknowledgments}
+
+\end{document}

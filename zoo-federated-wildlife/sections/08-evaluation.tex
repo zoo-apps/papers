@@ -1,0 +1,136 @@
+\section{Evaluation}
+
+\label{sec:evaluation}
+
+\subsection{Experimental Setup}
+
+We evaluate ZooFed on a consortium of 18 wildlife monitoring sites:
+
+\begin{table}[H]
+\centering
+\caption{Evaluation consortium overview.}
+\label{tab:consortium}
+\begin{tabularx}{\textwidth}{@{}llccl@{}}
+\toprule
+\textbf{Site} & \textbf{Region} & \textbf{Species} & \textbf{Events (K)} & \textbf{Sensors} \\
+\midrule
+Serengeti & East Africa & 247 & 842 & Camera, Acoustic \\
+Borneo Rainforest & SE Asia & 312 & 437 & Camera, Acoustic, eDNA \\
+Amazon Basin & South America & 489 & 623 & Camera, Acoustic, eDNA \\
+Great Barrier Reef & Oceania & 187 & 284 & Acoustic, eDNA \\
+Yellowstone & North America & 134 & 512 & Camera, GPS, Acoustic \\
+Bialowieza & Europe & 98 & 347 & Camera, Acoustic \\
+Western Ghats & South Asia & 276 & 218 & Camera, Acoustic \\
+Congo Basin & Central Africa & 341 & 189 & Camera \\
+Sundarbans & South Asia & 167 & 156 & Camera, eDNA \\
+Others (9 sites) & Various & 43--198 & 84--212 & Various \\
+\midrule
+\textbf{Total} & & 847 unique & 4,213 & \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Baselines}
+
+We compare ZooFed against five baselines:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Local Only:} Each site trains independently on its own data.
+    \item \textbf{Centralized Oracle:} All data pooled centrally (upper bound; not practically feasible).
+    \item \textbf{FedAvg:} Standard federated averaging \citep{mcmahan2017communication}.
+    \item \textbf{FedProx:} Federated averaging with proximal regularization \citep{li2020federated}.
+    \item \textbf{FedAvg + Uniform DP:} FedAvg with uniform $(\epsilon=2.0)$-differential privacy.
+\end{enumerate}
+
+\subsection{Overall Detection Accuracy}
+
+\begin{table}[H]
+\centering
+\caption{Species detection accuracy (\%) across methods.}
+\label{tab:accuracy}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Method} & \textbf{Overall} & \textbf{Common} & \textbf{Rare} & \textbf{CR/EN} \\
+\midrule
+Local Only & 70.7 & 78.4 & 52.3 & 48.1 \\
+Centralized Oracle & 91.5 & 94.2 & 84.7 & 82.3 \\
+FedAvg & 85.2 & 90.1 & 72.8 & 69.4 \\
+FedProx & 86.4 & 90.8 & 75.1 & 71.8 \\
+FedAvg + Uniform DP & 82.7 & 87.3 & 69.4 & 64.2 \\
+\textbf{ZooFed (NIRA + CCDP)} & \textbf{89.4} & \textbf{92.8} & \textbf{83.5} & \textbf{79.3} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+ZooFed achieves 89.4\% overall accuracy, within 2.1 points of the centralized oracle.
+The advantage is most pronounced for rare species (+31.2\% over local-only) and CR/EN species (+31.2\% over local-only), demonstrating effective cross-site knowledge transfer.
+
+\subsection{Component Ablation}
+
+\begin{table}[H]
+\centering
+\caption{Ablation study: contribution of each ZooFed component.}
+\label{tab:ablation}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Configuration} & \textbf{Overall Acc. (\%)} & \textbf{CR/EN Acc. (\%)} \\
+\midrule
+ZooFed Full & 89.4 & 79.3 \\
+$-$ HSA (visual only sites) & 84.1 ($-$5.3) & 72.4 ($-$6.9) \\
+$-$ CCDP (uniform DP) & 87.2 ($-$2.2) & 64.2 ($-$15.1) \\
+$-$ NIRA (standard FedAvg) & 85.8 ($-$3.6) & 73.1 ($-$6.2) \\
+$-$ Species embedding sharing & 87.7 ($-$1.7) & 71.8 ($-$7.5) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+CCDP has the largest impact on CR/EN species accuracy ($-$15.1\% when replaced with uniform DP), confirming that species-calibrated privacy is essential for conservation-relevant performance.
+
+\subsection{Heterogeneous Sensor Evaluation}
+
+We evaluate the HSA module by comparing detection accuracy across sensor modalities:
+
+\begin{table}[H]
+\centering
+\caption{Detection accuracy by sensor modality.}
+\label{tab:sensor_accuracy}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Modality} & \textbf{Local Only (\%)} & \textbf{ZooFed (\%)} & \textbf{Improvement} \\
+\midrule
+Camera Traps & 74.2 & 90.7 & +16.5 \\
+Acoustic & 68.3 & 86.4 & +18.1 \\
+GPS Telemetry & 61.7 & 81.2 & +19.5 \\
+eDNA & 72.8 & 88.1 & +15.3 \\
+Multi-modal (2+) & 79.1 & 93.2 & +14.1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+GPS telemetry shows the largest improvement (+19.5\%), likely because movement patterns are most consistent across sites, enabling strong knowledge transfer.
+Multi-modal sites achieve the highest absolute accuracy (93.2\%), demonstrating the value of sensor diversity.
+
+\subsection{Communication and Convergence}
+
+ZooFed converges in 47 federated rounds with gradient sparsification, compared to 82 rounds for full-gradient FedAvg.
+Total communication per site over full training is 94 MB (with sparsification) vs.\ 1.64 GB (without), a 17.4x reduction.
+
+\begin{table}[H]
+\centering
+\caption{Communication efficiency comparison.}
+\label{tab:communication}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Method} & \textbf{Rounds} & \textbf{Per-Round (MB)} & \textbf{Total (MB)} \\
+\midrule
+FedAvg (full gradient) & 82 & 20.0 & 1,640 \\
+FedAvg + compression & 89 & 2.0 & 178 \\
+ZooFed (full gradient) & 52 & 20.0 & 1,040 \\
+ZooFed (compressed) & 47 & 2.0 & 94 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================
+% 9. Case Studies
+% ============================================================

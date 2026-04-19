@@ -1,0 +1,43 @@
+\section{System Design for Citizen Science}
+
+\label{sec:system}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Deployment Architecture}
+
+TaxoNet is deployed as a REST API service behind a geographic routing
+layer. When a citizen scientist submits a photograph:
+
+\begin{enumerate}
+  \item \textbf{Candidate filtering}: Geographic and temporal priors
+    reduce the candidate species set to 50--200 plausible species.
+  \item \textbf{Feature extraction}: The ViT backbone extracts visual
+    features in approximately 45\,ms on an NVIDIA T4 GPU.
+  \item \textbf{Few-shot matching}: Taxonomic prototypical matching
+    against the candidate set runs in approximately 12\,ms.
+  \item \textbf{Result presentation}: Top-5 predictions with confidence
+    scores and diagnostic field marks are returned to the user.
+\end{enumerate}
+
+Total inference latency is under 100\,ms per image.
+
+\subsection{Prototype Management}
+
+Species prototypes are computed offline from curated reference images and
+stored in a vector database indexed by taxonomy and geography. New
+species can be added by computing and inserting their prototype
+embeddings---no model retraining is required.
+
+\subsection{Active Learning Loop}
+
+Citizen science identifications that disagree with model predictions
+are flagged for expert review. Confirmed identifications update
+prototypes:
+\begin{equation}
+  \mathbf{c}_{\text{new}}^{(s)} = (1 - \eta) \mathbf{c}_{\text{old}}^{(s)}
+  + \eta \cdot \phi(x_{\text{confirmed}})
+\end{equation}
+where $\eta = 0.01$ is the update rate.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

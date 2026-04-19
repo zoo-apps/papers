@@ -1,0 +1,31 @@
+\section{MPC Wallet Creation}
+
+\label{sec:wallet}
+
+\subsection{Permissioned Keygen}
+
+Wallet creation on \TChain{} is gated by the \texttt{AuthorizedChains} registry. A requesting chain (e.g., the Zoo EVM L2 bridge) submits a \texttt{KeygenTx} specifying:
+
+\begin{itemize}
+\item \texttt{chain\_id}: The requesting chain's identifier.
+\item \texttt{threshold}: The desired $t$ value.
+\item \texttt{key\_type}: \texttt{schnorr} (FROST) or \texttt{ecdsa} (CGGMP21).
+\item \texttt{metadata}: Application-specific context (e.g., bridge address, DID document hash).
+\end{itemize}
+
+\subsection{Keygen Flow}
+
+\begin{enumerate}
+\item The \texttt{KeygenTx} enters the \ThresholdVM{} mempool and is included in a block.
+\item \ThresholdVM{} selects $n$ validators from the active set, weighted by stake.
+\item A DKG session $\mathcal{S}$ is created; each selected validator receives a round-1 prompt.
+\item Validators execute the DKG (FROST or CGGMP21) across $R$ rounds, posting round messages as chain transactions.
+\item On successful completion, \ThresholdVM{} records the group public key $Y$ and \texttt{key\_id} in the chain state.
+\item Each validator stores their secret share $s_i$ in local encrypted storage, keyed by \texttt{key\_id}.
+\end{enumerate}
+
+\subsection{Public Key Derivation}
+
+For FROST keys, the group public key $Y$ is a standard Ed25519 point. For CGGMP21 keys, $Y$ is a secp256k1 point. In both cases, the corresponding blockchain address is derived using the target chain's standard address derivation (e.g., Keccak-256 for Ethereum, SHA-256 + RIPEMD-160 for Bitcoin). Hierarchical derivation follows BIP-32 for ECDSA keys, as described in \cite{zoo-key-management}.
+
+%% --------------------------------------------------------------------------

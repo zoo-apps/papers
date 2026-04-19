@@ -1,0 +1,11 @@
+\section{Related Work}
+
+
+\textbf{GPU-Accelerated Blockchains}: Solana~\cite{yakovenko2018solana} uses GPU for signature verification but not EVM execution. The Lux GPU EVM~\cite{lux-evmgpu-benchmark} is the first to apply GPU parallelism to opcode execution.
+
+\textbf{High-Throughput L2s}: MegaETH targets high TPS via optimistic execution but lacks GPU acceleration. Eclipse uses SVM (Solana VM) as an L2, which is not EVM-compatible.
+
+\textbf{AI-Optimized Chains}: Bittensor~\cite{bittensor2023} incentivizes AI compute but does not execute inference on-chain. Zoo Network's PoAI~\cite{zoo-poai-consensus} integrates AI verification into consensus.
+
+\textbf{Quasar Consensus}: The Lux Quasar protocol~\cite{lux-quasar-consensus,lux-quasar-benchmarks} provides the consensus foundation for Zoo Network, achieving 10ms finality with $O(n)$ message complexity.
+

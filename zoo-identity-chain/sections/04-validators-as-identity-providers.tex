@@ -1,0 +1,27 @@
+\section{Validators as Identity Providers}
+
+
+\subsection{Validator Identity Committee}
+
+In \IChain{}, validators collectively serve as the identity provider. No single validator can issue credentials unilaterally. Instead, a committee of $n$ validators is selected per epoch, and credential issuance requires threshold agreement from $t$ of $n$ members.
+
+\begin{definition}[Identity Committee]
+An identity committee $\mathcal{C}_e$ for epoch $e$ is a subset of validators $\{v_1, \ldots, v_n\} \subset \mathcal{V}$ selected by stake-weighted sortition. The committee threshold is $t = \lfloor 2n/3 \rfloor + 1$.
+\end{definition}
+
+This ensures that credential issuance inherits the same Byzantine fault tolerance as consensus: an adversary must control $> 1/3$ of staked weight to forge a credential.
+
+\subsection{Credential Issuance Flow}
+
+\begin{enumerate}
+\item \textbf{Request}: Subject submits a credential request $\text{req} = (\text{subject\_did}, \text{claim\_type}, \text{evidence})$ to the \IdentityVM{}.
+\item \textbf{Verification}: Each committee member $v_i$ independently verifies the evidence against the claim type's verification policy.
+\item \textbf{Partial Signature}: If verified, $v_i$ produces a partial threshold signature $\sigma_i$ over the credential body.
+\item \textbf{Aggregation}: Once $t$ partial signatures are collected, the \IdentityVM{} aggregates them into a full credential signature $\sigma = \text{Aggregate}(\sigma_1, \ldots, \sigma_t)$.
+\item \textbf{Issuance}: The credential is stored on-chain (commitment only; claim values remain with the subject) and an issuance event is emitted.
+\end{enumerate}
+
+\subsection{Trusted Issuer Registry}
+
+Not all credentials require validator committee issuance. \IChain{} maintains a \emph{Trusted Issuer Registry} (TIR) mapping credential types to authorized issuers (DID list, minimum trust level, verification policy). Adding or removing trusted issuers requires DAO governance approval with 66\% supermajority, consistent with Zoo's governance framework \cite{zoo-dao-governance}.
+

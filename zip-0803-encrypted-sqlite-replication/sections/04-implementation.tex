@@ -1,0 +1,60 @@
+\section{Implementation}
+
+
+\subsection{K8s Patches}
+
+Patches are applied as standalone YAML files in
+\texttt{k8s/patches/} rather than inline kustomize overlays.
+This allows selective application per-service and per-environment.
+
+Required patches:
+\begin{enumerate}
+\item \texttt{replicate-config.yaml} --- Shared ConfigMap
+\item \texttt{replicate-bridge.yaml} --- Bridge deployment patch
+  (when migrated to SQLite)
+\end{enumerate}
+
+\subsection{S3 Service}
+
+Deploy \texttt{hanzoai/s3} as a StatefulSet with block storage:
+
+\begin{lstlisting}[language=yaml,caption={S3 service (MinIO)}]
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: s3
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: s3
+          image: ghcr.io/hanzoai/s3:latest
+          ports:
+            - containerPort: 9000
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: ACCESS_KEY
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: SECRET_KEY
+\end{lstlisting}
+
+\subsection{Apply Script}
+
+A shell script (\texttt{scripts/apply-replicate.sh}) orchestrates
+the full deployment:
+
+\begin{enumerate}
+\item Verifies \texttt{s3-credentials} secret exists
+\item Applies the shared ConfigMap
+\item Patches each target service
+\item Restarts patched workloads
+\item Waits for rollout completion
+\end{enumerate}
+

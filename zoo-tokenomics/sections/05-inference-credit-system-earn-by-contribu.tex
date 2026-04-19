@@ -1,0 +1,146 @@
+\section{Inference Credit System: Earn by Contribution}
+
+
+Zoo's economic innovation: \textbf{replace pay-to-play with contribute-to-access}. Users earn Inference Credits (IC) through five contribution types:
+
+\subsection{Data Contribution}
+
+Upload quality datasets to earn IC:
+
+\begin{equation}
+\text{IC}_{\text{data}} = Q \times V \times R
+\end{equation}
+
+where:
+\begin{itemize}
+\item $Q$: Quality score (0-1, assessed by DAO validators)
+\item $V$: Volume (number of examples)
+\item $R$: Rarity bonus (underrepresented domains get 2-5× multiplier)
+\end{itemize}
+
+\textbf{Example:}
+\begin{itemize}
+\item Upload 1,000 medical Q\&A pairs
+\item Quality score: 0.85 (assessed by domain experts)
+\item Rarity multiplier: 3× (medical data scarce)
+\item IC earned: $0.85 \times 1000 \times 3 = 2,550$ IC
+\item Equivalent value: 25.5M $\KEEPER$ (at 10K $\KEEPER$/IC)
+\end{itemize}
+
+\subsection{Experience Contribution}
+
+Submit semantic experiences (training-free GRPO insights):
+
+\begin{equation}
+\text{IC}_{\text{experience}} = \frac{U \times E}{1000}
+\end{equation}
+
+where:
+\begin{itemize}
+\item $U$: Usage count (how many inferences used the experience)
+\item $E$: Effectiveness score (average improvement vs baseline, 0-100)
+\end{itemize}
+
+\textbf{Example:}
+\begin{itemize}
+\item Submit geometry problem-solving experience
+\item Usage: 5,000 inferences over 3 months
+\item Effectiveness: +15\% accuracy over baseline
+\item IC earned: $\frac{5000 \times 15}{1000} = 75$ IC
+\item Equivalent: 750K $\KEEPER$
+\end{itemize}
+
+This creates \textbf{perpetual income} for quality contributors - experiences continue generating IC as long as they're useful.
+
+\subsection{Feedback Contribution}
+
+Rate model outputs to improve quality:
+
+\begin{equation}
+\text{IC}_{\text{feedback}} = 0.1 \times N_{\text{ratings}} \times A_{\text{agreement}}
+\end{equation}
+
+where:
+\begin{itemize}
+\item $N_{\text{ratings}}$: Number of ratings submitted
+\item $A_{\text{agreement}}$: Agreement with consensus (prevents spam)
+\end{itemize}
+
+\textbf{Example:}
+\begin{itemize}
+\item Rate 1,000 model outputs (thumbs up/down, identify errors)
+\item Agreement rate: 0.92 (92\% match consensus)
+\item IC earned: $0.1 \times 1000 \times 0.92 = 92$ IC
+\end{itemize}
+
+\subsection{Code Contribution}
+
+Contribute to Zoo's open-source infrastructure:
+
+\begin{itemize}
+\item \textbf{Major Features}: 100-500 IC (e.g., new training algorithm)
+\item \textbf{Bug Fixes}: 1-10 IC (depends on severity)
+\item \textbf{Documentation}: 0.5-5 IC (per page/tutorial)
+\item \textbf{Testing}: 0.1-1 IC (per test case)
+\end{itemize}
+
+Assessment by technical DAO committee (5 elected developers review PRs).
+
+\subsection{Compute Contribution}
+
+Donate GPU/TPU time for training/inference:
+
+\begin{equation}
+\text{IC}_{\text{compute}} = \frac{H \times P}{100}
+\end{equation}
+
+where:
+\begin{itemize}
+\item $H$: Hours of compute donated
+\item $P$: Performance score (relative to baseline A100 GPU)
+\end{itemize}
+
+\textbf{Example:}
+\begin{itemize}
+\item Donate 100 hours of RTX 4090 (performance score: 0.8× A100)
+\item IC earned: $\frac{100 \times 0.8}{100} = 0.8$ IC
+\end{itemize}
+
+This enables \textbf{resource-rich but cash-poor} participants (students with gaming PCs, researchers with institutional access) to earn inference access without monetary payment.
+
+\subsection{Economic Impact of Contribution Model}
+
+Traditional AI platforms (OpenAI, Anthropic) extract 95%+ of value from data contributors. Zoo inverts this:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Platform} & \textbf{Data Contributor Cut} & \textbf{Platform Cut} & \textbf{Model} \\
+\midrule
+OpenAI & 0\% & 100\% & Pay-to-play \\
+Anthropic & 0\% & 100\% & Pay-to-play \\
+Scale AI & 5-10\% (contractors) & 90-95\% & Pay labor \\
+Bittensor & 30\% (miners) & 70\% (validators/TAO) & Mine-to-earn \\
+\textbf{Zoo} & \textbf{90\%} & \textbf{10\%} & \textbf{Contribute-to-access} \\
+\bottomrule
+\end{tabular}
+\caption{Value distribution across AI platforms}
+\label{tab:value_dist}
+\end{table}
+
+Zoo's 90/10 split (contributors retain 90\%, DAO takes 10\% for infrastructure) represents \textbf{18-fold improvement} over traditional platforms.
+
+\textbf{Empirical Validation:}
+
+From September-October 2025 (first 6 weeks post-airdrop):
+\begin{itemize}
+\item \textbf{Data Contributions}: 12.4M examples uploaded (worth \$6.2M at \$0.50/example market rate)
+\item \textbf{IC Distributed}: 142,000 IC (\$2.84M equivalent at \$20/IC)
+\item \textbf{Contributors}: 8,472 unique contributors
+\item \textbf{Average Earnings}: 16.8 IC per contributor (\$336)
+\item \textbf{Top Contributor}: 2,847 IC earned (\$56,940)
+\end{itemize}
+
+This demonstrates that contribute-to-access creates \textbf{real economic value} for community participants, not just speculative token appreciation.
+

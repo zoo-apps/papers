@@ -1,0 +1,115 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{natbib}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage{abstract}
+
+% ── Page Style ────────────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Antje Worring, Zach Kelling}
+\fancyhead[R]{\small Neural Habitat Modeling}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Metadata ──────────────────────────────────────────────────────────────────
+\title{%
+  \textbf{Neural Habitat Modeling: Predicting Species Distribution\\
+  Under Climate Change}\\[0.5em]
+  \large Antje Worring, Zach Kelling Paper ZOO-HAB-2026
+}
+
+\author{
+  Antje Worring, Zach Kelling\\
+  \texttt{research@zoo.ngo}\\[0.5em]
+  \small With contributions from the Zoo Open Science Network
+}
+
+\date{March 2025}
+
+% ── Macros ────────────────────────────────────────────────────────────────────
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\Loss}{\mathcal{L}}
+\newcommand{\Dataset}{\mathcal{D}}
+\newcommand{\Species}{\mathcal{S}}
+\newcommand{\Habitat}{\mathcal{H}}
+\newcommand{\Climate}{\mathcal{C}}
+
+\begin{document}
+
+\zoocoverpage
+
+% ── Abstract ──────────────────────────────────────────────────────────────────
+\begin{abstract}
+\noindent
+Predicting how species distributions shift under climate change is among
+the most consequential challenges in conservation biology. Classical
+species distribution models (SDMs) rely on correlative relationships
+between occurrence records and bioclimatic variables, yet they often fail
+to capture complex, non-linear habitat dependencies and spatial
+autocorrelation. We present \textbf{HabitatNet}, a graph neural network
+framework for species distribution modeling that jointly models habitat
+suitability, landscape connectivity, and migration corridors under
+projected climate scenarios. HabitatNet operates on a spatial graph
+representation where nodes encode local environmental features and edges
+capture dispersal potential. We integrate Shared Socioeconomic Pathway
+(SSP) climate projections from CMIP6 to forecast range shifts through
+2100. Evaluated on 847 terrestrial vertebrate species across six
+biogeographic realms, HabitatNet achieves a mean AUC of 0.943 and
+outperforms MaxEnt, random forests, and standard neural SDMs by
+8--14\% on held-out temporal validation sets. The framework identifies
+critical connectivity bottlenecks and proposes optimal corridor
+placements, directly informing conservation prioritization. All models,
+data pipelines, and results are released under open licenses through the
+Zoo Open Science Network.
+
+\medskip
+\noindent\textbf{Keywords:} species distribution modeling, graph neural
+networks, climate change, habitat connectivity, migration corridors,
+conservation planning
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════════════════════════
+
+\input{sections/01-introduction}
+\input{sections/02-background-and-related-work}
+\input{sections/03-problem-formulation}
+\input{sections/04-habitatnet-architecture}
+\input{sections/05-corridor-identification-algorithm}
+\input{sections/06-data-and-experimental-setup}
+\input{sections/07-results}
+\input{sections/08-case-study-east-african-montane-species}
+\input{sections/09-discussion}
+\input{sections/10-implementation-details}
+\input{sections/11-future-work}
+\input{sections/13-supplementary-feature-importance-analysi}
+\input{sections/14-supplementary-hyperparameter-sensitivity}
+\input{sections/99-conclusion}
+
+\end{document}

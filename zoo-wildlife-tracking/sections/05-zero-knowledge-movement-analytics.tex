@@ -1,0 +1,47 @@
+\section{Zero-Knowledge Movement Analytics}
+
+
+\subsection{ZK Circuit Design}
+
+We design zero-knowledge proof circuits that enable researchers to verify aggregate movement statistics without accessing individual locations. Our system uses zk-SNARKs~\cite{groth2016} with the following circuit structure:
+
+\begin{algorithm}[htbp]
+\caption{ZK-MoveStats: Zero-Knowledge Movement Statistics}
+\label{alg:zkmove}
+\begin{algorithmic}[1]
+\REQUIRE Private: trajectory $\tau = \{(\mathbf{x}_i, t_i)\}_{i=1}^n$; Public: claimed statistics $\mathbf{s}$
+\STATE Compute Merkle root $R$ of trajectory commitments
+\STATE Verify $R$ matches on-chain commitment
+\FOR{$i = 1$ to $n-1$}
+    \STATE Compute step length $\ell_i = \|\mathbf{x}_{i+1} - \mathbf{x}_i\|$
+    \STATE Compute step duration $\Delta t_i = t_{i+1} - t_i$
+    \STATE Compute velocity $v_i = \ell_i / \Delta t_i$
+\ENDFOR
+\STATE Compute mean step length $\bar{\ell} = \frac{1}{n-1}\sum_i \ell_i$
+\STATE Compute mean velocity $\bar{v} = \frac{1}{n-1}\sum_i v_i$
+\STATE Compute total displacement $D = \|\mathbf{x}_n - \mathbf{x}_1\|$
+\STATE Verify $\mathbf{s} = (\bar{\ell}, \bar{v}, D, n)$ within tolerance $\epsilon$
+\RETURN proof $\pi$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Efficient Range Proofs for Spatial Queries}
+
+Ecological studies often require spatial queries: ``How many individuals were within region $\mathcal{R}$ during period $[t_1, t_2]$?'' We implement efficient range proofs using Bulletproofs~\cite{bunz2018}:
+
+\begin{equation}
+\pi_{\text{range}} = \text{Prove}\left(\exists\, \mathbf{x} : \text{Commit}(\mathbf{x}) = C \;\wedge\; \mathbf{x} \in \mathcal{R}\right)
+\end{equation}
+
+For rectangular regions, the circuit decomposes into two independent range proofs (one per coordinate), each requiring $O(\log n)$ group operations where $n$ is the coordinate precision in bits.
+
+\subsection{Aggregate Statistics Without Data Pooling}
+
+Multi-party computation allows multiple tracking organizations to compute joint statistics (e.g., total population using a corridor) without revealing individual trajectories:
+
+\begin{equation}
+f(\tau_1, \tau_2, \ldots, \tau_K) = \text{MPC}(f; \text{secret shares of } \tau_1, \ldots, \tau_K)
+\end{equation}
+
+We implement this using the SPDZ protocol~\cite{damgard2012} with preprocessing for the arithmetic circuits required by ecological statistics. The communication cost is $O(K \cdot |f| \cdot \kappa)$ where $|f|$ is the circuit size and $\kappa$ is the security parameter.
+

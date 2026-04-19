@@ -1,0 +1,50 @@
+\section{Complete Smart Contract Interface}
+
+
+\begin{lstlisting}[language=Solidity,caption=Full IAgentNFT Interface]
+interface IAgentNFT is IERC721, IERC721Metadata {
+    // Agent wallet operations
+    function agentWallet(uint256 tokenId)
+        external view returns (address);
+    function walletBalance(uint256 tokenId)
+        external view returns (uint256);
+
+    // Capabilities
+    function capabilities(uint256 tokenId)
+        external view returns (uint256);
+    function hasCapability(uint256 tokenId,
+        uint8 capability) external view returns (bool);
+
+    // Autonomy
+    function autonomyParams(uint256 tokenId)
+        external view returns (AutonomyParams memory);
+    function updateAutonomy(uint256 tokenId,
+        AutonomyParams calldata params) external;
+
+    // Actions
+    function executeAction(uint256 tokenId,
+        bytes calldata action) external;
+    function batchExecute(uint256 tokenId,
+        bytes[] calldata actions) external;
+
+    // Economics
+    function pendingYield(uint256 tokenId)
+        external view returns (uint256);
+    function claimYield(uint256 tokenId)
+        external returns (uint256);
+    function totalYieldClaimed(uint256 tokenId)
+        external view returns (uint256);
+
+    // Reputation
+    function reputation(uint256 tokenId)
+        external view returns (uint256);
+    function tasksCompleted(uint256 tokenId)
+        external view returns (uint256);
+
+    // Emergency
+    function emergencyHalt(uint256 tokenId) external;
+    function emergencyWithdraw(uint256 tokenId,
+        address to) external;
+}
+\end{lstlisting}
+

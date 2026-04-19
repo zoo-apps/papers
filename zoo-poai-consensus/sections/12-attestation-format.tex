@@ -1,0 +1,28 @@
+\section{Attestation Format}
+
+
+\begin{lstlisting}[language=json,caption=TEE Attestation Structure]
+{
+  "version": 1,
+  "tee_type": "sgx" | "sev" | "tdx",
+  "measurement": {
+    "mrenclave": "0x...",
+    "mrsigner": "0x...",
+    "product_id": 1,
+    "security_version": 1
+  },
+  "report_data": {
+    "task_hash": "0x...",
+    "input_hash": "0x...",
+    "output_hash": "0x...",
+    "timestamp": 1650000000,
+    "nonce": "0x..."
+  },
+  "signature": {
+    "type": "ecdsa_p256",
+    "value": "0x..."
+  },
+  "certificate_chain": ["0x...", "0x..."]
+}
+\end{lstlisting}
+

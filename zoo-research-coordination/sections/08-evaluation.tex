@@ -1,0 +1,134 @@
+\section{Evaluation}
+
+\label{sec:evaluation}
+
+\subsection{Deployment}
+
+We deployed ZooCoord across 14 research groups in the Zoo Network, spanning three scientific domains:
+
+\begin{table}[H]
+\centering
+\caption{Deployment overview by research domain.}
+\label{tab:deployment}
+\begin{tabularx}{\textwidth}{@{}lcccX@{}}
+\toprule
+\textbf{Domain} & \textbf{Groups} & \textbf{Researchers} & \textbf{Experiments} & \textbf{Description} \\
+\midrule
+Biodiversity Monitoring & 6 & 47 & 412 & Camera trap analysis, species surveys, population estimates \\
+Ecological Modeling & 5 & 38 & 287 & Species distribution, climate impact, habitat connectivity \\
+Conservation Genetics & 3 & 22 & 148 & eDNA analysis, population genetics, phylogeography \\
+\midrule
+\textbf{Total} & 14 & 107 & 847 & \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Reproducibility Outcomes}
+
+Of 847 committed experiments, 773 reached completion (91.3\%).
+The remaining 74 were withdrawn (42), suspended pending additional data (27), or abandoned (5).
+
+\begin{table}[H]
+\centering
+\caption{Reproducibility verification results.}
+\label{tab:reproducibility}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Domain} & \textbf{Verified} & \textbf{Reproduced} & \textbf{Partial} & \textbf{Failed} \\
+\midrule
+Biodiversity Monitoring & 289 & 271 (93.8\%) & 14 (4.8\%) & 4 (1.4\%) \\
+Ecological Modeling & 198 & 176 (88.9\%) & 16 (8.1\%) & 6 (3.0\%) \\
+Conservation Genetics & 104 & 89 (85.6\%) & 12 (11.5\%) & 3 (2.9\%) \\
+\midrule
+\textbf{Total} & 591 & 536 (90.7\%) & 42 (7.1\%) & 13 (2.2\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The 13 reproduction failures were investigated through dispute resolution.
+Seven resulted from undocumented environment dependencies (now captured by enhanced provenance logging), four from genuine methodological errors caught before publication, and two from hardware-specific numerical instabilities.
+
+\subsection{Time-to-Reproduction}
+
+We measured the time required for an independent party to reproduce an experiment's results:
+
+\begin{table}[H]
+\centering
+\caption{Time-to-reproduction comparison (median days).}
+\label{tab:time}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Complexity} & \textbf{Traditional} & \textbf{ZooCoord} \\
+\midrule
+Simple (1--5 FEG nodes) & $14.2 \pm 8.7$ & $0.3 \pm 0.2$ \\
+Medium (6--20 nodes) & $42.6 \pm 21.3$ & $2.1 \pm 1.4$ \\
+Complex (21+ nodes) & $127.4 \pm 64.8$ & $8.7 \pm 5.2$ \\
+\midrule
+\textbf{Overall} & $48.3 \pm 41.2$ & $3.2 \pm 4.1$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+ZooCoord reduced median time-to-reproduction by 93.4\% overall.
+The improvement is most dramatic for simple experiments, where fully automated re-execution requires only hours.
+Complex experiments still require human intervention for data access authorization and environment-specific configuration.
+
+\subsection{Data Sharing}
+
+Data sharing rates increased substantially under ZooCoord's incentivized framework:
+
+\begin{table}[H]
+\centering
+\caption{Data sharing metrics before and after ZooCoord deployment.}
+\label{tab:sharing}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Metric} & \textbf{Pre-ZooCoord} & \textbf{Post-ZooCoord} \\
+\midrule
+Experiments with shared raw data & 18.3\% & 74.2\% \\
+Experiments with shared code & 42.7\% & 97.1\% \\
+Experiments with shared intermediate results & 7.2\% & 81.6\% \\
+Cross-group data reuse events & 4 per month & 17 per month \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Deviation Detection}
+
+The commitment protocol detected 23 potential reproducibility issues during the execution phase, before results were finalized:
+
+\begin{table}[H]
+\centering
+\caption{Deviation types detected during experiment execution.}
+\label{tab:deviations}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Deviation Type} & \textbf{Count} & \textbf{Severity} \\
+\midrule
+Undeclared parameter changes & 8 & Material \\
+Sample size deviations & 6 & Registered \\
+Analysis script modifications & 5 & Material \\
+Unreported data exclusions & 3 & Commitment Violation \\
+Software version drift & 1 & Registered \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All three commitment violations were resolved through revised commitments with transparent documentation of the reasons for deviation.
+This early detection mechanism prevented potential reproducibility failures from propagating to published results.
+
+\subsection{Cross-Institutional Collaboration}
+
+ZooCoord facilitated 12 cross-institutional collaborations that emerged organically from the shared experiment registry:
+
+\begin{itemize}[leftmargin=*]
+    \item 5 involved combining datasets from multiple sites for meta-analyses.
+    \item 4 involved one group extending another group's methodology to a new geographic region.
+    \item 3 involved verifiers discovering methodological improvements during reproduction and co-authoring enhanced versions.
+\end{itemize}
+
+These collaborations produced 8 joint publications and 3 shared datasets, none of which would have occurred under traditional coordination mechanisms where experiment details are typically shared only at publication.
+
+% ============================================================
+% 9. Economic Analysis
+% ============================================================

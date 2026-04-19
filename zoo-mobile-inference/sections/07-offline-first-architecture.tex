@@ -1,0 +1,76 @@
+\section{Offline-First Architecture}
+
+\label{sec:offline}
+
+\subsection{Design}
+
+ZooMobile is designed for environments with no connectivity.
+The offline-first architecture comprises:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.2cm,
+    box/.style={rectangle, draw, rounded corners, minimum width=2.5cm, minimum height=0.7cm, text centered, font=\footnotesize},
+    edge/.style={->, thick}
+]
+    \node[box, fill=blue!10] (camera) {Camera Input};
+    \node[box, fill=green!10, right=1.5cm of camera] (cai) {CAI Module};
+    \node[box, fill=orange!10, right=1.5cm of cai] (model) {TKD Model};
+    \node[box, fill=red!10, below=1cm of camera] (guide) {Field Guide DB};
+    \node[box, fill=purple!10, below=1cm of cai] (log) {Observation Log};
+    \node[box, fill=yellow!10, below=1cm of model] (sync) {Sync Engine};
+
+    \draw[edge] (camera) -- (cai);
+    \draw[edge] (cai) -- (model);
+    \draw[edge] (guide) -- (cai);
+    \draw[edge] (model) -- (log);
+    \draw[edge, dashed] (log) -- (sync);
+    \draw[edge, dashed] (sync) -| (model);
+\end{tikzpicture}
+\caption{ZooMobile offline-first architecture.}
+\label{fig:offline}
+\end{figure}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Local Field Guide:} A compressed database of species information (descriptions, images, conservation status) for the deployment region. Stored as a 40--80 MB SQLite database with JPEG-compressed reference images.
+    \item \textbf{Observation Log:} All identifications, GPS coordinates, timestamps, and original images are stored locally in a structured log.
+    \item \textbf{Sync Engine:} When connectivity becomes available (even briefly), the sync engine uploads observation logs to the Zoo Data Commons and downloads model updates using a delta-compression protocol that transfers only changed parameters.
+\end{itemize}
+
+\subsection{Model Update Protocol}
+
+Model updates are distributed as parameter deltas:
+
+\begin{equation}
+    \Delta\theta = \theta_{\text{new}} - \theta_{\text{old}}
+\end{equation}
+
+Delta compression exploits the sparsity of updates (typically <5\% of parameters change significantly between versions):
+
+\begin{equation}
+    \text{Size}(\text{Compress}(\Delta\theta)) \approx 0.03 \cdot \text{Size}(\theta)
+\end{equation}
+
+This enables model updates over low-bandwidth connections (satellite phones, intermittent cellular) that would be impractical for full model downloads.
+
+\subsection{Battery and Thermal Management}
+
+Field deployment requires careful power management.
+ZooMobile implements an adaptive computation budget:
+
+\begin{equation}
+    \text{Budget}(t) = f(\text{Battery}(t), \text{Temperature}(t), \text{Priority}(t))
+\end{equation}
+
+Under low battery or high temperature conditions, the system reduces computation by:
+\begin{enumerate}[leftmargin=*]
+    \item Skipping super-resolution preprocessing (saves 15ms per inference).
+    \item Reducing multi-scale inference from 3 crops to 1 (saves 25ms).
+    \item Increasing the confidence threshold to avoid uncertain identifications.
+    \item Caching recent identifications for repeat encounters.
+\end{enumerate}
+
+% ============================================================
+% 8. Field Deployment
+% ============================================================

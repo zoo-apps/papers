@@ -1,0 +1,21 @@
+\section{Limitations and Future Work}
+
+
+\subsection{Current Limitations}
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Taxonomic coverage}: While we achieve strong performance across 847 species, the long tail of rare species remains challenging. Species with fewer than 50 training examples show significantly degraded accuracy (below 70\%).
+    \item \textbf{Nocturnal imagery}: Infrared camera trap images present reduced discriminative features. Our system's accuracy drops by approximately 8 percentage points on purely infrared captures.
+    \item \textbf{Aquatic and underground species}: The current system is designed for terrestrial megafauna visible to camera traps and does not address aquatic or fossorial species.
+    \item \textbf{Population model assumptions}: The SECR model assumes a closed population during each sampling period, which may be violated during migration seasons.
+\end{enumerate}
+
+\subsection{Future Directions}
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Audio integration}: Combining camera trap images with passive acoustic monitoring data to improve species identification, particularly for birds and nocturnal species.
+    \item \textbf{Foundation models}: Training a large-scale foundation model on the \Zoo{} Data Commons to serve as a general-purpose wildlife feature extractor.
+    \item \textbf{Real-time alerting}: Extending the edge deployment to support real-time poaching detection and endangered species alerts.
+    \item \textbf{Climate adaptation}: Integrating climate model projections to forecast habitat quality changes and inform proactive conservation planning.
+\end{enumerate}
+

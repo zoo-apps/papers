@@ -1,0 +1,54 @@
+\section{Rehearsal: Testnet to Staging}
+
+
+Rehearsal runs on \texttt{lux-test-k8s}. The full launch-day sequence is
+executed end-to-end. Any failure resets the rehearsal from step~1.
+
+\subsection{Genesis and Bootstrap}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Step} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1  & Generate genesis blocks for all 14 chains                    & Core   & \pending \\
+2  & Validator key ceremony: generate staking TLS certs via K-Chain & Auth   & \pending \\
+3  & P-Chain L1 creation transaction submitted and confirmed       & Core   & \pending \\
+4  & Chain creation transactions for all 14 VMs confirmed          & Core   & \pending \\
+5  & Validator registration (5 founding nodes) on P-Chain          & Core   & \pending \\
+6  & MPC wallet creation via T-Chain (FROST DKG for bridge keys)   & Crypto & \pending \\
+7  & DID issuance for all 5 validators via I-Chain                 & Auth   & \pending \\
+8  & Verify all 14 chain RPC endpoints responding                  & Core   & \pending \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Load and Chaos Testing}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Test} & \textbf{Owner} & \textbf{Status} \\
+\midrule
+1 & Sustained throughput: 100K+ blocks produced across all chains    & Perf & \pending \\
+2 & EVM sustained load: 10K tx/s for 1 hour, no degradation         & Perf & \pending \\
+3 & Bridge stress: 1000 concurrent lock/mint operations              & Bridge & \pending \\
+4 & Kill 1 of 5 validators, verify chain progress continues          & Chaos & \pending \\
+5 & Kill 2 of 5 validators, verify chain halts (BFT threshold)      & Chaos & \pending \\
+6 & Restore killed validators, verify chain resumes within 30s       & Chaos & \pending \\
+7 & Network partition: split 3/2, verify majority partition progresses & Chaos & \pending \\
+8 & Disk full simulation: verify graceful degradation, no corruption  & Chaos & \pending \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Rehearsal Sign-off}
+
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{\#} & \textbf{Gate} & \textbf{Approver} & \textbf{Status} \\
+\midrule
+1 & All genesis/bootstrap steps completed without manual intervention & CTO    & \pending \\
+2 & Load test targets met                                             & CTO    & \pending \\
+3 & Chaos test recovery verified                                      & CTO    & \pending \\
+4 & Rehearsal log archived to IPFS                                    & DevOps & \pending \\
+\bottomrule
+\end{tabularx}
+
+%% ---------------------------------------------------------------------------

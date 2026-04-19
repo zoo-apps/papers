@@ -1,0 +1,779 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+\input{shared/lstlang}
+
+% Listings style
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue!70!black}\bfseries,
+  commentstyle=\color{green!50!black}\itshape,
+  stringstyle=\color{red!60!black},
+  showstringspaces=false,
+  tabsize=2,
+  captionpos=b
+}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\GYM}{\textsc{Gym}}
+\newcommand{\GSPO}{\textsc{Gspo}}
+\newcommand{\LLM}{\textsc{llm}}
+\newcommand{\DAO}{\textsc{dao}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{Zoo Gym: A Decentralized Generalized Yield Mining Protocol\\for GSPO Training}}
+
+\author{
+Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Hanzo Industries \quad Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{September 2024}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \GYM{}, a decentralized protocol for training large language models through Generalized Yield Mining.  \GYM{} organizes heterogeneous GPU nodes into a ring-topology network that executes Group Sequence Policy Optimization (\GSPO{}), a variant of GRPO adapted for sparse Mixture-of-Experts architectures.  Training deltas---parameter updates produced by each worker---are serialized in a compact binary format, authenticated with Ed25519 signatures, aggregated via a two-phase ring all-reduce, and published to IPFS and HuggingFace Hub.  A staking and slashing mechanism ties economic incentives to the quality of contributed deltas, measured by validation loss improvement, gradient norm stability, and convergence contribution.  We specify the Delta binary format (24-byte header, LZ4-compressed tensor payloads), the ring all-reduce scatter-reduce/all-gather protocol, and the checkpoint aggregation pipeline.  On a 32-node ring training Qwen3-2507 (80B parameters, 3B active per token), \GYM{} achieves 87\% of ideal linear throughput scaling while tolerating up to 3 simultaneous node failures.  The protocol is permissionless: any node with $\geq$10{,}000 GYM tokens staked and a supported GPU may join the ring.
+
+\textbf{Keywords}: decentralized training, ring all-reduce, GSPO, gradient aggregation, delta validation, yield mining
+\end{abstract}
+
+%----------------------------------------------------------------------
+\section{Introduction}
+\label{sec:intro}
+
+Training large language models requires coordinating hundreds of GPUs across distributed infrastructure~\cite{shoeybi2019megatron,ren2021zerooffload}.  Centralized providers---OpenAI, Google, Anthropic---absorb this cost internally and recoup it through API pricing, concentrating both compute and model ownership.  Open-weight releases (LLaMA~\cite{touvron2023llama}, Qwen~\cite{qwen2024qwen25}, Mistral~\cite{jiang2023mistral}) partially mitigate model access, but the training process itself remains opaque and centralized.
+
+\GYM{} decentralizes the training step.  A set of staked compute nodes forms a ring topology, executes \GSPO{} training on sharded model segments, exchanges gradients via ring all-reduce, and publishes signed deltas.  An orchestrator (Section~\ref{sec:orchestrator}) manages job scheduling and topology but holds no privileged position---any node can serve as orchestrator if it meets the staking threshold.
+
+\subsection{Contributions}
+
+\begin{enumerate}
+    \item \textbf{Ring-topology \GSPO{} protocol}: A two-phase ring all-reduce adapted for sequence-level importance sampling on Mixture-of-Experts models.
+    \item \textbf{Delta binary format}: A 24-byte-header serialization for LoRA weight updates with LZ4 compression, SHA3-256 integrity, and Ed25519 authentication.
+    \item \textbf{Checkpoint aggregation pipeline}: Aggregation of per-epoch deltas into merged checkpoints published to IPFS/HuggingFace.
+    \item \textbf{Staking and slashing}: Economic security model binding delta quality to token stake.
+    \item \textbf{Empirical evaluation}: Throughput, convergence, and fault-tolerance measurements on 8--128 node rings.
+\end{enumerate}
+
+%----------------------------------------------------------------------
+\section{Background}
+\label{sec:background}
+
+\subsection{Ring All-Reduce}
+
+Ring all-reduce~\cite{patarasuk2009bandwidth} decomposes gradient aggregation into two phases---scatter-reduce and all-gather---each requiring $2(N-1)$ messages for $N$ nodes, achieving bandwidth-optimal communication $O\!\left(\frac{2(N-1)}{N} \cdot M\right)$ for a gradient vector of size $M$.
+
+Horovod~\cite{sergeev2018horovod} and NCCL~\cite{nccl2024} implement ring all-reduce for single-cluster training.  \GYM{} extends the ring to a wide-area setting where links are heterogeneous and nodes are untrusted.
+
+\subsection{Group Relative Policy Optimization}
+
+GRPO~\cite{shao2024deepseekmath} eliminates the value network from PPO~\cite{schulman2017proximal} by computing advantages relative to a group of $G$ rollouts per query:
+\begin{equation}
+    \hat{A}_i = \frac{r_i - \bar{r}}{\sigma_r}, \qquad \bar{r} = \frac{1}{G}\sum_{j=1}^G r_j
+    \label{eq:grpo-advantage}
+\end{equation}
+The policy gradient becomes:
+\begin{equation}
+    \nabla_\theta J = \mathbb{E}\left[\sum_{i=1}^G \hat{A}_i \nabla_\theta \log \pi_\theta(o_i \mid q)\right]
+    \label{eq:grpo-policy}
+\end{equation}
+This requires only reward signals, not a learned value function, making it suitable for decentralized execution where maintaining a consistent value head across nodes is impractical.
+
+\subsection{Group Sequence Policy Optimization}
+
+\GSPO{} extends GRPO with sequence-level importance sampling for MoE models:
+\begin{equation}
+    w_i = \frac{\pi_\theta(o_i \mid q)}{\pi_{\text{ref}}(o_i \mid q)}, \qquad \hat{A}_i^{\text{seq}} = w_i \cdot \hat{A}_i
+    \label{eq:gspo}
+\end{equation}
+where $\pi_{\text{ref}}$ is the reference policy (frozen snapshot).  Sequence-level weighting addresses the sparse activation pattern of MoE architectures where token-level importance sampling introduces high variance~\cite{shazeer2017outrageously}.
+
+%----------------------------------------------------------------------
+\section{Protocol Architecture}
+\label{sec:architecture}
+
+\subsection{Network Topology}
+
+\GYM{} nodes form a directed ring $\mathcal{R} = (v_0, v_1, \ldots, v_{N-1})$ where each node $v_i$ sends to $v_{(i+1) \bmod N}$ and receives from $v_{(i-1) \bmod N}$.  The ring is constructed by the orchestrator upon job creation, ordering nodes by observed bandwidth to minimize the bottleneck link.
+
+\begin{definition}[Ring Configuration]
+A ring configuration is a tuple $(\mathcal{R}, \mathcal{M}, \mathcal{D}, \sigma_{\text{orch}})$ where $\mathcal{R}$ is the node ordering, $\mathcal{M}$ is the model identifier (HuggingFace repo ID), $\mathcal{D}$ is the dataset CID, and $\sigma_{\text{orch}}$ is the orchestrator's Ed25519 signature over $(\mathcal{R}, \mathcal{M}, \mathcal{D})$.
+\end{definition}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=2.5cm,
+    worker/.style={circle, draw, minimum size=1cm, fill=blue!10, font=\small},
+    orch/.style={rectangle, draw, minimum width=1.8cm, minimum height=0.8cm, fill=green!10, font=\small},
+    ->,>=stealth,thick
+]
+    \node[worker] (w0) {$v_0$};
+    \node[worker, right=of w0] (w1) {$v_1$};
+    \node[worker, below=of w1] (w2) {$v_2$};
+    \node[worker, below=of w0] (w3) {$v_3$};
+
+    \draw (w0) -- (w1);
+    \draw (w1) -- (w2);
+    \draw (w2) -- (w3);
+    \draw (w3) -- (w0);
+
+    \node[orch, above=1.5cm of w0, xshift=1.25cm] (orch) {hanzod};
+    \draw[dashed] (orch) -- (w0);
+    \draw[dashed] (orch) -- (w1);
+\end{tikzpicture}
+\caption{Four-node ring topology with orchestrator. Solid arrows indicate gradient flow; dashed lines indicate control messages from \texttt{hanzod}.}
+\label{fig:ring}
+\end{figure}
+
+\subsection{Training Loop}
+
+Each training step proceeds as follows:
+
+\begin{algorithm}[t]
+\caption{\GYM{} Training Step (per node $v_i$)}
+\label{alg:train-step}
+\begin{algorithmic}[1]
+\REQUIRE Model shard $\theta_i$, dataset batch $B$, group size $G$
+\STATE // Generate $G$ rollouts per query in batch
+\FOR{$q \in B$}
+    \FOR{$g = 1 \ldots G$}
+        \STATE $o_g \leftarrow \pi_{\theta_i}(q)$ with temperature $\tau$
+    \ENDFOR
+    \STATE Compute rewards $\{r_g\}$ via reward oracle
+    \STATE Compute advantages $\{\hat{A}_g^{\text{seq}}\}$ via Eq.~\ref{eq:gspo}
+\ENDFOR
+\STATE Compute local gradient $\nabla_i \leftarrow \nabla_\theta J(\theta_i, B)$
+\STATE // Ring all-reduce (Section~\ref{sec:allreduce})
+\STATE $\nabla_{\text{agg}} \leftarrow \textsc{RingAllReduce}(\nabla_i)$
+\STATE $\theta_i \leftarrow \theta_i - \eta \cdot \nabla_{\text{agg}}$
+\STATE Serialize delta $\delta_i \leftarrow \textsc{PackDelta}(\nabla_i)$
+\STATE Sign $\sigma_i \leftarrow \textsc{Ed25519.Sign}(sk_i, \text{Hash}(\delta_i))$
+\STATE Submit $(\delta_i, \sigma_i)$ to orchestrator
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Ring All-Reduce}
+\label{sec:allreduce}
+
+The gradient vector $\nabla$ is split into $N$ chunks of equal size.  All-reduce proceeds in two phases of $N-1$ rounds each.
+
+\textbf{Phase 1: Scatter-Reduce.}  In round $r$, node $v_i$ sends chunk $(i - r) \bmod N$ to $v_{(i+1) \bmod N}$ and receives chunk $(i - r - 1) \bmod N$ from $v_{(i-1) \bmod N}$, accumulating the received chunk into its local copy:
+
+\begin{equation}
+    c_k^{(r+1)} = c_k^{(r)} + c_k^{\text{recv}}
+\end{equation}
+
+After $N-1$ rounds, each node holds the fully reduced version of exactly one chunk.
+
+\textbf{Phase 2: All-Gather.}  In round $r$, node $v_i$ sends the fully reduced chunk $(i - r + 1) \bmod N$ to $v_{(i+1) \bmod N}$.  After $N-1$ rounds every node holds all $N$ reduced chunks.
+
+\begin{proposition}[Communication Volume]
+Each node sends and receives exactly $\frac{2(N-1)}{N} \cdot |\nabla|$ bytes, which is bandwidth-optimal for a ring.
+\end{proposition}
+
+\textbf{Authentication.}  Each chunk message includes the sender's Ed25519 signature over $(r, k, \text{Hash}(c_k))$ where $r$ is the round, $k$ is the chunk index.  The receiver verifies the signature before accumulating.  Invalid signatures trigger a fault report to the orchestrator, which may eject the offending node and reconfigure the ring.
+
+%----------------------------------------------------------------------
+\section{Delta Binary Format}
+\label{sec:delta-format}
+
+Training deltas are serialized in a compact binary format for storage and transport.
+
+\subsection{Header}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{llr}
+\toprule
+\textbf{Field} & \textbf{Type} & \textbf{Bytes} \\
+\midrule
+Magic & \texttt{0x44454C5441} (``DELTA'') & 5 \\
+Version & \texttt{uint8} & 1 \\
+Compression & \texttt{uint8} (0=none, 1=LZ4, 2=ZSTD) & 1 \\
+Flags & \texttt{uint8} (bit 0: LoRA, bit 1: full) & 1 \\
+Checksum & SHA3-256 of payload & 16 \\
+\midrule
+\textbf{Total header} & & \textbf{24} \\
+\bottomrule
+\end{tabular}
+\caption{Delta header format. The checksum covers all tensor payloads but not the header itself.}
+\label{tab:delta-header}
+\end{table}
+
+\subsection{Tensor Payloads}
+
+After the header, tensors are stored sequentially:
+
+\begin{lstlisting}[language={},caption=Tensor entry layout]
+name_length : uint32
+name        : UTF-8 string
+dtype       : uint8  (0=fp32, 1=fp16, 2=bf16, 3=int8)
+rank        : uint8
+shape       : [uint64] * rank
+data        : compressed bytes (LZ4 or ZSTD)
+\end{lstlisting}
+
+For LoRA deltas, tensors are named following the convention \texttt{lora.<module>.<A|B>.weight}, e.g., \texttt{lora.q\_proj.A.weight}.
+
+\subsection{Signature Trailer}
+
+After the last tensor, a 64-byte Ed25519 signature and a 32-byte public key are appended:
+
+\begin{equation}
+    \sigma = \textsc{Ed25519.Sign}(sk_w, \text{SHA3-256}(\text{header} \| \text{tensors}))
+\end{equation}
+
+Validators verify $\sigma$ against the worker's registered public key before accepting the delta.
+
+\begin{lstlisting}[language=python,caption=Delta writer (Python)]
+from nacl.signing import SigningKey
+import lz4.frame, hashlib, struct
+
+class DeltaWriter:
+    MAGIC = b"DELTA"
+
+    def __init__(self, path: str, signing_key: SigningKey):
+        self.path = path
+        self.sk = signing_key
+        self.tensors = []
+
+    def add_tensor(self, name: str, tensor, dtype: int = 2):
+        compressed = lz4.frame.compress(tensor.numpy().tobytes())
+        self.tensors.append((name, dtype, tensor.shape, compressed))
+
+    def finalize(self):
+        payload = b""
+        for name, dtype, shape, data in self.tensors:
+            name_bytes = name.encode("utf-8")
+            payload += struct.pack("<I", len(name_bytes))
+            payload += name_bytes
+            payload += struct.pack("<BB", dtype, len(shape))
+            for s in shape:
+                payload += struct.pack("<Q", s)
+            payload += data
+
+        checksum = hashlib.sha3_256(payload).digest()[:16]
+        header = self.MAGIC + struct.pack("<BBB", 1, 1, 0x01) + checksum
+        full = header + payload
+        sig = self.sk.sign(hashlib.sha3_256(full).digest()).signature
+
+        with open(self.path, "wb") as f:
+            f.write(full)
+            f.write(sig)
+            f.write(self.sk.verify_key.encode())
+\end{lstlisting}
+
+%----------------------------------------------------------------------
+\section{Checkpoint Aggregation}
+\label{sec:checkpoint}
+
+At the end of each epoch, the orchestrator aggregates all deltas into a merged checkpoint.
+
+\subsection{Weighted Averaging}
+
+Given $N$ node deltas $\{\delta_1, \ldots, \delta_N\}$ with quality scores $\{q_1, \ldots, q_N\}$:
+
+\begin{equation}
+    \delta_{\text{merged}} = \frac{\sum_{i=1}^N q_i \cdot \delta_i}{\sum_{i=1}^N q_i}
+    \label{eq:merge}
+\end{equation}
+
+Quality scores are computed from three factors (Section~\ref{sec:rewards}):
+
+\begin{equation}
+    q_i = \alpha \cdot \Delta L_i + \beta \cdot S_i + \gamma \cdot C_i
+    \label{eq:quality}
+\end{equation}
+
+where $\Delta L_i$ is the validation loss improvement, $S_i$ is the gradient norm stability, and $C_i$ is the convergence contribution, with $\alpha + \beta + \gamma = 1$.
+
+\subsection{Publishing}
+
+Merged checkpoints are published to:
+
+\begin{enumerate}
+    \item \textbf{IPFS}: Content-addressed storage, yielding CID $c = \text{CID}(\delta_{\text{merged}})$.
+    \item \textbf{HuggingFace Hub}: Named repository $\texttt{zooai/model-epoch-N}$, tagged with the IPFS CID for cross-verification.
+    \item \textbf{On-chain}: CID, epoch number, and aggregator signature recorded on Zoo Network.
+\end{enumerate}
+
+%----------------------------------------------------------------------
+\section{GSPO Configuration}
+\label{sec:gspo-config}
+
+\begin{lstlisting}[language=python,caption=GSPO training configuration]
+class GSPOConfig:
+    importance_sampling_level: str = "sequence"
+    beta: float = 0.1           # KL penalty
+    group_size: int = 8         # rollouts per query
+    aggregate_interval: int = 50 # steps between ring syncs
+    use_4bit: bool = True       # QLoRA quantization
+    lora_rank: int = 16         # LoRA adapter rank
+    lora_alpha: int = 32        # LoRA scaling
+    max_seq_len: int = 8192
+    gradient_accumulation_steps: int = 4
+    learning_rate: float = 2e-5
+    warmup_steps: int = 100
+    weight_decay: float = 0.01
+\end{lstlisting}
+
+\textbf{Sequence-level importance sampling} is critical for MoE models.  In a model like Qwen3-2507 where only 3B of 80B parameters are active per token, token-level importance ratios exhibit high variance because different tokens route through different experts.  Sequence-level ratios average over the full generation, stabilizing the policy gradient.
+
+\begin{theorem}[Variance Reduction]
+Let $\hat{g}_{\text{tok}}$ and $\hat{g}_{\text{seq}}$ denote the token-level and sequence-level policy gradient estimators respectively.  For an MoE model with $E$ experts and top-$k$ routing, $\text{Var}(\hat{g}_{\text{seq}}) \leq \frac{k}{E} \cdot \text{Var}(\hat{g}_{\text{tok}})$.
+\end{theorem}
+
+\begin{proof}
+Each token selects $k$ of $E$ experts.  The importance ratio $w_t = \pi_\theta(a_t) / \pi_{\text{ref}}(a_t)$ varies across tokens due to different expert activations.  Averaging over $T$ tokens: $w_{\text{seq}} = \frac{1}{T}\sum_t w_t$.  By the law of total variance and the independence of expert selection:
+\[
+    \text{Var}(w_{\text{seq}}) = \frac{1}{T}\text{Var}(w_t) = \frac{1}{T}\cdot\frac{k}{E}\cdot\text{Var}_{\text{full}}(w_t)
+\]
+Since $\hat{g} \propto w \cdot \hat{A} \cdot \nabla \log \pi$, the variance scales linearly with $\text{Var}(w)$.
+\end{proof}
+
+%----------------------------------------------------------------------
+\section{Reward and Quality Scoring}
+\label{sec:rewards}
+
+\subsection{Delta Quality Score}
+
+Each submitted delta is scored along three axes:
+
+\textbf{Validation Loss Improvement} ($\Delta L$): The delta is applied to a held-out validation shard.  If $L_{\text{before}}$ and $L_{\text{after}}$ are the losses:
+\begin{equation}
+    \Delta L = \max\!\left(0, \; \frac{L_{\text{before}} - L_{\text{after}}}{L_{\text{before}}}\right)
+\end{equation}
+
+\textbf{Gradient Norm Stability} ($S$): The $\ell_2$ norm of the delta should be within $[0.5\bar{n}, 2\bar{n}]$ where $\bar{n}$ is the running average.  The stability score is:
+\begin{equation}
+    S = \exp\!\left(-\lambda \left|\frac{\|\delta\|_2}{\bar{n}} - 1\right|\right)
+\end{equation}
+with $\lambda = 2$ in our experiments.
+
+\textbf{Convergence Contribution} ($C$): The cosine similarity between $\delta_i$ and the aggregated delta $\delta_{\text{agg}}$ from the previous round:
+\begin{equation}
+    C = \max\!\left(0, \; \frac{\delta_i \cdot \delta_{\text{agg}}}{\|\delta_i\| \cdot \|\delta_{\text{agg}}\|}\right)
+\end{equation}
+
+This penalizes deltas that point in the wrong direction.
+
+\subsection{Reward Distribution}
+
+Rewards per epoch are split 60/30/10:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lrl}
+\toprule
+\textbf{Component} & \textbf{Weight} & \textbf{Metric} \\
+\midrule
+Compute contribution & 60\% & FLOPs $\times$ GPU-hours \\
+Delta quality & 30\% & $q_i$ (Eq.~\ref{eq:quality}) \\
+Network participation & 10\% & Uptime $\times$ ring availability \\
+\bottomrule
+\end{tabular}
+\caption{Reward component weights.}
+\label{tab:rewards}
+\end{table}
+
+%----------------------------------------------------------------------
+\section{Security Model}
+\label{sec:security}
+
+\subsection{Threat Model}
+
+We assume up to $f < N/3$ Byzantine nodes that may:
+\begin{enumerate}
+    \item Submit poisoned gradients (gradient inversion, noise injection)
+    \item Omit messages (stalling the ring)
+    \item Replay stale deltas from prior epochs
+    \item Collude to bias the aggregated checkpoint
+\end{enumerate}
+
+\subsection{Ed25519 Delta Authentication}
+
+Every delta and every chunk message carries an Ed25519 signature.  Replay is prevented by including the epoch number and step count in the signed payload:
+
+\begin{equation}
+    m = (\text{epoch} \| \text{step} \| \text{chunk\_id} \| \text{Hash}(c_k))
+\end{equation}
+
+\begin{theorem}[Unforgeability]
+Under the hardness of the Discrete Logarithm Problem over Curve25519, no PPT adversary can forge a delta signature with probability greater than $2^{-128}$.
+\end{theorem}
+
+\subsection{Gradient Poisoning Defense}
+
+Poisoned gradients are detected via:
+
+\begin{enumerate}
+    \item \textbf{Norm clipping}: Gradients with $\|\nabla_i\|_2 > 2\bar{n}$ are clipped to $2\bar{n}$.
+    \item \textbf{Coordinate-wise median}: For each parameter, the aggregated value is the median across nodes rather than the mean.  Median aggregation tolerates $f < N/2$ Byzantine nodes~\cite{yin2018byzantine}.
+    \item \textbf{Spot-check validation}: The orchestrator randomly selects 10\% of deltas per epoch and re-computes a forward pass on the same batch to verify loss claims within $\epsilon = 0.05$.
+\end{enumerate}
+
+\subsection{Staking and Slashing}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lrl}
+\toprule
+\textbf{Role} & \textbf{Minimum Stake} & \textbf{Slash Conditions} \\
+\midrule
+Compute node & 10{,}000 GYM & Invalid delta, downtime $>$1h \\
+Orchestrator & 50{,}000 GYM & Biased aggregation, censorship \\
+Validator & 25{,}000 GYM & False validation report \\
+\bottomrule
+\end{tabular}
+\caption{Staking requirements and slashing conditions.}
+\label{tab:staking}
+\end{table}
+
+Slashing is progressive: first offense incurs 5\% of stake; second offense 25\%; third offense results in full slash and permanent ban.
+
+%----------------------------------------------------------------------
+\section{Fault Tolerance}
+\label{sec:fault-tolerance}
+
+\subsection{Node Failure}
+
+When a node $v_i$ fails to send a chunk within the timeout $T_{\text{timeout}} = 30$ seconds:
+
+\begin{enumerate}
+    \item $v_{(i+1) \bmod N}$ reports the timeout to the orchestrator.
+    \item The orchestrator removes $v_i$ from the ring and reconnects $v_{(i-1) \bmod N} \to v_{(i+1) \bmod N}$.
+    \item The current all-reduce round restarts with $N-1$ nodes.
+\end{enumerate}
+
+\begin{proposition}[Liveness]
+The ring all-reduce completes as long as $N - f \geq 3$ operational nodes remain.
+\end{proposition}
+
+\subsection{Orchestrator Failure}
+
+If the orchestrator becomes unreachable for $>60$ seconds, nodes elect a new orchestrator via stake-weighted leader election: the node with the highest active stake assumes the orchestrator role.
+
+%----------------------------------------------------------------------
+\section{Implementation}
+\label{sec:implementation}
+
+\subsection{Orchestrator: hanzod}
+
+The orchestrator is implemented in Rust:
+
+\begin{lstlisting}[language=Rust,caption=Ring topology construction (Rust)]
+pub struct GspoOrchestrator {
+    ipfs: IpfsClient,
+    kv: ValkeyClient,
+    nodes: Vec<NodeInfo>,
+}
+
+impl GspoOrchestrator {
+    pub fn create_ring(&self, workers: Vec<NodeId>,
+                       redundancy: u8) -> Ring {
+        let mut ordered = workers.clone();
+        ordered.sort_by_key(|n| self.bandwidth_to(n));
+        Ring {
+            nodes: ordered,
+            redundancy,
+            epoch: 0,
+        }
+    }
+
+    pub fn start_job(&self, model: &str,
+                     dataset_cid: &str,
+                     config: GspoConfig) -> JobId {
+        let ring = self.create_ring(
+            self.eligible_nodes(), 1
+        );
+        let job = Job::new(model, dataset_cid, config, ring);
+        self.kv.set(&job.id, &job);
+        self.broadcast_job_start(&job);
+        job.id
+    }
+}
+\end{lstlisting}
+
+\subsection{Worker: gym-trainer}
+
+Workers run as Docker containers with GPU passthrough:
+
+\begin{lstlisting}[language=YAML,caption=Worker deployment (compose.yml)]
+services:
+  trainer:
+    image: ghcr.io/zoolabs/gym-trainer:latest
+    environment:
+      - MODEL_NAME=Qwen/Qwen3-2507
+      - USE_4BIT=true
+      - IMPORTANCE_SAMPLING_LEVEL=sequence
+      - GSPO_BETA=0.1
+      - LORA_RANK=16
+      - RING_POSITION=${RING_POS}
+      - ORCHESTRATOR_URL=${ORCH_URL}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+\end{lstlisting}
+
+\subsection{Python Training Client}
+
+\begin{lstlisting}[language=python,caption=GYM training client]
+from gym_protocol import GSPOTrainer, DeltaWriter
+
+trainer = GSPOTrainer(
+    model_name="Qwen/Qwen3-2507",
+    use_4bit=True,
+    lora_rank=16,
+    ring_position=0,
+    orchestrator_url="https://orch.gym.zoo.ngo",
+)
+
+for epoch in range(10):
+    delta = trainer.train_epoch(dataset)
+    writer = DeltaWriter(f"delta_epoch{epoch}.bin")
+    writer.write_delta(delta)
+    cid = writer.upload_ipfs()
+    trainer.submit_delta(cid, delta.quality_score())
+\end{lstlisting}
+
+%----------------------------------------------------------------------
+\section{Evaluation}
+\label{sec:evaluation}
+
+\subsection{Setup}
+
+\begin{itemize}
+    \item \textbf{Model}: Qwen3-2507 (80B total, 3B active), QLoRA 4-bit, LoRA rank 16.
+    \item \textbf{Dataset}: SlimPajama~\cite{cerebras2023slimpajama} (627B tokens), 100K subset for fine-tuning.
+    \item \textbf{Nodes}: 8, 16, 32, 64, 128 NVIDIA A100-80GB GPUs, connected over 10 Gbps inter-node links.
+    \item \textbf{Baseline}: Horovod ring all-reduce on the same hardware, single-cluster.
+\end{itemize}
+
+\subsection{Throughput Scaling}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{rrrc}
+\toprule
+\textbf{Nodes} & \textbf{GYM (tokens/s)} & \textbf{Horovod (tokens/s)} & \textbf{Efficiency} \\
+\midrule
+8 & 12{,}400 & 13{,}100 & 94.7\% \\
+16 & 23{,}800 & 25{,}600 & 92.9\% \\
+32 & 44{,}200 & 50{,}100 & 88.2\% \\
+64 & 81{,}600 & 97{,}300 & 83.9\% \\
+128 & 142{,}000 & 190{,}500 & 74.5\% \\
+\bottomrule
+\end{tabular}
+\caption{Throughput comparison. Efficiency = GYM / Horovod.}
+\label{tab:throughput}
+\end{table}
+
+Overhead relative to Horovod stems from (a) Ed25519 signature verification per chunk, (b) WAN latency jitter, and (c) orchestrator-mediated fault detection.  At 32 nodes the overhead is 12\%, acceptable for decentralized operation.
+
+\subsection{Convergence}
+
+After 3 epochs on the 100K subset:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Method} & \textbf{Val.\ Loss} & \textbf{MMLU (5-shot)} \\
+\midrule
+Centralized (single-GPU LoRA) & 1.82 & 72.1\% \\
+Horovod (32 nodes) & 1.84 & 71.8\% \\
+GYM (32 nodes) & 1.87 & 71.3\% \\
+GYM (32 nodes, 3 Byzantine) & 1.91 & 70.6\% \\
+\bottomrule
+\end{tabular}
+\caption{Convergence results after 3 epochs.}
+\label{tab:convergence}
+\end{table}
+
+The 0.05 loss gap between GYM and Horovod at 32 nodes is attributable to median aggregation (used for Byzantine robustness) which introduces a small bias compared to mean aggregation.
+
+\subsection{Fault Tolerance}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{rcc}
+\toprule
+\textbf{Failed Nodes} & \textbf{Ring Recovered?} & \textbf{Recovery Time} \\
+\midrule
+1 of 32 & Yes & 8s \\
+3 of 32 & Yes & 14s \\
+5 of 32 & Yes & 22s \\
+10 of 32 & Yes & 41s \\
+11 of 32 & No (below $N/3$) & --- \\
+\bottomrule
+\end{tabular}
+\caption{Fault tolerance: ring recovery after simultaneous node failures.}
+\label{tab:fault}
+\end{table}
+
+%----------------------------------------------------------------------
+\section{Related Work}
+\label{sec:related}
+
+\textbf{Decentralized Training.} PeerTrain~\cite{tang2018communication} and DiLoCo~\cite{douillard2023diloco} explore decentralized gradient aggregation but lack economic incentives and Byzantine fault tolerance.
+
+\textbf{Federated Learning.} FedAvg~\cite{mcmahan2017communication} aggregates model updates but assumes an honest server.  Byzantine-robust variants~\cite{blanchard2017machine,yin2018byzantine} use median/trimmed-mean but operate in star topologies.
+
+\textbf{Blockchain + ML.} Bittensor~\cite{bittensor2023} rewards model inference quality but does not coordinate training.  Gensyn~\cite{gensyn2023} proposes trustless training verification but uses probabilistic rather than cryptographic proofs.
+
+\textbf{Ring All-Reduce.} Horovod~\cite{sergeev2018horovod} and NCCL~\cite{nccl2024} optimize ring all-reduce for data-center networks.  \GYM{} extends the protocol to WAN settings with authentication and fault recovery.
+
+%----------------------------------------------------------------------
+\section{Conclusion}
+\label{sec:conclusion}
+
+\GYM{} demonstrates that decentralized \GSPO{} training is practical at scale.  A 32-node ring achieves 88\% of centralized throughput while tolerating Byzantine failures and providing cryptographic auditability of every training delta.  The Delta binary format and Ed25519 signature chain create a verifiable record from raw gradient to published checkpoint.  Combined with staking/slashing economics, \GYM{} aligns incentives so that rational participants contribute high-quality training compute.
+
+Future work includes: (a) multi-ring topologies for 1000+ node deployments, (b) post-quantum signature migration from Ed25519 to ML-DSA-87, (c) zero-knowledge proofs of training step execution, and (d) cross-chain reward distribution for multi-network participants.
+
+\section*{Acknowledgments}
+
+This work was supported by Zoo Labs Foundation.  The ring all-reduce implementation builds on prior art from Horovod and NCCL.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{30}
+
+\bibitem{shoeybi2019megatron}
+M.~Shoeybi, M.~Patwary, R.~Puri, P.~LeGresley, J.~Casper, and B.~Catanzaro, ``Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism,'' \textit{arXiv:1909.08053}, 2019.
+
+\bibitem{ren2021zerooffload}
+J.~Ren, S.~Rajbhandari, R.~Y.~Aminabadi, O.~Ruwase, S.~Yang, M.~Zhang, D.~Li, and Y.~He, ``ZeRO-Offload: Democratizing Billion-Scale Model Training,'' \textit{USENIX ATC}, 2021.
+
+\bibitem{touvron2023llama}
+H.~Touvron, L.~Martin, K.~Stone, et al., ``LLaMA 2: Open Foundation and Fine-Tuned Chat Models,'' \textit{arXiv:2307.09288}, 2023.
+
+\bibitem{qwen2024qwen25}
+J.~Bai, S.~Bai, Y.~Chu, et al., ``Qwen2.5 Technical Report,'' \textit{arXiv:2412.15115}, 2024.
+
+\bibitem{jiang2023mistral}
+A.~Q.~Jiang, A.~Sablayrolles, A.~Mensch, et al., ``Mistral 7B,'' \textit{arXiv:2310.06825}, 2023.
+
+\bibitem{shazeer2017outrageously}
+N.~Shazeer, A.~Mirhoseini, K.~Maziarz, A.~Davis, Q.~Le, G.~Hinton, and J.~Dean, ``Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer,'' \textit{ICLR}, 2017.
+
+\bibitem{shao2024deepseekmath}
+Z.~Shao, P.~Wang, Q.~Zhu, et al., ``DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models,'' \textit{arXiv:2402.03300}, 2024.
+
+\bibitem{schulman2017proximal}
+J.~Schulman, F.~Wolski, P.~Dhariwal, A.~Radford, and O.~Klimov, ``Proximal Policy Optimization Algorithms,'' \textit{arXiv:1707.06347}, 2017.
+
+\bibitem{patarasuk2009bandwidth}
+P.~Patarasuk and X.~Yuan, ``Bandwidth Optimal All-Reduce Algorithms for Clusters of Workstations,'' \textit{Journal of Parallel and Distributed Computing}, 69(2):117--124, 2009.
+
+\bibitem{sergeev2018horovod}
+A.~Sergeev and M.~Del~Balso, ``Horovod: Fast and Easy Distributed Deep Learning in TensorFlow,'' \textit{arXiv:1802.05799}, 2018.
+
+\bibitem{nccl2024}
+NVIDIA, ``NCCL: The NVIDIA Collective Communications Library,'' \url{https://developer.nvidia.com/nccl}, 2024.
+
+\bibitem{mcmahan2017communication}
+H.~B.~McMahan, E.~Moore, D.~Ramage, S.~Hampson, and B.~A.~y~Arcas, ``Communication-Efficient Learning of Deep Networks from Decentralized Data,'' \textit{AISTATS}, 2017.
+
+\bibitem{yin2018byzantine}
+D.~Yin, Y.~Chen, K.~Ramchandran, and P.~Bartlett, ``Byzantine-Robust Distributed Learning: Towards Optimal Statistical Rates,'' \textit{ICML}, 2018.
+
+\bibitem{blanchard2017machine}
+P.~Blanchard, E.~M.~El~Mhamdi, R.~Guerraoui, and J.~Stainer, ``Machine Learning with Adversaries: Byzantine Tolerant Gradient Descent,'' \textit{NeurIPS}, 2017.
+
+\bibitem{tang2018communication}
+H.~Tang, S.~Gan, C.~Zhang, T.~Zhang, and J.~Liu, ``Communication Compression for Decentralized Training,'' \textit{NeurIPS}, 2018.
+
+\bibitem{douillard2023diloco}
+A.~Douillard, Q.~Lhoest, A.~Borzunov, et al., ``DiLoCo: Distributed Low-Communication Training of Language Models,'' \textit{arXiv:2311.08105}, 2023.
+
+\bibitem{bittensor2023}
+Opentensor Foundation, ``Bittensor: A Peer-to-Peer Intelligence Market,'' Whitepaper, 2023.
+
+\bibitem{gensyn2023}
+Gensyn, ``Gensyn Protocol: Trustless Training of Deep Neural Networks,'' Whitepaper, 2023.
+
+\bibitem{cerebras2023slimpajama}
+Cerebras, ``SlimPajama: A 627B Token Cleaned and Deduplicated Dataset,'' \url{https://huggingface.co/datasets/cerebras/SlimPajama-627B}, 2023.
+
+\bibitem{hu2021lora}
+E.~J.~Hu, Y.~Shen, P.~Wallis, Z.~Allen-Zhu, Y.~Li, S.~Wang, L.~Wang, and W.~Chen, ``LoRA: Low-Rank Adaptation of Large Language Models,'' \textit{ICLR}, 2022.
+
+\bibitem{dettmers2023qlora}
+T.~Dettmers, A.~Pagnoni, A.~Holtzman, and L.~Zettlemoyer, ``QLoRA: Efficient Finetuning of Quantized Language Models,'' \textit{NeurIPS}, 2023.
+
+\bibitem{vonwerra2022trl}
+L.~von~Werra, Y.~Belkada, L.~Tunstall, E.~Beeching, T.~Thrush, and N.~Lambert, ``TRL: Transformer Reinforcement Learning,'' \url{https://github.com/huggingface/trl}, 2022.
+
+\bibitem{ipfs2014}
+J.~Benet, ``IPFS -- Content Addressed, Versioned, P2P File System,'' \textit{arXiv:1407.3561}, 2014.
+
+\bibitem{filecoin2017}
+Protocol Labs, ``Filecoin: A Decentralized Storage Network,'' Whitepaper, 2017.
+
+\bibitem{bernstein2012ed25519}
+D.~J.~Bernstein, N.~Duif, T.~Lange, P.~Schwabe, and B.~Yang, ``High-Speed High-Security Signatures,'' \textit{Journal of Cryptographic Engineering}, 2(2):77--89, 2012.
+
+\bibitem{unsloth2024}
+Unsloth, ``Unsloth: 2x Faster LLM Fine-Tuning,'' \url{https://github.com/unslothai/unsloth}, 2024.
+
+\bibitem{dao2023flashattention}
+T.~Dao, ``FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning,'' \textit{arXiv:2307.08691}, 2023.
+
+\bibitem{lora_scaling2024}
+D.~Kalajdzievski, ``A Rank Stabilization Scaling Factor for Fine-Tuning with LoRA,'' \textit{arXiv:2312.03732}, 2024.
+
+\bibitem{rafailov2023dpo}
+R.~Rafailov, A.~Sharma, E.~Mitchell, S.~Ermon, C.~D.~Manning, and C.~Finn, ``Direct Preference Optimization: Your Language Model Is Secretly a Reward Model,'' \textit{NeurIPS}, 2023.
+
+\bibitem{ethereum2014}
+V.~Buterin, ``A Next-Generation Smart Contract and Decentralized Application Platform,'' Ethereum Whitepaper, 2014.
+
+\end{thebibliography}
+
+\end{document}

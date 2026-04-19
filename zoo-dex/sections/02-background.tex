@@ -1,0 +1,39 @@
+\section{Background}
+
+
+\subsection{Lux DEX Precompiles}
+
+The Lux Network provides native DEX precompiles~\cite{lux-dex} at reserved EVM addresses:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Precompile} & \textbf{LP} & \textbf{Address} \\
+\midrule
+PoolManager & LP-9010 & \texttt{0x...9010} \\
+OracleHub & LP-9011 & \texttt{0x...9011} \\
+SwapRouter & LP-9012 & \texttt{0x...9012} \\
+HooksRegistry & LP-9013 & \texttt{0x...9013} \\
+FlashLoan & LP-9014 & \texttt{0x...9014} \\
+CLOB & LP-9020 & \texttt{0x...9020} \\
+Vault & LP-9030 & \texttt{0x...9030} \\
+PriceFeed & LP-9040 & \texttt{0x...9040} \\
+\bottomrule
+\end{tabular}
+\caption{Lux DEX precompile addresses inherited by Zoo Network.}
+\label{tab:precompiles}
+\end{table}
+
+These precompiles execute AMM operations natively in the EVM, bypassing Solidity bytecode interpretation. A \texttt{swap()} call to LP-9012 executes in $< 1\mu$s compared to $\sim$100$\mu$s for an equivalent Uniswap V3 swap in Solidity.
+
+\subsection{GPU Matching Engine}
+
+The Lux LightSpeed DEX~\cite{lux-lightspeed-dex} introduced a GPU-accelerated order matching engine that processes orders in parallel across GPU cores:
+
+\begin{equation}
+\text{Throughput} = \frac{\text{GPU cores} \times \text{orders/core/cycle}}{\text{cycle time}} = \frac{10,496 \times 4}{96.8\text{ns}} \approx 434\text{M orders/sec}
+\end{equation}
+
+Zoo DEX inherits this engine for its CLOB component.
+

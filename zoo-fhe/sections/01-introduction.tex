@@ -1,0 +1,26 @@
+\section{Introduction}
+
+\label{sec:intro}
+%----------------------------------------------------------------------
+
+Public blockchains expose every transaction and every byte of contract state to all participants. This transparency, while valuable for auditability, precludes entire classes of applications: sealed-bid auctions, private order matching, confidential voting, and machine-learning inference over sensitive data.
+
+Two cryptographic families address this gap:
+
+\begin{enumerate}
+  \item \textbf{Zero-knowledge proofs} (ZKPs) allow a prover to convince a verifier of a statement's truth without revealing witness data. ZKPs prove facts about plaintext but do not enable \emph{computation} on encrypted data.
+  \item \textbf{Fully homomorphic encryption} (FHE) permits arbitrary computation directly on ciphertexts. The result, once decrypted, equals the output of the same computation on plaintexts~\cite{gentry2009fhe}.
+\end{enumerate}
+
+FHE is strictly more expressive than ZKPs for on-chain privacy: a smart contract can evaluate functions over encrypted inputs without any party---including validators---ever observing plaintext values. \Zoo{} Network combines two complementary FHE schemes:
+
+\begin{itemize}
+  \item \textbf{\TFHE{}} (Torus FHE): bit-level and small-integer operations with fast programmable bootstrapping, ideal for branching logic, comparisons, and access-control circuits.
+  \item \textbf{\CKKS{}} (Cheon--Kim--Kim--Song): approximate fixed-point arithmetic over vectors of real numbers, ideal for neural-network inference, statistical aggregation, and financial modelling.
+\end{itemize}
+
+\Zoo{}'s approach differs from prior work in three ways: (1)~GPU-accelerated bootstrapping that reduces latency by 40$\times$, making FHE practical inside block times; (2)~threshold decryption integrated with \Zoo{} \TChain{} validators so that decryption requires 67-of-100 consensus; and (3)~formal verification in Lean~4 of noise budgets, rescaling correctness, and GPU parallelism bounds.
+
+This paper is organized as follows. Sections~\ref{sec:tfhe}--\ref{sec:ckks} describe the two FHE schemes and their on-chain encoding. Section~\ref{sec:gpu} details GPU acceleration. Section~\ref{sec:threshold} presents the threshold decryption protocol. Section~\ref{sec:tchain} explains integration with \TChain{}. Section~\ref{sec:formal} covers formal verification. Section~\ref{sec:apps} surveys applications, Section~\ref{sec:bench} provides benchmarks, and Section~\ref{sec:related} discusses related work.
+
+%----------------------------------------------------------------------

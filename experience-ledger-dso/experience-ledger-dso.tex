@@ -1,0 +1,82 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning}
+\usepackage{listings}
+\input{shared/lstlang}
+\usepackage{caption}
+\usepackage{subcaption}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\HLLM}{\textsc{hllm}}
+\newcommand{\DSO}{\textsc{dso}}
+\newcommand{\DAO}{\textsc{dao}}
+\newcommand{\IPFS}{\textsc{ipfs}}
+\newcommand{\LLM}{\textsc{llm}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{Experience Ledger: Decentralized Semantic Optimization for Large Language Models}}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Hanzo Industries \quad Lux Industries \quad Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{September 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present the \textit{Experience Ledger}, a decentralized infrastructure for semantic optimization of Large Language Models (\LLM{}s) that replaces centralized fine-tuning with community-driven knowledge curation. Unlike traditional approaches that update model parameters—an opaque, expensive, and centralized process—our system maintains a content-addressable library of semantic advantages: natural language insights extracted via introspection that guide model behavior through context injection. The Experience Ledger combines cryptographic verification (Merkle trees), decentralized storage (\IPFS{}/Arweave), and \DAO{}-based governance to enable transparent, auditable, and democratic model evolution. We demonstrate that semantic optimization achieves comparable or superior performance to parameter fine-tuning at 0.2\% of the cost while enabling cross-domain transfer, interpretability, and Byzantine-robust aggregation. This paradigm shift—from implicit weight updates to explicit wisdom commons—establishes a foundation for truly decentralized artificial intelligence.
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-background-and-related-work}
+\input{sections/03-experience-format-specification}
+\input{sections/04-storage-architecture}
+\input{sections/05-retrieval-system}
+\input{sections/06-curation-protocol}
+\input{sections/07-decentralized-semantic-optimization-algo}
+\input{sections/08-evaluation}
+\input{sections/09-comparison-with-alternative-approaches}
+\input{sections/10-economic-model}
+\input{sections/11-security-and-adversarial-robustness}
+\input{sections/12-future-directions}
+\input{sections/13-conclusion}
+\input{sections/15-full-json-schemas}
+\input{sections/16-smart-contract-abi}
+\input{sections/17-prompt-templates}
+\input{sections/99-acknowledgments}
+
+\end{document}

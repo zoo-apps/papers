@@ -1,0 +1,62 @@
+\section{The Gym Platform: 2.5 Years of Democratization}
+
+
+\subsection{Evolution Timeline}
+
+\begin{itemize}
+    \item \textbf{v0.1.0 (May 2023)}: Initial release supporting LLaMA, Alpaca, ChatGLM. LoRA fine-tuning only.
+    \item \textbf{v0.3.0 (Aug 2023)}: Added QLoRA, multi-GPU training (DDP), 15 models.
+    \item \textbf{v0.5.0 (Jan 2024)}: RLHF methods (PPO, DPO), Flash Attention, 40 models.
+    \item \textbf{v0.7.0 (Jun 2024)}: Multimodal support (LLaVA, Qwen-VL), Unsloth integration, 70 models.
+    \item \textbf{v0.9.4 (Oct 2025)}: Training-Free GRPO, Qwen3-Omni, audio models, 100+ models.
+\end{itemize}
+
+\subsection{Technical Architecture}
+
+Gym's modular design separates concerns:
+
+\begin{enumerate}
+    \item \textbf{Data Layer} (\texttt{src/gym/data/}): Unified dataset loading, format conversion (JSON/CSV/Parquet), templating system for chat formats.
+    \item \textbf{Model Layer} (\texttt{src/gym/model/}): Adapter management (LoRA/QLoRA/DoRA), quantization (GPTQ/AWQ), multimodal processors (vision/audio).
+    \item \textbf{Training Layer} (\texttt{src/gym/train/}): Trainer implementations (SFT, PPO, DPO, KTO, GRPO), optimizer/scheduler creation, distributed training wrappers.
+    \item \textbf{Evaluation Layer} (\texttt{src/gym/eval/}): MMLU, CEVAL, CMMLU benchmarks, custom metric computation.
+    \item \textbf{Serving Layer} (\texttt{src/gym/api/}): OpenAI-compatible API server, vLLM/SGLang backends.
+    \item \textbf{Interface Layer} (\texttt{src/gym/webui/}, CLI): Gradio web UI, command-line tools.
+\end{enumerate}
+
+\subsection{Unique Innovations}
+
+\subsubsection{Unified Template System}
+Different models require different prompt formats (ChatML, Alpaca, ShareGPT). Gym's template engine abstracts these:
+
+\begin{verbatim}
+gym train \
+  --model_name_or_path Qwen/Qwen3-7B \
+  --template qwen3 \
+  --dataset custom_dataset
+\end{verbatim}
+
+Automatic conversion handles multimodal inputs (images, audio) seamlessly.
+
+\subsubsection{Experience-Enhanced Training}
+Training-Free GRPO integration allows:
+
+\begin{verbatim}
+gym train \
+  --finetuning_type grpo \
+  --grpo_training_free \
+  --grpo_experience_lib_path ./experiences \
+  --grpo_group_size 5
+\end{verbatim}
+
+Model weights remain frozen; only experience library updates. Checkpoints include both model state and experience JSON.
+
+\subsubsection{One-Click Hugging Face Deployment}
+\begin{verbatim}
+gym deploy --model_path ./output/qwen3-lora \
+           --hf_token $HF_TOKEN \
+           --push_to_hub
+\end{verbatim}
+
+Creates Space with Gradio chat interface, OpenAI-compatible API, and auto-scaling compute.
+

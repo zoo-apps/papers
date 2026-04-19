@@ -1,0 +1,9 @@
+\section{Secure Memory Architecture}
+
+
+\subsection{Key Material Protection}
+
+Private key shares exist in validator memory only during active operations. \KChain{} enforces: (1) \texttt{mlock}'d pages preventing swap-to-disk, (2) guard pages detecting buffer overflows, (3) cryptographic clearing (CSPRNG overwrite, zero overwrite via volatile writes, page unmap), and (4) constant-time operations for all comparisons and conditionals on key material.
+
+Side-channel mitigations cover timing (constant-time Barrett reduction), cache (preloaded NTT twiddle factors, no data-dependent access), power (random masking of intermediate lattice values), speculative execution (\texttt{lfence} barriers), and cold boot (cryptographic clearing with encrypted swap disabled).
+

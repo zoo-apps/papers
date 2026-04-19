@@ -1,0 +1,75 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tikz}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{xcolor}
+
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\IChain}{\textsc{I-Chain}}
+\newcommand{\TChain}{\textsc{T-Chain}}
+\newcommand{\KChain}{\textsc{K-Chain}}
+\newcommand{\IdentityVM}{\textsc{IdentityVM}}
+\newcommand{\DID}{\textsc{DID}}
+
+% Title information
+\title{\textbf{Decentralized Identity on Zoo Network:\\Chain-Native DIDs and Verifiable Credentials via I-Chain}\\
+\large IdentityVM: Replacing External IAM with Validator-Backed Identity}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{September 2024}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \IChain{} (\IdentityVM{}), a chain-native decentralized identity layer for Zoo Network that replaces external Identity and Access Management (IAM) systems with validator-backed W3C Decentralized Identifiers (DIDs) and verifiable credentials. \IChain{} implements the \texttt{did:lux:zoo:*} method, where validators collectively serve as identity providers through threshold credential issuance. Credentials carry zero-knowledge proofs enabling selective disclosure---proving properties (age $\geq$ 18, membership in a set, credential validity) without revealing underlying data. The system supports trusted issuer registries, self-issued credentials, and on-chain revocation via accumulator-based revocation lists. Integration with \TChain{} enables threshold signing of credentials using $t$-of-$n$ validator committees, ensuring no single validator can forge identities. Formal verification of trust semantics is established through Lean 4 proofs covering authority delegation, vouching, and revocation (\texttt{Trust/Authority.lean}, \texttt{Trust/Vouch.lean}, \texttt{Trust/Revocation.lean}). We demonstrate that chain-native identity achieves equivalent security guarantees to centralized IAM while eliminating single points of failure, supporting privacy-preserving credential presentation, and enabling cross-chain identity portability across the Lux ecosystem.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\input{sections/01-introduction}
+\input{sections/02-the-texttt-did-lux-zoo}
+\input{sections/03-verifiable-credentials-with-zero-knowled}
+\input{sections/04-validators-as-identity-providers}
+\input{sections/05-credential-revocation}
+\input{sections/06-integration-with-t-chain}
+\input{sections/07-self-issued-credentials}
+\input{sections/08-formal-verification}
+\input{sections/09-security-analysis}
+\input{sections/10-cross-chain-identity}
+\input{sections/99-conclusion}
+
+\end{document}

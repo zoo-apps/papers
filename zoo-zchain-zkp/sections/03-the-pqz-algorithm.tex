@@ -1,0 +1,64 @@
+\section{The PQZ Algorithm}
+
+
+Post-Quantum Zero-Knowledge (PQZ) combines three primitives into a unified framework:
+
+\subsection{Poseidon2 Commitments}
+
+We replace Pedersen commitments (which rely on discrete log hardness) with Poseidon2 \cite{grassi2023poseidon2}, a ZK-friendly algebraic hash function secure under collision resistance assumptions that do not require elliptic curve hardness.
+
+\begin{definition}[Poseidon2 Commitment]
+For message $m \in \mathbb{F}_p^n$ and randomness $r \in \mathbb{F}_p$:
+$$\text{Commit}(m, r) = \text{Poseidon2}(m \| r)$$
+\end{definition}
+
+\textbf{Performance.} Benchmarks on Zoo Network validators (NVIDIA H100):
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Operation} & \textbf{Poseidon2} & \textbf{Pedersen} & \textbf{Speedup} \\
+\midrule
+Commitment & 29 ns & 92 $\mu$s & 2000$\times$ \\
+Note commit & 50 ns & 99 $\mu$s & 1980$\times$ \\
+Merkle path (depth 32) & 928 ns & 2.9 ms & 3125$\times$ \\
+Gas cost & 800 & 6,000 & 7.5$\times$ \\
+\bottomrule
+\end{tabular}
+\caption{Poseidon2 vs Pedersen on GPU-accelerated validators.}
+\end{table}
+
+\subsection{STARK Proofs over Goldilocks}
+
+For the core proving system, PQZ uses STARKs over the Goldilocks field ($p = 2^{64} - 2^{32} + 1$), which provides:
+
+\begin{itemize}
+\item \textbf{Transparency}: No trusted setup. Verification relies only on hash function collision resistance.
+\item \textbf{Post-quantum security}: Security reduces to hash collision resistance (Poseidon2), not discrete log or factoring.
+\item \textbf{Efficient FRI}: The Goldilocks field admits $2^{32}$-th roots of unity, enabling efficient Fast Reed-Solomon Interactive Oracle Proofs.
+\end{itemize}
+
+\subsection{ML-DSA Receipt Signing}
+
+After STARK verification, the Z-Chain validator set signs the resulting receipt using ML-DSA (FIPS 204) threshold signatures coordinated through K-Chain:
+
+\begin{enumerate}
+\item Prover submits STARK proof to Z-Chain.
+\item Z-Chain validators independently verify the proof.
+\item Upon $\geq 67\%$ agreement, validators produce a threshold ML-DSA signature on the receipt.
+\item The signed receipt is stored on-chain and indexed by receipt hash.
+\end{enumerate}
+
+\subsection{Groth16 Export for External EVMs}
+
+For interoperability with Ethereum and other EVM chains that only support BN254 pairings, PQZ provides a Groth16 export:
+
+\begin{enumerate}
+\item Take a verified STARK receipt from Z-Chain.
+\item Generate a Groth16 proof that ``I know a STARK proof that was verified and signed by the Zoo validator set.''
+\item Export the Groth16 proof to the target EVM chain.
+\end{enumerate}
+
+This wraps the post-quantum STARK in a classical Groth16 for compatibility, while the original STARK receipt remains the source of truth on Z-Chain.
+

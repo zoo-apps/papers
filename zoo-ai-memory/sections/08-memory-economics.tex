@@ -1,0 +1,66 @@
+\section{Memory Economics}
+
+\label{sec:economics}
+%----------------------------------------------------------------------
+
+\subsection{Storage Costs}
+
+Memory Capsules consume storage on \Zoo{} Network. Costs are denominated in $\KEEPER$ tokens:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Operation} & \textbf{Cost} & \textbf{Unit} \\
+\midrule
+Capsule creation & 1,000 & $\KEEPER$ \\
+Entry append & 10 & $\KEEPER$ per KB \\
+CRDT sync (per merge) & 50 & $\KEEPER$ \\
+\IChain{} anchor update & 100 & $\KEEPER$ \\
+FHE encrypted query & 500 & $\KEEPER$ \\
+Threshold reveal & 200 & $\KEEPER$ per reveal \\
+\bottomrule
+\end{tabular}
+\caption{Memory operation costs}
+\label{tab:costs}
+\end{table}
+
+\subsection{Garbage Collection}
+
+Unbounded memory growth is economically unsustainable. The garbage collection policy:
+
+\begin{enumerate}
+    \item \textbf{TTL Expiry.} Entries past their TTL are marked for collection.
+    \item \textbf{Salience Threshold.} Episodic entries below $\theta_{\textit{gc}} = 0.1$ salience are eligible.
+    \item \textbf{Confidence Threshold.} Semantic entries below $\gamma = 0.05$ are eligible.
+    \item \textbf{Storage Budget.} Each capsule has a configurable storage budget. When exceeded, the lowest-priority entries are collected first.
+    \item \textbf{Compaction.} Tombstoned entries in the operation log are removed during periodic compaction (default: weekly).
+\end{enumerate}
+
+\begin{proposition}
+Under the garbage collection policy with parameters $(\theta_{\textit{gc}} = 0.1, \gamma = 0.05, \textit{TTL}_{\textit{default}} = 90\text{ days})$, a capsule receiving 1,000 episodic entries per day converges to a steady-state size of approximately 45,000 live entries (180 MB encrypted).
+\end{proposition}
+
+\subsection{Archival Policies}
+
+Collected entries are not destroyed---they are moved to cold storage at reduced cost:
+
+\begin{itemize}
+    \item \textbf{Hot Storage.} Active capsule on \Zoo{} validators. Full read/write, CRDT sync. Cost: 10 $\KEEPER$/KB/month.
+    \item \textbf{Cold Storage.} Archived entries on decentralized storage (IPFS/Filecoin). Read-only, high latency. Cost: 0.1 $\KEEPER$/KB/month.
+    \item \textbf{Glacier.} Long-term archival. Retrieval requires 24-hour notice. Cost: 0.01 $\KEEPER$/KB/month.
+\end{itemize}
+
+\subsection{Memory as an Asset}
+
+Memory Capsules are transferable on-chain assets. An agent's accumulated knowledge has economic value independent of the agent itself. Use cases:
+
+\begin{itemize}
+    \item An agent retiring can sell its capsule to a successor agent.
+    \item A training institution can sell pre-built capsules (``expert medical knowledge base'').
+    \item DAO treasuries can fund public-good capsules (``complete Rust documentation memory'').
+\end{itemize}
+
+Transfer is implemented as a \DID{} ownership change on \IChain{}, with re-encryption of the vault key under the new owner's \KChain{} key.
+
+%----------------------------------------------------------------------

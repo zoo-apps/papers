@@ -1,0 +1,54 @@
+\section{Related Work}
+
+\label{sec:related}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Species Identification with Deep Learning}
+
+The past decade has seen dramatic advances in automated species
+identification. iNaturalist's computer vision system classifies over
+76{,}000 species \citep{van2021benchmarking}. eBird's Merlin app
+achieves high accuracy for North American birds using audio and image
+inputs \citep{kahl2021birdnet}. PlantNet identifies over 38{,}000 plant
+species from photographs \citep{goeau2022overview}. These systems rely
+on extensive labeled datasets, with performance degrading sharply for
+species with fewer than 100 training images.
+
+\subsection{Few-Shot Learning}
+
+Few-shot learning aims to classify novel classes from $K$ labeled
+examples per class (a ``$K$-shot'' setting). Metric-based approaches
+learn an embedding space where classification reduces to nearest-neighbor
+comparison: matching networks \citep{vinyals2016matching}, prototypical
+networks \citep{snell2017prototypical}, and relation networks
+\citep{sung2018learning}. Optimization-based methods learn
+initialization points for rapid adaptation: MAML \citep{finn2017model}
+and its variants. More recently, large pre-trained models with
+in-context learning have shown strong few-shot capabilities
+\citep{brown2020language}.
+
+\subsection{Hierarchical Classification}
+
+Taxonomic hierarchy has been exploited in traditional species
+classification through hierarchical softmax \citep{deng2014large},
+label embedding with taxonomy trees \citep{akata2015label}, and
+curriculum learning from coarse to fine \citep{bengio2009curriculum}.
+\citet{chang2021your} incorporate hierarchical labels into contrastive
+learning. However, hierarchical few-shot learning remains
+underexplored, with only \citet{li2019large} and
+\citet{liu2020many} addressing it in non-ecological contexts.
+
+\subsection{Fine-Grained Recognition}
+
+Fine-grained visual classification distinguishes subordinate categories
+(species, cultivars, model variants). Key approaches include bilinear
+pooling \citep{lin2015bilinear}, part-based attention
+\citep{zheng2017learning}, and feature recalibration
+\citep{hu2018squeeze}. Vision transformers (ViTs) have become dominant
+due to their ability to capture global context
+\citep{dosovitskiy2021image, he2022transfg}. Few-shot fine-grained
+recognition remains challenging due to the high intra-class and low
+inter-class variance \citep{wei2019piecewise}.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

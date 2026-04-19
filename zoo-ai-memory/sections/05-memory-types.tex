@@ -1,0 +1,79 @@
+\section{Memory Types}
+
+\label{sec:types}
+%----------------------------------------------------------------------
+
+We formalize four memory types, each with distinct storage semantics, encryption policies, and retention behavior.
+
+\subsection{Episodic Memory}
+
+\begin{definition}[Episodic Memory]
+Episodic entries record specific events: conversations, transactions, observations, errors. Each entry is a timestamped record $e = (t, \textit{context}, \textit{content}, \textit{salience})$ where salience $\in [0, 1]$ determines retention priority.
+\end{definition}
+
+Properties:
+\begin{itemize}
+    \item \textbf{Encryption.} AES-256-GCM per entry. Key derived from vault key and entry ID.
+    \item \textbf{Retention.} Salience-weighted decay. Entries with $\textit{salience} < \theta_{\textit{gc}}$ (default 0.1) are eligible for garbage collection after their TTL expires.
+    \item \textbf{Volume.} Highest volume type. Expected to dominate storage costs.
+    \item \textbf{Access Pattern.} Temporal locality---recent episodes accessed most frequently.
+\end{itemize}
+
+\subsection{Semantic Memory}
+
+\begin{definition}[Semantic Memory]
+Semantic entries encode learned facts, relationships, and world knowledge: ``Project X uses PostgreSQL 16,'' ``User prefers functional style.'' Each entry is a triple $s = (\textit{subject}, \textit{predicate}, \textit{object})$ with an associated confidence score $\gamma \in [0, 1]$.
+\end{definition}
+
+Properties:
+\begin{itemize}
+    \item \textbf{Encryption.} AES-256-GCM. Embeddings are separately encrypted for vector search.
+    \item \textbf{Retention.} Confidence-weighted. Entries reinforced by repeated observation increase $\gamma$; contradicted entries decrease. At $\gamma < 0.05$, eligible for removal.
+    \item \textbf{Deduplication.} New entries are compared against existing semantic memory. If an entry with cosine similarity $> 0.95$ exists, the existing entry is updated rather than duplicated.
+\end{itemize}
+
+\subsection{Procedural Memory}
+
+\begin{definition}[Procedural Memory]
+Procedural entries encode learned skills and workflows: tool-use sequences, API interaction patterns, multi-step reasoning chains. Each entry is a state machine $p = (S, s_0, \delta, F)$ where $S$ is the state set, $s_0$ the initial state, $\delta$ the transition function, and $F$ the accepting states.
+\end{definition}
+
+Properties:
+\begin{itemize}
+    \item \textbf{Encryption.} Threshold-encrypted via \TChain{} (default $t = 3$-of-$5$). Procedural knowledge is high-value intellectual property.
+    \item \textbf{Retention.} Permanent unless explicitly deleted. Procedural memory represents distilled capability.
+    \item \textbf{Versioning.} Each update creates a new version. Previous versions are retained for rollback.
+\end{itemize}
+
+\subsection{Preference Memory}
+
+\begin{definition}[Preference Memory]
+Preference entries encode user and agent preferences: communication style, risk tolerance, tool preferences, formatting rules. Each entry is a key-value pair $\pi = (k, v, \textit{strength})$ where strength $\in [0, 1]$ indicates how firmly the preference is held.
+\end{definition}
+
+Properties:
+\begin{itemize}
+    \item \textbf{Encryption.} AES-256-GCM. Preferences are moderately sensitive.
+    \item \textbf{Retention.} Permanent with decay. Unused preferences ($\textit{accessed\_at}$ older than 90 days) have strength halved each subsequent period.
+    \item \textbf{Conflict Resolution.} Explicit preferences override inferred ones. Later preferences override earlier ones at equal strength.
+\end{itemize}
+
+\subsection{Type Distribution and Storage Allocation}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Type} & \textbf{Encryption} & \textbf{Retention} & \textbf{Avg Size} & \textbf{Expected \%} \\
+\midrule
+Episodic & AES-256-GCM & TTL + salience & 2--8 KB & 60\% \\
+Semantic & AES-256-GCM & Confidence decay & 0.5--2 KB & 25\% \\
+Procedural & Threshold & Permanent & 4--32 KB & 10\% \\
+Preference & AES-256-GCM & Strength decay & 0.1--1 KB & 5\% \\
+\bottomrule
+\end{tabular}
+\caption{Memory type characteristics}
+\label{tab:memory_types}
+\end{table}
+
+%----------------------------------------------------------------------

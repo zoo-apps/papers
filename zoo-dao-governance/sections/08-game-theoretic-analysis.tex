@@ -1,0 +1,41 @@
+\section{Game-Theoretic Analysis}
+
+\label{sec:game_theory}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Voter Strategic Behavior}
+
+Under QV, strategic voting is bounded. Misrepresentation cost scales
+quadratically:
+\begin{equation}
+  \text{Cost of misrepresentation} = \sum_j (k_{ij}^* - k_{ij})^2
+\end{equation}
+
+This makes strategic behavior increasingly expensive relative to sincere
+voting as proposals increase.
+
+\subsection{Collusion Resistance}
+
+We implement pairwise penalization:
+\begin{equation}
+  V_j^{\text{adjusted}} = \sum_i k_{ij} \cdot \left(1 -
+  \frac{1}{M} \sum_{i' \neq i} \text{sim}(i, i')^2\right)
+\end{equation}
+
+where $\text{sim}(i, i')$ measures voting pattern overlap.
+
+\subsection{Reviewer Honesty}
+
+\begin{proposition}[Honest Review Equilibrium]
+Under the staking mechanism, honest reviewing is a Nash equilibrium when
+expected quality from honest review exceeds that from strategic review
+by more than the effort cost difference.
+\end{proposition}
+
+This holds because inter-reviewer consistency rewards agreement with
+independent (likely honest) assessors, author feedback rewards genuine
+engagement, and post-publication calibration penalizes divergence from
+realized outcomes.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

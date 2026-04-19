@@ -1,0 +1,92 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+
+% ============================================================
+% Preamble
+% ============================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,fit}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{fancyhdr}
+\usepackage{authblk}
+\usepackage{abstract}
+\usepackage{natbib}
+\bibliographystyle{plainnat}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    citecolor=green!50!black,
+    urlcolor=blue!80!black
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Antje Worring, Zach Kelling}
+\lhead{Decentralized Research Coordination}
+\rfoot{Page \thepage}
+
+% ============================================================
+\title{\textbf{Decentralized Research Coordination: Federated Experiment Management for DeSci} \\[0.5em]
+\large A Protocol for Reproducible, Incentive-Aligned Scientific Collaboration on Distributed Networks}
+
+\author[1]{Antje Worring, Zach Kelling}
+\affil[1]{Antje Worring, Zach Kelling, Research Division \\ \texttt{research@zoo.ngo}}
+
+\date{August 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+% ============================================================
+% Abstract
+% ============================================================
+\begin{abstract}
+\noindent
+Scientific research faces a reproducibility crisis compounded by institutional fragmentation, misaligned incentives, and opaque experimental workflows.
+We present ZooCoord, a decentralized research coordination protocol that enables federated experiment management across independent laboratories and research groups without requiring trust in a central authority.
+The protocol introduces three primitives: \emph{Experiment Commitments} that cryptographically bind researchers to pre-registered hypotheses and methodologies; \emph{Federated Execution Graphs} that decompose multi-site experiments into verifiable computational units with provenance tracking; and \emph{Semantic Reproducibility Proofs} that formally verify whether an experiment's results can be independently regenerated from its declared inputs and methods.
+ZooCoord integrates with the Zoo Network's Decentralized Semantic Optimization (DSO) protocol to create a token-incentivized marketplace where reproducibility verification, peer review, and data sharing are economically rewarded.
+We deploy ZooCoord across 14 research groups conducting biodiversity monitoring, ecological modeling, and conservation genetics experiments.
+Over 9 months, the system processed 847 experiment commitments, achieved 91.3\% successful federated executions, and detected 23 potential reproducibility failures before publication.
+Compared to traditional workflows, ZooCoord reduced time-to-reproduction by 67\%, increased data sharing rates by 340\%, and enabled 12 cross-institutional collaborations that would not have occurred under conventional coordination mechanisms.
+The protocol is specified as Zoo Improvement Proposal ZIP-008 and released as open-source infrastructure.
+\end{abstract}
+
+\vspace{0.5em}
+\noindent\textbf{Keywords:} decentralized science, reproducibility, experiment management, federated computing, research incentives, provenance tracking
+
+% ============================================================
+% 1. Introduction
+% ============================================================
+
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-protocol-design}
+\input{sections/04-experiment-commitment-protocol}
+\input{sections/05-federated-execution-graphs}
+\input{sections/06-reproducibility-verification-market}
+\input{sections/07-implementation}
+\input{sections/08-evaluation}
+\input{sections/09-economic-analysis}
+\input{sections/10-discussion}
+\input{sections/99-conclusion}
+
+\end{document}

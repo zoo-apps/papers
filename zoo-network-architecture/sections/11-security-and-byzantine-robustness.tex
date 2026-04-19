@@ -1,0 +1,70 @@
+\section{Security and Byzantine Robustness}
+
+
+\subsection{Threat Model}
+
+\subsubsection{Malicious GPU Nodes}
+
+Nodes may:
+\begin{itemize}
+\item Return incorrect outputs (to save computation).
+\item Inject backdoor experiences (to manipulate model behavior).
+\item Collude to control query routing.
+\end{itemize}
+
+\subsubsection{Malicious Contributors}
+
+Contributors may:
+\begin{itemize}
+\item Submit toxic/biased experiences.
+\item Sybil attack to upvote low-quality experiences.
+\item Poison training data.
+\end{itemize}
+
+\subsubsection{Network-Level Attacks}
+
+\begin{itemize}
+\item \textbf{DDoS}: Flood Inference Router with junk queries.
+\item \textbf{Eclipse}: Isolate honest nodes from network.
+\item \textbf{Censorship}: Prevent specific experiences from propagating.
+\end{itemize}
+
+\subsection{Defenses}
+
+\subsubsection{Proof Systems}
+
+\begin{itemize}
+\item \textbf{Optimistic}: Fast but requires dispute mechanism.
+\item \textbf{zkSNARK}: Slow but provides instant finality.
+\item \textbf{Hybrid}: Optimistic by default, zkSNARK for high-value queries.
+\end{itemize}
+
+\subsubsection{DAO Governance}
+
+All experience updates require 66\% DAO approval. This prevents single-actor manipulation.
+
+\subsubsection{Slashing}
+
+Nodes caught returning incorrect outputs lose staked KEEPER. Slashing conditions:
+\begin{enumerate}
+\item Proof verification fails.
+\item Output deviates from majority (if $\geq 3$ nodes execute same query).
+\item Node is offline during assigned query.
+\end{enumerate}
+
+\subsubsection{Rate Limiting}
+
+Inference Router enforces per-user rate limits (e.g., 100 queries/hour for free tier). This mitigates DDoS.
+
+\subsubsection{Redundancy}
+
+Critical queries can be executed by $k \geq 3$ nodes. Outputs are compared via majority voting. If nodes disagree, all are slashed except the majority.
+
+\subsection{Cryptographic Primitives}
+
+\begin{itemize}
+\item \textbf{Merkle Trees}: Verify experience inclusion without revealing full library.
+\item \textbf{Digital Signatures}: All on-chain transactions signed with ECDSA/EdDSA.
+\item \textbf{Post-Quantum}: Lux layer provides CRYSTALS-Dilithium resistance.
+\end{itemize}
+

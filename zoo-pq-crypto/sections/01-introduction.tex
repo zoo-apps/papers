@@ -1,0 +1,15 @@
+\section{Introduction}
+
+
+\subsection{The Quantum Threat}
+
+Blockchain cryptography faces two quantum-vulnerable primitive classes: key agreement (ECDH, broken by Shor's algorithm) and digital signatures (ECDSA, EdDSA, BLS, similarly broken). Hash functions and symmetric ciphers retain security with doubled key lengths. The ``harvest now, decrypt later'' model makes this threat immediate: transactions recorded today can be forged retroactively once quantum computers arrive \cite{shor1997polynomial}.
+
+\subsection{NIST Standards and Zoo's Strategy}
+
+NIST finalized three post-quantum standards in 2024 \cite{nist2024pqc}: \MLKEM{} (FIPS~203, key encapsulation, Module-LWE), \MLDSA{} (FIPS~204, digital signatures, Module-LWE), and \SLHDSA{} (FIPS~205, digital signatures, hash-based). Zoo deploys each where its properties are most advantageous, supplemented by \Corona{} for threshold operations not covered by NIST.
+
+\subsection{Contributions}
+
+We contribute: (1)~complete FIPS 203/204/205 integration into a production blockchain; (2)~\Corona{} threshold signatures with Ring-LWE security; (3)~hybrid classical+PQ composition framework; (4)~GPU NTT acceleration achieving 8x throughput; (5)~Lean~4 formal verification of all primitives; (6)~chain-specific deployment mapping across Zoo's multi-chain topology.
+

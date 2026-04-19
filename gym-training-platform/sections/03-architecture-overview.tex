@@ -1,0 +1,95 @@
+\section{Architecture Overview}
+
+
+\subsection{Design Philosophy}
+
+Gym's architecture follows three core principles:
+
+\begin{enumerate}
+\item \textbf{Modularity}: Each component (data processing, model loading, training loop, evaluation) is independently testable and swappable.
+\item \textbf{Extensibility}: Adding new models requires only a JSON configuration entry; new training methods inherit base infrastructure.
+\item \textbf{Progressive Disclosure}: Simple use cases require minimal configuration; advanced features available when needed.
+\end{enumerate}
+
+\subsection{System Components}
+
+Figure~\ref{fig:architecture} illustrates Gym's modular architecture:
+
+\begin{figure}[h]
+\centering
+\begin{verbatim}
+┌─────────────────────────────────────────────────────────────────┐
+│                         User Interfaces                          │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐   │
+│  │ Web UI   │  │   CLI    │  │ Python   │  │  API Server  │   │
+│  │ (Gradio) │  │          │  │   API    │  │  (OpenAI)    │   │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────────┘   │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+┌──────────────────────────┼──────────────────────────────────────┐
+│                    Training Orchestration                        │
+│  ┌────────────────────────────────────────────────────────┐    │
+│  │ Trainer Factory (SFT, LoRA, DPO, PPO, GRPO, GSPO)     │    │
+│  └────────────────────────────────────────────────────────┘    │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+┌──────────────────────────┴──────────────────────────────────────┐
+│                     Core Infrastructure                          │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐   │
+│  │   Data   │  │  Model   │  │ Training │  │  Evaluation  │   │
+│  │ Processor│  │  Loader  │  │   Loop   │  │   Metrics    │   │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────────┘   │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+┌──────────────────────────┴──────────────────────────────────────┐
+│                   Optimization Layer                             │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐   │
+│  │  Flash   │  │  Liger   │  │ Unsloth  │  │ Quantization │   │
+│  │Attention │  │  Kernel  │  │          │  │  (4/8-bit)   │   │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────────┘   │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+┌──────────────────────────┴──────────────────────────────────────┐
+│                   Hardware Abstraction                           │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐   │
+│  │  Single  │  │   DDP    │  │   FSDP   │  │  DeepSpeed   │   │
+│  │   GPU    │  │          │  │          │  │    ZeRO      │   │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+\end{verbatim}
+\caption{Gym's modular architecture with five abstraction layers.}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{Data Processing Pipeline}
+
+Gym supports multiple dataset formats through a unified preprocessing pipeline:
+
+\begin{itemize}
+\item \textbf{Alpaca Format}: Standard instruction-following datasets.
+\item \textbf{ShareGPT Format}: Multi-turn conversations.
+\item \textbf{Preference Pairs}: For DPO, KTO, ORPO training.
+\item \textbf{Multi-Modal}: Images, audio, video with text.
+\end{itemize}
+
+The data collator handles:
+\begin{itemize}
+\item Dynamic padding to longest sequence in batch
+\item Label masking for input/output separation
+\item Vision/audio token insertion at correct positions
+\item KV cache management for generation
+\end{itemize}
+
+\subsection{Model Registry}
+
+Models are registered via JSON configuration specifying:
+\begin{itemize}
+\item Architecture family (Qwen, LLaMA, Mistral, etc.)
+\item Template format (chat markup)
+\item Special tokens (BOS, EOS, PAD)
+\item Supported modalities (text, vision, audio)
+\item Memory requirements (FP16, INT8, INT4)
+\end{itemize}
+
+This declarative approach enables adding new models without code changes. As of September 2025, Gym supports 112 model variants.
+

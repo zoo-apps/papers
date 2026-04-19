@@ -1,0 +1,99 @@
+\section{Theoretical Foundation}
+
+\label{sec:theory}
+
+We ground our approach in Hamiltonian mechanics, providing a principled framework for understanding the trade-offs in context-based learning.
+
+\subsection{The Context-Inference Hamiltonian}
+
+\begin{definition}[Policy Mass]
+The \textbf{policy mass} $\Psi$ quantifies the semantic richness of the context provided to an LLM:
+\begin{equation}
+\Psi = \sum_{e \in \mathcal{E}} w_e \cdot \text{relevance}(e, q)
+\end{equation}
+where $\mathcal{E}$ is the experience library, $w_e$ is the weight (confidence) of experience $e$, and $\text{relevance}(e, q)$ measures applicability to query $q$.
+\end{definition}
+
+\begin{definition}[Inference Complexity]
+The \textbf{inference complexity} $\Theta$ quantifies the computational cost and uncertainty:
+\begin{equation}
+\Theta = H[\pi_\theta(\cdot | q, \mathcal{E})] + \lambda \cdot |\mathcal{E}|
+\end{equation}
+where $H[\pi_\theta]$ is the policy entropy (model uncertainty) and $|\mathcal{E}|$ is the context length cost with regularization $\lambda$.
+\end{definition}
+
+\begin{theorem}[Hamiltonian Invariant]
+For a sufficiently capable foundation model $\pi_\theta$ with frozen parameters $\theta$, there exists a conserved quantity $\kappa$ such that:
+\begin{equation}
+\Psi \cdot \Theta = \kappa
+\end{equation}
+This conservation law ensures that increasing policy mass (richer context) decreases inference complexity (lower uncertainty), maintaining system equilibrium.
+\end{theorem}
+
+\begin{proof}[Proof Sketch]
+Consider the expected performance of the LLM as a function of both context and model uncertainty:
+\begin{equation}
+\mathbb{E}_{q \sim \mathcal{D}}[R(q, \pi_\theta(\cdot | q, \mathcal{E}))]
+\end{equation}
+
+For a fixed level of expected performance (target reward), the information-theoretic bound from Rate-Distortion theory \cite{cover1999elements} implies:
+\begin{equation}
+I(Q; O | \mathcal{E}) + H[O | Q, \mathcal{E}] \geq C
+\end{equation}
+where $I(Q; O | \mathcal{E})$ is mutual information between queries and outputs given context, $H[O | Q, \mathcal{E}]$ is conditional entropy, and $C$ is a constant determined by the target performance level.
+
+The mutual information term $I(Q; O | \mathcal{E})$ increases with policy mass $\Psi$ (richer context provides more information), while the conditional entropy $H[O | Q, \mathcal{E}]$ corresponds to our inference complexity $\Theta$. The conservation law $\Psi \cdot \Theta = \kappa$ emerges as a geometric mean constraint that maintains this information-theoretic balance.
+\end{proof}
+
+\subsection{Policy Manifold Geometry}
+
+Traditional fine-tuning navigates the \textbf{parameter space} $\mathcal{M}_\theta$, a high-dimensional manifold where each point represents a different set of model weights. Training-Free GRPO instead navigates the \textbf{context space} $\mathcal{M}_\mathcal{E}$, where each point represents a different experience library.
+
+\begin{proposition}[Context Space Optimization]
+For a frozen foundation model $\pi_\theta$ with sufficient capability, the optimal experience library $\mathcal{E}^*$ can be found by gradient-free optimization in context space:
+\begin{equation}
+\mathcal{E}^* = \arg\max_{\mathcal{E}} \mathbb{E}_{q \sim \mathcal{D}}[R(q, \pi_\theta(\cdot | q, \mathcal{E}))] - \lambda \cdot |\mathcal{E}|
+\end{equation}
+This optimization can be performed through discrete updates (Add/Modify/Delete operations) guided by semantic advantages.
+\end{proposition}
+
+The key insight: while $\mathcal{M}_\theta$ has billions of dimensions (model parameters), $\mathcal{M}_\mathcal{E}$ has only hundreds (experiences), making optimization vastly more efficient. Furthermore, $\mathcal{M}_\mathcal{E}$ is \textit{discrete and interpretable}—each point corresponds to a human-readable set of strategic insights.
+
+\subsection{Semantic Advantage as Gradient Analog}
+
+In traditional policy gradient methods, we compute:
+\begin{equation}
+\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}[A^\pi(s, a) \nabla_\theta \log \pi_\theta(a | s)]
+\end{equation}
+where $A^\pi(s, a)$ is the advantage function.
+
+In Training-Free GRPO, we instead compute \textbf{semantic advantages}:
+\begin{equation}
+\mathcal{A}_{\text{sem}}(\tau_i, \tau_j) = \text{LLM}_{\text{introspect}}(\tau_i, \tau_j, r_i, r_j)
+\end{equation}
+which returns a natural language description of \textit{why} trajectory $\tau_i$ outperformed $\tau_j$.
+
+This semantic advantage serves as an analog to gradients:
+\begin{itemize}
+    \item \textbf{Gradient}: Direction in parameter space to improve policy
+    \item \textbf{Semantic Advantage}: Insight about context to add/modify for improvement
+\end{itemize}
+
+The "update" is then performed discretely in context space:
+\begin{equation}
+\mathcal{E}_{t+1} = \text{Update}(\mathcal{E}_t, \mathcal{A}_{\text{sem}})
+\end{equation}
+where Update is a discrete operation (Add/Modify/Delete) rather than continuous gradient descent.
+
+\subsection{Convergence Analysis}
+
+\begin{theorem}[Context Space Convergence]
+Under mild regularity conditions (experience library size $|\mathcal{E}| \leq M$, bounded relevance scores, sufficiently capable foundation model), the Training-Free GRPO algorithm converges to a local optimum in context space in $\mathcal{O}(M \log M)$ iterations.
+\end{theorem}
+
+\begin{proof}[Proof Sketch]
+Each iteration performs group-relative comparisons across $G$ rollouts, extracting semantic advantages that strictly improve the experience library (measured by expected reward). Since the context space is discrete and finite (bounded by $M$ experiences, each with finite vocabulary), and each update increases expected performance, the algorithm must converge to a fixed point where no further advantageous experiences can be extracted. The $\log M$ factor arises from the tree structure of embedding-based retrieval for relevant experiences.
+\end{proof}
+
+Importantly, this convergence requires \textit{no gradient computation}, making it applicable to black-box API models where parameter access is unavailable.
+

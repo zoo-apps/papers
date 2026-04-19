@@ -1,0 +1,69 @@
+\section{Hierarchical Meta-Learning}
+
+\label{sec:metalearning}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Episode Construction}
+
+Standard meta-learning samples episodes uniformly. We introduce
+\textbf{taxonomic episode sampling} that ensures episodes contain
+discriminative challenges at each rank.
+
+For each training episode, we:
+\begin{enumerate}
+  \item Sample a focal family $f$ with probability proportional to its
+    species richness.
+  \item From $f$, sample 2--4 genera.
+  \item From each genus, sample 2--5 species.
+  \item Include 1--2 ``distractor'' species from the same order but
+    different family.
+\end{enumerate}
+
+This ensures the model must discriminate at multiple taxonomic levels
+within each episode, unlike uniform sampling which often produces
+episodes of distantly related, trivially distinguishable species.
+
+\subsection{Multi-Rank Loss}
+
+The training loss combines classification losses at each rank:
+\begin{equation}
+  \Loss_{\text{meta}} = \Loss_{\text{CE}}^{(r_S)} + \gamma_G
+  \Loss_{\text{CE}}^{(r_G)} + \gamma_F \Loss_{\text{CE}}^{(r_F)}
+  + \lambda \Loss_{\text{triplet}}
+\end{equation}
+where $\Loss_{\text{CE}}^{(r)}$ is the cross-entropy loss for
+classification at rank $r$, $\Loss_{\text{triplet}}$ is a taxonomic
+triplet loss that pushes apart embeddings of different genera while
+pulling together congeneric species, and $\gamma_G = 0.3$, $\gamma_F =
+0.1$, $\lambda = 0.2$ are weighting coefficients.
+
+\subsection{Taxonomic Triplet Loss}
+
+We define:
+\begin{equation}
+  \Loss_{\text{triplet}} = \sum_{(a, p, n)} \max(0,
+  \|\phi(x_a) - \phi(x_p)\| - \|\phi(x_a) - \phi(x_n)\| + m(a, n))
+\end{equation}
+where $(a, p, n)$ is an anchor-positive-negative triplet, and the margin
+$m(a, n)$ scales with taxonomic distance:
+\begin{equation}
+  m(a, n) = m_0 \cdot (1 - \text{sim}_{\text{tax}}(a, n))
+\end{equation}
+Here $\text{sim}_{\text{tax}}(a, n) \in [0, 1]$ is the fraction of
+shared taxonomic ranks, and $m_0 = 0.5$ is the base margin.
+
+\subsection{Training Protocol}
+
+\begin{itemize}
+  \item \textbf{Meta-training set}: 8{,}000 species (disjoint from
+    evaluation species).
+  \item \textbf{Meta-validation set}: 1{,}000 species.
+  \item \textbf{Episodes per epoch}: 10{,}000.
+  \item \textbf{Optimizer}: AdamW, learning rate $5 \times 10^{-5}$,
+    cosine schedule over 100 epochs.
+  \item \textbf{Episode configuration}: 10-way $K$-shot, $K \in
+    \{1, 5\}$, with 15 queries per class.
+\end{itemize}
+
+
+% ══════════════════════════════════════════════════════════════════════════════

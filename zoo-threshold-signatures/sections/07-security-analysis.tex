@@ -1,0 +1,41 @@
+\section{Security Analysis}
+
+\label{sec:security}
+
+\subsection{Open DKG Safety}
+
+The DKG executes over an open network where validators may be adversarial. Safety relies on two mechanisms:
+
+\begin{enumerate}
+\item \textbf{Feldman commitments}: Each participant commits to their polynomial coefficients. Share recipients verify consistency, detecting any deviation.
+\item \textbf{Zero-knowledge proofs}: Each participant proves knowledge of their secret coefficient $a_{i,0}$ without revealing it, preventing a rogue-key attack where an adversary biases the group public key.
+\end{enumerate}
+
+\begin{proposition}[DKG Soundness]
+If fewer than $t$ of the $n$ DKG participants are corrupted, the resulting group public key $Y$ is uniformly distributed and the adversary learns no information about honest parties' shares.
+\end{proposition}
+
+\subsection{Consensus-Coupled Threshold Guarantees}
+
+In \TChain{}, the MPC threshold $t$ is set to match the consensus fault tolerance. For $n$ validators with total stake $W$, the consensus safety threshold requires honest control of $\geq \frac{2}{3}W$. We set $t = \lceil \frac{n}{3} \rceil + 1$, ensuring:
+
+\begin{equation}
+\text{Forge signature} \implies \text{Corrupt } \geq t \text{ validators} \implies \text{Break consensus}
+\end{equation}
+
+An adversary who can forge a threshold signature can also break consensus, and vice versa. The two security boundaries collapse into one.
+
+\subsection{Identifiable Abort}
+
+Both FROST and CGGMP21 support identifiable abort. If a participant submits an invalid round message:
+
+\begin{enumerate}
+\item Other participants detect the inconsistency via commitment verification or range proof checking.
+\item The session aborts and the offending validator's identity is recorded on-chain.
+\item The validator is slashed according to the staking parameters defined in \cite{zoo-tokenomics}.
+\item A new session is initiated excluding the slashed validator.
+\end{enumerate}
+
+This mechanism converts MPC liveness failures into economic penalties, aligning cryptographic and economic security.
+
+%% --------------------------------------------------------------------------

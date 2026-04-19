@@ -1,0 +1,101 @@
+\section{Adaptive Gamification Engine}
+
+\label{sec:gamification}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Challenge Generation}
+
+The gamification engine generates personalized challenges for each
+observer. A challenge $c$ specifies: target taxon group, geographic
+area, time window, and observation protocol. Challenges are designed
+to fill gaps in the existing data coverage.
+
+\subsection{Reinforcement Learning Formulation}
+
+We model challenge generation as a contextual bandit problem. The
+\textbf{state} $s_t$ for observer $i$ at time $t$ comprises:
+\begin{itemize}
+  \item Observer profile: skill level, taxonomic expertise, location,
+    historical observation patterns.
+  \item Data gap map: spatial-temporal-taxonomic cells with low
+    observation density.
+  \item Environmental context: season, weather, habitat accessibility.
+\end{itemize}
+
+The \textbf{action} $a_t$ is a challenge parameterized by
+$(\text{taxon}, \text{location}, \text{time}, \text{difficulty})$.
+
+The \textbf{reward} $r_t$ combines:
+\begin{equation}
+  r_t = w_1 \cdot \text{DataValue}(a_t) + w_2 \cdot \text{Engagement}(a_t)
+  + w_3 \cdot \text{Quality}(a_t)
+  \label{eq:reward}
+\end{equation}
+
+where DataValue measures the scientific value of filling the targeted
+gap, Engagement measures whether the observer attempted and completed
+the challenge, and Quality measures the reliability of the resulting
+observation.
+
+\subsection{Optimization}
+
+We use a contextual Thompson sampling algorithm
+\citep{agrawal2013thompson} with a neural network reward model:
+\begin{equation}
+  \hat{r}(s, a; \theta) = \text{MLP}_\theta([\mathbf{s} \| \mathbf{a}])
+\end{equation}
+
+The reward model is updated daily on the previous day's challenge
+outcomes. Posterior uncertainty is maintained through an ensemble of
+5 models with different random initializations.
+
+\subsection{Challenge Types}
+
+\begin{table}[H]
+\centering
+\caption{Challenge types and their gamification mechanisms.}
+\label{tab:challenges}
+\begin{tabular}{p{2.5cm}p{4cm}p{4.5cm}}
+\toprule
+\textbf{Challenge} & \textbf{Objective} & \textbf{Gamification} \\
+\midrule
+Explorer & Visit undersampled 1\,km grid cell & Map reveal, territory
+  badge \\
+Species Quest & Find target species in area & Progressive difficulty,
+  species album \\
+Survey Sprint & Complete structured survey & Streak bonuses, team
+  competitions \\
+Night Watch & Nocturnal survey in target area & Exclusive night badge,
+  bonus multiplier \\
+Seasonal Tracker & Document phenological events & Season completion
+  progress bar \\
+Data Rescue & Verify/correct historical records & Accuracy leaderboard \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Bias Reduction Results}
+
+\begin{table}[H]
+\centering
+\caption{Sampling bias metrics: ZooPlatform vs.\ unguided observation.}
+\label{tab:bias}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Bias metric} & \textbf{Unguided} & \textbf{ZooPlatform} \\
+\midrule
+Spatial Gini coefficient & 0.83 & 0.44 \\
+Weekend/weekday ratio & 3.7:1 & 1.8:1 \\
+Bird/invertebrate obs.\ ratio & 14.2:1 & 5.1:1 \\
+Distance from road (median km) & 0.4 & 1.8 \\
+\% of 1\,km cells with $\geq$1 obs. & 8.3\% & 22.7\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Adaptive gamification reduces spatial Gini coefficient by 47\% (0.83 to
+0.44), taxonomic bias by 64\% (14.2:1 to 5.1:1), and increases spatial
+coverage by 2.7x.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,25 @@
+\section{Introduction}
+
+
+Conservation biology increasingly relies on AI for species monitoring, habitat analysis, and population modeling. However, these applications handle sensitive data: GPS coordinates of endangered species, veterinary medical records, and genetic sequences that could be exploited by poachers or biopirates. Traditional approaches either centralize data (creating single points of compromise) or anonymize it (reducing analytical utility).
+
+Fully homomorphic encryption (\FHE{}) enables computation on encrypted data without decryption. An \FHE{} scheme allows a party to evaluate arbitrary functions $f$ on ciphertexts $\text{Enc}(x)$, producing $\text{Enc}(f(x))$ without learning $x$ or $f(x)$. This property is transformative for conservation AI: models can be trained on encrypted wildlife data, inference can be performed on encrypted images, and results can be released only through threshold decryption controlled by a conservation DAO.
+
+The Zoo Network is a non-profit L2 on Lux Network, purpose-built for AI/ML research, conservation, and decentralized science. Zoo inherits Lux's high-performance EVM with GPU acceleration and Quasar consensus, providing the computational substrate necessary for \FHE{} workloads that would be infeasible on Ethereum or other general-purpose chains.
+
+\subsection{Contributions}
+
+This paper makes the following contributions:
+
+\begin{enumerate}
+    \item \textbf{Zoo FHE Architecture}: A dual-scheme \FHE{} framework (\TFHE{} + \CKKS{}) integrated into the Zoo EVM via precompile at \texttt{0x0700} (Section~\ref{sec:architecture}).
+
+    \item \textbf{Encrypted AI Primitives}: Protocols for encrypted model weights, encrypted inference, and encrypted gradient aggregation (Section~\ref{sec:primitives}).
+
+    \item \textbf{Threshold Decryption}: A $(t, n)$-threshold scheme for controlled model output release governed by conservation DAOs (Section~\ref{sec:threshold}).
+
+    \item \textbf{Conservation Applications}: Three deployed applications---private wildlife monitoring, confidential veterinary AI, and encrypted genomics (Section~\ref{sec:applications}).
+
+    \item \textbf{Benchmarks}: Performance evaluation on Zoo testnet demonstrating practical latency and gas costs (Section~\ref{sec:evaluation}).
+\end{enumerate}
+

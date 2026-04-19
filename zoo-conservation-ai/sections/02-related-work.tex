@@ -1,0 +1,23 @@
+\section{Related Work}
+
+
+\subsection{Camera Trap Image Classification}
+
+Early automated camera trap classification relied on traditional computer vision features such as HOG descriptors~\cite{dalal2005} and SIFT keypoints~\cite{lowe2004} combined with SVM classifiers. The introduction of deep learning marked a significant improvement: Norouzzadeh et al.~\cite{norouzzadeh2018} demonstrated that deep CNNs could match expert-level classification on Snapshot Serengeti with ResNet-152, achieving 93.8\% top-1 accuracy across 48 species.
+
+Subsequent work has explored transfer learning~\cite{tabak2019}, data augmentation strategies for imbalanced wildlife datasets~\cite{beery2019}, and multi-task learning that jointly predicts species, count, and behavior~\cite{willi2019}. MegaDetector~\cite{beery2019mega} introduced a two-stage approach: a general-purpose animal detector followed by a species classifier, which improved robustness to empty frames and domain shift.
+
+Recent advances include the use of vision transformers for camera trap classification~\cite{dosovitskiy2021}, self-supervised pre-training on unlabeled camera trap data~\cite{pantazis2021}, and foundation models fine-tuned for ecological applications~\cite{weinstein2022}. However, these approaches predominantly treat each image independently, discarding temporal context.
+
+\subsection{Population Estimation}
+
+Traditional wildlife population estimation relies on capture-recapture methods~\cite{jolly1965, seber1965}, distance sampling~\cite{buckland2001}, and occupancy modeling~\cite{mackenzie2002}. Camera trap-based population estimation has incorporated individual identification through coat patterns~\cite{karanth1998} for species such as tigers, leopards, and zebras.
+
+Deep learning has been applied to individual re-identification~\cite{schneider2020}, enabling automated capture-recapture analysis. Density estimation methods using detection counts and spatial models~\cite{chandler2011} provide alternatives when individual identification is not feasible.
+
+\subsection{Habitat Quality Assessment}
+
+Remote sensing provides the foundation for large-scale habitat assessment, with indices such as NDVI~\cite{tucker1979}, EVI~\cite{huete2002}, and fragmentation metrics~\cite{mcgarigal2012} serving as standard tools. Recent work has applied deep learning to satellite imagery for land cover classification~\cite{helber2019}, deforestation detection~\cite{ortega2021}, and habitat connectivity modeling~\cite{mcrae2008}.
+
+The integration of in-situ camera trap data with remote sensing observations remains underexplored, despite the complementary nature of these data sources---satellite imagery provides spatial coverage while camera traps provide temporal depth and species-level resolution.
+

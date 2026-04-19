@@ -1,0 +1,87 @@
+# Zoo Papers Index
+
+Auto-generated catalogue of research papers.
+
+| Paper | PDF | Path |
+|-------|-----|------|
+| `beluga-l3-whitepaper` | ✓ | `beluga-l3-whitepaper/beluga-l3-whitepaper.tex` |
+| `embedding-7680` | ✓ | `embedding-7680/embedding-7680.tex` |
+| `experience-ledger-dso` | ✓ | `experience-ledger-dso/experience-ledger-dso.tex` |
+| `gym-training-platform` | ✓ | `gym-training-platform/gym-training-platform.tex` |
+| `hllm-training-free-grpo` | ✓ | `hllm-training-free-grpo/hllm-training-free-grpo.tex` |
+| `zip-002-zen-reranker` | ✓ | `zip-002-zen-reranker/zip-002-zen-reranker.tex` |
+| `zip-0803-encrypted-sqlite-replication` | ✓ | `zip-0803-encrypted-sqlite-replication/zip-0803-encrypted-sqlite-replication.tex` |
+| `zoo-agent-nft` | ✓ | `zoo-agent-nft/zoo-agent-nft.tex` |
+| `zoo-agi` | ✓ | `zoo-agi/zoo-agi.tex` |
+| `zoo-ai-memory` | ✓ | `zoo-ai-memory/zoo-ai-memory.tex` |
+| `zoo-ai-research-agenda` | ✓ | `zoo-ai-research-agenda/zoo-ai-research-agenda.tex` |
+| `zoo-avatar-tutors` | ✓ | `zoo-avatar-tutors/zoo-avatar-tutors.tex` |
+| `zoo-bitdelta-deltasoup` | ✓ | `zoo-bitdelta-deltasoup/zoo-bitdelta-deltasoup.tex` |
+| `zoo-bridge` | ✓ | `zoo-bridge/zoo-bridge.tex` |
+| `zoo-carbon-credits` | ✓ | `zoo-carbon-credits/zoo-carbon-credits.tex` |
+| `zoo-citizen-science` | ✓ | `zoo-citizen-science/zoo-citizen-science.tex` |
+| `zoo-confidential-defi` | ✓ | `zoo-confidential-defi/zoo-confidential-defi.tex` |
+| `zoo-consensus` | ✓ | `zoo-consensus/zoo-consensus.tex` |
+| `zoo-conservation-ai` | ✓ | `zoo-conservation-ai/zoo-conservation-ai.tex` |
+| `zoo-dao-emergency-protocol` | ✓ | `zoo-dao-emergency-protocol/zoo-dao-emergency-protocol.tex` |
+| `zoo-dao-governance` | ✓ | `zoo-dao-governance/zoo-dao-governance.tex` |
+| `zoo-dao-grants-program` | ✓ | `zoo-dao-grants-program/zoo-dao-grants-program.tex` |
+| `zoo-dao-operating-system` | ✓ | `zoo-dao-operating-system/zoo-dao-operating-system.tex` |
+| `zoo-dao-reputation-system` | ✓ | `zoo-dao-reputation-system/zoo-dao-reputation-system.tex` |
+| `zoo-dao-research-governance` | ✓ | `zoo-dao-research-governance/zoo-dao-research-governance.tex` |
+| `zoo-data-commons` | ✓ | `zoo-data-commons/zoo-data-commons.tex` |
+| `zoo-desci-platform` | ✓ | `zoo-desci-platform/zoo-desci-platform.tex` |
+| `zoo-dex` | ✓ | `zoo-dex/zoo-dex.tex` |
+| `zoo-eco1-zjepa` | ✓ | `zoo-eco1-zjepa/zoo-eco1-zjepa.tex` |
+| `zoo-educational-ai` | ✓ | `zoo-educational-ai/zoo-educational-ai.tex` |
+| `zoo-evm-benchmarks` | ✓ | `zoo-evm-benchmarks/zoo-evm-benchmarks.tex` |
+| `zoo-evm-l2-architecture` | ✓ | `zoo-evm-l2-architecture/zoo-evm-l2-architecture.tex` |
+| `zoo-experience-ledger` | ✓ | `zoo-experience-ledger/zoo-experience-ledger.tex` |
+| `zoo-federated-wildlife` | ✓ | `zoo-federated-wildlife/zoo-federated-wildlife.tex` |
+| `zoo-fhe-ai` | ✓ | `zoo-fhe-ai/zoo-fhe-ai.tex` |
+| `zoo-fhe` | ✓ | `zoo-fhe/zoo-fhe.tex` |
+| `zoo-foundation-mission` | ✓ | `zoo-foundation-mission/zoo-foundation-mission.tex` |
+| `zoo-fund-impact-oracle` | ✓ | `zoo-fund-impact-oracle/zoo-fund-impact-oracle.tex` |
+| `zoo-fund-impact-thesis` | ✓ | `zoo-fund-impact-thesis/zoo-fund-impact-thesis.tex` |
+| `zoo-fund-platform` | ✓ | `zoo-fund-platform/zoo-fund-platform.tex` |
+| `zoo-fund-treasury` | ✓ | `zoo-fund-treasury/zoo-fund-treasury.tex` |
+| `zoo-fund-validator-rewards` | ✓ | `zoo-fund-validator-rewards/zoo-fund-validator-rewards.tex` |
+| `zoo-gpu-evm` | ✓ | `zoo-gpu-evm/zoo-gpu-evm.tex` |
+| `zoo-gym-compute-proof` | ✓ | `zoo-gym-compute-proof/zoo-gym-compute-proof.tex` |
+| `zoo-gym-grpo-continuous` | ✓ | `zoo-gym-grpo-continuous/zoo-gym-grpo-continuous.tex` |
+| `zoo-gym-orchestrator` | ✓ | `zoo-gym-orchestrator/zoo-gym-orchestrator.tex` |
+| `zoo-gym-protocol` | ✓ | `zoo-gym-protocol/zoo-gym-protocol.tex` |
+| `zoo-gym-tokenomics` | ✓ | `zoo-gym-tokenomics/zoo-gym-tokenomics.tex` |
+| `zoo-habitat-modeling` | ✓ | `zoo-habitat-modeling/zoo-habitat-modeling.tex` |
+| `zoo-hamiltonian-llm` | ✓ | `zoo-hamiltonian-llm/zoo-hamiltonian-llm.tex` |
+| `zoo-hanzo-settlement` | ✓ | `zoo-hanzo-settlement/zoo-hanzo-settlement.tex` |
+| `zoo-identity-chain` | ✓ | `zoo-identity-chain/zoo-identity-chain.tex` |
+| `zoo-impact-bonds` | ✓ | `zoo-impact-bonds/zoo-impact-bonds.tex` |
+| `zoo-key-management` | ✓ | `zoo-key-management/zoo-key-management.tex` |
+| `zoo-lux-bridge-protocol` | ✓ | `zoo-lux-bridge-protocol/zoo-lux-bridge-protocol.tex` |
+| `zoo-mainnet-launch-checklist` | ✓ | `zoo-mainnet-launch-checklist/zoo-mainnet-launch-checklist.tex` |
+| `zoo-mobile-inference` | ✓ | `zoo-mobile-inference/zoo-mobile-inference.tex` |
+| `zoo-mpc-custody` | ✓ | `zoo-mpc-custody/zoo-mpc-custody.tex` |
+| `zoo-network-architecture` | ✓ | `zoo-network-architecture/zoo-network-architecture.tex` |
+| `zoo-nft-liquidity-protocol` | ✓ | `zoo-nft-liquidity-protocol/zoo-nft-liquidity-protocol.tex` |
+| `zoo-omnichain-teleport` | ✓ | `zoo-omnichain-teleport/zoo-omnichain-teleport.tex` |
+| `zoo-poai-consensus` | ✓ | `zoo-poai-consensus/zoo-poai-consensus.tex` |
+| `zoo-pq-crypto` | ✓ | `zoo-pq-crypto/zoo-pq-crypto.tex` |
+| `zoo-quasar-benchmarks` | ✓ | `zoo-quasar-benchmarks/zoo-quasar-benchmarks.tex` |
+| `zoo-research-coordination` | ✓ | `zoo-research-coordination/zoo-research-coordination.tex` |
+| `zoo-satellite-ecology` | ✓ | `zoo-satellite-ecology/zoo-satellite-ecology.tex` |
+| `zoo-spatial-web-agents` | ✓ | `zoo-spatial-web-agents/zoo-spatial-web-agents.tex` |
+| `zoo-species-classification` | ✓ | `zoo-species-classification/zoo-species-classification.tex` |
+| `zoo-threshold-signatures` | ✓ | `zoo-threshold-signatures/zoo-threshold-signatures.tex` |
+| `zoo-token-bound-accounts` | ✓ | `zoo-token-bound-accounts/zoo-token-bound-accounts.tex` |
+| `zoo-tokenomics` | ✓ | `zoo-tokenomics/zoo-tokenomics.tex` |
+| `zoo-user-owned-models` | ✓ | `zoo-user-owned-models/zoo-user-owned-models.tex` |
+| `zoo-voting-platform` | ✓ | `zoo-voting-platform/zoo-voting-platform.tex` |
+| `zoo-web5-local-first` | ✓ | `zoo-web5-local-first.tex` |
+| `zoo-wildlife-tracking` | ✓ | `zoo-wildlife-tracking/zoo-wildlife-tracking.tex` |
+| `zoo-zchain-zkp` | ✓ | `zoo-zchain-zkp/zoo-zchain-zkp.tex` |
+| `zoo-zrc-1155` | ✓ | `zoo-zrc-1155/zoo-zrc-1155.tex` |
+| `zoo-zrc-20` | ✓ | `zoo-zrc-20/zoo-zrc-20.tex` |
+| `zoo-zrc-721` | ✓ | `zoo-zrc-721/zoo-zrc-721.tex` |
+
+**Total**: 79 papers, 132 PDFs compiled

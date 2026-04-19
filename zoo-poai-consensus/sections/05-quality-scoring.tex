@@ -1,0 +1,50 @@
+\section{Quality Scoring}
+
+\label{sec:quality}
+
+\subsection{Multi-Party Evaluation}
+
+Quality scoring uses multi-party computation to prevent manipulation:
+
+\begin{algorithm}[t]
+\caption{Multi-Party Quality Evaluation}
+\label{alg:mpe}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Attestation $A$, validator set $V$
+\STATE \textbf{Output}: Consensus quality $Q$
+\STATE Each validator $v$ computes $q_v(A)$ independently
+\STATE Validators commit $c_v = \text{Hash}(q_v \| r_v)$
+\STATE Wait for all commits
+\STATE Validators reveal $(q_v, r_v)$
+\STATE Verify $c_v = \text{Hash}(q_v \| r_v)$ for all $v$
+\STATE $Q \leftarrow \text{TrimmedMean}(\{q_v\}, 0.1)$
+\RETURN $Q$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Evaluation Metrics}
+
+\textbf{Inference Tasks}:
+\begin{equation}
+q_{\text{inf}} = \frac{\text{correct outputs}}{\text{total outputs}} \cdot (1 - \text{latency penalty})
+\end{equation}
+
+\textbf{Training Tasks}:
+\begin{equation}
+q_{\text{train}} = \Delta_{\text{val}} \cdot e^{-\lambda \cdot \text{cost}}
+\end{equation}
+where $\Delta_{\text{val}}$ is validation accuracy improvement.
+
+\textbf{Experience Extraction}:
+\begin{equation}
+q_{\text{exp}} = \text{novelty} \cdot \text{applicability} \cdot \text{correctness}
+\end{equation}
+
+\subsection{Gaming Resistance}
+
+The trimmed mean resists Byzantine manipulation:
+
+\begin{theorem}[Byzantine Resistance]
+With $f < n/3$ Byzantine validators, the trimmed mean with 10\% trim differs from the honest median by at most $2\sigma / \sqrt{n-2f}$.
+\end{theorem}
+

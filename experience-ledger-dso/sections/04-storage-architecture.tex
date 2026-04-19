@@ -1,0 +1,164 @@
+\section{Storage Architecture}
+
+\label{sec:storage}
+
+The Experience Ledger employs a three-layer architecture balancing efficiency, verifiability, and permanence (Figure~\ref{fig:storage}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=1.5cm,
+    box/.style={rectangle, draw, minimum width=3cm, minimum height=1cm, align=center},
+    arrow/.style={->, thick}
+]
+    \node[box, fill=blue!20] (chain) {Zoo Network L2\\Merkle Root};
+    \node[box, fill=green!20, below=of chain] (ipfs) {IPFS\\Mutable Library};
+    \node[box, fill=orange!20, below=of ipfs] (arweave) {Arweave\\Permanent Archive};
+    \node[box, fill=purple!20, right=3cm of chain] (contract) {Experience Registry\\Smart Contract};
+    
+    \draw[arrow] (contract) -- (chain) node[midway,above] {Publish};
+    \draw[arrow] (ipfs) -- (chain) node[midway,right] {Hash};
+    \draw[arrow] (arweave) -- (ipfs) node[midway,right] {Archive};
+    \draw[arrow] (contract) -- (ipfs) node[midway,above right] {Update CID};
+\end{tikzpicture}
+\caption{Three-layer storage architecture with on-chain verification, mutable addressing, and permanent archival.}
+\label{fig:storage}
+\end{figure}
+
+\subsection{Layer 1: On-Chain Verification (Zoo Network L2)}
+
+The Experience Registry smart contract maintains:
+
+\begin{lstlisting}[language=Solidity,caption=Experience Registry Contract (Simplified)]
+contract ExperienceRegistry {
+    struct Library {
+        bytes32 merkleRoot;
+        string ipfsCID;
+        string arweaveID;
+        uint256 version;
+        uint256 timestamp;
+    }
+    
+    mapping(uint256 => Library) public libraries;
+    uint256 public latestVersion;
+    
+    event LibraryUpdated(
+        uint256 indexed version,
+        bytes32 merkleRoot,
+        string ipfsCID
+    );
+    
+    function updateLibrary(
+        bytes32 _merkleRoot,
+        string memory _ipfsCID,
+        bytes32[] memory _proof
+    ) public onlyDAO {
+        require(verifyMerkleProof(_proof), 
+                "Invalid Merkle proof");
+        latestVersion++;
+        libraries[latestVersion] = Library({
+            merkleRoot: _merkleRoot,
+            ipfsCID: _ipfsCID,
+            arweaveID: "",  // Set later
+            version: latestVersion,
+            timestamp: block.timestamp
+        });
+        emit LibraryUpdated(latestVersion, 
+                           _merkleRoot, _ipfsCID);
+    }
+}
+\end{lstlisting}
+
+\textbf{Merkle Tree Construction}: Given experience library $\mathcal{E} = \{e_1, \ldots, e_n\}$, we construct a balanced binary tree:
+
+\begin{algorithm}[t]
+\caption{Merkle Tree Construction}
+\label{alg:merkle}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Experience set $\mathcal{E} = \{e_1, \ldots, e_n\}$
+\STATE \textbf{Output}: Root hash $r$
+\STATE $L_0 \leftarrow \{\text{SHA256}(e_i) \mid e_i \in \mathcal{E}\}$
+\STATE $k \leftarrow 0$
+\WHILE{$|L_k| > 1$}
+    \STATE $L_{k+1} \leftarrow \{\}$
+    \FOR{$i = 0$ \textbf{to} $|L_k| / 2 - 1$}
+        \STATE $h \leftarrow \text{SHA256}(L_k[2i] || L_k[2i+1])$
+        \STATE $L_{k+1}.\text{append}(h)$
+    \ENDFOR
+    \IF{$|L_k| \mod 2 = 1$}
+        \STATE $L_{k+1}.\text{append}(L_k[-1])$ \COMMENT{Duplicate last}
+    \ENDIF
+    \STATE $k \leftarrow k + 1$
+\ENDWHILE
+\RETURN $L_k[0]$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Verification Cost}: Storing the 32-byte Merkle root on-chain costs $\approx$20,000 gas ($\sim$\$0.10 at 5 gwei). Proof verification is $O(\log n)$ hashes, enabling efficient validation without storing the full library on-chain.
+
+\subsection{Layer 2: Mutable Addressing (IPFS)}
+
+The current experience library is stored on \IPFS{} using Content Identifier (CID) version 1:
+
+\begin{equation}
+\text{CID} = \langle \text{multibase}, \text{multicodec}, \text{multihash} \rangle
+\end{equation}
+
+\textbf{Example CID}: \texttt{bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi}
+
+\textbf{Pinning Strategy}: The \Zoo{} Foundation operates three dedicated IPFS nodes with:
+\begin{itemize}
+    \item Recursive pinning: All experiences and library snapshots
+    \item DHT bootstrapping: Seeders for popular libraries
+    \item Gateway caching: HTTP access at \texttt{gateway.zoo.ngo}
+\end{itemize}
+
+Community nodes can opt-in to pin via:
+\begin{lstlisting}[language=bash]
+ipfs pin add bafybei...
+ipfs dht provide bafybei...
+\end{lstlisting}
+
+\textbf{Update Protocol}: When \DAO{} approves library changes:
+\begin{enumerate}
+    \item Generate new JSON with updated experiences
+    \item Compute new CID: \texttt{ipfs add experience\_lib.json}
+    \item Pin on Foundation nodes
+    \item Update on-chain registry with new CID + Merkle root
+\end{enumerate}
+
+\subsection{Layer 3: Permanent Archival (Arweave)}
+
+Every library version is permanently archived on Arweave:
+
+\begin{lstlisting}[language=bash]
+arweave deploy experience_lib_v23.json \
+  --wallet ~/.arweave/key.json \
+  --tags version:23 domain:math
+\end{lstlisting}
+
+\textbf{Transaction ID Example}: \texttt{tx\_7vXqL1TzYG3u9pXhN...}
+
+\textbf{Cost Analysis}: Arweave charges one-time fees for 200-year storage:
+\begin{itemize}
+    \item Single experience (1 KB): \$0.0015
+    \item Full library (200 KB): \$0.30
+    \item Annual archival (52 versions): \$15.60
+\end{itemize}
+
+This is economically sustainable for a non-profit foundation, ensuring permanent public access even if \IPFS{} nodes fail.
+
+\subsection{Retrieval Workflow}
+
+GPU compute nodes retrieve experiences via:
+
+\begin{enumerate}
+    \item Query on-chain registry for latest CID
+    \item Fetch from \IPFS{}: \texttt{ipfs cat <CID>}
+    \item Parse JSON and load embeddings
+    \item Verify Merkle proof for critical experiences
+    \item Cache locally for inference
+\end{enumerate}
+
+\textbf{Latency}: Cold retrieval takes 500-2000ms (IPFS DHT lookup). Warm cache reduces to <10ms.
+

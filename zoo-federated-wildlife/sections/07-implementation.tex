@@ -1,0 +1,72 @@
+\section{Implementation}
+
+\label{sec:implementation}
+
+\subsection{System Architecture}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.5cm,
+    box/.style={rectangle, draw, rounded corners, minimum width=2.5cm, minimum height=0.7cm, text centered, font=\footnotesize},
+    edge/.style={->, thick},
+    dedge/.style={<->, thick, dashed}
+]
+    \node[box, fill=blue!10] (coord) {ZooFed Coordinator};
+    \node[box, fill=green!10, below left=1.5cm and 1cm of coord] (s1) {Site 1: Camera Traps};
+    \node[box, fill=green!10, below=1.5cm of coord] (s2) {Site 2: Acoustic + Visual};
+    \node[box, fill=green!10, below right=1.5cm and 1cm of coord] (s3) {Site 3: eDNA + GPS};
+
+    \draw[edge] (coord) -- node[left, font=\tiny] {$\phi, \psi_m$} (s1);
+    \draw[edge] (coord) -- node[left, font=\tiny] {$\phi, \psi_m$} (s2);
+    \draw[edge] (coord) -- node[right, font=\tiny] {$\phi, \psi_m$} (s3);
+    \draw[edge] (s1) -- node[right, font=\tiny] {$\nabla\phi$} (coord);
+    \draw[edge] (s2) -- node[right, font=\tiny] {$\nabla\phi$} (coord);
+    \draw[edge] (s3) -- node[left, font=\tiny] {$\nabla\phi$} (coord);
+\end{tikzpicture}
+\caption{ZooFed federated learning architecture.}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{Software Components}
+
+\begin{table}[H]
+\centering
+\caption{ZooFed software components.}
+\label{tab:software}
+\begin{tabularx}{\textwidth}{@{}llcX@{}}
+\toprule
+\textbf{Component} & \textbf{Language} & \textbf{Lines} & \textbf{Description} \\
+\midrule
+Coordinator & Python & 6,400 & Aggregation, clustering, privacy accounting \\
+Site Client & Python & 8,200 & Local training, gradient computation, DP noise injection \\
+Sensor Adapters & Python & 4,800 & Modality-specific preprocessing and encoding \\
+Privacy Accountant & Rust & 3,100 & Moments accountant, per-species budget tracking \\
+Communication & Rust & 2,700 & Secure aggregation, gradient compression \\
+Monitoring Dashboard & TypeScript & 5,200 & Training progress, privacy budget visualization \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Communication Efficiency}
+
+Wildlife monitoring sites often have limited bandwidth.
+ZooFed reduces communication cost through:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Gradient Sparsification:} Only the top-$p\%$ gradient entries are transmitted (default $p=10$), reducing communication by 10x with <1\% accuracy loss.
+    \item \textbf{Quantized Transmission:} Gradient values are quantized to 8-bit fixed point for transmission.
+    \item \textbf{Asynchronous Updates:} Sites with poor connectivity can participate asynchronously, submitting updates when bandwidth is available rather than requiring synchronous rounds.
+\end{enumerate}
+
+The total communication cost per round per site is:
+
+\begin{equation}
+    C_{\text{comm}} = p \cdot |\phi| \cdot 8 \text{ bits} \approx 0.1 \cdot 2.5\text{M} \cdot 8 = 2 \text{ Mbit}
+\end{equation}
+
+This is feasible even over satellite links commonly used at remote monitoring sites.
+
+% ============================================================
+% 8. Evaluation
+% ============================================================

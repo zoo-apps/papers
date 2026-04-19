@@ -1,0 +1,56 @@
+\section{Retrieval Protocol}
+
+\label{sec:retrieval}
+
+\subsection{Semantic Query Processing}
+
+Given query $q$, retrieval proceeds in three phases:
+
+\begin{algorithm}[t]
+\caption{Experience Retrieval with Proof}
+\label{alg:retrieval}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: Query $q$, library root $r$, top-$k$
+\STATE \textbf{Output}: Experiences $\{e_i\}$, proofs $\{\pi_i\}$
+\STATE \COMMENT{Phase 1: Cluster Selection}
+\STATE $q_v \leftarrow \text{Embed}(q)$
+\STATE $\{C_{i^*}\} \leftarrow \text{TopClusters}(q_v, \{\mu_i\}, \sqrt{k})$
+\STATE \COMMENT{Phase 2: Local Search}
+\STATE $\mathcal{E}_{\text{cand}} \leftarrow \bigcup_{C \in \{C_{i^*}\}} C$
+\STATE $\{e_i\}_{i=1}^k \leftarrow \text{TopK}(\mathcal{E}_{\text{cand}}, q_v, k)$
+\STATE \COMMENT{Phase 3: Proof Generation}
+\FOR{$e_i \in \{e_i\}$}
+    \STATE $\pi_i \leftarrow \text{GenerateMerkleProof}(e_i, r)$
+\ENDFOR
+\RETURN $\{e_i\}, \{\pi_i\}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Complexity Analysis}
+
+\begin{theorem}[Retrieval Complexity]
+For a library of $n$ experiences with $k$ clusters, retrieval has:
+\begin{itemize}
+    \item Time complexity: $O(\sqrt{n} + k \log n)$
+    \item Space complexity: $O(k \log n)$ for proofs
+\end{itemize}
+\end{theorem}
+
+\begin{proof}
+Cluster selection: $O(k)$ centroid comparisons. Local search: $O(n/k)$ per cluster, $\sqrt{k}$ clusters = $O(\sqrt{n})$. Proof generation: $O(\log k)$ per experience.
+\end{proof}
+
+\subsection{Verified Retrieval}
+
+Clients can verify retrieved experiences without trusting the server:
+
+\begin{lstlisting}[caption=Verified Retrieval Protocol]
+# Client side
+root = fetch_root_from_blockchain()
+results = query_server(q, k)
+for (exp, proof) in results:
+    assert verify_merkle_proof(root, exp, proof)
+    assert verify_cid(exp) == exp.cid
+    # exp is now trusted
+\end{lstlisting}
+

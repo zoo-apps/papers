@@ -1,0 +1,48 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{cite}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{authblk}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{multirow}
+
+\definecolor{zoogreen}{RGB}{30,140,60}
+\hypersetup{colorlinks=true,linkcolor=zoogreen,citecolor=zoogreen,urlcolor=zoogreen}
+
+\title{\textbf{Zoo EVM: A Post-Quantum Safe Layer 2 Blockchain\\with AI-Native Precompiles on the Lux Network}}
+
+\author[1]{Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}}
+\affil[1]{\textit{Zoo Labs Foundation \quad Hanzo Industries \quad Lux Industries}, \texttt{research@zoo.ngo}}
+
+\date{October 2024}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present \textbf{Zoo EVM}, a Layer 2 blockchain designed for decentralized artificial intelligence research and decentralized science (DeSci). Operating as a sovereign subnet on the Lux Network, Zoo EVM features 20 precompiles including NIST PQC standards (ML-DSA, SLH-DSA, ML-KEM), threshold signatures (FROST, CGGMP21), privacy primitives (FHE, zero-knowledge proofs, ring signatures), and a novel AI Mining precompile for proof-of-useful-computation consensus. Zoo Labs Foundation, established in 2021 as one of the earliest agentic AI platforms---predating the mainstream adoption of agent frameworks by over two years---brings deep experience in frontier LLM development and decentralized compute to the blockchain layer. This paper describes the architecture, precompile suite, deployment model, and quantum security properties of Zoo EVM, and positions it within the broader Zoo ecosystem of decentralized AI governance via ZIPs (Zoo Improvement Proposals).
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-architecture}
+\input{sections/03-precompile-architecture}
+\input{sections/04-deployment-architecture}
+\input{sections/05-comparison-with-liquid-evm}
+\input{sections/06-zips-governance-integration}
+\input{sections/07-security-considerations}
+\input{sections/99-conclusion}
+
+\end{document}

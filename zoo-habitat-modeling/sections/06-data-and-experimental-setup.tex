@@ -1,0 +1,82 @@
+\section{Data and Experimental Setup}
+
+\label{sec:data}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Species Occurrence Data}
+
+We compiled occurrence records from multiple sources:
+
+\begin{itemize}
+  \item \textbf{GBIF} \citep{gbif2024}: 12.4 million georeferenced
+    records for 847 terrestrial vertebrate species.
+  \item \textbf{eBird} \citep{sullivan2009ebird}: 8.2 million
+    structured bird survey records.
+  \item \textbf{Camera trap networks}: 1.3 million detection records
+    from TEAM \citep{jansen2014team} and Wildlife Insights
+    \citep{ahumada2020wildlife}.
+\end{itemize}
+
+After spatial thinning (minimum 1\,km separation) and temporal filtering
+(2000--2023), the final dataset contains 4.7 million occurrence records.
+
+\subsection{Environmental Variables}
+
+Bioclimatic variables were sourced from WorldClim v2.1
+\citep{fick2017worldclim} at 30 arc-second resolution. Topographic
+variables were derived from SRTM v4.1 \citep{jarvis2008srtm}. Land cover
+was from ESA WorldCover 2021 \citep{zanaga2022esa}. MODIS vegetation
+indices were averaged over 2018--2022.
+
+\subsection{Climate Projections}
+
+We used downscaled CMIP6 projections from WorldClim
+\citep{fick2017worldclim} for four SSP scenarios at three time periods
+(2041--2060, 2061--2080, 2081--2100). Twelve GCMs were selected based
+on performance evaluation by \citet{arias2021climate}.
+
+\subsection{Study Regions}
+
+We evaluate across six biogeographic realms:
+\begin{enumerate}
+  \item Neotropical (Amazon basin focus)
+  \item Afrotropical (East Africa highlands)
+  \item Indo-Malayan (Southeast Asian tropics)
+  \item Palearctic (European temperate forests)
+  \item Nearctic (North American boreal-temperate transition)
+  \item Australasian (Eastern Australia)
+\end{enumerate}
+
+\subsection{Baseline Models}
+
+\begin{itemize}
+  \item \textbf{MaxEnt} \citep{phillips2006maximum}: Standard
+    configuration with linear, quadratic, hinge, and threshold features.
+  \item \textbf{Random Forest (RF)}: 500 trees, following
+    \citet{cutler2007random}.
+  \item \textbf{BRT}: Boosted regression trees \citep{elith2008working}
+    with 5000 trees and interaction depth 5.
+  \item \textbf{DeepSDM}: 4-layer MLP with 256 hidden units per layer
+    \citep{botella2018deep}.
+  \item \textbf{CNN-SDM}: Convolutional model on environmental raster
+    patches \citep{deneu2021convolutional}.
+\end{itemize}
+
+\subsection{Evaluation Protocol}
+
+We employ two validation strategies:
+\begin{enumerate}
+  \item \textbf{Spatial block cross-validation}: Study area divided into
+    $10 \times 10$ blocks, with blocks assigned to 5 folds ensuring
+    minimum 200\,km separation between train and test
+    \citep{roberts2017cross}.
+  \item \textbf{Temporal validation}: Models trained on 2000--2015 data,
+    validated on 2016--2023 independent resurvey data from standardized
+    monitoring programs.
+\end{enumerate}
+
+Metrics include AUC, True Skill Statistic (TSS), and Boyce index for
+continuous suitability evaluation \citep{hirzel2006evaluating}.
+
+
+% ══════════════════════════════════════════════════════════════════════════════

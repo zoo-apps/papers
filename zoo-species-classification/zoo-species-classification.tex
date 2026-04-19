@@ -1,0 +1,112 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{natbib}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage{abstract}
+\usepackage{multirow}
+
+% ── Page Style ────────────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Antje Worring, Zach Kelling}
+\fancyhead[R]{\small Few-Shot Visual Recognition}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Metadata ──────────────────────────────────────────────────────────────────
+\title{%
+  \textbf{Few-Shot Visual Recognition for\\Biodiversity Monitoring}\\[0.5em]
+  \large Antje Worring, Zach Kelling Paper ZOO-CLS-2026
+}
+
+\author{
+  Antje Worring, Zach Kelling\\
+  \texttt{research@zoo.ngo}\\[0.5em]
+  \small With contributions from the Zoo Open Science Network
+}
+
+\date{March 2023}
+
+% ── Macros ────────────────────────────────────────────────────────────────────
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Loss}{\mathcal{L}}
+\newcommand{\Support}{\mathcal{S}}
+\newcommand{\Query}{\mathcal{Q}}
+
+\begin{document}
+
+\zoocoverpage
+
+% ── Abstract ──────────────────────────────────────────────────────────────────
+\begin{abstract}
+\noindent
+Automated species identification is fundamental to scalable biodiversity
+monitoring, yet most deep learning classifiers require hundreds or
+thousands of labeled images per species---a prohibitive requirement for
+the vast majority of Earth's estimated 8.7 million species. We present
+\textbf{TaxoNet}, a few-shot visual recognition framework designed for
+fine-grained species classification in ecological monitoring contexts.
+TaxoNet combines a vision transformer backbone pre-trained on large-scale
+ecological imagery with a taxonomy-aware meta-learning strategy that
+exploits the hierarchical structure of biological classification (kingdom
+through species). A novel \emph{taxonomic prototypical network}
+constructs class prototypes at multiple taxonomic ranks and fuses them
+through learned rank-attention weights, enabling robust identification
+from as few as 1--5 reference images per species. We evaluate TaxoNet on
+four biodiversity datasets spanning birds, insects, plants, and marine
+organisms, achieving state-of-the-art 1-shot accuracy of 78.4\% and
+5-shot accuracy of 91.2\% on held-out species. We further demonstrate
+integration with citizen science platforms, where TaxoNet assists
+non-expert observers in identifying species with 94.7\% accuracy when
+combined with geographic and phenological priors. All models and datasets
+are released through the Zoo Open Science Network.
+
+\medskip
+\noindent\textbf{Keywords:} few-shot learning, fine-grained
+classification, biodiversity monitoring, taxonomic hierarchy, citizen
+science, species identification
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════════════════════════
+
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-problem-formulation}
+\input{sections/04-taxonet-architecture}
+\input{sections/05-domain-adaptive-pre-training}
+\input{sections/06-hierarchical-meta-learning}
+\input{sections/07-evaluation}
+\input{sections/08-system-design-for-citizen-science}
+\input{sections/09-discussion}
+\input{sections/10-implementation-details}
+\input{sections/11-future-work}
+\input{sections/13-supplementary-per-taxon-analysis}
+\input{sections/14-supplementary-prototype-visualization}
+\input{sections/99-conclusion}
+
+\end{document}

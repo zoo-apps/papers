@@ -1,0 +1,43 @@
+\section{Discussion}
+
+\label{sec:discussion}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Why Taxonomy Matters}
+
+The success of taxonomic prototypes reflects a biological reality:
+species within the same genus share morphological features due to common
+ancestry. By explicitly modeling this hierarchical structure, TaxoNet
+leverages phylogenetically informative features even when species-level
+examples are scarce. The rank-attention mechanism acts as a soft decision
+tree, routing queries to the appropriate level of taxonomic resolution
+based on visual evidence quality.
+
+\subsection{Limitations}
+
+\paragraph{Cryptic species.} Species complexes that are
+morphologically indistinguishable cannot be resolved by visual features
+alone. Integration with molecular data (eDNA) or acoustic features is
+needed.
+
+\paragraph{Phenological variation.} Some species change appearance
+dramatically across seasons. Explicit temporal prototype modulation
+would be more principled than our current update mechanism.
+
+\paragraph{Geographic bias.} Pre-training data is biased toward North
+America and Europe. Performance on tropical and Southern Hemisphere
+species may be lower due to representation gaps.
+
+\subsection{Ethical Considerations}
+
+\begin{itemize}
+  \item \textbf{Poaching risk}: We implement geographic fuzzing for
+    threatened species locations.
+  \item \textbf{Over-reliance}: We display confidence calibration and
+    encourage expert confirmation for low-confidence predictions.
+  \item \textbf{Data sovereignty}: We follow the Nagoya Protocol and
+    CARE principles for indigenous data governance.
+\end{itemize}
+
+
+% ══════════════════════════════════════════════════════════════════════════════

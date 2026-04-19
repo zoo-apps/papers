@@ -1,0 +1,37 @@
+\section{Protocol Model}
+
+
+\subsection{System Model}
+
+We consider a set of $n$ validators $\mathcal{V} = \{v_1, \ldots, v_n\}$ with stake weights $\{w_1, \ldots, w_n\}$ where $\sum_{i=1}^{n} w_i = W$. The protocol tolerates up to $f$ Byzantine validators subject to:
+
+\begin{equation}
+\sum_{i \in \mathcal{F}} w_i < \frac{W}{3}
+\end{equation}
+
+where $\mathcal{F} \subseteq \mathcal{V}$ is the set of Byzantine validators.
+
+\subsection{Dual-Path Finality}
+
+\begin{definition}[Quasar Finality]
+A block $B$ at height $h$ achieves \Quasar{} finality when both conditions hold:
+\begin{align}
+\textsc{BLS-Finality}(B) &: \sum_{i \in \mathcal{S}_{\text{BLS}}} w_i \geq \frac{2W}{3} \label{eq:bls-fin} \\
+\textsc{Corona-Finality}(B) &: \textsc{Verify}_{\Corona{}}(\sigma_{\text{thresh}}, B) = \top \label{eq:rt-fin}
+\end{align}
+where $\mathcal{S}_{\text{BLS}}$ is the set of validators that signed $B$ with BLS, and $\sigma_{\text{thresh}}$ is the \Corona{} threshold signature on $B$.
+\end{definition}
+
+Both paths execute concurrently. The block proposer collects BLS signatures and \Corona{} signature shares in parallel. Finality is declared when both thresholds are met.
+
+\subsection{Threat Model}
+
+\Quasar{} provides security under two adversary classes:
+
+\begin{itemize}
+\item \textbf{Classical adversary}: Controls $< n/3$ validators and has polynomial-time computational resources. BLS path alone suffices.
+\item \textbf{Quantum adversary}: Controls $< n/3$ validators and has access to a cryptographically relevant quantum computer. The \Corona{} path provides security; BLS path may be compromised but cannot override \Corona{} finality without controlling $\geq n/3$ stake.
+\end{itemize}
+
+The dual requirement ensures that an adversary must break \textbf{both} BLS and \Corona{} simultaneously to violate safety.
+

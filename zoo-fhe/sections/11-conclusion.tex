@@ -1,0 +1,18 @@
+\section{Conclusion}
+
+\label{sec:conclusion}
+%----------------------------------------------------------------------
+
+We have presented \Zoo{} Network's threshold FHE system, combining \TFHE{} for boolean circuits and \CKKS{} for approximate arithmetic with GPU acceleration and validator-distributed threshold decryption. Key results:
+
+\begin{enumerate}
+  \item \textbf{40$\times$ GPU speedup} for single \TFHE{} bootstrap (12\,ms $\to$ 0.3\,ms), with up to 793$\times$ for batched operations.
+  \item \textbf{67-of-100 threshold decryption} aligned with BFT consensus, with end-to-end latency of $\sim$183\,ms dominated by network communication.
+  \item \textbf{Formal verification} of \CKKS{} rescaling precision, \TFHE{} noise bounds, and GPU parallelism in Lean~4.
+  \item \textbf{Practical applications} demonstrated: encrypted order matching (48\,ms), sealed-bid auctions (312\,ms), and private neural-network inference (580\,ms).
+\end{enumerate}
+
+FHE on \Zoo{} \TChain{} enables a new class of privacy-preserving smart contracts where computation proceeds on encrypted state without any party---including validators---observing plaintext values. Combined with post-quantum key encapsulation (\MLKEM{}-768) for share distribution, the system provides long-term confidentiality against both classical and quantum adversaries.
+
+Future work includes bootstrapping-free FHE schemes for reduced latency, hardware-accelerated key switching via custom FPGA pipelines, and integration with \Zoo{}'s experience ledger~\cite{zoo-tokenomics} for privacy-preserving model training.
+

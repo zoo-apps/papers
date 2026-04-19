@@ -1,0 +1,76 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\PoAI}{\textsc{PoAI}}
+\newcommand{\Quasar}{\textsc{Quasar}}
+\newcommand{\TEE}{\textsc{tee}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\title{\textbf{Zoo Network Consensus: Quasar + PoAI Dual-Layer Verification}}
+\author{
+Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{November 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present the dual-layer consensus architecture of the Zoo Network (chain ID 200200): \Quasar{} for block consensus and \PoAI{} for AI compute verification. \Quasar{}, inherited from the Lux Network, provides deterministic finality in 10ms with $O(n)$ message complexity, making it the fastest BFT consensus protocol deployed in production. \PoAI{} operates as a verification overlay that attests to the correctness of AI compute contributions---inference, training, and data processing---performed by Zoo Network validators. The dual-layer design separates concerns: \Quasar{} handles transaction ordering and block production with sub-second finality, while \PoAI{} handles compute quality assessment with epoch-based evaluation. We benchmark the combined system on Zoo testnet with 21 validators and 500 GPU workers, demonstrating 10.9ms combined finality (10ms \Quasar{} + 0.9ms \PoAI{} overhead), 4.76M TPS sustained throughput, and 98.2\% of validator compute devoted to useful AI work. We compare against single-layer alternatives and show that the dual-layer approach achieves 15\% higher useful compute utilization without sacrificing consensus safety or liveness.
+
+\textbf{Keywords}: consensus protocol, Quasar, Proof of AI, dual-layer verification, Zoo Network
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-background}
+\input{sections/03-dual-layer-design}
+\input{sections/04-quasar-benchmarks}
+\input{sections/05-poai-overhead-analysis}
+\input{sections/06-tee-attestation-for-gpu-providers}
+\input{sections/07-comparative-evaluation}
+\input{sections/08-discussion}
+\input{sections/09-related-work}
+\input{sections/10-conclusion}
+\input{sections/99-acknowledgments}
+
+\end{document}

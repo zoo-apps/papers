@@ -1,0 +1,25 @@
+\section{Introduction}
+
+\label{sec:introduction}
+
+Biodiversity data underpins conservation science, policy, and action.
+Species occurrence records, population estimates, habitat maps, genetic sequences, and ecological interaction networks collectively form the empirical foundation for understanding and responding to the biodiversity crisis \citep{diaz2019global}.
+Yet this data ecosystem suffers from chronic fragmentation, inconsistent quality, and misaligned incentives that severely limit its utility.
+
+The Global Biodiversity Information Facility (GBIF) aggregates over 2.4 billion occurrence records from 1,800 institutions \citep{gbif2024overview}, representing the most ambitious centralized aggregation effort.
+Despite its success, GBIF faces structural limitations: metadata quality varies enormously across providers, provenance tracking is limited to institutional attribution, temporal coverage is biased toward recent decades and temperate regions, and the centralized architecture creates governance challenges around data sovereignty and access control \citep{yesson2007how}.
+
+The FAIR principles---Findable, Accessible, Interoperable, Reusable---articulate the requirements for scientific data to support automated discovery and reuse \citep{wilkinson2016fair}.
+However, surveys consistently find that fewer than 20\% of biodiversity datasets fully satisfy FAIR criteria \citep{jacobsen2020fair}, primarily due to inadequate metadata, inconsistent formats, and absence of machine-readable provenance.
+
+We present the Zoo Data Commons (ZDC), a decentralized biodiversity data repository that addresses these challenges through three technical contributions:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{FAIR-Native Data Object Model:} A self-describing data object format that embeds rich, machine-readable metadata including taxonomic ontology mappings, spatial reference systems, temporal resolution, and collection methodology descriptors (\Cref{sec:data_model}).
+    \item \textbf{Provenance-Preserving Storage:} A content-addressed storage architecture on IPFS with blockchain-anchored provenance chains that record the complete transformation history of every dataset (\Cref{sec:storage}).
+    \item \textbf{Sovereign Access Control:} A three-tier access governance framework supporting open, permissioned, and sovereign data models, enabling data holders to define and enforce nuanced sharing policies (\Cref{sec:access}).
+\end{enumerate}
+
+% ============================================================
+% 2. Related Work
+% ============================================================

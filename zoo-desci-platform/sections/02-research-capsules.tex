@@ -1,0 +1,73 @@
+\section{Research Capsules}
+
+\label{sec:capsules}
+%----------------------------------------------------------------------
+
+\subsection{Encrypted Lab Notebooks}
+
+A Research Capsule is an encrypted, versioned, on-chain-anchored container for a complete research project. It extends the Memory Capsule architecture \cite{zoo-ai-memory} with research-specific semantics:
+
+\begin{definition}[Research Capsule]
+A Research Capsule $\mathcal{R} = (\textit{did}, \textit{notebook}, \textit{data}, \textit{code}, \textit{env}, \textit{provenance})$ where:
+\begin{itemize}
+    \item $\textit{did}$: researcher's decentralized identifier on \IChain{}.
+    \item $\textit{notebook}$: encrypted append-only log of observations, hypotheses, and analysis notes.
+    \item $\textit{data}$: encrypted datasets with content-addressed hashes.
+    \item $\textit{code}$: versioned source code (git-compatible).
+    \item $\textit{env}$: reproducible compute environment specification (container image hash).
+    \item $\textit{provenance}$: on-chain record of creation time, modifications, and access history.
+\end{itemize}
+\end{definition}
+
+\subsection{Provenance Anchoring}
+
+Every mutation to a Research Capsule produces an on-chain anchor on \IChain{}:
+
+\begin{verbatim}
+struct ProvenanceRecord {
+    capsule_id:  bytes32,   // BLAKE3(capsule)
+    author_did:  bytes32,   // researcher DID
+    action:      uint8,     // 0=create, 1=update_data,
+                            // 2=update_code, 3=run_experiment,
+                            // 4=publish_result
+    content_hash: bytes32,  // BLAKE3(changed_content)
+    prev_hash:   bytes32,   // previous provenance record
+    timestamp:   uint64     // block timestamp
+}
+\end{verbatim}
+
+This creates an immutable, publicly auditable timeline of the research process. Pre-registration of hypotheses (action 0 followed by action 3) is verifiable: the hypothesis was recorded before the experiment was run.
+
+\subsection{Threshold-Gated Data Sharing}
+
+Research data often has sensitivity constraints: patient data, endangered species locations, proprietary measurements. Research Capsules support threshold-gated sharing via \TChain{}:
+
+\begin{enumerate}
+    \item The researcher encrypts sensitive data under a threshold scheme ($t$-of-$n$ via \TChain{}).
+    \item Access requests require: (a) a valid \DID{} with researcher credentials, (b) IRB approval credential (for human subjects data), and (c) $t$ validator approvals.
+    \item Approved access produces a time-limited, scope-limited decryption key.
+    \item All access is logged on \IChain{} for audit.
+\end{enumerate}
+
+\subsection{Reproducible Compute Environments}
+
+Each Research Capsule specifies its compute environment as an OCI container image:
+
+\begin{itemize}
+    \item The image hash is recorded in the capsule's $\textit{env}$ field.
+    \item Experiments are run inside the container, ensuring identical environments across reproductions.
+    \item The execution trace (stdin/stdout/stderr + exit code + resource usage) is hashed and anchored on \IChain{}.
+    \item A reproduction attempt is valid if and only if: same container image, same input data hash, and matching output hash.
+\end{itemize}
+
+\begin{definition}[Reproducible Experiment]
+An experiment $E = (\textit{env}, \textit{data}, \textit{code}, \textit{params})$ is \emph{reproduced} by execution $E'$ if and only if:
+\begin{equation}
+\text{BLAKE3}(\textit{output}(E')) = \text{BLAKE3}(\textit{output}(E))
+\end{equation}
+given $\textit{env}(E') = \textit{env}(E)$, $\textit{data}(E') = \textit{data}(E)$, $\textit{code}(E') = \textit{code}(E)$, and $\textit{params}(E') = \textit{params}(E)$.
+\end{definition}
+
+For stochastic experiments, the definition relaxes to statistical equivalence: output distributions match within a specified tolerance.
+
+%----------------------------------------------------------------------

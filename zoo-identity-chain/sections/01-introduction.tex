@@ -1,0 +1,35 @@
+\section{Introduction}
+
+
+\subsection{The Problem with External IAM}
+
+Current blockchain ecosystems rely on external identity infrastructure. Users authenticate through centralized providers (OAuth, SAML, OIDC), creating dependencies on systems whose trust assumptions conflict with decentralization. When a centralized identity provider is compromised, all dependent services are exposed. When a provider disappears, identities become unresolvable.
+
+Three specific failures motivate \IChain{}:
+
+\begin{enumerate}
+\item \textbf{Trust Mismatch}: Centralized IAM assumes a trusted authority. Blockchain assumes trustlessness. These assumptions are incompatible.
+\item \textbf{Privacy Violation}: Traditional identity systems require revealing full credentials. Proving age requires exposing a birthdate. Proving membership requires exposing an identity.
+\item \textbf{Vendor Lock-in}: Identities bound to a provider cannot migrate. Users who invest in reputation on one platform lose it when switching.
+\end{enumerate}
+
+\subsection{Chain-Native Identity}
+
+\IChain{} resolves these failures by making identity a first-class blockchain primitive. Every Zoo Network participant receives a \texttt{did:lux:zoo:*} identifier resolved entirely on-chain. Credentials are issued by validator committees through threshold signing, ensuring that identity provision inherits the same Byzantine fault tolerance as consensus.
+
+\subsection{Contributions}
+
+This paper makes the following contributions:
+
+\begin{itemize}
+\item A W3C DID method (\texttt{did:lux:zoo}) with on-chain resolution and validator-backed lifecycle management.
+\item A verifiable credential system with zero-knowledge selective disclosure based on Groth16 proofs.
+\item An accumulator-based revocation mechanism with $O(1)$ revocation checks and $O(\log n)$ witness updates.
+\item Formal verification of trust authority, vouch chains, and revocation correctness in Lean 4.
+\item Integration architecture with \TChain{} (threshold signatures) and \KChain{} (key management) for credential signing and key rotation.
+\end{itemize}
+
+\subsection{Paper Organization}
+
+Section~2 defines the DID method specification. Section~3 covers verifiable credentials and zero-knowledge proofs. Section~4 describes the validator identity provider model. Section~5 presents credential revocation. Section~6 details \TChain{} integration. Section~7 covers self-issued credentials. Section~8 presents formal verification. Section~9 analyzes security properties. Section~10 discusses cross-chain identity. Section~11 concludes.
+

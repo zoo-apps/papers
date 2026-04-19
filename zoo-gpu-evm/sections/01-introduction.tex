@@ -1,0 +1,30 @@
+\section{Introduction}
+
+\label{sec:intro}
+
+The EVM was designed for single-threaded deterministic execution.
+Every transaction executes sequentially against the prior transaction's state, producing a canonical state root.
+This guarantees determinism but imposes a hard throughput ceiling: a single CPU core processes roughly 100~Mops/sec, bounding L1 Ethereum to 15--30 TPS \cite{wood2014ethereum}.
+L2 rollups inherit this bottleneck---execution remains the critical path regardless of data-layer capacity.
+
+Zoo Network operates as a specialized L2 on \Lux{}, serving AI-native workloads: decentralized inference (AI Mining), privacy-preserving computation (FHE VM), and on-chain DeFi (DEX VM) \cite{zoo-network-architecture}.
+A single AI Mining round produces 2,000--10,000 result-submission transactions within a 12-second block.
+DEX arbitrage bursts exceed 5,000 TPS.
+FHE ciphertext operations consume 10--100$\times$ the gas of standard transfers.
+
+\cevm{} addresses this gap by moving EVM execution to GPU hardware.
+The key insight: \emph{most transactions are independent}---they touch disjoint storage slots.
+Only 3--8\% on Zoo L2 exhibit true state conflicts.
+By isolating conflicts, \cevm{} executes the independent majority in parallel while preserving full determinism.
+
+\subsection{Contributions}
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Transaction dependency analysis} partitioning blocks into independent and conflict sets in $O(n \log n)$.
+\item \textbf{GPU execution engine} in C++/CUDA achieving 2.3~Gops/sec on a single NVIDIA H100.
+\item \textbf{Deterministic conflict resolution} ensuring identical state roots across heterogeneous hardware.
+\item \textbf{Mechanically verified proofs} in Lean~4 of linear scaling, Amdahl's bound, and re-execution correctness.
+\item \textbf{Integration architecture} for Zoo L2 with DEX VM, FHE VM, and AI Mining precompiles.
+\end{enumerate}
+
+%% ---------------------------------------------------------------------------

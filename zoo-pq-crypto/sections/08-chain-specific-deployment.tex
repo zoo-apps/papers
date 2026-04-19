@@ -1,0 +1,23 @@
+\section{Chain-Specific Deployment}
+
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{llp{6cm}}
+\toprule
+\textbf{Chain / Layer} & \textbf{Primitives} & \textbf{Usage} \\
+\midrule
+\KChain{} & \MLKEM{}-768, \MLDSA{}-65 & User transactions, key exchange, contract auth \\
+\QChain{} & \Corona{} & Validator threshold ops, collective signing, DKG \\
+Consensus & BLS12-381 + \Corona{} & Hybrid dual-path finality \cite{zoo-consensus} \\
+PKI / Governance & \SLHDSA{}-SHA2-192s & Root certs, constitutional amendments \\
+P2P Networking & \MLKEM{}-768 + X25519 & Hybrid encrypted validator channels \\
+\bottomrule
+\end{tabular}
+\caption{Cryptographic deployment across Zoo chains}
+\label{tab:chain-crypto}
+\end{table}
+
+\KChain{} addresses derive as $\text{addr} = \text{BLAKE3}(\text{ML-DSA-65.pk})[0..19]$. Archival nodes prune verified \MLDSA{} signatures after finality, retaining only the signature hash. \QChain{} handles \Corona{} DKG at epoch boundaries and threshold signing for cross-chain messages.
+

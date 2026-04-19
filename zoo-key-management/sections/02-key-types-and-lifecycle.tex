@@ -1,0 +1,22 @@
+\section{Key Types and Lifecycle}
+
+
+\subsection{Key Registry}
+
+\KeyVM{} maintains a typed key registry where each entry is a tuple:
+
+\begin{definition}[Key Record]
+A key record $K = (\text{id}, \tau, \text{pub}, \text{shares}, \text{meta})$ where:
+\begin{itemize}
+\item $\text{id}$ is the key identifier (Blake2b-256 hash of the public key),
+\item $\tau \in \{\texttt{ml-kem-768}, \texttt{ml-kem-1024}, \texttt{ml-dsa-65}, \texttt{ml-dsa-87}, \texttt{slh-dsa-128s}, \texttt{bls12-381}\}$ is the key type,
+\item $\text{pub}$ is the public key (stored on-chain),
+\item $\text{shares} = \{(i, s_i)\}_{i \in \mathcal{C}}$ are threshold shares distributed to committee members (off-chain, encrypted),
+\item $\text{meta}$ includes creation epoch, rotation schedule, usage policy, and owning DID.
+\end{itemize}
+\end{definition}
+
+\subsection{Lifecycle Operations}
+
+Four operations govern key lifecycle: \textbf{Generate} (DKG across validators; no single node sees complete key), \textbf{Use} (threshold protocol where $t$ validators produce partial results aggregated by \KeyVM{}), \textbf{Rotate} (new key generation, re-encryption of dependent material, deprecation of old key---triggered by policy, governance, or compromise), and \textbf{Destroy} ($t$-of-$n$ agreement, secure share clearing, revocation list update).
+

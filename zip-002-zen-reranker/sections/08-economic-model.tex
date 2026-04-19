@@ -1,0 +1,67 @@
+\section{Economic Model}
+
+
+\subsection{Inference Costs}
+
+\textbf{Cloud Deployment (Hanzo Network):}
+\begin{itemize}
+\item Hardware: 1$\times$ A100 40GB per inference node
+\item Throughput: 500 embeddings/second
+\item Latency: 21.5ms per embedding (including BitDelta compression)
+\item Cost: \$0.0001 per embedding
+\item SLA: 99.9\% uptime
+\end{itemize}
+
+\textbf{Local Deployment (Edge):}
+\begin{itemize}
+\item Quantization: 4-bit GPTQ (2GB VRAM)
+\item Hardware: RTX 4090, Apple M3 Max, or equivalent
+\item Throughput: 50 embeddings/second
+\item Latency: 21.5ms per embedding
+\end{itemize}
+
+\subsection{Contributor Incentives}
+
+Contributors earn rewards proportional to experience usage:
+
+\begin{equation}
+\text{Reward}_i = \alpha \cdot \text{Usage}_i + \beta \cdot \text{Quality}_i
+\end{equation}
+
+where:
+\begin{itemize}
+\item $\text{Usage}_i$: Number of times experience $i$ retrieved in past epoch
+\item $\text{Quality}_i$: DAO governance votes for experience $i$
+\item $\alpha, \beta$: Tunable parameters (default: $\alpha=0.7, \beta=0.3$)
+\end{itemize}
+
+\textbf{Reward Distribution:}
+\begin{equation}
+\text{ZOO}_i = \frac{\text{Reward}_i}{\sum_j \text{Reward}_j} \times \text{Total Epoch Rewards}
+\end{equation}
+
+\textbf{Revenue Sources:}
+\begin{itemize}
+\item Query fees: \$0.0001 per embedding retrieval
+\item API subscriptions: \$100/month for 1M queries
+\item Enterprise licenses: Custom pricing
+\end{itemize}
+
+\subsection{Network Economics}
+
+\textbf{Revenue Distribution:}
+\begin{itemize}
+\item 50\% - Zoo DAO treasury (infrastructure, development)
+\item 25\% - Experience contributors (proportional to usage)
+\item 15\% - Inference node operators (Byzantine-robust validation)
+\item 10\% - Research grants (ZKP, privacy, scaling)
+\end{itemize}
+
+\textbf{Token Utility (ZOO):}
+\begin{itemize}
+\item \textbf{Governance:} Vote on experience curation, protocol upgrades
+\item \textbf{Staking:} Earn yield from network fees (5-10\% APR)
+\item \textbf{Payment:} Pay for API access (discounts vs. fiat)
+\item \textbf{Collateral:} Bonding for inference node operation
+\end{itemize}
+

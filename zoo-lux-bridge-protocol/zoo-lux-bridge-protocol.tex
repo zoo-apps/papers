@@ -1,0 +1,525 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% geometry loaded by zoocover
+
+\input{shared/lstlang}
+
+% Listing style
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  captionpos=b,
+  xleftmargin=2em,
+  framexleftmargin=1.5em,
+}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\NFT}{\textsc{nft}}
+\newcommand{\ERC}{\textsc{erc}}
+\newcommand{\DAO}{\textsc{dao}}
+\newcommand{\ZOO}{\$\textsc{zoo}}
+\newcommand{\TBA}{\textsc{tba}}
+\newcommand{\MPC}{\textsc{mpc}}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{Zoo $\leftrightarrow$ Lux Bridge: Multi-Chain Asset Transfer via Warp Messaging}}
+
+\author{
+Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{February 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We present the cross-chain bridge protocol between Zoo L2 (Chain~ID: 200200) and Lux Network (C-Chain, X-Chain, B-Chain). The bridge is built on the Lux Teleport architecture (LP-6332) and Warp messaging (ZIP-0022), and secured by MPC threshold signatures with a $\lceil 2n/3 \rceil$ supermajority requirement using the GG20 threshold ECDSA scheme. It supports bridging of ZRC-20 fungible tokens, ZRC-721 wildlife NFTs with full metadata preservation, ZRC-1155 multi-tokens, and native ZOO/LUX gas tokens. The protocol ensures that conservation metadata, provenance chains, and token-bound account states are faithfully preserved across chains. We describe the bridge gateway contracts, MPC signer set, metadata serialization, TBA freeze/mirror mechanism, fee structure, and liveness/safety guarantees.
+
+\textbf{Keywords}: cross-chain bridge, Warp messaging, MPC, threshold ECDSA, Teleport, metadata preservation
+\end{abstract}
+
+\section{Introduction}
+
+The Zoo ecosystem exists on Zoo L2 (Chain~ID: 200200), a rollup anchored to the Lux primary network. Zoo tokens, wildlife NFTs, and conservation assets must be portable to Lux C-Chain for DeFi liquidity, to Lux X-Chain for exchange listing, and to external chains for broader ecosystem access.
+
+Two bridge architectures serve different trust models. The Lux Warp messaging bridge~\cite{warp2023} is the native, trustless path for Zoo L2 $\leftrightarrow$ Lux C-Chain transfers: Warp messages are validated by the Lux primary network validators, requiring no additional trust assumptions. For transfers to external EVM chains, a lock-and-mint bridge secured by an MPC threshold signer set provides Byzantine fault tolerance.
+
+The bridge's distinguishing feature is conservation metadata preservation. When Tiger \#42's ZRC-721 NFT bridges from Zoo to Lux, its species metadata (IUCN status, GPS coordinates, taxonomy), provenance chain (field observations, veterinary records), and token-bound account state (donation balance, conservation history) must arrive intact on the destination chain.
+
+\subsection{Contributions}
+
+\begin{enumerate}
+    \item The IZooBridgeGateway interface supporting four asset types (Section~\ref{sec:gateway}).
+    \item MPC threshold signature verification using GG20 (Section~\ref{sec:mpc}).
+    \item Conservation metadata serialization for cross-chain transfer (Section~\ref{sec:metadata}).
+    \item TBA freeze/mirror mechanism for NFT bridge transfers (Section~\ref{sec:tba}).
+    \item Liveness and safety guarantees with emergency withdrawal fallback (Section~\ref{sec:liveness}).
+    \item Security analysis of MPC key compromise, replay, and censorship attacks (Section~\ref{sec:security}).
+\end{enumerate}
+
+
+\section{Architecture}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=1.2cm and 3.5cm,
+    box/.style={rectangle, draw, minimum width=3cm, minimum height=0.7cm, align=center, font=\footnotesize, fill=blue!8},
+    mpc/.style={rectangle, draw, minimum width=3cm, minimum height=0.7cm, align=center, font=\footnotesize, fill=green!8},
+    arr/.style={<->, >=stealth, thick},
+]
+    \node[box] (zoo) {ZooBridgeGateway\\(Zoo L2)};
+    \node[mpc, right=of zoo] (mpc) {MPC Signer Set\\($n \geq 7$, $t = \lceil 2n/3 \rceil$)};
+    \node[box, right=of mpc] (lux) {LuxBridgeGateway\\(Lux C-Chain)};
+
+    \draw[arr] (zoo) -- (mpc);
+    \draw[arr] (mpc) -- (lux);
+
+    \node[box, below=0.8cm of zoo] (locker) {Token Locker\\+ Metadata Serializer\\+ TBA Freezer};
+    \node[box, below=0.8cm of lux] (minter) {Token Minter\\+ Metadata Deserializer\\+ TBA Mirror};
+
+    \draw[->, >=stealth] (zoo) -- (locker);
+    \draw[->, >=stealth] (lux) -- (minter);
+\end{tikzpicture}
+\caption{Zoo $\leftrightarrow$ Lux bridge architecture.}
+\label{fig:architecture}
+\end{figure}
+
+
+\section{Bridge Gateway}
+\label{sec:gateway}
+
+\begin{lstlisting}[language=Solidity,caption=IZooBridgeGateway interface]
+interface IZooBridgeGateway {
+    enum AssetType {
+        NATIVE,   // ZOO or LUX gas token
+        ZRC20,    // Fungible token
+        ZRC721,   // Non-fungible token
+        ZRC1155   // Multi-token
+    }
+
+    struct BridgeMessage {
+        bytes32 messageId;
+        uint256 sourceChainId;
+        uint256 destinationChainId;
+        address sender;
+        address recipient;
+        AssetType assetType;
+        address tokenContract;
+        uint256 tokenId;   // 0 for fungibles
+        uint256 amount;    // 1 for NFTs
+        bytes metadata;    // Serialized conservation
+        uint256 nonce;     // Replay protection
+        uint256 deadline;  // Message expiry
+    }
+
+    function bridgeOut(
+        uint256 destinationChainId,
+        address recipient,
+        AssetType assetType,
+        address tokenContract,
+        uint256 tokenId,
+        uint256 amount
+    ) external payable returns (bytes32 messageId);
+
+    function bridgeIn(
+        BridgeMessage calldata message,
+        bytes calldata mpcSignature
+    ) external;
+
+    function mpcSignerSet()
+        external view returns (address);
+    function processedMessages(bytes32 messageId)
+        external view returns (bool);
+
+    event BridgeOutInitiated(
+        bytes32 indexed messageId,
+        address indexed sender,
+        uint256 destinationChainId,
+        AssetType assetType,
+        address tokenContract,
+        uint256 tokenId,
+        uint256 amount
+    );
+    event BridgeInCompleted(
+        bytes32 indexed messageId,
+        address indexed recipient,
+        uint256 sourceChainId,
+        AssetType assetType,
+        address tokenContract,
+        uint256 tokenId,
+        uint256 amount
+    );
+}
+\end{lstlisting}
+
+\subsection{Warp Messaging Path}
+
+For Zoo L2 $\leftrightarrow$ Lux C-Chain transfers, the bridge uses native Warp messaging~\cite{warp2023}:
+
+\begin{lstlisting}[language=Solidity,caption=Warp bridge integration (from ZIP-0022)]
+IWarpMessenger constant WARP =
+    IWarpMessenger(
+        0x0200000000000000000000000000000000000005
+    );
+
+function bridgeOutViaWarp(
+    uint256 amount, address recipient
+) external {
+    IERC20(zooToken).transferFrom(
+        msg.sender, address(this), amount);
+    bytes memory payload = abi.encode(
+        recipient, amount);
+    WARP.sendWarpMessage(payload);
+}
+
+function bridgeInViaWarp(uint32 index) external {
+    (IWarpMessenger.WarpMessage memory msg,
+        bool valid) =
+        WARP.getVerifiedWarpMessage(index);
+    require(valid, "invalid warp message");
+    require(msg.sourceChainID == peerChainId,
+        "wrong source");
+    (address recipient, uint256 amount) =
+        abi.decode(msg.payload,
+            (address, uint256));
+    IERC20(zooToken).transfer(recipient, amount);
+}
+\end{lstlisting}
+
+Warp messages are validated by the Lux primary network validators. No MPC signer set is needed for this path.
+
+
+\section{MPC Threshold Signatures}
+\label{sec:mpc}
+
+For external chain bridges, the protocol uses GG20~\cite{gg20} threshold ECDSA:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lc}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Minimum signers ($n$) & 7 \\
+Threshold ($t$) & $\lceil 2n/3 \rceil$ \\
+Key generation & Distributed key generation (DKG) \\
+Signature scheme & Threshold ECDSA (secp256k1) \\
+Rotation period & 30 days \\
+Slashing & 10,000 LUX stake; slashed for equivocation \\
+\bottomrule
+\end{tabular}
+\caption{MPC signer set parameters.}
+\label{tab:mpc}
+\end{table}
+
+\begin{lstlisting}[language=Solidity,caption=IMPCSignerSet interface]
+interface IMPCSignerSet {
+    function verifyThresholdSignature(
+        bytes32 messageHash,
+        bytes calldata signature
+    ) external view returns (bool valid);
+
+    function signerSetInfo()
+        external view returns (
+            uint256 totalSigners,
+            uint256 threshold,
+            uint256 rotationEpoch,
+            bytes32 publicKeyHash
+        );
+
+    function proposeRotation(
+        address[] calldata newSigners,
+        uint256 newThreshold
+    ) external;
+
+    event SignerSetRotated(
+        uint256 epoch,
+        uint256 totalSigners,
+        uint256 threshold,
+        bytes32 publicKeyHash
+    );
+}
+\end{lstlisting}
+
+MPC threshold ECDSA produces a single on-chain signature regardless of signer set size. This costs constant gas for verification, unlike multisig which scales linearly with signer count.
+
+\begin{theorem}[Byzantine Fault Tolerance]
+With $n = 7$ signers and threshold $t = 5$, the bridge tolerates $f = 2$ Byzantine (compromised) signers. An attacker must compromise $t = 5$ signers to forge a bridge message. The economic cost of compromise is $5 \times 10{,}000 = 50{,}000$ LUX in slashable stake.
+\end{theorem}
+
+
+\section{Asset Bridging Mechanics}
+
+\subsection{Native Token (ZOO/LUX)}
+
+\begin{itemize}
+    \item \textbf{Zoo to Lux}: ZOO locked in ZooBridgeGateway. Wrapped ZOO (wZOO) minted on Lux as LRC-20 (LP-3800).
+    \item \textbf{Lux to Zoo}: wZOO burned on Lux. ZOO unlocked on Zoo L2.
+    \item LUX follows the reverse path (locked on Lux, wrapped on Zoo).
+\end{itemize}
+
+\subsection{ZRC-20 Tokens}
+
+Tokens locked on the source chain. A bridged representation is minted on the destination per LP-3800. Conservation extensions (donation rate, impact credits) are restored from on-chain state on return.
+
+\subsection{ZRC-721 NFTs}
+
+\begin{enumerate}
+    \item NFT locked on Zoo L2.
+    \item Species metadata serialized via ABI encoding and included in \texttt{BridgeMessage.metadata}.
+    \item Provenance chain snapshot uploaded to IPFS; CID included in metadata.
+    \item TBA frozen (ZIP-0703).
+    \item Mirror LRC-721 minted on Lux with full metadata.
+    \item On return: mirror burned, original unlocked, TBA unfrozen, ``bridged\_back'' provenance record added.
+\end{enumerate}
+
+\subsection{ZRC-1155 Multi-Tokens}
+
+Multiple token IDs and amounts can be bridged in a single message. Soulbound tokens MUST NOT be bridged; the gateway rejects any \texttt{bridgeOut} for non-transferable token IDs.
+
+
+\section{Metadata Serialization}
+\label{sec:metadata}
+
+\begin{lstlisting}[language=Solidity,caption=ZRC-721 metadata serialization]
+bytes memory metadata = abi.encode(
+    speciesMetadata,        // SpeciesMetadata
+    provenanceSnapshotCID,  // IPFS CID
+    conservationFundAddress,
+    royaltySplit,           // (conservBps, creatorBps)
+    tbaAddress,             // TBA on source chain
+    tbaBalanceSnapshot      // ZOO balance in TBA
+);
+\end{lstlisting}
+
+ABI encoding ensures deterministic serialization. The destination chain deserializes the metadata and reconstructs the on-chain state. The provenance CID provides a full history reference without including the entire provenance chain in the bridge message.
+
+
+\section{TBA Freeze/Mirror}
+\label{sec:tba}
+
+\begin{algorithm}[t]
+\caption{TBA Freeze on Bridge-Out}
+\label{alg:freeze}
+\begin{algorithmic}[1]
+\STATE \textbf{Input}: NFT $N$, destination chain $D$
+\STATE Lock $N$ in bridge gateway
+\STATE $\text{TBA.state()} \leftarrow \text{TBA.state()} + 1$ \COMMENT{Invalidate pending ops}
+\STATE $\text{TBA.frozen} \leftarrow \text{true}$
+\STATE Serialize TBA balance snapshot
+\STATE Include in bridge message metadata
+\STATE Relay to destination chain $D$
+\STATE Create mirror TBA on $D$ with same salt
+\end{algorithmic}
+\end{algorithm}
+
+The freeze and NFT lock are atomic within a single \texttt{bridgeOut} transaction. This prevents a race condition where the TBA is accessed between the lock and the freeze.
+
+\begin{theorem}[Cross-Chain Asset Safety]
+A TBA's assets cannot be double-spent across chains. The freeze mechanism ensures exactly one chain has an active TBA at any time. Asset access on the inactive chain requires a bridge transfer, which is mediated by the MPC signer set.
+\end{theorem}
+
+
+\section{Fee Structure}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Operation} & \textbf{Fee} & \textbf{Recipient} \\
+\midrule
+Native token bridge & 0.1\% & MPC signers \\
+ZRC-20 bridge & 0.05\% & 50\% signers, 50\% conservation \\
+ZRC-721 bridge & Flat 10 ZOO & Conservation fund \\
+ZRC-1155 batch & 5 ZOO per type & Conservation fund \\
+\bottomrule
+\end{tabular}
+\caption{Bridge fee schedule.}
+\label{tab:fees}
+\end{table}
+
+
+\section{Liveness and Safety}
+\label{sec:liveness}
+
+\textbf{Liveness}: If the MPC signer set is unavailable for $> 72$ hours, a governance-controlled emergency withdrawal path activates. Users can reclaim locked assets after a 7-day timelock.
+
+\textbf{Safety}: Messages expire after \texttt{deadline} (default 24 hours). Expired messages are rejected. Each \texttt{messageId} is processed at most once.
+
+\textbf{Finality}: Bridge messages are relayed only after source chain finality. Zoo L2 inherits sub-second finality from the Lux primary network. Lux C-Chain requires 2~seconds.
+
+\textbf{Rate limiting}: Per ZIP-0022, the bridge enforces per-transaction, hourly, and daily volume limits:
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Adjustable} \\
+\midrule
+Per-transaction limit & 1,000,000 ZOO & Governance \\
+Hourly volume limit & 10,000,000 ZOO & Governance \\
+Daily volume limit & 50,000,000 ZOO & Governance \\
+Emergency pause & 25\% of locked supply in 24h & Fixed \\
+\bottomrule
+\end{tabular}
+\caption{Bridge rate limiting parameters.}
+\label{tab:ratelimit}
+\end{table}
+
+\begin{theorem}[Supply Invariant]
+The bridge enforces:
+\begin{equation}
+S_{\text{zoo\_l2}} + S_{\text{locked}} = S_{\text{initial}} + S_{\text{emissions}}
+\end{equation}
+An on-chain audit function verifies this invariant and pauses the bridge if violated.
+\end{theorem}
+
+
+\section{Security Analysis}
+\label{sec:security}
+
+\subsection{MPC Key Compromise}
+
+If $t$ signers are compromised, the bridge is vulnerable to fraudulent minting. Mitigations: 30-day key rotation, geographic distribution of signers, HSMs, and slashing for equivocation.
+
+\subsection{Replay Attacks}
+
+Each \texttt{messageId} is tracked in \texttt{processedMessages}. The nonce and deadline fields provide additional replay protection.
+
+\subsection{Metadata Tampering}
+
+The \texttt{messageHash} covers all fields including \texttt{metadata}. MPC signature verification ensures integrity.
+
+\subsection{Censorship}
+
+If MPC relayers censor specific messages, the 72-hour liveness fallback allows governance to force-process messages.
+
+\subsection{TBA Freeze Race Condition}
+
+The TBA must be frozen before the bridge message is relayed. The \texttt{bridgeOut} function atomically locks the NFT and freezes the TBA in a single transaction.
+
+\subsection{Signer Set Rotation}
+
+During rotation, both old and new signer sets are valid for a 24-hour overlap period. Messages signed by either set are accepted during this window.
+
+
+\section{Related Work}
+
+Lux Teleport (LP-6332)~\cite{teleport2022} provides the transport layer; ZIP-0800 adds the application layer for conservation metadata. LayerZero~\cite{layerzero2022} provides generic cross-chain messaging but lacks conservation metadata support. Wormhole~\cite{wormhole2022} uses a guardian set similar to our MPC signer set. Axelar~\cite{axelar2022} provides general message passing with threshold signatures. Chainlink CCIP~\cite{ccip2023} offers cross-chain interoperability with oracle-based verification. The Cosmos IBC protocol~\cite{ibc2019} provides trustless interchain communication for Tendermint-based chains; Lux Warp messaging provides analogous guarantees within the Lux ecosystem.
+
+
+\section{Conclusion}
+
+The Zoo $\leftrightarrow$ Lux bridge combines trustless Warp messaging for intra-ecosystem transfers with MPC threshold signatures for external chain access. Conservation metadata preservation ensures that wildlife NFTs, impact credits, and token-bound account states survive cross-chain transfers intact. Rate limiting and the supply invariant provide defense-in-depth against the bridge exploits that have plagued cross-chain DeFi.
+
+\section*{Acknowledgments}
+
+This work was supported by Zoo Labs Foundation. We thank the Lux team for the Teleport architecture and Warp messaging protocol.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{20}
+
+\bibitem{warp2023}
+Lux Partners, ``Lux Warp Messaging,'' \url{https://docs.lux.network/warp}, 2023.
+
+\bibitem{teleport2022}
+Lux Partners, ``LP-6332: Teleport Bridge Architecture,'' Lux Protocol Standards, 2022.
+
+\bibitem{gg20}
+R.~Gennaro and S.~Goldfeder, ``One Round Threshold ECDSA with Identifiable Abort,'' \textit{IACR ePrint} 2020/540, 2020.
+
+\bibitem{lp3800}
+Lux Partners, ``LP-3800: Bridged Asset Standard,'' Lux Protocol Standards, 2022.
+
+\bibitem{lp6000}
+Lux Partners, ``LP-6000: B-Chain Bridge Specification,'' Lux Protocol Standards, 2022.
+
+\bibitem{layerzero2022}
+R.~Zarick et al., ``LayerZero: An Omnichain Interoperability Protocol,'' Technical Report, 2022.
+
+\bibitem{wormhole2022}
+Wormhole, ``Wormhole: Generic Message Passing Protocol,'' Technical Documentation, 2022.
+
+\bibitem{axelar2022}
+S.~Haouari et al., ``Axelar: Connecting All Blockchains,'' Technical Documentation, 2022.
+
+\bibitem{ccip2023}
+Chainlink, ``CCIP: Cross-Chain Interoperability Protocol,'' Technical Documentation, 2023.
+
+\bibitem{ibc2019}
+C.~Goes et al., ``The Interblockchain Communication Protocol,'' Cosmos Network, 2019.
+
+\bibitem{zip0022}
+Zoo Labs Foundation, ``ZIP-0022: Multi-Chain Bridge Standard,'' Zoo Improvement Proposals, 2025.
+
+\bibitem{zip0042}
+Zoo Labs Foundation, ``ZIP-0042: Cross-Ecosystem Interoperability,'' Zoo Improvement Proposals, 2024.
+
+\bibitem{zip0100}
+Zoo Labs Foundation, ``ZIP-0100: Zoo Contract Registry,'' Zoo Improvement Proposals, 2024.
+
+\bibitem{zip0700}
+Zoo Labs Foundation, ``ZIP-0700: ZRC-20 Fungible Token Standard,'' Zoo Improvement Proposals, 2025.
+
+\bibitem{zip0701}
+Zoo Labs Foundation, ``ZIP-0701: ZRC-721 NFT Standard,'' Zoo Improvement Proposals, 2025.
+
+\bibitem{zip0703}
+Zoo Labs Foundation, ``ZIP-0703: Token-Bound Accounts for Wildlife,'' Zoo Improvement Proposals, 2025.
+
+\bibitem{hip0101}
+Hanzo AI, ``HIP-0101: Hanzo-Lux Bridge Protocol,'' Hanzo Improvement Proposals, 2023.
+
+\bibitem{ronin2022}
+S.~Gudgeon et al., ``Ronin Bridge Hack: A Post-Mortem,'' Technical Analysis, 2022.
+
+\bibitem{nomad2022}
+Nomad, ``Nomad Bridge Exploit: Root Cause Analysis,'' Technical Report, 2022.
+
+\bibitem{eip7683}
+Across Protocol, ``EIP-7683: Cross-Chain Intents,'' Ethereum Improvement Proposals, 2023.
+
+\end{thebibliography}
+
+\end{document}

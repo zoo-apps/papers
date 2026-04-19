@@ -1,0 +1,23 @@
+\section{Comparison with Alternatives}
+
+
+\begin{table}[h]
+\centering
+\caption{Replication approaches}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Approach & RPO & RTO & Complexity & Cost \\
+\midrule
+PVC snapshots & hours & minutes & low & low \\
+PostgreSQL streaming & 0 & seconds & high & high \\
+\textbf{WAL to S3} & \textbf{1\,s} & \textbf{seconds} & \textbf{low} & \textbf{low} \\
+CockroachDB & 0 & 0 & very high & very high \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+WAL-to-S3 replication provides the best tradeoff for Zoo's
+requirements: near-zero RPO, fast recovery, minimal operational
+complexity, and compatibility with the Base/SQLite-per-org
+architecture.
+

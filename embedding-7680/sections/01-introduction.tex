@@ -1,0 +1,56 @@
+\section{Introduction}
+
+
+Embedding models transform text into dense vector representations, enabling semantic similarity computation, retrieval, and clustering. The dimensionality of these embeddings---the number of components in each vector---profoundly affects both representation capacity and computational efficiency.
+
+Current embedding models exhibit significant dimensionality variation:
+
+\begin{table}[h]
+\centering
+\caption{Embedding dimensionalities of popular models (2024-2025)}
+\label{tab:dims}
+\begin{tabular}{lrc}
+\toprule
+\textbf{Model} & \textbf{Dimensions} & \textbf{Source} \\
+\midrule
+text-embedding-3-small & 1,536 & OpenAI \\
+text-embedding-3-large & 3,072 & OpenAI \\
+voyage-large-2 & 1,536 & Voyage \\
+Cohere embed-v3 & 1,024 & Cohere \\
+E5-large-v2 & 1,024 & Microsoft \\
+BGE-large-en-v1.5 & 1,024 & BAAI \\
+Qwen3-Embedding-8B & 4,096 & Alibaba \\
+\textbf{Zen Reranker (Ours)} & \textbf{7,680} & Zoo/Hanzo \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This heterogeneity creates challenges for systems that need to combine embeddings from multiple sources---particularly decentralized AI networks where different nodes may use different models.
+
+\subsection{The Alignment Problem}
+
+Decentralized Self-Optimization (\DSO{}) enables language models to share learned experiences across organizational boundaries. A critical requirement is \emph{semantic alignment}: experiences from Model A must be retrievable by Model B.
+
+Na\"ive approaches fail:
+\begin{itemize}
+    \item \textbf{Dimension Truncation}: Loses information from higher dimensions
+    \item \textbf{Zero-Padding}: Creates artificial structure that degrades similarity
+    \item \textbf{Learned Projection}: Adds latency and requires training data
+\end{itemize}
+
+\subsection{Our Contribution}
+
+We propose a different approach: design embedding models that \emph{natively} produce a canonical dimensionality optimized for the ecosystem. Our contributions:
+
+\begin{enumerate}
+    \item \textbf{Dimensionality Analysis}: Systematic study of how embedding dimensions affect semantic preservation, retrieval accuracy, and compression efficiency (Section~\ref{sec:analysis})
+
+    \item \textbf{7680-Dim Optimality}: Proof that 7680 dimensions is Pareto-optimal for current frontier LLM architectures (Section~\ref{sec:optimality})
+
+    \item \textbf{Zen Reranker Architecture}: Novel model design producing native 7680-dim embeddings (Section~\ref{sec:architecture})
+
+    \item \textbf{BitDelta Compression}: Quantization scheme achieving 31.87$\times$ compression with minimal quality loss (Section~\ref{sec:compression})
+
+    \item \textbf{Evaluation}: Comprehensive benchmarks on retrieval, reranking, and cross-model compatibility (Section~\ref{sec:evaluation})
+\end{enumerate}
+

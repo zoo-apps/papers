@@ -1,0 +1,39 @@
+\section{Background}
+
+
+\subsection{Content-Addressable Storage}
+
+Content-addressable storage (CAS) identifies data by its cryptographic hash rather than its location. First formalized by the InterPlanetary File System (\IPFS{})~\cite{benet2014ipfs}, CAS provides:
+
+\begin{definition}[Content Identifier]
+A Content Identifier (CID) is a tuple $\langle \text{codec}, \text{multihash} \rangle$ where:
+\begin{itemize}
+    \item \texttt{codec} specifies the data encoding (e.g., dag-cbor, raw)
+    \item \texttt{multihash} is $\langle \text{algo}, \text{len}, \text{digest} \rangle$ identifying the hash function and digest
+\end{itemize}
+\end{definition}
+
+For example, CID \texttt{bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi} uniquely identifies a specific data object globally.
+
+\subsection{Merkle Trees for Verification}
+
+Merkle trees enable efficient membership proofs:
+
+\begin{theorem}[Merkle Proof Efficiency]
+Given a set $S$ of $n$ elements stored in a Merkle tree, verifying membership of element $e \in S$ requires only $O(\log n)$ hash computations and $O(\log n)$ proof size.
+\end{theorem}
+
+This property is essential for verifying experience integrity without downloading the entire library.
+
+\subsection{Semantic Memory in AI}
+
+Prior work on AI memory systems includes:
+
+\begin{itemize}
+    \item \textbf{Episodic Memory}~\cite{graves2016hybrid}: Neural networks with explicit memory modules
+    \item \textbf{Retrieval-Augmented Generation}~\cite{lewis2020retrieval}: Combining retrieval with generation
+    \item \textbf{Vector Databases}~\cite{pinecone2021}: Storing embeddings for similarity search
+\end{itemize}
+
+These approaches focus on single-agent memory. Our work extends to \emph{distributed} memory shared across agents.
+

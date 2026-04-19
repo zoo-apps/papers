@@ -1,0 +1,30 @@
+\section{Threshold Key Sharing}
+
+
+\subsection{Shamir's Secret Sharing over Lattices}
+
+\KChain{} distributes key material using Shamir's secret sharing adapted for polynomial rings $R_q = \mathbb{Z}_q[X]/(X^n + 1)$:
+
+\begin{definition}[Lattice Shamir Sharing]
+Given a secret $s \in R_q^k$ and threshold $(t, n)$:
+\begin{enumerate}
+\item Sample random polynomials $a_1, \ldots, a_{t-1} \in R_q^k$.
+\item Define $f(x) = s + a_1 x + a_2 x^2 + \cdots + a_{t-1} x^{t-1}$.
+\item Share $i$ is $f(\omega^i)$ where $\omega$ is a primitive $n$-th root of unity in $R_q$.
+\end{enumerate}
+\end{definition}
+
+Reconstruction uses Lagrange interpolation over $R_q$:
+
+\begin{equation}
+s = f(0) = \sum_{i \in S} f(\omega^i) \prod_{j \in S \setminus \{i\}} \frac{-\omega^j}{\omega^i - \omega^j}
+\end{equation}
+
+where $|S| \geq t$.
+
+\subsection{Verifiable Secret Sharing and Proactive Refresh}
+
+To prevent malicious dealers from distributing inconsistent shares, \KChain{} uses Feldman's VSS \cite{feldman1987practical} adapted for lattices: each share $s_i$ has a commitment $C_i = g^{s_i}$ verified against public commitments.
+
+Key shares are periodically refreshed without changing the underlying secret. Each validator $v_i$ samples a random $(t-1)$-degree polynomial $r_i(x)$ with $r_i(0) = 0$, sends $r_i(\omega^j)$ to each $v_j$ (encrypted under $v_j$'s ML-KEM key), and each validator updates $s_j' = s_j + \sum_{i=1}^{n} r_i(\omega^j)$. The new shares reconstruct the same secret but are unlinkable to old shares, ensuring that an adversary who compromises $f < t$ validators across different epochs cannot reconstruct the secret even if $f + f' \geq t$.
+

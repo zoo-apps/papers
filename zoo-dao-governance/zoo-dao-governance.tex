@@ -1,0 +1,113 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{shared/zoocover}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+% geometry loaded by zoocover
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\usepackage{cleveref}
+\usepackage{natbib}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage{abstract}
+\usepackage{multirow}
+
+% ── Page Style ────────────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Antje Worring, Zach Kelling}
+\fancyhead[R]{\small Zoo DAO Governance}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Metadata ──────────────────────────────────────────────────────────────────
+\title{%
+  \textbf{Zoo DAO: Decentralized Governance for\\Open Science Research}\\[0.5em]
+  \large Antje Worring, Zach Kelling Paper ZOO-GOV-2026
+}
+
+\author{
+  Antje Worring, Zach Kelling\\
+  \texttt{research@zoo.ngo}\\[0.5em]
+  \small With contributions from the Zoo Open Science Network
+}
+
+\date{September 2022}
+
+% ── Macros ────────────────────────────────────────────────────────────────────
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\QV}{\text{QV}}
+\newcommand{\ZOO}{\textsc{ZOO}}
+
+\begin{document}
+
+\zoocoverpage
+
+% ── Abstract ──────────────────────────────────────────────────────────────────
+\begin{abstract}
+\noindent
+Traditional scientific funding suffers from well-documented pathologies:
+conservative grant allocation favoring established researchers, opaque
+peer review processes, multi-year funding cycles misaligned with research
+timelines, and geographic concentration in wealthy nations. We present
+the \textbf{Zoo DAO}, a decentralized autonomous organization for
+governing open science research funding, peer review, and intellectual
+property. Zoo DAO employs quadratic voting for research proposal
+selection, sybil-resistant reputation tokens for researcher credentialing,
+retroactive public goods funding for high-impact discoveries, and
+incentivized peer review through reviewer staking. We formalize the
+governance mechanism, analyze its game-theoretic properties, and present
+simulation results from 18 months of operation on the Zoo Network. The
+DAO has funded 143 research projects across 34 countries, with reviewer
+response times averaging 8.4 days (compared to 3--6 months for
+traditional journals) and a researcher satisfaction score of 4.3/5.0.
+We demonstrate that quadratic voting allocates funds more efficiently
+than 1-token-1-vote systems, with a 41\% higher correlation between
+funded projects and subsequent citation impact. All governance parameters
+are managed through Zoo Improvement Proposals (ZIPs) at
+\texttt{zips.zoo.ngo}.
+
+\medskip
+\noindent\textbf{Keywords:} decentralized governance, quadratic voting,
+research funding, peer review, reputation systems, open science, DAO
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════════════════════════
+
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-governance-architecture}
+\input{sections/04-quadratic-voting-for-research-funding}
+\input{sections/05-incentivized-peer-review}
+\input{sections/06-retroactive-public-goods-funding}
+\input{sections/07-empirical-results}
+\input{sections/08-game-theoretic-analysis}
+\input{sections/09-discussion}
+\input{sections/10-future-work}
+\input{sections/99-conclusion}
+
+\end{document}

@@ -1,0 +1,118 @@
+\section{Memory Capsule Architecture}
+
+\label{sec:architecture}
+%----------------------------------------------------------------------
+
+\subsection{Overview}
+
+A Memory Capsule is a tuple $\mathcal{C} = (\textit{did}, \textit{log}, \textit{vault}, \textit{caps}, \textit{meta})$ where:
+
+\begin{itemize}
+    \item $\textit{did} \in \mathcal{D}$ is the owner's decentralized identifier on \IChain{}.
+    \item $\textit{log}$ is a content-addressed append-only operation log.
+    \item $\textit{vault}$ is an encrypted SQLite database storing materialized state.
+    \item $\textit{caps}$ is the set of outstanding capability tokens.
+    \item $\textit{meta}$ is an on-chain metadata record (creation time, size, type distribution, access statistics).
+\end{itemize}
+
+\subsection{Content-Addressed Append-Only Log}
+
+Every mutation to a capsule is recorded as an operation in an append-only log. Operations are content-addressed using BLAKE3:
+
+\begin{definition}[Memory Operation]
+An operation $o = (t, \textit{type}, \textit{payload}, h_{\textit{prev}})$ consists of a timestamp $t$, operation type $\textit{type} \in \{\texttt{write}, \texttt{update}, \texttt{delete}, \texttt{merge}\}$, an encrypted payload, and the hash of the previous operation $h_{\textit{prev}} = \text{BLAKE3}(o_{\textit{prev}})$.
+\end{definition}
+
+This structure provides:
+\begin{enumerate}
+    \item \textbf{Tamper Evidence.} Any modification to a historical entry breaks the hash chain.
+    \item \textbf{Causal Ordering.} The $h_{\textit{prev}}$ link establishes a total order within a single writer and a partial order across concurrent writers.
+    \item \textbf{Efficient Sync.} Two replicas can determine their divergence point by comparing head hashes.
+\end{enumerate}
+
+The log is stored on \Zoo{} Network's storage layer, with the head hash anchored on \IChain{} for tamper-evident auditability.
+
+\subsection{Encrypted SQLite Vault}
+
+The materialized state---the current snapshot of all live memory entries---is stored in a SQLite database encrypted with SQLCipher (AES-256-CBC with HMAC-SHA512 page authentication). The database schema is fixed:
+
+\begin{verbatim}
+CREATE TABLE memories (
+    id          BLOB PRIMARY KEY,  -- BLAKE3(content)
+    type        INTEGER NOT NULL,  -- 0=episodic,1=semantic,
+                                   -- 2=procedural,3=preference
+    content     BLOB NOT NULL,     -- encrypted entry
+    embedding   BLOB,              -- encrypted vector
+    created_at  INTEGER NOT NULL,  -- unix timestamp
+    accessed_at INTEGER NOT NULL,
+    access_count INTEGER DEFAULT 0,
+    ttl         INTEGER,           -- seconds, NULL=permanent
+    tags        TEXT               -- JSON array, encrypted
+);
+
+CREATE TABLE operations (
+    seq         INTEGER PRIMARY KEY AUTOINCREMENT,
+    hash        BLOB NOT NULL UNIQUE,
+    prev_hash   BLOB NOT NULL,
+    op_type     INTEGER NOT NULL,
+    payload     BLOB NOT NULL,
+    timestamp   INTEGER NOT NULL
+);
+\end{verbatim}
+
+The vault key is derived from the owner's \KChain{} key hierarchy:
+
+\begin{equation}
+k_{\textit{vault}} = \text{HKDF-SHA256}(k_{\textit{master}}, \text{``memory-capsule''} \| \textit{did})
+\end{equation}
+
+where $k_{\textit{master}}$ is the owner's root key managed by \KChain{} validators.
+
+\subsection{CRDT Synchronization}
+
+Agents may run across multiple instances (e.g., a desktop session and a mobile session operating concurrently). Memory Capsules synchronize via operation-based CRDTs:
+
+\begin{definition}[Memory CRDT]
+The memory state is modeled as a grow-only set $G$ of operations with a merge function $\sqcup$ defined as set union, and a \emph{materialize} function $M(G)$ that replays operations in causal order to produce the current vault state.
+\end{definition}
+
+Conflict resolution follows last-writer-wins (LWW) semantics for updates to the same key, with ties broken by \DID{}-derived priority. Deletes are soft (tombstone markers) until garbage collection compacts them.
+
+The synchronization protocol:
+
+\begin{algorithm}
+\caption{CRDT Sync Between Capsule Replicas}
+\begin{algorithmic}[1]
+\REQUIRE Replicas $R_A$, $R_B$ with head hashes $h_A$, $h_B$
+\STATE $R_A$ sends $h_A$ to $R_B$
+\IF{$h_A = h_B$}
+    \STATE Replicas are synchronized; no action needed
+\ELSE
+    \STATE $R_B$ computes $\Delta = \textit{log}_B \setminus \textit{ancestors}(h_A)$
+    \STATE $R_B$ sends $\Delta$ to $R_A$
+    \STATE $R_A$ validates each $o \in \Delta$ (signature, capability check)
+    \STATE $R_A$ merges: $G_A \leftarrow G_A \sqcup \Delta$
+    \STATE $R_A$ re-materializes vault: $\textit{vault}_A \leftarrow M(G_A)$
+    \STATE $R_A$ anchors new head hash to \IChain{}
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{On-Chain Metadata}
+
+The full vault is too large for on-chain storage. Only metadata is anchored on \IChain{}:
+
+\begin{verbatim}
+struct CapsuleAnchor {
+    did:        bytes32,    // owner DID
+    head_hash:  bytes32,    // current log head
+    entry_count: uint64,
+    total_bytes: uint64,
+    type_dist:  [4]uint64, // count per memory type
+    updated_at: uint64
+}
+\end{verbatim}
+
+This allows on-chain verification of capsule integrity without storing content on-chain.
+
+%----------------------------------------------------------------------

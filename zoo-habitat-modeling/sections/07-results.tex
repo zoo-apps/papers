@@ -1,0 +1,106 @@
+\section{Results}
+
+\label{sec:results}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Current Distribution Accuracy}
+
+\begin{table}[H]
+\centering
+\caption{Model performance on current species distributions (mean
+$\pm$ SD across 847 species). Best results in \textbf{bold}.}
+\label{tab:current}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Model} & \textbf{AUC} & \textbf{TSS} & \textbf{Boyce} \\
+\midrule
+MaxEnt          & 0.867 $\pm$ 0.071 & 0.612 $\pm$ 0.114 & 0.751 $\pm$ 0.098 \\
+Random Forest   & 0.881 $\pm$ 0.063 & 0.641 $\pm$ 0.107 & 0.773 $\pm$ 0.091 \\
+BRT             & 0.889 $\pm$ 0.058 & 0.658 $\pm$ 0.102 & 0.789 $\pm$ 0.087 \\
+DeepSDM         & 0.901 $\pm$ 0.054 & 0.687 $\pm$ 0.096 & 0.812 $\pm$ 0.079 \\
+CNN-SDM         & 0.912 $\pm$ 0.049 & 0.711 $\pm$ 0.091 & 0.834 $\pm$ 0.072 \\
+\textbf{HabitatNet} & \textbf{0.943 $\pm$ 0.038} & \textbf{0.762 $\pm$ 0.078} & \textbf{0.891 $\pm$ 0.056} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+HabitatNet achieves a mean AUC of 0.943, representing a 3.4\% absolute
+improvement over the next-best model (CNN-SDM). The improvement is most
+pronounced for species with fragmented ranges, where graph-based spatial
+reasoning provides the greatest advantage.
+
+\subsection{Temporal Transferability}
+
+\begin{table}[H]
+\centering
+\caption{Temporal validation: models trained on 2000--2015, evaluated on
+2016--2023 resurvey data.}
+\label{tab:temporal}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Model} & \textbf{AUC} & \textbf{TSS} & \textbf{$\Delta$ AUC} \\
+\midrule
+MaxEnt          & 0.793 $\pm$ 0.089 & 0.497 $\pm$ 0.131 & $-$0.074 \\
+Random Forest   & 0.801 $\pm$ 0.082 & 0.513 $\pm$ 0.124 & $-$0.080 \\
+BRT             & 0.811 $\pm$ 0.077 & 0.531 $\pm$ 0.119 & $-$0.078 \\
+DeepSDM         & 0.834 $\pm$ 0.069 & 0.567 $\pm$ 0.108 & $-$0.067 \\
+CNN-SDM         & 0.849 $\pm$ 0.063 & 0.591 $\pm$ 0.101 & $-$0.063 \\
+\textbf{HabitatNet} & \textbf{0.907 $\pm$ 0.047} & \textbf{0.689 $\pm$ 0.084} & $-$\textbf{0.036} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+HabitatNet exhibits the smallest performance degradation under temporal
+transfer ($\Delta$AUC = $-$0.036), suggesting superior generalization to
+novel environmental conditions. The graph structure allows the model to
+propagate information about distributional shifts through connected
+landscape elements.
+
+\subsection{Climate Projection Results}
+
+Under SSP2-4.5 (intermediate emissions), HabitatNet projects:
+\begin{itemize}
+  \item \textbf{Range contractions}: 67\% of species lose $>$10\% of
+    current suitable habitat by 2081--2100.
+  \item \textbf{Range shifts}: Mean poleward shift of 6.1\,km/decade
+    ($\pm$2.3), consistent with observed trends
+    \citep{chen2011rapid}.
+  \item \textbf{Elevational shifts}: Mean upslope shift of 11.2\,m/decade
+    in mountainous regions.
+  \item \textbf{Novel disconnections}: 23\% of currently connected
+    habitat networks become fragmented by 2061--2080.
+\end{itemize}
+
+Under SSP5-8.5 (high emissions), projections intensify dramatically:
+range contractions affect 89\% of species, and 41\% of habitat networks
+become disconnected.
+
+\subsection{Connectivity Analysis}
+
+\begin{table}[H]
+\centering
+\caption{Habitat connectivity metrics under current and projected
+conditions (SSP2-4.5, 2081--2100). Mean across species.}
+\label{tab:connectivity}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metric} & \textbf{Current} & \textbf{2081--2100} \\
+\midrule
+Number of patches         & 4.2 $\pm$ 2.1  & 7.8 $\pm$ 3.6 \\
+Largest patch area (km$^2$) & 84{,}300 $\pm$ 41{,}200 & 52{,}100 $\pm$ 29{,}800 \\
+Effective mesh size       & 0.71 $\pm$ 0.18 & 0.43 $\pm$ 0.21 \\
+Graph connectivity index  & 0.84 $\pm$ 0.11 & 0.58 $\pm$ 0.19 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Corridor Identification}
+
+The greedy corridor algorithm (\Cref{alg:corridor}) identifies
+restoration priorities that maximize connectivity recovery. With a
+budget of 5\% additional restored area, corridors recover 72\% of lost
+connectivity on average, compared to 31\% for random placement and 54\%
+for least-cost path heuristics.
+
+
+% ══════════════════════════════════════════════════════════════════════════════
