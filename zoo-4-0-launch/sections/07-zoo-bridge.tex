@@ -1,0 +1,88 @@
+\section{\Zoo{} Bridge}
+\label{sec:zoo-bridge}
+
+\Zoo{} Bridge (at \texttt{\textasciitilde/work/zoo/bridge}) is the
+cross-ecosystem bridge for \Zoo{} L1. It lets ZRC-20 fungibles, ZRC-721
+\NFT{}s, ZRC-1155 multi-tokens, and the native \$ZOO gas token move
+between \Zoo{} L1 and external chains while preserving conservation
+metadata, provenance chains, and token-bound account state.
+
+\subsection{Architecture}
+
+\Zoo{} Bridge is layered:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{Bridge \textsc{vm} layer.} \Zoo{} Bridge sits on top of
+        the \Lux{} B-Chain (BVM, \textsc{lp-134}). The B-Chain is the
+        \Lux{} ecosystem's bridge substrate; \Zoo{} Bridge is the
+        \Zoo{}-specific message and asset model on top of it.
+  \item \textbf{Threshold signing.} Lock and mint operations require a
+        2-of-3 supermajority across the \Zoo{} bridge committee, which
+        signs via M-Chain (MVM) MPC ceremonies (CGGMP21 / FROST), with
+        \Ringtail{} threshold proofs anchoring the post-quantum side.
+  \item \textbf{Asset adapters.} One adapter per supported foreign
+        chain: \Lux{} C/X/B/Z-Chains, Ethereum mainnet, Polygon, BSC
+        (legacy migration path for the original 2021 \Zoo{}
+        deployment), and arbitrary EVM-compatible chains via the
+        generic adapter.
+\end{itemize}
+
+\subsection{Supported chains}
+
+At activation, \Zoo{} Bridge supports:
+
+\begin{longtable}{p{0.20\textwidth}p{0.30\textwidth}p{0.40\textwidth}}
+\toprule
+\textbf{Chain} & \textbf{Direction} & \textbf{Notes} \\
+\midrule
+\Lux{} C-Chain & both & native EVM, fastest \\
+\Lux{} X-Chain & both & for UTXO-based assets \\
+\Lux{} B-Chain & both & native bridge VM \\
+\Lux{} Z-Chain & both & for ZK-rollup-bound assets \\
+Ethereum mainnet & both & wrapped \$ZOO, NFT migration \\
+BSC & inbound & legacy 2021 \Zoo{} migration only \\
+Polygon & both & retail wallets and tooling \\
+Arbitrary EVM & both & generic adapter, slower path \\
+\bottomrule
+\end{longtable}
+
+\subsection{Conservation metadata preservation}
+
+A wildlife ZRC-721 carries fields that generic bridges lose: provenance
+chain (pedigree), conservation contributions, token-bound account
+balances, and on-chain achievements (gym, breeding, feeding). \Zoo{}
+Bridge encodes these into the lock event and replays them on the
+mint side. A bridged \NFT{} arrives identical, not a synthetic
+wrapper.
+
+\subsection{Yield-bearing bridge bookkeeping}
+
+When \$ZOO sits on the foreign side as a wrapped token, the locked
+backing on \Zoo{} L1 can stake into the validator set. Yield is
+accrued on a per-deposit basis; on burn-and-unlock, the depositor
+receives principal plus accumulated yield. This follows the
+yield-bearing bridge pattern (\textsc{lp-018}).
+
+\subsection{Security model}
+
+The threshold signing ceremony has three properties:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Liveness.} Any 2-of-3 of the bridge committee can
+        sign; one offline signer does not stall the bridge.
+  \item \textbf{Safety.} Any forged release requires compromising 2-of-3
+        committee members \emph{and} forging a \Ringtail{} threshold
+        proof on M-Chain. The \Ringtail{} layer is post-quantum.
+  \item \textbf{Auditability.} Every signed message is logged on
+        B-Chain with the full triple-consensus certificate.
+\end{enumerate}
+
+\subsection{Migration of 2021 \Zoo{} BSC deployment}
+
+The original 2021 \Zoo{} deployment lives on BSC. \Zoo{} Bridge
+provides a one-way migration adapter that reads the BSC ZRC-20 and
+ZRC-721 holdings, escrows them under the BSC bridge contract, and
+mints native equivalents on \Zoo{} L1. Users opt in by signing a
+migration intent with the BSC private key; the bridge committee
+counter-signs and the L1 token is delivered. The BSC token contract
+is locked post-migration so legacy holders cannot double-spend.

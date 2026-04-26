@@ -1,0 +1,98 @@
+\section{\GPU{}-Native Across the Stack}
+\label{sec:gpu-native}
+
+This section breaks down what runs on the \GPU{} in \Zoo{} 4.0 and why each
+component is on the device rather than the host. The design discipline is
+\textsc{lp-137}'s \GPU{}-Residency Invariant: data on the hot path stays on
+the device until a certificate is emitted.
+
+\subsection{Consensus (\Quasar{} 4.0, LP-020 + LP-135)}
+
+\Quasar{} 4.0 ships triple-consensus:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{\BLS{}12-381} --- 48-byte aggregate signature, classical
+        fast path. Pairing check and miller-loop kernels run on \GPU{}.
+  \item \textbf{\Ringtail{} (Ring-LWE)} --- post-quantum threshold proof.
+        \GPU{}-resident polynomial multiplication (NTT) for signature
+        share aggregation.
+  \item \textbf{\MLDSA{}-65} (FIPS 204) --- post-quantum identity proof
+        ($\sim$3.3 KB). Hash-and-sample, polynomial arithmetic, and
+        rejection sampling all on-device.
+\end{itemize}
+
+Each layer is independently toggleable via \texttt{TripleSignRound1}; the
+default 4.0 mode runs all three in parallel and emits a \Quasar{}Cert
+that carries all three proofs. Photon (committee selection), Wave
+(threshold voting), and Focus (confidence accumulation) execute as
+device-side logic per LP-105.
+
+\subsection{\textsc{evm} execution (LP-009)}
+
+The \Zoo{} 4.0 \textsc{evm} is a fiber \textsc{vm}:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Each transaction maps to a \GPU{} fiber.
+  \item U256 arithmetic uses 4$\times$64 limb representation in registers
+        with carry-chain primitives.
+  \item Cold-state \texttt{SLOAD} suspends the fiber and yields the warp
+        slot to a runnable peer; the storage-fetch coalescer batches
+        outstanding loads into a single device-side trie traversal.
+  \item Block-STM-style optimistic concurrency
+        \cite{zoo-per-llm-chains} (cf.~\textsc{lp-010}) provides parallel
+        execution with deterministic re-execution on conflict.
+\end{itemize}
+
+\subsection{AI mining}
+
+The \Zoo{} AI mining loop binds compute to receipts:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item A miner runs Zen inference inside a TEE-attested container
+        (NVIDIA H100 confidential compute, AMD SEV-SNP, Intel TDX).
+  \item The TEE quote plus an inference digest is submitted to the \Lux{}
+        A-Chain (AIVM, \textsc{lp-134}); the A-Chain anchors the receipt.
+  \item \Zoo{} reads the A-Chain receipt and attributes the inference
+        to the appropriate per-\LLM{} chain (\cite{zoo-per-llm-chains}),
+        updating the contributor attribution graph.
+  \item Rewards are paid in \$AI to the miner and routed through the
+        per-\LLM{} chain's distribution policy to upstream contributors
+        (training-data, fine-tuners, evaluators).
+\end{enumerate}
+
+The hot path of this loop --- attestation verification, signature
+aggregation, attribution graph update --- runs as \GPU{} kernels.
+
+\subsection{\DEX{} matching}
+
+\Zoo{}'s \DEX{} (see \S\ref{sec:zoo-dex}) implements \AMM{} V2/V3 natively
+on the chain and exposes V4 as a precompile bridge to the \Lux{} \DEX{}
+\cite{lux-dex}. \AMM{} curve math, fee calculations, tick crossings, and
+order matching execute on the \GPU{}. The constant-product invariant for
+V2 and the concentrated-liquidity tick math for V3 are simple enough that
+a single warp can step thousands of swaps per microsecond at validator
+hardware budgets.
+
+\subsection{F-Chain \FHE{} (LP-013)}
+
+When a \Zoo{} contract dispatches to the F-Chain \FHE{} precompile,
+the ciphertext arithmetic (TFHE bootstrapping, key-switching, gadget
+products) runs on the F-Chain validator's \GPU{}. Confidential ERC-20
+operations (\textsc{lp-067}) --- transfer, balance check, allowance
+update --- are device-side ciphertext circuits.
+
+\subsection{Z-Chain \ZKP{} (LP-063)}
+
+Verification of Groth16, Halo2, and Plonky2 proofs runs as \GPU{}
+kernels on the Z-Chain validator. \Zoo{} dispatches verification
+requests via precompile; the Z-Chain returns a verification receipt
+that the calling \Zoo{} contract treats as a boolean.
+
+\subsection{The discipline}
+
+The common pattern across all of the above: data lands on the \GPU{}
+when a transaction enters the mempool, executes its lifecycle on
+the device (verify, run, prove, log), and only leaves the device
+when a certificate is committed to disk or sent over the wire.
+The CPU becomes the orchestration layer; the \GPU{} is where the
+ledger lives during the block.

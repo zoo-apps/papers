@@ -1,0 +1,67 @@
+\section{The 4.0 Thesis}
+\label{sec:thesis}
+
+\Zoo{} 4.0 is 100\% \GPU{}-powered. The fastest blockchain plus consensus plus
+\textsc{evm} ever shipped. Pure C++ and \GPU{} kernels for all hot-path
+cryptography. No interpreter glue on the critical path. No CPU fallbacks
+gating throughput. No hybrid scheduler that pretends.
+
+\subsection{What ``\GPU{}-native'' actually means}
+
+In the \Zoo{} 4.0 stack, every primitive whose latency matters at validator
+scale lives on the \GPU{} device for the duration of a block. Concretely:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Triple-consensus signature verification (\BLS{}12-381 aggregate +
+        \Ringtail{} threshold + \MLDSA{}-65 identity) runs as fused
+        \GPU{} kernels per the \QuasarGPU{} adapter (\textsc{lp-132}).
+  \item The \textsc{evm} bytecode interpreter executes as a fiber
+        \textsc{vm} with 256-bit \texttt{U256} arithmetic implemented as
+        device-resident SIMD (\textsc{lp-009}).
+  \item Cold-state \texttt{SLOAD} suspends the fiber rather than blocking the
+        warp, so a single warp finishes a block of mixed-cost transactions
+        without serial stalls (\textsc{lp-009}).
+  \item The \GPU{}-Residency Invariant (\textsc{lp-137}) forbids spurious
+        host round-trips: state, witnesses, and proofs stay on-device until
+        the \Quasar{}Cert is emitted.
+\end{itemize}
+
+\subsection{Why this is a category step, not a tuning pass}
+
+Block production is a pipeline of $O(n)$ verification + $O(n \log n)$
+ordering + $O(n)$ execution + $O(1)$ certificate generation, where $n$ is
+the transaction count. Optimizing any single stage on CPU eventually hits
+the memory wall or the per-core ceiling. \Zoo{} 4.0 takes the entire
+pipeline to a SIMT machine where verification, execution, and proof
+emission share device memory. The result is not a constant-factor
+improvement; it is a different point on the latency-versus-throughput
+curve, anchored by three specs:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{LP-132 (\QuasarGPU{} adapter)} --- deterministic kernel
+        scheduling that makes \GPU{} execution reproducible across
+        validators with the same hardware class.
+  \item \textbf{LP-009 (\GPU{}-native \textsc{evm})} --- fiber \textsc{vm}
+        for bytecode, U256 arithmetic, suspend-on-cold-state semantics.
+  \item \textbf{LP-137 (\GPU{}-Residency Invariant)} --- the negative
+        constraint: no host bounce on the hot path.
+\end{enumerate}
+
+\subsection{What \Zoo{} 4.0 is not}
+
+\Zoo{} 4.0 is not a marketing rename. It is not an upgrade only to consensus
+or only to the \textsc{evm}. It is the substrate change. Every component
+documented in this paper --- \DEX{} matching, \FHE{} compute, \ZKP{}
+verification, AI inference attestation, bridge message verification, and
+wallet-side transaction signing --- runs on the new substrate.
+
+\subsection{Why now}
+
+The Zen model family ships frontier-tier weights at every scale from
+\texttt{zen4-nano} (0.8B) through \texttt{zen4-ultra-max} (1T+). Modern
+data-center \GPU{}s ship with confidential compute and FP4/FP8 tensor
+cores. \Quasar{} 4.0 ships with triple-consensus support, certificate
+parallelism. Together, these pieces close the loop: a chain that mints,
+trades, attests, and pays for AI compute on the same device class that
+runs the AI compute. \Zoo{} 4.0 is the first chain to take that loop
+seriously.

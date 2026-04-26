@@ -1,0 +1,89 @@
+\section{Activation}
+\label{sec:activation}
+
+\Zoo{} 4.0 activates on February 14, 2026, alongside \Lux{}
+\Quasar{} 4.0 (\textsc{lp-020} + \textsc{lp-135}) and the per-\LLM{}
+chain framework \cite{zoo-per-llm-chains}.
+
+\subsection{Phase 0 --- spec freeze (2026-01-15)}
+
+This paper, the \Zoo{} \DEX{} ZIP, the \Zoo{} L1 graduation ZIP, the
+\Zoo{} AI Desktop ZIP, the \texttt{zoo-bot} ZIP, and the \Zoo{} Bridge
+ZIP all freeze on 2026-01-15. After this date, only spec-clarification
+PRs are accepted; behaviour-changing PRs slip to 4.1.
+
+\subsection{Phase 1 --- testnet bring-up (2026-01-15 through 2026-02-07)}
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Zoo L1 testnet validators come online with \Quasar{} 4.0
+        binaries.
+  \item \Zoo{} \DEX{} V2 and V3 deploy on testnet; V4 precompile
+        target dummied to a mock \Lux{} \DEX{} for parallel testing.
+  \item \Zoo{} Bridge committee runs threshold ceremonies on M-Chain
+        testnet and validates BSC migration adapter end-to-end.
+  \item \Zoo{} AI Desktop release candidate ships to internal testers;
+        Zoo Cloud routing exercised via A-Chain testnet.
+  \item \texttt{zoo-bot} alpha ships to ecosystem partners.
+\end{itemize}
+
+\subsection{Phase 2 --- canary (2026-02-07 through 2026-02-13)}
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Zoo L1 canary mainnet brought up with a subset of validators.
+  \item Bridge enabled inbound only (foreign $\rightarrow$ Zoo L1) for
+        legacy 2021 BSC migrants.
+  \item \Zoo{} \DEX{} pools seeded with foundation liquidity for major
+        pairs.
+  \item \Lux{} Wallet 4.0 release candidate accepts \Zoo{} L1 as a
+        chain target.
+\end{itemize}
+
+\subsection{Phase 3 --- activation (2026-02-14)}
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Zoo L1 mainnet open to all validators.
+  \item \Zoo{} \DEX{} V2 / V3 / V4 production-active.
+  \item \Zoo{} Bridge bidirectional on all listed chains.
+  \item \Zoo{} AI Desktop GA.
+  \item \texttt{zoo-bot} 1.0 GA.
+  \item \Lux{} Wallet 4.0 GA with \Zoo{} L1 enabled by default.
+  \item \NFT{} migration program opens; first cohort of partner
+        collections announced.
+\end{itemize}
+
+\subsection{Phase 4 --- post-activation roll-forward}
+
+\Zoo{} 4.x continues to ship features incrementally without breaking
+the spec freeze in this paper. The next planned milestone is the
+\Zoo{} \DEX{} native securities launch on April 20, 2026, with
+\Liquidity{} Protocol integration \cite{zoo-dex-launch}, at which
+point \Zoo{} 4.0 picks up tokenised securities trading, native
+fixed income, and tokenised derivatives without a chain-level fork.
+
+\subsection{Cross-paper relationships}
+
+This paper is the activation document for \Zoo{} 4.0. It cross-references:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Per-\LLM{} chains \cite{zoo-per-llm-chains} --- the upstream
+        training, research, and pooled-\GPU{} layer.
+  \item Hanzo AI Chain \cite{hanzo-ai-chain} --- the inference
+        marketplace and HMM that \Zoo{} dispatches into.
+  \item Zoo 2025 securities and \DAO{} \cite{zoo-2025-securities-and-dao}
+        --- the digital-securities positioning and holographic-consensus
+        \DAO{} mechanics.
+  \item Zoo 3.0 \cite{zoo-3-0} --- the full post-quantum stack epoch
+        that this release graduates from.
+  \item Zoo 2.0 \cite{zoo-2-0} --- the L2 \textsc{evm} re-launch on
+        \Lux{} that preceded the L1 graduation.
+  \item Zoo \DEX{} launch \cite{zoo-dex-launch} --- the post-activation
+        native securities trading layer.
+\end{itemize}
+
+\subsection{One-line summary}
+
+\Zoo{} 4.0 is what happens when you take the fastest blockchain ever
+shipped, put the entire hot path on the \GPU{}, and graduate the
+result to a sovereign L1 that ships with native private AI, native
+\AMM{}, native bridge, native confidential compute, and a wallet
+that exposes all of it. February 14, 2026.

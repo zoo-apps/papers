@@ -1,0 +1,78 @@
+\section{\Zoo{} AI Desktop and Local Private AI}
+\label{sec:ai-desktop}
+
+\Zoo{} 4.0 ships a desktop application --- the \Zoo{} AI Desktop --- that
+runs the \Zen{} model family locally on the user's machine. The
+application is the user-facing entry point to Zoo's privacy-first AI
+posture: weights live on the device; queries do not leave the device
+unless the user opts in.
+
+\subsection{Form factor}
+
+The \Zoo{} AI Desktop is a Tauri 2 application (Rust backend, React
+frontend) that auto-spawns the \texttt{zoo-node} runtime on launch. The
+local node hosts:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Inference runtimes: \texttt{llama.cpp}, \texttt{vLLM}, and
+        \texttt{ollama} backends, selected by hardware capability.
+  \item Model registry: the local copy of the \Zen{} family
+        (\texttt{zen4-nano} through \texttt{zen4-ultra-max}), gated by
+        device VRAM.
+  \item Wallet integration: \$AI mining rewards accrue to the
+        device's local wallet.
+  \item MCP server: agents in the desktop expose \Hanzo{} MCP tools for
+        local-first task automation.
+\end{itemize}
+
+\subsection{Free local inference}
+
+A user with a recent consumer \GPU{} can run \texttt{zen4-nano},
+\texttt{zen4-mini}, or \texttt{zen4-small} fully locally with no
+network egress. Inference is free at the marginal cost of electricity.
+The user's queries do not enter any logging surface, do not enter any
+cloud telemetry pipeline, and do not enter any third-party datastore.
+
+\subsection{Zoo Cloud upgrade path}
+
+Users running larger models (\texttt{zen4-large}, \texttt{zen4-ultra},
+\texttt{zen4-ultra-max}) that exceed local VRAM can opt into Zoo Cloud,
+which dispatches to the federated capacity layer documented in
+\cite{zoo-per-llm-chains} (\S Pooled \GPU{} Hosting). Zoo Cloud is
+opt-in, pay-per-token, and TEE-attested: the cloud worker runs in an
+H100 / TDX / SEV-SNP container, the inference receipt is anchored to
+A-Chain, and the user can verify post-hoc that the response came from
+the model the user paid for.
+
+\subsection{Privacy posture}
+
+The default privacy posture is local-only:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item No cloud calls without explicit user opt-in.
+  \item No telemetry without explicit user opt-in.
+  \item Wallet signing happens locally; the signing key never leaves
+        the device.
+  \item Conversation history is stored encrypted in a local SQLite
+        database (per Zoo Web5 / local-first architecture).
+\end{itemize}
+
+When the user opts into Zoo Cloud, the inference request is routed via
+\Lux{} F-Chain \FHE{} (\S\ref{sec:privacy}) when confidential mode is
+selected, so the cloud worker never sees the plaintext query.
+
+\subsection{Mining UX}
+
+The desktop's wallet pane shows live \$AI accrual from compute the
+device contributes to the Hanzo network. A typical desktop with a
+recent gaming \GPU{} can earn approximately one \$AI per minute under
+default mining settings; rates depend on market demand for the
+device's compute class.
+
+\subsection{Why this matters for \Zoo{} 4.0}
+
+The \Zoo{} 4.0 narrative is \GPU{}-native everywhere. The desktop app
+is the user-side endpoint of that narrative: the same \GPU{}
+architecture that runs validator-side consensus runs user-side
+inference. \Zoo{} is the chain whose user runtime and validator
+runtime share a substrate.

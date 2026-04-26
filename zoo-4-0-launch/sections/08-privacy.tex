@@ -1,0 +1,101 @@
+\section{Privacy}
+\label{sec:privacy}
+
+\Zoo{} 4.0 supports two complementary privacy paths via \Lux{}
+chain topology (\textsc{lp-134}): \FHE{} via F-Chain
+(\textsc{lp-013}) for confidential compute on encrypted data, and
+\ZKP{} via Z-Chain (\textsc{lp-063}) for selective disclosure of
+private facts. They are not alternatives; they solve different
+problems.
+
+\subsection{F-Chain \FHE{} (LP-013)}
+
+F-Chain (FVM) is a fully-homomorphic encryption execution
+environment. Contracts on F-Chain operate on ciphertexts: the chain
+never sees the plaintext, and yet the result of a computation is
+verifiable on-chain.
+
+\paragraph{Confidential ERC-20 (LP-067).}
+The Confidential ERC-20 standard runs balances and allowances as
+ciphertexts. A confidential transfer ciphertext-decrypts the source
+balance, ciphertext-subtracts the amount, ciphertext-adds to the
+destination, and ciphertext-encrypts the new balances. Validators
+verify the operation without ever seeing a plaintext balance. Useful
+for:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Confidential trading of high-value collectibles where price
+        movements should not be public until settlement.
+  \item Per-\LLM{} token holdings that the holder wants to keep
+        private for governance reasons.
+  \item Treasury balances that the \DAO{} holds confidentially until
+        formal disclosure.
+\end{itemize}
+
+\paragraph{Private inference.}
+A user submits an encrypted prompt to F-Chain; an \FHE{}-aware Zen
+inference worker performs the forward pass on the ciphertext; the
+encrypted output is returned to the user, who decrypts locally. The
+worker never sees the plaintext prompt or the plaintext output. This
+is the canonical pattern for confidential AI in regulated workflows
+(healthcare, securities research, internal counsel).
+
+\paragraph{When to use F-Chain.}
+\FHE{} is the right primitive when the property to protect is the
+\emph{data}, the computation is non-trivial, and verifiers need
+correctness without seeing the data. \FHE{} costs more than \ZKP{}
+per operation but supports arbitrary functions on the encrypted
+data.
+
+\subsection{Z-Chain \ZKP{} (LP-063)}
+
+Z-Chain (ZVM) is a zero-knowledge proof execution and registry
+environment. Z-Chain runs a Groth16 / Halo2 / Plonky2 verifier as a
+\GPU{} kernel and hosts a circuit registry. Contracts on \Zoo{} L1
+dispatch verification jobs to Z-Chain via precompile.
+
+\paragraph{Selective disclosure.}
+A user proves ``I am over 18'' or ``I hold $\geq 1{,}000$ \$ZOO''
+without revealing date of birth or actual balance. Identity
+assertions live on A-Chain (AIVM, \textsc{lp-134}); proofs about
+those assertions live on Z-Chain.
+
+\paragraph{Rollup of identity assertions.}
+For high-volume assertion flows --- e.g., per-block KYC checks for a
+regulated trading venue --- Z-Chain rolls up batches of proofs
+into a single Groth16 verification, amortising verification cost.
+
+\paragraph{When to use Z-Chain.}
+\ZKP{} is the right primitive when the property to protect is a
+\emph{predicate over data}, the predicate is bounded (compileable
+to a circuit), and verifiers need a yes/no answer with cryptographic
+backing. \ZKP{} verification is much cheaper than \FHE{} computation
+per operation but requires you to know the predicate in advance.
+
+\subsection{Choosing between them}
+
+\begin{longtable}{p{0.30\textwidth}p{0.30\textwidth}p{0.34\textwidth}}
+\toprule
+\textbf{Question} & \textbf{F-Chain (\FHE{})} & \textbf{Z-Chain (\ZKP{})} \\
+\midrule
+Hide values? & yes (whole computation) & no (only the witness) \\
+Hide identity? & via key management & yes (predicate over identity) \\
+Arbitrary compute? & yes & no (must be a circuit) \\
+Per-op cost & high & low to moderate \\
+Setup cost & key generation & circuit compile + trusted setup (Groth16) \\
+\bottomrule
+\end{longtable}
+
+The \Zoo{} 4.0 wallet (\S\ref{sec:wallet-desktop}) exposes a privacy
+mode toggle that picks the right chain for the user's intent: ``hide
+this transfer'' routes to F-Chain Confidential ERC-20; ``prove
+eligibility'' routes to Z-Chain selective disclosure.
+
+\subsection{\GPU{}-native privacy}
+
+Both privacy paths are \GPU{}-native end-to-end. F-Chain's TFHE
+bootstrapping runs on the \GPU{} per LP-013. Z-Chain's Groth16
+verification (and the prover for circuits compiled in advance) runs
+on the \GPU{}. The privacy primitives in \Zoo{} 4.0 are not bolted on
+at the application layer; they execute on the same substrate as the
+rest of the chain.
