@@ -1,0 +1,116 @@
+\section{Triple-Cert Adoption}
+\label{sec:triple-cert}
+
+\Zoo{} 3.0 inherits the \Lux{} \Quasar{} 3.0 triple-cert lane defined
+by LP-020 \cite{lp-020}, with each cert layer specified in its own LP:
+LP-075 for $\BLS{}_{12\text{-}381}$ \cite{lp-075}, LP-073 for
+\Corona{} \cite{lp-073}, LP-070 for $\MLDSA{}\text{-}65$
+\cite{lp-070}.
+
+\subsection{The three lanes}
+
+A \Quasar{} 3.0 cert is the conjunction of three independent proofs:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{$\BLS{}_{12\text{-}381}$ aggregate (LP-075).}
+        Classical fast-path proof. 48 bytes. Pairing-based.
+        Falsifies under a CRQC; remains useful as the low-latency
+        check that gates pre-final block propagation.
+  \item \textbf{\Corona{} threshold (LP-073).}
+        Post-quantum threshold proof built on Ring-LWE. Threshold
+        $t$-of-$n$ aggregation across the validator set. Approximately
+        2.0--2.4 KB depending on threshold and committee size.
+  \item \textbf{$\MLDSA{}\text{-}65$ identity (LP-070).}
+        Per-validator post-quantum identity proof, FIPS 204 conforming.
+        Approximately 3.3 KB. Establishes which validator authorised
+        a given cert layer.
+\end{enumerate}
+
+The triple-cert is the conjunction of all three. A block with only
+$\BLS{}$ is invalid in 3.0 even if a majority of stake signed it
+classically.
+
+\subsection{Why triple, not double}
+
+A double cert (classical + one PQ) leaves a single-point failure on
+the post-quantum side. If the chosen lattice scheme has a structural
+flaw that downgrades its security, the chain has no second PQ proof
+to fall back on. \Quasar{} 3.0's design intent is to require two
+independent PQ assumptions: \Corona{} relies on Ring-LWE hardness;
+$\MLDSA{}$ relies on the hardness of M-LWE and M-SIS. A simultaneous
+break of both --- on different lattice problems with different
+parameter regimes --- is materially less likely than either
+individually. The classical $\BLS{}$ layer remains for fast-path
+liveness while the chain is healthy, and as a defence-in-depth
+witness while a CRQC is plausible but not yet operational.
+
+\subsection{What 3.0 inherits unchanged}
+
+\Zoo{} 3.0 does not modify \Quasar{} 3.0 itself; \Zoo{} consumes it
+as a chain-level service. The pieces \Zoo{} inherits from LP-020:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{TripleSignRound1.} The kernel that orchestrates parallel
+        execution of the three cert lanes within a single round.
+  \item \textbf{Photon committee selection (LP-105).} VRF-driven
+        selection of the round's committee, deterministic given
+        the previous \Quasar{}Cert.
+  \item \textbf{Wave threshold voting (LP-105).} Threshold accumulation
+        of signatures inside each lane.
+  \item \textbf{Focus confidence accumulation (LP-105).} The check that
+        all three lanes have crossed their respective thresholds before
+        the cert is finalised.
+\end{itemize}
+
+\subsection{Where Zoo plugs in}
+
+Zoo's L2 chain settles state commitments to the L1 \Quasar{}Cert. In
+3.0, those commitments are themselves signed under the triple-cert
+discipline, so a \Zoo{} block is final when:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item the \Zoo{} sequencer signs the block with $\BLS{}$, and
+  \item the \Zoo{} sequencer submits the block hash to \Lux{}
+        \Quasar{} 3.0 for inclusion, and
+  \item a quorum of \Lux{} validators emit a \Quasar{}Cert that
+        anchors the \Zoo{} block.
+\end{enumerate}
+
+The L2 inherits the L1's PQ guarantees through the cert. Pre-3.0,
+\Zoo{} L2 also signed the inclusion proof with classical-only
+multisig at the operator boundary; 3.0 adds the requirement that
+the operator multisig be threshold $\MLDSA{}\text{-}65$ rather than
+ECDSA.
+
+\subsection{Verifier interface}
+
+A \Zoo{} 3.0 light client must verify three proofs per epoch:
+
+\begin{lstlisting}[language=C++,caption={Triple-cert verifier sketch}]
+struct QuasarCert3 {
+    bls::Aggregate           bls_proof;       // 48 bytes
+    corona::ThresholdSig   corona_proof; // ~2.0-2.4 KB
+    mldsa::Aggregate         mldsa_proof;    // ~3.3 KB * t
+    Hash                     block_root;
+};
+
+bool verify_3_0(const QuasarCert3& c, const ValidatorSet& vs) {
+    if (!bls_verify(c.bls_proof, c.block_root, vs))      return false;
+    if (!corona_verify(c.corona_proof, c.block_root, vs)) return false;
+    if (!mldsa_verify(c.mldsa_proof, c.block_root, vs))  return false;
+    return true;
+}
+\end{lstlisting}
+
+A failure on any lane fails the cert. There is no ``best of'' fallback.
+
+\subsection{Performance budget}
+
+The dominant cost in cert verification under 3.0 is the
+$\MLDSA{}\text{-}65$ aggregate, because it scales linearly in the
+number of distinct signers in the threshold whereas $\BLS{}$ aggregates
+to a single 48-byte object. Empirically, on the \Lux{} validator
+hardware class targeted for 3.0, the verifier closes at well below
+the per-block latency budget (\cite{lp-105}, \cite{lp-020}). \Zoo{}'s
+client side picks up the cost as a one-time verification per finalised
+\Lux{} epoch; per-transaction cost is unchanged.

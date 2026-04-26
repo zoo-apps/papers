@@ -1,0 +1,83 @@
+\section{\Zoo{} \DEX{}}
+\label{sec:zoo-dex}
+
+\Zoo{} ships a native \AMM{} \DEX{}. The design is intentionally
+Uniswap-shaped at the surface so existing tooling, audits, and pool
+analytics translate directly. Underneath, the curve evaluation runs on
+the \GPU{} per \S\ref{sec:gpu-native}.
+
+\subsection{V2 --- constant product}
+
+V2 implements the canonical $x \cdot y = k$ \AMM{}. Pools are pairs of
+ZRC-20 tokens; LP shares are minted as ZRC-20 receipt tokens. Fees default
+to 30 bps with per-pool override. A V2 swap on \Zoo{} 3.0 costs roughly
+the same gas as a Uniswap V2 swap on a CPU \textsc{evm}, but block-level
+throughput is materially higher because hundreds of swaps execute in
+parallel on the device.
+
+\subsection{V3 --- concentrated liquidity}
+
+V3 implements concentrated liquidity in the Uniswap V3 style
+\cite{uniswap-v3}: liquidity providers position capital in price ranges
+defined by tick boundaries. Tick crossings, fee accumulation, and
+range-position accounting are device-side. Multi-fee-tier pools
+(5 / 30 / 100 bps) coexist for the same pair.
+
+\subsection{V4 --- \Lux{} \DEX{} precompile}
+
+V4 is not a separate \AMM{}. V4 is a precompile interface that lets
+\Zoo{} contracts route swaps to the \Lux{} \DEX{} \cite{lux-dex},
+which lives at \texttt{\textasciitilde/work/lx/dex}. The \Lux{} \DEX{}
+is the cross-chain liquidity router and the canonical venue for
+\Lux{}-ecosystem CLOB-style matching; \Zoo{} V4 plugs into it via
+B-Chain (\textsc{lp-134}) routed precompile calls. Use V4 when:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Routing across chains where the deepest book lives on \Lux{}.
+  \item Matching against external order flow that the \Lux{} \DEX{}
+        already aggregates.
+  \item Serving institutional flow that expects CLOB semantics.
+\end{itemize}
+
+Use V2/V3 when:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Trading \Zoo{}-native assets (per-\LLM{} tokens, wildlife \NFT{}
+        fractional pools, \DAO{} governance pools).
+  \item Latency budget is sub-block; staying chain-local avoids the
+        B-Chain hop.
+  \item LP yield must be programmable per pool by Zoo \DAO{} policy.
+\end{itemize}
+
+\subsection{Optional local Zoo \DEX{} precompile}
+
+For \Zoo{}-internal use cases that want CLOB semantics without the
+B-Chain hop, \Zoo{} ships an optional in-chain \DEX{} precompile that
+implements the same matching primitives as the \Lux{} \DEX{} but
+against \Zoo{}-local order books. The precompile shares its kernel
+implementation with \Lux{} \DEX{} so behaviour is identical; only
+the venue and gas accounting differ.
+
+\subsection{Per-\LLM{} token markets}
+
+The per-\LLM{} chain framework \cite{zoo-per-llm-chains} mints a
+distinct gas/utility token per \Zen{} model. These tokens trade against
+\$ZOO and against each other on \Zoo{} \DEX{} V2/V3. Inference revenue
+flowing through the per-\LLM{} chain attribution graph settles into
+the relevant V3 pool, providing a price discovery mechanism for model
+quality.
+
+\subsection{\NFT{} fractional pools}
+
+\NFT{}s migrated to \Zoo{} L1 (\S\ref{sec:nft-strategy}) can be wrapped
+into ERC-4626 vault shares and traded as concentrated-liquidity V3
+positions. Combined with F-Chain \FHE{} (\S\ref{sec:privacy}), the
+fractional positions can trade with confidential balances --- material
+for high-value collections.
+
+\subsection{Versioning policy}
+
+\Zoo{} \DEX{} V2 and V3 are stable. V4 is the precompile interface and
+will track the \Lux{} \DEX{} interface contract; breaking changes to
+\Lux{} \DEX{} require a corresponding \Zoo{} \DEX{} V4 revision. There
+is no separate ``Zoo V4 \AMM{}''; V4 is the precompile, full stop.

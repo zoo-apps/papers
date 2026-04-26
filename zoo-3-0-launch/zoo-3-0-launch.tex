@@ -1,0 +1,200 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes,arrows,positioning,calc,decorations.pathreplacing}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{longtable}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{definition}{Definition}[section]
+
+% Custom commands (match per-LLM chains style)
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\Zen}{\textsc{Zen}}
+\newcommand{\Quasar}{\textsc{Quasar}}
+\newcommand{\QuasarGPU}{\textsc{Quasar}\textsc{gpu}}
+\newcommand{\Liquidity}{\textsc{Liquidity}}
+\newcommand{\PoAI}{\textsc{PoAI}}
+\newcommand{\TEE}{\textsc{tee}}
+\newcommand{\LLM}{\textsc{llm}}
+\newcommand{\GPU}{\textsc{gpu}}
+\newcommand{\DAO}{\textsc{dao}}
+\newcommand{\AMM}{\textsc{amm}}
+\newcommand{\DEX}{\textsc{dex}}
+\newcommand{\NFT}{\textsc{nft}}
+\newcommand{\FHE}{\textsc{fhe}}
+\newcommand{\ZKP}{\textsc{zkp}}
+\newcommand{\BLS}{\textsc{bls}}
+\newcommand{\MLDSA}{\textsc{ml-dsa}}
+\newcommand{\Corona}{\textsc{Corona}}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    tabsize=2,
+    captionpos=b,
+}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\title{\textbf{Zoo 3.0}\\
+\large \GPU{}-Native L1: Fastest Blockchain Ever Created}
+
+\author{
+Antje Worring, Zach Kelling\thanks{research@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{December 15, 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+\Zoo{} 3.0 is the \GPU{}-native graduation of the \Zoo{} stack. Every hot-path primitive --- consensus signature aggregation, \BLS{}12-381 verification, \Corona{} threshold proofs, \MLDSA{}-65 identity proofs, \textsc{evm} bytecode execution, \AMM{} curve math, \FHE{} ciphertext arithmetic, and Groth16/Halo2 \ZKP{} verification --- runs as deterministic \GPU{} kernels in pure C++ via the \QuasarGPU{} adapter (\textsc{lp-132}) under the \GPU{}-Residency Invariant (\textsc{lp-137}). With this release, \Zoo{} graduates from a \Lux{} L2 application to a sovereign \Lux{} L1 with its own validator set, \Quasar{}-certified consensus, and independent economic security, while continuing to settle and bridge to the broader \Lux{} chain topology (\textsc{lp-134}). This paper documents the 3.0 architecture: the L1 graduation, the \GPU{}-native execution stack, the \Zoo{} \DEX{} (native \AMM{} V2/V3, V4 as a precompile to the \Lux{} \DEX{}), the \Zoo{} AI Desktop application hosting the \Zen{} model family for free local private inference, the \texttt{zoo-bot} pure-Go re-write of the \Hanzo{} OpenClaw bot, the \Zoo{} Bridge multi-ecosystem connector, dual-path privacy via F-Chain \FHE{} (\textsc{lp-013}) and Z-Chain \ZKP{} (\textsc{lp-063}), and the \NFT{} migration program. Spec freeze: 2025-12-15. Activation alongside \Lux{} \Quasar{} 3.0: 2025-12-25.
+
+\textbf{Keywords}: \Zoo{} 3.0, \GPU{}-native, L1 graduation, \Quasar{} 3.0, \Zoo{} \DEX{}, \Zoo{} AI Desktop, \texttt{zoo-bot}, \Zoo{} Bridge, \FHE{}, \ZKP{}, \NFT{} migration
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\input{sections/01-thesis}
+\input{sections/02-l1-graduation}
+\input{sections/03-gpu-native}
+\input{sections/04-zoo-dex}
+\input{sections/05-ai-desktop}
+\input{sections/06-zoo-bot}
+\input{sections/07-zoo-bridge}
+\input{sections/08-privacy}
+\input{sections/09-nft-strategy}
+\input{sections/10-wallet-desktop}
+\input{sections/11-activation}
+
+\begin{thebibliography}{99}
+
+\bibitem{lp-009}
+Lux Foundation.
+\newblock LP-009: \GPU{}-Native \textsc{evm}.
+\newblock Lux Improvement Proposal, December 2025.
+\newblock \url{https://github.com/luxfi/lps/lp-009}.
+
+\bibitem{lp-013}
+Lux Foundation.
+\newblock LP-013: F-Chain \FHE{}-Protected Inference.
+\newblock Lux Improvement Proposal, December 2025.
+
+\bibitem{lp-020}
+Lux Foundation.
+\newblock LP-020: \Quasar{} Consensus 3.0 (Triple Consensus: \BLS{} + \Corona{} + \MLDSA{}).
+\newblock Lux Improvement Proposal, December 2025.
+
+\bibitem{lp-063}
+Lux Foundation.
+\newblock LP-063: Z-Chain Zero-Knowledge Rollup and \ZKP{} Registry.
+\newblock Lux Improvement Proposal, December 2025.
+
+\bibitem{lp-067}
+Lux Foundation.
+\newblock LP-067: Confidential ERC-20 on F-Chain.
+\newblock Lux Improvement Proposal, December 2025.
+
+\bibitem{lp-105}
+Lux Foundation.
+\newblock LP-105: \Quasar{} Consensus Family Specification (Photon, Wave, Focus, Nova, Nebula).
+\newblock Lux Improvement Proposal, December 2025.
+
+\bibitem{lp-132}
+Lux Foundation.
+\newblock LP-132: \QuasarGPU{} Execution Adapter for Deterministic \GPU{} Scheduling.
+\newblock Lux Improvement Proposal, December 2025.
+
+\bibitem{lp-133}
+Lux Foundation.
+\newblock LP-133: \Quasar{}-Native App Stack for Sovereign Appchains.
+\newblock Lux Improvement Proposal, December 2025.
+
+\bibitem{lp-134}
+Lux Foundation.
+\newblock LP-134: \Lux{} Chain Topology (P/C/X/Q/Z/A/B/M/F-Chains).
+\newblock Lux Improvement Proposal, December 2025.
+
+\bibitem{lp-137}
+Lux Foundation.
+\newblock LP-137: \GPU{}-Residency Invariant.
+\newblock Lux Improvement Proposal, December 2025.
+
+\bibitem{hanzo-ai-chain}
+Hanzo AI.
+\newblock The \Hanzo{} AI Chain: Inference Marketplace and Commerce Layer.
+\newblock Hanzo Whitepaper, December 2025.
+
+\bibitem{zoo-per-llm-chains}
+Zoo Labs Foundation.
+\newblock Per-\LLM{} Chains: One Sovereign Chain per Model on \Quasar{} 3.0.
+\newblock Zoo Whitepaper, December 15, 2025.
+
+\bibitem{zoo-2025-securities-and-dao}
+Zoo Labs Foundation.
+\newblock Zoo 2025: Digital Securities, Quantum-Secure Settlement, and the Holographic Consensus DAO.
+\newblock Zoo Whitepaper, December 15, 2025.
+
+\bibitem{zoo-dex}
+Zoo Labs Foundation.
+\newblock \Zoo{} \DEX{}: \AMM{} V2/V3 Native, V4 Precompile.
+\newblock Zoo Whitepaper, December 2025.
+
+\bibitem{lux-dex}
+Lux Network.
+\newblock \Lux{} \DEX{} Specification.
+\newblock \url{https://github.com/luxfi/dex}, December 2025.
+
+\bibitem{zen-models}
+Zen LM.
+\newblock The \Zen{} Model Family: Open-Weight Frontier Models.
+\newblock \url{https://huggingface.co/zenlm}, December 2025.
+
+\bibitem{uniswap-v3}
+Adams, H., et al.
+\newblock Uniswap v3 Core.
+\newblock Uniswap Whitepaper, March 2021.
+
+\bibitem{tee-attestation}
+Costan, V., Devadas, S.
+\newblock Intel SGX Explained.
+\newblock IACR Cryptology ePrint Archive, 2016.
+
+\end{thebibliography}
+
+\end{document}

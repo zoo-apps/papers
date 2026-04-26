@@ -1,0 +1,128 @@
+\section{zLLM Post-Quantum Commitments}
+\label{sec:zllm-pq}
+
+zLLM is \Zoo{}'s training-free experience-library adaptation system:
+a base model is frozen, and an experience library curated by the \DAO{}
+is injected at inference. The system needs commitments at three
+points: the experience-library state, the governance vote that
+admitted each experience, and the inference receipts that record
+which experiences were used.
+
+In 3.0 each of these three commitments uses post-quantum primitives.
+
+\subsection{Experience library commitment}
+
+The experience library is a Merkle accumulator over individual
+experience entries (a tuple of prompt context, expected behaviour,
+provenance, and metadata). Pre-3.0 the accumulator used SHA-256 over
+classical Merkle paths and was signed by the curating multisig with
+ECDSA. In 3.0:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Hash function: SHA3-256 (Keccak-f) for collision resistance under
+        Grover-bounded adversaries; the $128$-bit post-quantum security
+        target requires the underlying hash to provide $256$-bit
+        classical resistance.
+  \item Accumulator: a sparse Merkle tree (still classical structure;
+        PQ resistance comes from the hash and the signing key).
+  \item Signing key on the accumulator root: threshold
+        $\MLDSA{}\text{-}65$ over the curators set, $t$-of-$n$ where
+        $t \geq \lceil 2n/3 \rceil$.
+\end{itemize}
+
+The experience library commit transaction posts the new root and the
+threshold $\MLDSA{}$ signature. Verifiers re-derive the threshold
+public key from the on-chain curators set and check the signature.
+
+\subsection{Governance vote commitments}
+
+zLLM experience admission is a \DAO{} vote. Each ballot is a
+$\MLDSA{}\text{-}65$ signature over the experience hash, the voter's
+weight, and the vote direction. Tally is a deterministic Merkle root
+over the ballots, signed by the tally proposer with $\MLDSA{}$.
+Optional \FHE{} mode (per \cite{zoo-2025-securities-and-dao}) keeps
+ballot direction private until the tally is opened, but the public
+result is still authenticated by $\MLDSA{}$.
+
+A vote receipt for an admitted experience contains:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item The experience hash.
+  \item The governance proposal hash.
+  \item The tally Merkle root.
+  \item The \MLDSA{} signature on the tally root.
+  \item The block height of the tally on the L2.
+  \item The reference \Quasar{}Cert from \Lux{} L1.
+\end{enumerate}
+
+A verifier can reconstruct the entire admission chain from these
+six fields.
+
+\subsection{Inference receipts}
+
+When a zLLM inference uses the experience library, the inference
+receipt records which experiences were retrieved. The receipt schema
+in 3.0:
+
+\begin{lstlisting}[language=C++,caption={3.0 inference receipt schema}]
+struct InferenceReceipt3 {
+    Hash      base_model_id;          // pinned weights digest
+    Hash      experience_root;        // accumulator root at retrieval
+    Hash[]    experience_paths;       // Merkle paths for retrieved entries
+    Hash      prompt_digest;          // hash of input (or FHE handle)
+    Hash      output_digest;          // hash of output (or FHE handle)
+    TeeQuote  tee_quote;              // attestation of execution env
+    MlDsa::Sig signing_proof;          // worker's ML-DSA-65 signature
+    Hash      a_chain_anchor;         // commitment to A-Chain (LP-134)
+};
+\end{lstlisting}
+
+The receipt establishes:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item which model produced the output (\texttt{base\_model\_id}),
+  \item which experiences shaped it (\texttt{experience\_paths}),
+  \item that the execution happened inside a TEE-attested container
+        (\texttt{tee\_quote}),
+  \item that the worker authenticated under a post-quantum signing
+        key (\texttt{signing\_proof}),
+  \item that the receipt is anchored to A-Chain (LP-134) for
+        cross-chain verifiability.
+\end{itemize}
+
+\subsection{Attribution graph}
+
+zLLM rewards flow back to upstream contributors: experience curators,
+training-data donors, evaluators, and reviewers. The attribution
+graph is itself a series of commitments. In 3.0 every node in the
+attribution graph is signed with the contributor's $\MLDSA{}$ key,
+the edge between contributor and experience is a Merkle inclusion
+proof under the experience library root, and the disbursement
+transaction is a triple-cert-anchored \Lux{} L1 transaction
+\cite{lp-020}.
+
+This means a long-tail contributor whose data shaped a Zen model in
+2024 still receives correctly-attributed disbursements years later
+under post-quantum verification --- the historical record is not
+invalidated by Q-day.
+
+\subsection{Migration of pre-3.0 commitments}
+
+Experience-library entries created before 3.0 carry classical
+commitments. The migration plan:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Re-sign campaign.} Curators re-sign the legacy
+        accumulator root with the new threshold $\MLDSA{}\text{-}65$
+        key. The on-chain commitment now carries both the legacy
+        ECDSA and the new $\MLDSA{}$ signatures.
+  \item \textbf{Sunset window.} For 90 days post-3.0 spec freeze,
+        verifiers accept either signature.
+  \item \textbf{PQ-only enforcement.} After the sunset window,
+        only $\MLDSA{}$ signatures are accepted. Legacy ECDSA-only
+        commitments must be re-signed before that date or be
+        considered un-attestable.
+\end{enumerate}
+
+This is the same pattern adopted by the \DAO{} key migration
+(\S\ref{sec:dao-migration}).

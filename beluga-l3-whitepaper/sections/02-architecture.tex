@@ -21,7 +21,7 @@
 \subsection{Layer Responsibilities}
 
 \begin{description}[leftmargin=2cm, style=nextline]
-    \item[Lux (L0)] Provides the base consensus layer via Quasar \cite{lux-quasar}, a post-HotStuff BFT protocol achieving sub-second finality with $O(n)$ message complexity. All validator sets are anchored on the P-Chain. Warp messaging enables verified cross-chain communication between any two Lux chains.
+    \item[Lux (L0)] Provides the base consensus layer via Quasar 3.0 \cite{lux-quasar} (Lux LP-020), a post-HotStuff BFT protocol with post-quantum security and sub-second finality at $O(n)$ message complexity. All validator sets are anchored on the P-Chain. Warp messaging enables verified cross-chain communication between any two Lux chains. \Beluga{} settlement and \Zoo{} per-LLM chains \cite{zoo-per-llm-chains} share this base.
     \item[Zoo (L2)] A research-focused EVM chain (chain ID 200200) with ZOO as the native gas token. Zoo hosts the Agent NFT standard \cite{zoo-agent-nft}, the Experience Ledger \cite{zoo-experience-ledger}, and the \DSO{} adaptation framework \cite{zoo-dso}. Zoo validators run the \texttt{zood} binary, which is a superset of \texttt{luxd} with AI-specific extensions.
     \item[Beluga (L3)] An application-specific chain with its own block production, state, and gas token. \Beluga{} inherits Zoo's validator set---no new node binary is required. Validators that run \texttt{zood} automatically validate \Beluga{} blocks via the same process that validates Zoo subnets.
 \end{description}

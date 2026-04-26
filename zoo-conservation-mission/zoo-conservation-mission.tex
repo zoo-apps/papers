@@ -1,0 +1,60 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{titling}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\Quasar}{\textsc{Quasar}}
+\newcommand{\DAO}{\textsc{dao}}
+\newcommand{\NFT}{\textsc{nft}}
+
+\title{\textbf{Zoo Conservation \texorpdfstring{$\times$}{x} Education Mission}\\[0.3em]
+\large On-Chain Realization of the 2021 Foundation Vision}
+
+\author{Antje Worring, Zach Kelling\thanks{research@zoo.ngo}\\
+\textit{Zoo Labs Foundation Inc, 501(c)(3)}\\
+\texttt{zoo.ngo}}
+
+\date{2025-12-15}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+\noindent The October 31, 2021 Zoo whitepaper established the Zoo
+Foundation as the conservation $\times$ education arm of the Zoo
+ecosystem. Four years later, this paper documents the on-chain
+realization: the protocol-level sustainability tax, treasury custody
+under M-Chain MPC, conservation grant cycles via the \DAO{}, the V1
+species catalogue with their named non-profit partners, and the
+post-quantum-secure settlement layer that anchors every grant
+disbursement. We avoid restating the vision; instead, we list what
+shipped, when, and against which 2021 commitment. This paper is the
+canonical conservation-pillar artifact for 2025-12-15.
+\end{abstract}
+
+\input{sections/01-mission}
+\input{sections/02-species-catalogue}
+\input{sections/03-treasury-grants}
+\input{sections/04-impact-measurement}
+
+\end{document}

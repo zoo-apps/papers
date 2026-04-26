@@ -1,0 +1,67 @@
+\section{Cross-Chain Interaction}
+\label{sec:crosschain}
+
+A per-LLM chain is one node in a graph of chains. Every meaningful workflow---training, inference, attestation, payment---crosses at least one chain boundary. The interaction patterns below are the standard set.
+
+\subsection{\Lux{} C-Chain (general EVM)}
+
+C-Chain hosts the general EVM contract surface used by external dApps. Two flows:
+\begin{itemize}[nosep]
+\item \textbf{Outbound (per-LLM $\to$ C-Chain).} The chain emits an event when a checkpoint is finalized; a C-Chain registry contract subscribes via Warp Messaging and updates a public model index.
+\item \textbf{Inbound (C-Chain $\to$ per-LLM).} An external grant program funds training bounties on C-Chain in stablecoins; a bridge contract transfers the bounty to the per-LLM chain's bounty escrow.
+\end{itemize}
+
+\subsection{\Hanzo{} AI Chain (inference marketplace)}
+
+The \Hanzo{} AI Chain is the marketplace for inference and AI commerce. The cross-chain protocol with per-LLM chains:
+
+\begin{enumerate}[nosep]
+\item Listing: a model is listed for inference on \Hanzo{} by submitting a chain-cross-reference proof: ``the per-LLM chain at \texttt{chainID = X} has finalized weights at root \texttt{R} as of epoch \texttt{e}''.
+\item Inference: a user pays \Hanzo{} for inference; \Hanzo{} routes the workload to operators registered on the \Zen{} chain; \Hanzo{} settles operator payment in its native unit.
+\item Revenue distribution: a fraction of the inference revenue (chain-specified, default 30\%) is forwarded to the per-LLM chain via cross-chain transfer and distributed across the attribution tree.
+\end{enumerate}
+
+The split is orthogonal: \Hanzo{} runs the storefront and inference orchestration; \Zoo{} per-LLM chains run the lab and attribution. Neither chain duplicates the other's state.
+
+\subsection{\Lux{} F-Chain (encrypted inference)}
+
+F-Chain (\textsc{lp-013}) provides FHE-protected inference for queries that must remain private to the chain operators. The integration:
+\begin{itemize}[nosep]
+\item User encrypts query under the chain's FHE public key.
+\item F-Chain orchestrates ciphertext-domain inference using operator pool registered on the model's per-LLM chain.
+\item Decryption key remains with the user; inference output is returned in ciphertext.
+\item Settlement: F-Chain pays operators; per-LLM attribution credit accrues to the originating model's contributors.
+\end{itemize}
+
+\subsection{\Lux{} A-Chain and B-Chain (\textsc{lp-134})}
+
+A-Chain anchors \TEE{} attestations. Every gradient submission's quote-id is verified by an A-Chain bridge before the per-LLM chain admits the gradient. B-Chain provides the bridge layer between per-LLM chains and external chains (Ethereum, Solana, etc.) for ERC-20 reward token wraps and cross-chain bounty receipts.
+
+\subsection{\Lux{} Cloud (\textsc{lp-136})}
+
+\Lux{} Cloud is the federation layer for cloud capacity. The integration is documented in \S\ref{sec:gpu}. Operationally, every per-LLM chain registers itself with \Lux{} Cloud's discovery service so that operators can find and stake on chains they wish to support.
+
+\subsection{Topology summary}
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=1.0cm and 1.4cm,
+  every node/.style={font=\small},
+  chain/.style={draw, rounded corners, minimum width=2.2cm, minimum height=0.7cm, align=center}
+]
+\node[chain] (perllm) {Per-LLM\\chain};
+\node[chain, above=of perllm] (q3) {\Quasar{} 3.0\\(\textsc{lp-020})};
+\node[chain, right=of perllm] (hanzo) {\Hanzo{}\\AI Chain};
+\node[chain, left=of perllm] (cchain) {C-Chain\\(EVM)};
+\node[chain, below left=of perllm] (fchain) {F-Chain\\(\textsc{lp-013})};
+\node[chain, below=of perllm] (achain) {A-Chain\\(\textsc{lp-134})};
+\node[chain, below right=of perllm] (cloud) {\Lux{} Cloud\\(\textsc{lp-136})};
+
+\draw[<->] (perllm) -- (q3) node[midway,right]{\scriptsize settle};
+\draw[<->] (perllm) -- (hanzo) node[midway,above]{\scriptsize revenue};
+\draw[<->] (perllm) -- (cchain) node[midway,above]{\scriptsize EVM};
+\draw[<->] (perllm) -- (fchain) node[midway,below left]{\scriptsize FHE};
+\draw[<->] (perllm) -- (achain) node[midway,right]{\scriptsize \TEE{}};
+\draw[<->] (perllm) -- (cloud) node[midway,below right]{\scriptsize \GPU{}};
+\end{tikzpicture}
+\end{center}

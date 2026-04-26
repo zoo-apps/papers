@@ -1,0 +1,119 @@
+\section{NFT Liquidity Protocol Post-Quantum}
+\label{sec:nft-liquidity-pq}
+
+The NFT Liquidity Protocol --- the term \Zoo{} coined in the
+October 31, 2021 whitepaper \cite{zoo-2021} --- turns \NFT{}s into
+productive collateral inside a yield-bearing system. In 3.0 the
+loan, repayment, and liquidation primitives are all post-quantum
+authenticated.
+
+\subsection{Why this matters specifically for NFT collateral}
+
+An NFT loan is a long-lived bilateral commitment: the borrower locks
+the \NFT{}, the lender extends a loan, and the agreement persists
+for the loan duration (months to years). A classical signature on
+that agreement is exactly the kind of long-lived hot-path credential
+that harvest-now-decrypt-later most threatens. If the agreement
+expires post-Q-day, the holder of the original loan agreement may
+discover their authority has been retroactively forged. 3.0 closes
+that gap.
+
+\subsection{Loan agreement schema (3.0)}
+
+\begin{lstlisting}[language=C++,caption={3.0 NFT loan agreement schema}]
+struct NftLoanAgreement3 {
+    Hash      nft_id;                  // ZRC-721 token reference
+    Address   borrower;
+    Address   lender;
+    Amount    principal;
+    Rate      apr;
+    Duration  term;
+    Hash      collateral_appraisal;    // F-Chain FHE handle (optional)
+    MlDsa::Sig borrower_sig;           // ML-DSA-65 signature
+    Corona::Sig lender_sig;          // Corona signature, threshold capable
+    Hash      l1_anchor;               // Quasar 3.0 cert reference
+};
+\end{lstlisting}
+
+The borrower signs with $\MLDSA{}\text{-}65$ to bind individual
+identity. The lender signs with \Corona{}, threshold-capable so
+that pooled-lender markets (lender DAOs, lending pools) can present
+a single threshold signature standing in for many participants. Both
+signatures are required for the loan to bind.
+
+\subsection{Confidential appraisal}
+
+The optional \texttt{collateral\_appraisal} field is a handle to an
+F-Chain \FHE{} ciphertext holding the appraised value of the \NFT{}.
+A confidential market can run liquidation logic over the ciphertext
+without exposing the appraised value to public observers. This is
+useful for high-value collections where revealing appraisal is itself
+information leakage. The 3.0 \FHE{} substrate is the same one used
+elsewhere in the stack (LP-013, Confidential ERC-20 LP-067), so
+appraisals can be composed with confidential balance transfers
+without breaking PQ guarantees.
+
+\subsection{Liquidation flow}
+
+Liquidation is the highest-stakes path in the protocol because it
+transfers the \NFT{} away from the borrower. The 3.0 liquidation
+flow:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item Liquidation oracle (an A-Chain attested process) reads the
+        appraisal-vs-debt threshold.
+  \item Oracle issues a liquidation event signed under threshold
+        $\MLDSA{}$.
+  \item Loan contract verifies the oracle's threshold signature
+        against the on-chain oracle set's public key.
+  \item Contract transfers \NFT{} to lender (or auctions to the
+        lending pool, depending on agreement type).
+  \item Liquidation receipt is anchored to \Lux{} \Quasar{} 3.0 cert
+        \cite{lp-020}, providing a triple-cert-final record of the
+        transfer.
+\end{enumerate}
+
+A classical-only oracle compromise (a future Q-day adversary forging
+the oracle's classical signature) cannot trigger liquidation in 3.0
+because the liquidation contract does not honour classical-only
+signatures.
+
+\subsection{Repayment flow}
+
+Repayment closes the loan and unlocks the \NFT{}. The borrower
+submits a repayment transaction signed with $\MLDSA{}$; the contract
+verifies the signature, transfers the principal plus accrued interest
+to the lender, and releases the \NFT{} from escrow. The repayment
+receipt is anchored to L1 cert and is independently verifiable
+post-Q-day.
+
+\subsection{Pooled lending}
+
+Pooled lender markets aggregate many lenders behind a single
+\Corona{} threshold key. The threshold structure means individual
+lender shares can be added or removed without re-issuing every
+outstanding loan: the pool's threshold public key is stable across
+lender membership changes inside the agreed parameter set. When
+the pool needs to rotate its lattice parameters (a security-driven
+upgrade), it emits a one-time PQ-signed parameter-update event, and
+all in-flight loans pin to the parameter epoch in which they were
+signed.
+
+\subsection{Migration of pre-3.0 loan agreements}
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item All open 2.x loan agreements are walked by an automated
+        migration job.
+  \item For each open loan, both counterparties are notified to
+        co-sign a 3.0 loan agreement that supersedes the 2.x form,
+        carrying the same economic terms.
+  \item Loans whose counterparties do not co-sign within the
+        90-day sunset window are flagged ``classical-only'' on the
+        UI; liquidation against these loans requires an additional
+        consensus check.
+  \item Newly-issued loans after the 3.0 cutover are PQ-only.
+\end{enumerate}
+
+This is the same sunset pattern used for governance keys
+(\S\ref{sec:dao-migration}) and zLLM commitments
+(\S\ref{sec:zllm-pq}).

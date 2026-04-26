@@ -1,0 +1,98 @@
+\section{\NFT{} Strategy}
+\label{sec:nft-strategy}
+
+\Zoo{} 3.0 launches with an explicit go-to-market for \NFT{} migration.
+\Zoo{} intends to make competitive offers to the leading \NFT{}
+collections in the wildlife/conservation, AI/agent, and metaverse
+categories for migration to \Zoo{} L1. The goal is for \Zoo{} to host a
+top-2 \NFT{} project portfolio inside its first activation cycle.
+
+\subsection{Why a collection should migrate}
+
+\paragraph{Native \FHE{} privacy.}
+High-value collectibles benefit from confidential trading: the floor
+price reveals less to predators, holders can build positions without
+front-running, and treasury balances stay private until disclosure.
+F-Chain (\textsc{lp-013}) makes this a chain-level primitive, not a
+per-collection bolt-on.
+
+\paragraph{\GPU{}-fast minting and transfer.}
+Drop mechanics that bottleneck on signature verification clear faster
+on a \GPU{}-native chain. A 10k-supply drop that exceeds CPU \textsc{evm}
+block budgets clears inside a normal block on \Zoo{} 3.0.
+
+\paragraph{Native AI provenance.}
+A-Chain (AIVM, \textsc{lp-134}) anchors TEE-attested inference
+receipts. For collections whose value derives from generative outputs
+(AI-art collections, agent \NFT{}s, on-chain creatures with AI
+behaviour), provenance is a chain-level guarantee, not a marketing
+claim.
+
+\paragraph{Per-\NFT{} token-bound accounts.}
+ZRC-721 \NFT{}s on \Zoo{} L1 have native ERC-6551-style token-bound
+accounts. The account can hold \$ZOO, per-\LLM{} tokens, other
+\NFT{}s, and accrue yield from staking. Combined with the \Zoo{} \DEX{}
+(\S\ref{sec:zoo-dex}) and bridge (\S\ref{sec:zoo-bridge}), the \NFT{}
+becomes a programmable agent rather than a static JPEG.
+
+\paragraph{\DAO{}-aligned governance.}
+Migrated collections plug into Zoo \DAO{} voting weight. Holders
+participate in conservation grants, per-\LLM{} chain governance, and
+treasury allocation.
+
+\subsection{Migration mechanics}
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Snapshot.} \Zoo{} Bridge (\S\ref{sec:zoo-bridge}) takes a
+        snapshot of holders on the source chain.
+  \item \textbf{Lock-and-mint.} The source-chain contract is escrowed;
+        the \Zoo{} L1 native ZRC-721 is minted to the same wallet
+        address.
+  \item \textbf{Metadata mirror.} On-chain metadata moves over with
+        provenance hash chain intact; off-chain assets re-pin to
+        \Zoo{}'s decentralised storage layer.
+  \item \textbf{Treasury onboarding.} The collection's treasury is
+        onboarded to a \Zoo{} \DAO{}-governed multisig with optional
+        F-Chain \FHE{} balance privacy.
+  \item \textbf{Royalty redirection.} Future royalties accrue to the
+        L1 contract; the bridge keeps the source-chain contract
+        readable for legacy explorers.
+\end{enumerate}
+
+\subsection{What \Zoo{} offers a migrating collection}
+
+The migration package includes:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Validator-tier infrastructure for the collection's contracts.
+  \item Native integration with the \Zoo{} \DEX{} for floor and
+        fractional liquidity.
+  \item Marketing co-promotion across the \Zoo{} foundation channels.
+  \item Treasury-grant matching for conservation- or AI-aligned
+        collections from the Zoo Fund.
+  \item Optional F-Chain confidential balances and Z-Chain selective
+        disclosure for holder identity.
+  \item Free \Zoo{} AI Desktop integration for collections that ship
+        agent companions.
+\end{itemize}
+
+\subsection{Categories}
+
+\Zoo{} prioritises three collection categories:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Wildlife and conservation.} Aligned with the Zoo Labs
+        Foundation 501(c)(3) mission. Collections whose ongoing
+        impact accrues to species preservation.
+  \item \textbf{AI agents and generative art.} Collections that
+        benefit from A-Chain provenance and Zen model integration.
+  \item \textbf{Metaverse and gaming.} Collections that map to the
+        Zoo metaverse companion app and gym progression.
+\end{enumerate}
+
+\subsection{Note on naming}
+
+This paper does not name specific target collections; competitive
+offers are confidential until accepted. The architecture above is
+designed to be a credible offer for any collection in the listed
+categories, on terms no other chain can match.

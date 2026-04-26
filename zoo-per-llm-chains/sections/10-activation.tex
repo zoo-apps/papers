@@ -1,0 +1,58 @@
+\section{Activation}
+\label{sec:activation}
+
+\subsection{Spec freeze and activation timeline}
+
+\begin{longtable}{p{3.5cm}p{10cm}}
+\toprule
+\textbf{Date} & \textbf{Milestone} \\
+\midrule
+\endhead
+2025-12-15 & \Quasar{} 3.0 spec freeze (\textsc{lp-020}). Per-LLM chain spec frozen alongside. \\
+2025-12-16 -- 2025-12-22 & Genesis dry-runs on testnet for the \texttt{zen4} family. Validators rehearse \BlockSTM{} ordering, A-Chain bridge handshake, and \Lux{} Cloud federation. \\
+2025-12-23 -- 2025-12-24 & Final genesis state generated. Validator set seeded. Operator pool stake-locked. \\
+2025-12-25 & \Quasar{} 3.0 activation. \texttt{zen4} per-LLM chains launch with checkpoints derived from upstream HF weights. First on-chain training epoch begins. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Genesis state}
+
+For each \Zen{} model in \S\ref{sec:zen}, genesis state contains:
+\begin{itemize}[nosep]
+\item The HF source commit pinned as the initial weights root.
+\item The architecture artifact for the upstream foundation, registered as research artifact zero.
+\item An empty receipts tree (no training has occurred on chain yet).
+\item An empty attribution tree (initial weights are imported, not earned on chain).
+\item The reward token contract deployed and the DAO treasury allocated.
+\end{itemize}
+
+A genesis import is itself a transaction signed by the \Zoo{} multisig that holds upstream license attestations. Subsequent training accrues attribution to on-chain contributors as defined in \S\ref{sec:training}.
+
+\subsection{Operator onboarding}
+
+Operators wishing to commit capacity at activation must:
+\begin{enumerate}[nosep]
+\item Register an account on \Lux{} Cloud (\textsc{lp-136}).
+\item Submit hardware claim (\GPU{} class, count, geo, network).
+\item Stake-lock per the chain's $\kappa$ multiplier.
+\item Pass an attestation handshake against A-Chain (\textsc{lp-134}).
+\end{enumerate}
+
+The onboarding window closes 24\,h before activation; post-activation onboarding is continuous but new operators wait one epoch before receiving shard claims (this is a slashing-safety buffer, not a centralization choice).
+
+\subsection{Post-activation roadmap}
+
+The post-activation roadmap is sequenced as four phases beyond 2025-12-25; exact dates are governed by on-chain milestones rather than calendar quarters.
+
+\begin{itemize}[nosep]
+\item \textbf{Phase I (post-activation)}: \texttt{zen4} identity LoRA fine-tunes are first-on-chain training runs; results validate the protocol against existing centralized fine-tunes.
+\item \textbf{Phase II}: \texttt{zen5} chains genesis. \texttt{zen5} introduces MoDE (Mixture of Diverse Experts) and is the first \Zen{} generation trained natively on chain rather than imported from upstream.
+\item \textbf{Phase III}: cross-chain inference revenue routing from \Hanzo{} AI Chain to \Zoo{} per-LLM chains live in production.
+\item \textbf{Phase IV}: F-Chain (\textsc{lp-013}) FHE inference live for \texttt{zen-omni} and \texttt{zen-vl-*} chains.
+\end{itemize}
+
+\subsection{Conclusion}
+
+Per-LLM chains are the smallest design that binds training data, compute, research, and revenue into a single audit-eligible ledger. They are not a generic blockchain hosting model files; they are an execution environment in which the lifecycle of a single model is the chain's reason to exist. The \Zen{} family demonstrates the design at scale: eighteen models, eighteen sovereign chains, one settlement layer. \Quasar{} 3.0 (\textsc{lp-020}) provides the security; the \Quasar{}-Native App Stack (\textsc{lp-133}) provides the substrate; \Quasar{}\GPU{} (\textsc{lp-132}) provides scheduling; A-Chain (\textsc{lp-134}) provides attestation; \Lux{} Cloud (\textsc{lp-136}) provides capacity federation. The \Zoo{} per-LLM chains compose these into the open foundation-model lab that centralized labs cannot match.
+
+Activation: 2025-12-25.

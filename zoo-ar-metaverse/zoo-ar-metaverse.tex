@@ -1,0 +1,66 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{titling}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\Zen}{\textsc{Zen}}
+\newcommand{\AR}{\textsc{ar}}
+\newcommand{\AI}{\textsc{ai}}
+\newcommand{\NFT}{\textsc{nft}}
+\newcommand{\GPU}{\textsc{gpu}}
+\newcommand{\Quasar}{\textsc{Quasar}}
+
+\title{\textbf{Zoo Cute AI Assistant, AR App, and Metaverse Companion}\\[0.3em]
+\large On-Chain Realization of the 2021 Vision (\S\S21--23)}
+
+\author{Antje Worring, Zach Kelling\thanks{research@zoo.ngo}\\
+\textit{Zoo Labs Foundation Inc, 501(c)(3)}\\
+\texttt{zoo.ngo}}
+
+\date{2025-12-15}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+\noindent The October 31, 2021 Zoo whitepaper described three
+interlocking experience surfaces: a personality-bearing ``Cute \AI{}
+Assistant'' (\S21), an Augmented Reality app for in-the-field
+encounters (\S22), and a Metaverse Companion that follows the user
+across surfaces (\S23). This paper documents the 2025-12-15
+realization. The Cute \AI{} Assistant ships as the on-device avatar
+within Zoo Desktop, backed by the \Zen{} model family co-developed
+with \Hanzo{}. The \AR{} App ships as Zoo Field, a mobile companion
+tied to geo-attested quest completion. The Metaverse Companion ships
+as the persistent avatar binding wallet, \NFT{}, chat, and \AR{}
+surfaces, anchored by per-\textsc{llm}{} chains
+\cite{zoo-perllm-chains}. We document architecture, dependencies, and
+the 2021 commitments each surface honours.
+\end{abstract}
+
+\input{sections/01-cute-ai-assistant}
+\input{sections/02-ar-app}
+\input{sections/03-metaverse-companion}
+\input{sections/04-roadmap}
+
+\end{document}

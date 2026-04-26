@@ -1,0 +1,65 @@
+\section{Unified Training}
+\label{sec:training}
+
+\subsection{Training as transactions}
+
+Training a model on a per-LLM chain is not an off-chain process whose results are imported. It is the chain's primary economic activity. Every gradient step is a transaction; every checkpoint is the result of executing those transactions in consensus order. \BlockSTM{} (\textsc{lp-010}) provides parallel optimistic execution with deterministic ordering, which is exactly the property training requires: anyone replaying the chain reproduces bit-identical checkpoints.
+
+\subsection{Training-step transaction}
+
+A single training step is the four-instruction sequence:
+
+\begin{algorithm}[h]
+\caption{Per-Step Training Cycle}
+\begin{algorithmic}[1]
+\STATE \texttt{ClaimShard(epoch, shard\_id)} --- operator stakes claim
+\STATE Operator runs forward+backward pass on shard inside \TEE{}
+\STATE \texttt{SubmitGradient(job\_id, grad\_hash, loss, tee\_quote\_id)}
+\STATE Chain validates: stake sufficient, \TEE{} quote anchored, loss within expected band
+\STATE \texttt{MergeCheckpoint(epoch, root)} once $\ge t$ gradients accepted for epoch
+\end{algorithmic}
+\end{algorithm}
+
+The expected loss band is parameterized at chain genesis. A loss outside the band rejects the gradient and slashes a configurable fraction of the operator's stake; this is the chain's defense against operators submitting arbitrary or adversarial gradients.
+
+\subsection{Determinism and reproduction}
+
+For training to be reproducible from chain state alone, four things must be deterministic: shard partitioning, gradient ordering, aggregation, and floating-point reduction. The first three are guaranteed by \BlockSTM{} sequencing of the four-instruction protocol. The fourth---floating-point---is enforced by requiring all training jobs to use a chain-specified deterministic numerics profile (e.g., NCCL with \texttt{CUBLAS\_WORKSPACE\_CONFIG=:4096:8}, fp32 master weights).
+
+\begin{proposition}[Reproducibility]
+Given the genesis state and the canonical transaction sequence of a per-LLM chain, any party with sufficient compute can reconstruct every weight checkpoint bit-for-bit, modulo the deterministic numerics profile recorded at genesis.
+\end{proposition}
+
+This is not a theoretical property. It is the basis on which validators verify that a checkpoint matches the gradient transactions that produced it. Without it, the chain cannot detect operators who submit fabricated checkpoints.
+
+\subsection{Capacity scheduling via \Quasar{}\GPU{}}
+
+\Quasar{}\GPU{} (\textsc{lp-132}) is the deterministic \GPU{} scheduling adapter. The per-LLM chain emits capacity requests; \Quasar{}\GPU{} assigns shards to operators in the chain's pool based on stake-weighted lottery, geo-locality, and announced \GPU{} class. The assignment itself is a deterministic function of chain state, so an attacker cannot manipulate which operator gets which shard.
+
+\subsection{Aggregation}
+
+Aggregation is the merge of $t$ accepted gradients into the next checkpoint. Two aggregation modes are supported:
+
+\begin{itemize}[nosep]
+\item \textbf{Synchronous SGD-equivalent}: when $t$ matches the global batch size, aggregation is plain mean. Loss curves match a centralized run identically.
+\item \textbf{Asynchronous with bounded staleness}: gradients accepted within a staleness window are aggregated; stale gradients beyond the window are slashed (not just rejected). This trades reproducibility for throughput on large chains.
+\end{itemize}
+
+The mode is chain-genesis configuration. \Zen{} models default to synchronous SGD-equivalent for the consumer line and bounded staleness for the frontier line.
+
+\subsection{Attribution from gradient receipts}
+
+The attribution tree is updated atomically with every accepted gradient. The default policy is \emph{shard-weighted contribution}:
+\begin{equation}
+w_{\text{op} \to \text{epoch}} \mathrel{+}= \frac{\|\nabla_{\text{op}}\|_2}{\sum_{\text{op}'} \|\nabla_{\text{op}'}\|_2}
+\end{equation}
+Other policies (compute-time-weighted, loss-improvement-weighted) may be specified at genesis or amended via on-chain governance. Inference revenue distribution downstream uses these weights as the payout vector for the corresponding epoch.
+
+\subsection{Slashing}
+
+Three slashing conditions:
+\begin{enumerate}[nosep]
+\item \textbf{Out-of-band loss}: gradient produces a loss outside the expected band. Slash $5\%$ of stake.
+\item \textbf{Invalid \TEE{} quote}: A-Chain (\textsc{lp-134}) bridge returns a failed attestation. Slash $25\%$.
+\item \textbf{Equivocation}: operator submits two different gradients for the same shard claim. Slash $100\%$.
+\end{enumerate}

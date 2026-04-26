@@ -18,6 +18,12 @@
 | **2024** | Eco-1 / Z-JEPA | Hyper-modal MoE architecture |
 | **2024** | BitDelta / DeltaSoup | 1-bit personalization and community model merging |
 | **2024-2025** | 70+ additional papers | Infrastructure, governance, conservation, tokenomics |
+| **2025-12-15** | Zoo Per-LLM Chains | One sovereign Quasar appchain per model -- canonical Zen family deployment, activation 2025-12-25 |
+| **2025-12-15** | Zoo 2025: Securities and DAO | Five planks: updated team, $113T digital-securities positioning (Lux + Liquidity), Quasar 3.0 quantum-secure settlement (BLS + Corona + ML-DSA), Homomorphic / Holographic Consensus DAO with weighted voting, democratized end-to-end information access |
+| **2025-12-15** | Zoo 3.0 Launch | GPU-native L1 graduation -- Quasar 3.0 substrate, Zoo DEX (V2/V3 native, V4 = Lux DEX precompile), Zoo AI Desktop, zoo-bot, Zoo Bridge, F-Chain FHE + Z-Chain ZKP privacy, NFT migration program; activation 2025-12-25 |
+| **2025-10-31** | Zoo 3.0 Full Post-Quantum Stack | Full PQ era -- every signature, every commitment, every proof in Corona + ML-DSA-65 + BLS schemes. Triple-cert inheritance from Lux Quasar 3.0 (LP-020). DAO migration, Bridge re-keying, NFT Liquidity PQ, zLLM PQ commitments. Spec freeze 2025-10-31 (founder's anniversary) |
+| **2026-02-14** | Zoo 4.0 Launch (renamed from 3.0 Launch directory) | GPU-native sovereign L1 -- graduation from Lux L2 application to sovereign L1 with own validator set, Quasar 4.0 cert finality, GPU-Residency Invariant. Spec freeze 2026-01-15. Activation alongside Lux Quasar 4.0 |
+| **2026-04-20** | Zoo DEX Launch | Native securities trading on Zoo D-Chain (Lux D-Chain white-label) -- equities, fixed income, RWA, derivatives. Liquidity Protocol integration (Liquidity.io launched 2026-04-01; Lux/Hanzo/Zoo/Pars adopted 2026-04-20). Robinhood-style retail UX. Sub-1.1s T+0 settlement |
 
 **Key fact**: Zoo's October 2021 whitepaper describes a GUI-based conversational AI interface backed by large language models with blockchain-persistent memory. OpenAI's ChatGPT launched November 30, 2022. That is a 13-month gap. The Experience Ledger's content-addressable semantic memory predates both mainstream vector databases (2023) and ChatGPT's conversation memory feature (February 2024).
 
@@ -32,6 +38,22 @@
 | Zoo Whitepaper | `zoo-whitepaper/zoo-whitepaper.tex` | Antje Worring, Zach Kelling |
 | Zoo Foundation Mission | `zoo-foundation-mission/zoo-foundation-mission.tex` | Antje Worring, Zach Kelling |
 | Zoo Experience Ledger | `zoo-experience-ledger/zoo-experience-ledger.tex` | Antje Worring, Zach Kelling |
+| **Zoo 2021 Original Whitepaper** (gitbook reconstruction) | `zoo-2021-original-whitepaper/zoo-2021-original-whitepaper.tex` | Antje Worring |
+| -- Element 1: Open AI Protocol | `zoo-2021-original-whitepaper/elements/01-open-ai-protocol.tex` | Antje Worring |
+| -- Element 2: Endangered Species Conservation | `zoo-2021-original-whitepaper/elements/02-endangered-species-conservation.tex` | Antje Worring |
+| -- Element 3: AI x Blockchain Intersection | `zoo-2021-original-whitepaper/elements/03-ai-blockchain-intersection.tex` | Antje Worring |
+| -- Element 4: The Zoo Metaverse | `zoo-2021-original-whitepaper/elements/04-metaverse.tex` | Antje Worring |
+| -- Element 5: Gaming Mechanics | `zoo-2021-original-whitepaper/elements/05-gaming.tex` | Antje Worring |
+| -- Element 6: \$ZOO Tokenomics | `zoo-2021-original-whitepaper/elements/06-tokenomics.tex` | Antje Worring |
+
+> **Canonical historical record.** Antje Worring, Zoo Labs Foundation, 2021-10-31. Reconstructed from `zoolabs.gitbook.io/whitepaper/` (mirrored 2025-12-15). 32-page main paper plus six 4-5 page element papers covering Open AI Protocol, conservation, AI x blockchain, metaverse, gaming, and tokenomics.
+
+### Founder-Vision Realizations (Added 2025-12-15)
+
+| Paper | Path | Realizes (2021 §) |
+|-------|------|-------------------|
+| Zoo Conservation × Education | `zoo-conservation-mission/zoo-conservation-mission.tex` | §5 Sustainability, §6 Non-Profits, §7 Foundation |
+| Zoo Cute AI Assistant, AR App, and Metaverse Companion | `zoo-ar-metaverse/zoo-ar-metaverse.tex` | §21 Cute AI, §22 AR App, §23 Metaverse |
 
 ### AI Research
 
@@ -105,6 +127,11 @@
 | Zoo Identity Chain | `zoo-identity-chain/zoo-identity-chain.tex` |
 | Zoo Mainnet Launch Checklist | `zoo-mainnet-launch-checklist/zoo-mainnet-launch-checklist.tex` |
 | Zoo PoAI Consensus | `zoo-poai-consensus/zoo-poai-consensus.tex` |
+| Zoo Per-LLM Chains | `zoo-per-llm-chains/zoo-per-llm-chains.tex` |
+| Zoo 2025 Securities and DAO | `zoo-2025-securities-and-dao/zoo-2025-securities-and-dao.tex` |
+| Zoo 3.0 Full PQ Stack | `zoo-3-0-full-pq/zoo-3-0-full-pq.tex` |
+| Zoo 4.0 Launch (GPU-Native Sovereign L1) | `zoo-4-0-launch/zoo-4-0-launch.tex` |
+| Zoo DEX Launch (Native Securities, 2026-04-20) | `zoo-dex-launch-2026-04-20/zoo-dex-launch-2026-04-20.tex` |
 
 ### Cryptography and Security
 
@@ -168,4 +195,73 @@
 
 ---
 
-**Total**: 79 papers
+**Total**: 81 papers
+
+---
+
+## Zen Model Family (Canonical Per-LLM Chain Deployment)
+
+The Zoo per-LLM chain framework's canonical deployment hosts the Zen model family. Each Zen model gets its own Quasar appchain at activation (2025-12-25). Source repository: `~/work/zen` (read-only, training operations only).
+
+### Small Line (Qwen3.5 base, Gated DeltaNet, 262K context)
+- `zen4-nano` (0.8B), `zen4-micro` (2B), `zen4-mini` (4B), `zen4` (9B)
+
+### Medium Line
+- `zen4-pro` (27B), `zen4-max` (35B MoE / 3B active), `zen4-pro-max` (80B MoE / 3B), `zen4-mega` (122B MoE / 10B)
+
+### Coder Line
+- `zen4-coder-flash` (31B MoE / 3B), `zen4-coder` (80B MoE / 3B), `zen4-coder-pro` (355B)
+
+### Frontier Line
+- `zen4-thunder` (230B MoE), `zen4-storm` (456B MoE), `zen4-titan` (744B MoE), `zen4-ultra` (1.04T MoE), `zen4-ultra-gguf` (1.04T MoE GGUF), `zen4-ultra-max` (1T+ MoE)
+
+### Specialty Chains
+- `zen-omni` (text+vision+audio), `zen-tts` (24kHz speech), `zen-vl-{4b,8b,30b}-{instruct,agent}` (vision-language), `zen-reranker`, `zen-embedding`, `zen-guard*` (safety), and the creative line: `zen-scribe`, `zen-blog`, `zen-translator`, `zen-dub`, `zen-foley`, `zen-musician`, `zen-3d`, `zen-artist`, `zen-designer`, `zen-director`, `zen-video`, `zen-world`, `zen-voyager`.
+
+Each chain settles on Lux Quasar 3.0 (Lux LP-020), follows the Quasar-Native App Stack pattern (Lux LP-133), schedules GPU work via Quasar GPU (Lux LP-132), anchors TEE attestations on Lux A-Chain (Lux LP-134), and federates capacity through Lux Cloud (Lux LP-136). Inference revenue routes from the Hanzo AI Chain back to per-LLM chains for distribution along the on-chain attribution graph.
+
+---
+
+## Cross-Reference Index (Quasar 3.0 Stack, 2025-12-15)
+
+The following papers explicitly cross-reference the per-LLM chain framework and Lux Quasar 3.0 LP series:
+
+| Paper | Cross-references added |
+|-------|------------------------|
+| `zoo-per-llm-chains` | LP-020, LP-010, LP-105, LP-132, LP-133, LP-134, LP-136, LP-013, Hanzo AI Chain |
+| `beluga-l3-whitepaper` | LP-020, LP-132, LP-133, plus `zoo-per-llm-chains` |
+| `hllm-training-free-grpo` | LP-020, LP-132, LP-133, plus `zoo-per-llm-chains`, Hanzo AI Chain |
+| `gym-training-platform` | LP-020, LP-132, LP-133, LP-134, LP-136, plus `zoo-per-llm-chains`, Hanzo AI Chain |
+| `zoo-2025-securities-and-dao` | LP-013, LP-019, LP-020, LP-070, LP-073, LP-075, LP-105, LP-134, Hanzo AI Chain, `zoo-per-llm-chains`, `zoo-2021-original-whitepaper` |
+| `zoo-per-llm-chains` (§11) | adds LP-019, LP-070, LP-073, LP-075, plus `zoo-2025-securities-and-dao` |
+| `zoo-2021-original-whitepaper` (§10 update) | LP-013, LP-019, LP-020, LP-070, LP-073, LP-075, LP-105, LP-134, Hanzo AI Chain |
+| `zoo-3-0-full-pq` | LP-009, LP-016, LP-017, LP-020, LP-070, LP-073, LP-075, LP-105, LP-134, plus `zoo-2-0`, `zoo-4-0`, `zoo-2021`, `zoo-2025-securities-and-dao` |
+| `zoo-4-0-launch` | LP-009, LP-013, LP-020, LP-063, LP-067, LP-105, LP-132, LP-133, LP-134, LP-137, Hanzo AI Chain, `zoo-per-llm-chains`, `zoo-2025-securities-and-dao`, `zoo-2-0`, `zoo-3-0`, `zoo-dex-launch`, Lux DEX |
+| `zoo-dex-launch-2026-04-20` | LP-009, LP-013, LP-020, LP-063, LP-105, LP-132, LP-133, LP-134, LP-137, plus `zoo-4-0`, `zoo-3-0`, `zoo-2-0`, `zoo-2021`, `zoo-per-llm-chains`, `zoo-2025-securities-and-dao`, Liquidity Protocol formal proof, Zoo Adopts Liquidity Protocol, Lux DEX |
+| `zoo-per-llm-chains` (§12) | adds LP-132, LP-137, plus `zoo-4-0-launch` |
+
+**Spec freeze**: 2025-12-15. **Activation**: 2025-12-25 alongside Lux Quasar 3.0 mainnet upgrade.
+
+---
+
+## 2025-12-15 Five-Plank Update Summary
+
+The following five planks landed across the paper corpus on 2025-12-15:
+
+1. **Updated team** — see `zips/team.md` (canonical) and the `01-team` section
+   of `zoo-2025-securities-and-dao`. Founder: Antje Worring. Chief Scientist:
+   Zach Kelling.
+2. **$113 trillion digital-securities slide** — `zoo-2025-securities-and-dao` §2;
+   per-LLM chains §11.1; original whitepaper §10 update.
+3. **Quantum-secure settlement** — `zoo-2025-securities-and-dao` §3;
+   per-LLM chains §11.2; original whitepaper §10 update.
+4. **Homomorphic / Holographic Consensus DAO with weighted voting** —
+   `zoo-2025-securities-and-dao` §4; per-LLM chains §11.3;
+   original whitepaper §10 update; ZIP-0017 update.
+5. **Democratized end-to-end information access** —
+   `zoo-2025-securities-and-dao` §5; per-LLM chains §11.4;
+   original whitepaper §10 update.
+
+Weighted-voting formula:
+`weight(p) = α·advocacy + β·involvement + γ·contribution + δ·token_stake`
+with default `(α, β, γ, δ) = (0.20, 0.30, 0.40, 0.10)`.
