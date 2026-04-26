@@ -1,0 +1,225 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage{caption}
+\usepackage{listings}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+    pdftitle={Zoo DEX - Native Securities Trading on Lux Quasar with Liquidity Protocol Integration},
+    pdfauthor={Antje Worring, Zach Kelling},
+    pdfsubject={Zoo Labs Foundation - Native Securities DEX Launch},
+    pdfkeywords={Zoo DEX, native securities, Liquidity Protocol, Quasar 4.0, AMM V4, Robinhood-style, RWA, perpetuals}
+}
+
+% Macros
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\Zen}{\textsc{Zen}}
+\newcommand{\Quasar}{\textsc{Quasar}}
+\newcommand{\QuasarGPU}{\textsc{Quasar}\textsc{gpu}}
+\newcommand{\Liquidity}{\textsc{Liquidity}}
+\newcommand{\PoAI}{\textsc{PoAI}}
+\newcommand{\TEE}{\textsc{tee}}
+\newcommand{\LLM}{\textsc{llm}}
+\newcommand{\GPU}{\textsc{gpu}}
+\newcommand{\DAO}{\textsc{dao}}
+\newcommand{\AMM}{\textsc{amm}}
+\newcommand{\DEX}{\textsc{dex}}
+\newcommand{\NFT}{\textsc{nft}}
+\newcommand{\FHE}{\textsc{fhe}}
+\newcommand{\ZKP}{\textsc{zkp}}
+\newcommand{\BLS}{\textsc{bls}}
+\newcommand{\MLDSA}{\textsc{ml-dsa}}
+\newcommand{\Ringtail}{\textsc{Ringtail}}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    tabsize=2,
+    captionpos=b,
+}
+
+\title{\textbf{Zoo \DEX{} --- Native Securities Trading on \Lux{}
+\Quasar{} with \Liquidity{} Protocol Integration}\\
+\large April 20, 2026 launch edition}
+
+\author{
+Antje Worring, Zach Kelling\thanks{research@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{April 20, 2026}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+\noindent The \Zoo{} \DEX{} launches on April 20, 2026 with native
+trading of equities, fixed income, real-world assets, and tokenised
+derivatives, all settling on \Zoo{} D-Chain (a \Lux{} D-Chain
+white-label per \textsc{lp-134}) with sub-second \Quasar{} 4.0
+triple-cert finality. The \DEX{} integrates the \Liquidity{} Protocol
+formally launched by \Liquidity{}.io on April 1, 2026 and adopted by
+\Lux{}, \Hanzo{}, \Zoo{}, and Pars on April 20, 2026
+\cite{zoo-adopts-liquidity-protocol}, providing compliance-by-construction
+through a dedicated \Liquidity{} precompile that applies KYC/AML at
+the perimeter (SEC ATS, FINRA broker-dealer, and registered transfer
+agent obligations are met by the \Liquidity{}.io control plane). The
+architecture is built on \Zoo{} 4.0's \GPU{}-native sovereign L1
+\cite{zoo-4-0}, activated February 14, 2026 and inheriting the full
+post-quantum stack from \Zoo{} 3.0 \cite{zoo-3-0}. The \DEX{} ships
+\AMM{} V2 (constant product) and V3 (concentrated liquidity), with V4
+implemented as a precompile to the \Lux{} \DEX{} cross-chain
+liquidity router; \Zoo{} additionally exposes an optional in-chain
+local \DEX{} precompile for \Zoo{}-specific assets (per-\LLM{}
+tokens, fractional \NFT{}s). Order types include limit, market,
+stop, IOC, FOK, post-only, hidden, and iceberg, with both batch-auction
+and continuous-limit-book matching. A Robinhood-style retail UX
+delivers zero commission, fractional shares, 24/7 markets, and
+sub-1.1s settlement. Optional FHE-encrypted orderflow runs through
+F-Chain (\textsc{lp-013}); ZK selective disclosure runs through Z-Chain
+(\textsc{lp-063}). Quantum-secure trading is end-to-end: every trade
+settles under a triple-cert ($\BLS{}_{12\text{-}381}$ + \Ringtail{} +
+$\MLDSA{}$). The \DEX{} is the migration destination for \NFT{}
+markets and the realisation of the original ``NFT Liquidity
+Protocol'' coinage from the October 31, 2021 \Zoo{} whitepaper
+\cite{zoo-2021}.
+
+\textbf{Keywords}: \Zoo{} \DEX{}, native securities, \Liquidity{}
+Protocol, \Quasar{} 4.0, real-world assets, tokenised derivatives,
+post-quantum trading, Robinhood-style retail, \FHE{} orderflow
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\input{sections/01-architecture}
+\input{sections/02-native-securities}
+\input{sections/03-liquidity-integration}
+\input{sections/04-order-types}
+\input{sections/05-retail-ux}
+\input{sections/06-quantum-secure}
+\input{sections/07-privacy}
+\input{sections/08-nft-migration}
+\input{sections/09-operator-economics}
+\input{sections/10-roadmap}
+
+\begin{thebibliography}{99}
+
+\bibitem{lp-009}
+Lux Foundation.
+\newblock LP-009: \GPU{}-Native \textsc{evm}.
+\newblock Lux Improvement Proposal, 2025.
+
+\bibitem{lp-013}
+Lux Foundation.
+\newblock LP-013: F-Chain \FHE{}-Protected Inference and Confidential Compute.
+\newblock Lux Improvement Proposal, 2025.
+
+\bibitem{lp-020}
+Lux Foundation.
+\newblock LP-020: \Quasar{} Consensus 3.0 (Triple Consensus: \BLS{} + \Ringtail{} + \MLDSA{}).
+\newblock Lux Improvement Proposal, 2025.
+
+\bibitem{lp-063}
+Lux Foundation.
+\newblock LP-063: Z-Chain Zero-Knowledge Rollup and \ZKP{} Registry.
+\newblock Lux Improvement Proposal, 2025.
+
+\bibitem{lp-105}
+Lux Foundation.
+\newblock LP-105: \Quasar{} Consensus Family Specification (Photon, Wave, Focus, Nova, Nebula).
+\newblock Lux Improvement Proposal, 2025.
+
+\bibitem{lp-132}
+Lux Foundation.
+\newblock LP-132: \QuasarGPU{} Execution Adapter for Deterministic \GPU{} Scheduling.
+\newblock Lux Improvement Proposal, 2025.
+
+\bibitem{lp-133}
+Lux Foundation.
+\newblock LP-133: \Quasar{}-Native App Stack for Sovereign Appchains.
+\newblock Lux Improvement Proposal, 2025.
+
+\bibitem{lp-134}
+Lux Foundation.
+\newblock LP-134: \Lux{} Chain Topology and White-Label D-Chain Template (P/C/X/Q/Z/A/B/M/F/D-Chains).
+\newblock Lux Improvement Proposal, 2026.
+
+\bibitem{lp-137}
+Lux Foundation.
+\newblock LP-137: \GPU{}-Residency Invariant.
+\newblock Lux Improvement Proposal, 2025.
+
+\bibitem{liquidity-protocol-formal}
+Liquidity.io.
+\newblock The \Liquidity{} Protocol: A Compliance-by-Construction Settlement Standard for Tokenised Securities. Formal Proof.
+\newblock Liquidity Whitepaper and Soundness Proof, April 1, 2026.
+
+\bibitem{zoo-adopts-liquidity-protocol}
+Zoo Labs Foundation.
+\newblock Zoo Adopts the \Liquidity{} Protocol.
+\newblock Zoo Adoption Note, April 20, 2026.
+
+\bibitem{zoo-2021}
+Antje Worring et al.
+\newblock Zoo: A Decentralized Wildlife Conservation Platform (NFT Liquidity Protocol).
+\newblock Zoo Whitepaper (Original), October 31, 2021.
+
+\bibitem{zoo-2-0}
+Zoo Labs Foundation.
+\newblock Zoo \textsc{evm}: A Post-Quantum Safe L2 Blockchain with AI-Native Precompiles on the \Lux{} Network.
+\newblock Zoo Whitepaper, October 2024.
+
+\bibitem{zoo-3-0}
+Zoo Labs Foundation.
+\newblock Zoo 3.0 --- Full Post-Quantum Stack.
+\newblock Zoo Whitepaper, October 31, 2025.
+
+\bibitem{zoo-4-0}
+Zoo Labs Foundation.
+\newblock Zoo 4.0 --- \GPU{}-Native Sovereign L1.
+\newblock Zoo Whitepaper, February 14, 2026.
+
+\bibitem{zoo-per-llm-chains}
+Zoo Labs Foundation.
+\newblock Per-\LLM{} Chains: One Sovereign Chain per Model on \Quasar{}.
+\newblock Zoo Whitepaper, December 15, 2025.
+
+\bibitem{zoo-2025-securities-and-dao}
+Zoo Labs Foundation.
+\newblock Zoo 2025: Digital Securities, Quantum-Secure Settlement, and the Holographic Consensus \DAO{}.
+\newblock Zoo Whitepaper, December 15, 2025.
+
+\bibitem{lux-dex}
+Lux Network.
+\newblock \Lux{} \DEX{} Specification.
+\newblock \url{https://github.com/luxfi/dex}, 2026.
+
+\bibitem{uniswap-v3}
+Adams, H., et al.
+\newblock Uniswap v3 Core.
+\newblock Uniswap Whitepaper, March 2021.
+
+\end{thebibliography}
+
+\end{document}

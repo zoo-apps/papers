@@ -1,0 +1,156 @@
+\section{Order Types and Matching}
+\label{sec:order-types}
+
+\Zoo{} \DEX{} ships the full retail and institutional order-type
+matrix on day one of the April 20, 2026 launch.
+
+\subsection{Order types (taker side)}
+
+\paragraph{Limit.}
+Buy or sell at a specified price or better. Resting limit orders
+post to the continuous limit book at the specified price level and
+match by price-time priority.
+
+\paragraph{Market.}
+Buy or sell at the best available price. Routes against the AMM
+pool when the AMM has a better price than the top of the book; uses
+the order book otherwise.
+
+\paragraph{Stop.}
+Triggered when the market reaches the stop price; converts into a
+market or limit order at the trigger.
+
+\paragraph{IOC (Immediate-or-Cancel).}
+Match what can be matched at the specified price; cancel any
+unfilled remainder. No resting state.
+
+\paragraph{FOK (Fill-or-Kill).}
+Match the full quantity at the specified price or cancel the entire
+order. No partial fills.
+
+\paragraph{Post-only.}
+Add liquidity to the order book at the specified price; reject if
+the order would cross the spread (i.e., act as a taker). Useful for
+makers earning rebates.
+
+\paragraph{Hidden.}
+Resting limit order that does not display in the public order book.
+Visible to the matching engine only. Used by institutional flow that
+does not want to telegraph size.
+
+\paragraph{Iceberg.}
+A large limit order that displays only a fraction of its size in the
+public book. As the displayed slice fills, the next slice becomes
+visible. Useful for working size without spooking the book.
+
+\subsection{Continuous limit book}
+
+The continuous limit book is the high-frequency matching engine. It
+implements price-time priority: among orders at the same price, the
+earliest-arrived order matches first. The order book lives in device
+memory per LP-137 \cite{lp-137}; updates run as \GPU{} kernels.
+
+A typical continuous-book trade lifecycle:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item Order arrives at the sequencer; passes the \Liquidity{}
+        precompile check.
+  \item Order is inserted into the per-pair price-time-priority
+        order book.
+  \item If the order crosses an existing book level, the crossing
+        match is generated; both orders' resting states are updated;
+        the trade event is emitted.
+  \item Trade event flows through the transfer-agent notify path
+        \cite{liquidity-protocol-formal}.
+  \item Block production seals the trades into a \Quasar{} 4.0
+        triple-cert.
+\end{enumerate}
+
+\subsection{Batch auctions}
+
+For fair price discovery on instruments where front-running risk is
+material (illiquid securities, opening prints, closing prints), the
+\DEX{} also runs batch auctions. A batch auction:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item Accepts orders during the batch window (e.g., 100ms).
+  \item At the window close, computes the uniform clearing price
+        that maximises matched volume.
+  \item Executes all crossing orders at the uniform clearing price.
+  \item Cancels any orders that do not match at the clearing price
+        (or rests them in the continuous book if so flagged).
+\end{enumerate}
+
+Batch auctions eliminate the latency arms race because the inside
+order does not benefit from being earlier within the batch; only
+prices and quantities matter, not microsecond arrival times. This
+is materially better for retail than continuous matching for the
+same instrument set.
+
+\subsection{When to use which}
+
+\begin{longtable}{p{0.30\textwidth}p{0.62\textwidth}}
+\toprule
+\textbf{Mode} & \textbf{Use when} \\
+\midrule
+Continuous limit book & Liquid pairs, high-frequency strategies, market-makers, retail at-the-touch trading. \\
+Batch auction & Opening prints, closing prints, illiquid securities, retail order flow that benefits from front-running protection. \\
+\AMM{} (V2/V3) & Long-tail pairs, programmatic-LP yield, automated market-making without an active maker. \\
+\bottomrule
+\end{longtable}
+
+The matching engine routes a market order across all three venues
+and executes against whichever has the best price; the user receives
+a single fill report.
+
+\subsection{Self-trade prevention}
+
+Two orders from the same beneficial owner cannot match each other.
+The matching engine consults the \Liquidity{} precompile's
+beneficial-owner record; if a match would put both sides on the same
+beneficial owner, the engine cancels the resting side and applies
+the inbound side as a new resting order. This prevents wash trading
+without requiring the user to explicitly tag orders.
+
+\subsection{Order routing across V2/V3/V4}
+
+A retail market order for a security pair flows through the router:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item Router queries V2 pool, V3 pool, V4 (Lux \DEX{}), and the
+        local CLOB precompile for executable price at the order
+        size.
+  \item Router computes the price-impact-adjusted best venue (or
+        splits across venues for large orders).
+  \item Router executes against the chosen venue(s); each leg goes
+        through the \Liquidity{} precompile check.
+  \item Router returns a single weighted-average fill report to the
+        user.
+\end{enumerate}
+
+This is invisible to the user; it is a router-side concern.
+
+\subsection{Cancel-replace semantics}
+
+A cancel-replace transaction atomically cancels the existing order
+and submits a new one. If the cancel succeeds and the replace fails
+(e.g., the precompile rejects the new order), the engine reverts
+to a clean state with no resting order. There is no half-applied
+state.
+
+\subsection{Reporting}
+
+Every executed trade emits a \texttt{TradeEvent} on chain that
+includes:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Pair, price, quantity, side, taker/maker flag.
+  \item Beneficial-owner reference (or its hash, in privacy mode).
+  \item Venue (V2 / V3 / V4 / CLOB).
+  \item \Liquidity{}-precompile attestation hash.
+  \item \Quasar{}Cert reference (for finality verification).
+\end{itemize}
+
+Public market-data subscribers (the BBO, the last-trade tape, the
+volume by venue) consume these events. There is no separate
+market-data infrastructure; the chain log is the tape.

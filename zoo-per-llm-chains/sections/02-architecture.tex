@@ -1,0 +1,90 @@
+\section{Architecture}
+\label{sec:architecture}
+
+\subsection{Settlement on \Quasar{} 3.0}
+
+Every per-LLM chain is a \Quasar{}-certified appchain following the \Quasar{}-Native App Stack pattern (\textsc{lp-133}). Settlement, finality, and Byzantine guarantees come from \Quasar{} 3.0 (\textsc{lp-020}); the appchain provides only the model-specific state machine. \Quasar{} 3.0 finalizes the chain's headers within sub-second bounds and provides post-quantum security via the \Quasar{} consensus family.
+
+The chain identifier is a deterministic function of the model's canonical identifier:
+\begin{equation}
+\texttt{chainID} = \texttt{keccak256}(\texttt{``zoo://llm/''} \,\Vert\, \texttt{model.canonical\_id}) \bmod 2^{32}
+\end{equation}
+For \texttt{zen4-coder-flash}, the canonical identifier is \texttt{zenlm/zen4-coder-flash@v1}. This binding ensures one chain per (model, major-version) pair and forbids two chains claiming the same model.
+
+\subsection{State schema}
+
+A per-LLM chain's world state is partitioned into four trees, all rooted into the chain's state commitment:
+
+\begin{longtable}{p{3.5cm}p{4cm}p{6.5cm}}
+\toprule
+\textbf{Tree} & \textbf{Key} & \textbf{Value} \\
+\midrule
+\endhead
+\texttt{weights} & $(\text{epoch}, \text{shard\_id})$ & shard hash, parameter count, dtype, source job receipt \\
+\texttt{data} & $\text{example\_id}$ & content hash, license tag, contributor address, redaction status \\
+\texttt{receipts} & $\text{job\_id}$ & operator address, \GPU{} model, hours, \TEE{} quote (A-Chain anchor), loss curve hash \\
+\texttt{attribution} & $\text{contributor}$ & weighted edge list to (data, weights, research) nodes \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{Weights tree}
+Each training epoch produces a weight checkpoint. The checkpoint is content-chunked into shards (default 4\,GiB, sufficient for FP16 storage of $\le$2B parameters per shard) and a Merkle tree is built over shard hashes. Only the root and shard metadata enter chain state; bulk shard storage is offloaded to content-addressable storage with the chain holding integrity proofs.
+
+\subsubsection{Training-data tree}
+Every training example referenced by any committed gradient step has a record. The record commits to the example's content hash, license, and contributor identity. Examples may be \emph{redacted} (revoked by contributor) without altering historical receipts, by setting the redaction flag and replacing the value commitment with a redaction proof.
+
+\subsubsection{Compute-receipts tree}
+Every gradient step accepted into a checkpoint is backed by a receipt: the operator address, the \GPU{} hardware, the wall-clock duration, and a \TEE{} attestation quote. \TEE{} quotes are not stored on the per-LLM chain directly; the chain stores a receipt-id and the chain's bridge to \Lux{} A-Chain (\textsc{lp-134}) verifies the quote, anchors it, and publishes a one-bit attestation result back to the per-LLM chain.
+
+\subsubsection{Attribution tree}
+A weighted directed graph: contributor identity $\rightarrow$ (data nodes, weights nodes, research nodes), with edge weights determined by the chain's attribution policy (\S\ref{sec:training}). Inference revenue distribution (paid by the \Hanzo{} AI Chain when inference is purchased) follows this graph.
+
+\subsection{Validator set}
+
+A per-LLM chain inherits the \Quasar{} validator set by default: any \Quasar{} 3.0 validator may produce blocks for the chain subject to chain-specific stake. Per-LLM chains may also opt into a \emph{constrained validator subset} (e.g., only validators that have committed \GPU{} capacity to the chain's pool), trading decentralization for higher capacity utilization. The constraint policy is part of the chain's genesis parameters.
+
+\subsection{Native instructions}
+
+The chain exposes seven native instructions beyond the standard \BlockSTM{} (\textsc{lp-010}) execution surface:
+\begin{itemize}[nosep]
+\item \texttt{ClaimShard(epoch, shard\_id)} --- operator claims a training shard.
+\item \texttt{SubmitGradient(job\_id, grad\_hash, loss, tee\_quote\_id)} --- operator submits gradient.
+\item \texttt{MergeCheckpoint(epoch, root)} --- aggregator publishes new checkpoint root.
+\item \texttt{RegisterArtifact(kind, hash, metadata)} --- publish architecture, ablation, or benchmark.
+\item \texttt{CommitData(example\_id, content\_hash, license, contributor)} --- record training data.
+\item \texttt{Redact(example\_id, proof)} --- contributor revokes an example.
+\item \texttt{DistributeRevenue(epoch, total)} --- pay revenue across attribution graph.
+\end{itemize}
+
+These instructions are precompiles in the chain's execution layer; user-defined contracts (ERC-20 reward tokens, governance, etc.) coexist as ordinary EVM contracts.
+
+\subsection{System diagram}
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=0.8cm and 1.0cm,
+  every node/.style={font=\small},
+  layer/.style={draw, rounded corners, minimum width=11cm, minimum height=0.9cm, align=center},
+  chain/.style={draw, rounded corners, minimum width=2.2cm, minimum height=0.7cm, align=center}
+]
+\node[layer] (q3) {\Lux{} \Quasar{} 3.0 settlement (\textsc{lp-020})};
+\node[layer, below=of q3] (app) {\Quasar{}-Native App Stack (\textsc{lp-133}) ---\BlockSTM{} (\textsc{lp-010})};
+
+\node[chain, below=1.0cm of app, xshift=-4cm] (c1) {\texttt{zen4-nano}\\chain};
+\node[chain, right=of c1] (c2) {\texttt{zen4-mini}\\chain};
+\node[chain, right=of c2] (c3) {\texttt{zen4-coder}\\chain};
+\node[chain, right=of c3] (c4) {$\cdots$};
+
+\node[layer, below=of c1, xshift=4cm] (qgpu) {\Quasar{}\GPU{} (\textsc{lp-132}) + \Lux{} Cloud (\textsc{lp-136})};
+\node[layer, below=of qgpu] (achain) {\Lux{} A-Chain attestations (\textsc{lp-134})};
+
+\draw[->] (q3) -- (app);
+\draw[->] (app) -- (c1);
+\draw[->] (app) -- (c2);
+\draw[->] (app) -- (c3);
+\draw[->] (c1) -- (qgpu);
+\draw[->] (c2) -- (qgpu);
+\draw[->] (c3) -- (qgpu);
+\draw[->] (qgpu) -- (achain);
+\end{tikzpicture}
+\end{center}

@@ -1,0 +1,58 @@
+\section{Privacy and Provenance}
+\label{sec:privacy}
+
+\subsection{Selective disclosure of training data}
+
+The training-data tree commits to (content hash, license tag, contributor). Disclosure of the example content itself is not required for the commitment to be valid. Three disclosure modes are supported:
+
+\begin{enumerate}[nosep]
+\item \textbf{Public}: content is published to content-addressable storage; anyone with the hash can fetch.
+\item \textbf{Permissioned}: content is published encrypted under the contributor's policy key; consumers prove eligibility off-chain.
+\item \textbf{Private}: content is held by the contributor; the chain holds only the commitment and a zero-knowledge proof of license.
+\end{enumerate}
+
+The chain stores a \emph{disclosure flag} per record. Inference downstream may filter to public-only data when the use case requires (e.g., open-source model card generation).
+
+\subsection{Differential privacy on gradient submission}
+
+Operators may submit gradients with calibrated noise added to satisfy $(\varepsilon, \delta)$-differential privacy. The chain records the noise parameters; the loss-band check is widened proportionally. Models with strong privacy requirements (medical, legal) genesis-configure all gradient submissions to require DP noise above a threshold.
+
+The mechanism is straightforward Gaussian noise addition:
+\begin{equation}
+\tilde{g} = g + \mathcal{N}(0, \sigma^2 I), \qquad \sigma = \frac{C \sqrt{2 \ln(1.25/\delta)}}{\varepsilon}
+\end{equation}
+where $C$ is the gradient clip norm. The chain enforces $C$ through the bounded-norm gradient submission instruction; an operator submitting an over-norm gradient is slashed.
+
+\subsection{TEE attestation as compute provenance}
+
+\TEE{} attestations (anchored on \Lux{} A-Chain per \textsc{lp-134}) provide cryptographic evidence that the gradient was computed inside an enclave running the chain-specified training image. The evidence chain:
+\begin{enumerate}[nosep]
+\item Genesis pins the SHA-256 hash of the training image.
+\item Operator's \GPU{} runs the image inside a \TEE{} (NVIDIA H100 Confidential Computing or AMD MI300X SEV-SNP).
+\item \TEE{} produces a quote signed by the hardware root of trust.
+\item A-Chain verifies the quote and publishes a binary attestation result.
+\item Per-LLM chain admits the gradient only on positive attestation.
+\end{enumerate}
+
+\subsection{Redaction and right-to-revoke}
+
+A contributor may revoke a previously committed training example. The redaction transaction:
+\begin{enumerate}[nosep]
+\item Sets the redaction flag on the \texttt{data} tree entry.
+\item Replaces the content commitment with a zero-knowledge proof that the original committer holds the same key.
+\item Triggers downstream subscribers (model serving operators) to remove the corresponding example from any active replicas.
+\end{enumerate}
+
+Crucially, redaction does not erase historical receipts: the gradient transactions that consumed the now-redacted example remain on chain. Reproducing the model from chain state would require the redacted data, which the redactor refuses to release. The chain's reproducibility guarantee is therefore conditional on data availability; redaction trades reproducibility for contributor sovereignty. This is the documented tradeoff, not a bug.
+
+\subsection{Reading the provenance graph}
+
+External consumers (auditors, regulators, downstream model users) read provenance via subgraph indexers. Standard queries:
+\begin{itemize}[nosep]
+\item ``What licenses appear in the training data of \texttt{zen4-coder} as of epoch $e$?''
+\item ``Which contributors hold $>1\%$ attribution in \texttt{zen4-pro-max}?''
+\item ``Which gradient submissions failed \TEE{} attestation in the last 30 days?''
+\item ``Was example $h$ used after redaction event $r$?''
+\end{itemize}
+
+Each is answerable from the per-LLM chain's state with no off-chain trust assumption beyond the \Quasar{} consensus that finalized the chain's headers.

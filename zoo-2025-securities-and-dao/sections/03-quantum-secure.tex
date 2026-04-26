@@ -1,0 +1,117 @@
+\section{Quantum-Secure Settlement}
+\label{sec:quantum}
+
+\subsection{Three independent hardness assumptions}
+
+\Quasar{} 3.0 (\Lux{} \textsc{lp-020}, \cite{lp-020-quasar-3,lp-105-quasar})
+provides finality based on \emph{three} independent cryptographic hardness
+assumptions, composed in a single block-finalization certificate. An
+adversary must break \emph{all three} simultaneously to forge a
+\Lux{}/\Zoo{} block.
+
+\begin{longtable}{p{3.8cm}p{4.5cm}p{6.4cm}}
+\toprule
+\textbf{Layer} & \textbf{Hardness assumption} & \textbf{Role in finality} \\
+\midrule
+\endhead
+$\BLS{}_{12\text{-}381}$ & Discrete log over BLS pairings (classical).
+   See \Lux{} \textsc{lp-075}~\cite{lp-075-bls}.
+   & Classical aggregate signature for the validator quorum.
+   Carries the bulk of liveness throughput. \\
+Ringtail Ring-LWE & Ring Learning-With-Errors (post-quantum lattice).
+   See \Lux{} \textsc{lp-073}~\cite{lp-073-ringtail,ring-lwe}.
+   & Post-quantum threshold signature; co-signed with \BLS{} on every
+   block. Falls back to majority Ringtail-only certificate if \BLS{}
+   is suspect. \\
+$\MLDSA{}\text{-}65$ via Z-Chain Groth16 &
+   Module-Lattice signature (\textsc{nist} \textsc{fips}~204).
+   See \Lux{} \textsc{lp-070}~\cite{lp-070-mldsa,nist-mldsa}, with
+   succinct proof of validator identity via Groth16~\cite{groth16}.
+   & Post-quantum \emph{identity proof} layer; binds each
+   block-signing key to a \textsc{pq}-safe credential committed on
+   Z-Chain. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Forgery requires breaking all three}
+
+A valid \Quasar{} 3.0 block-finalization certificate $\sigma$ contains:
+
+\[
+\sigma \;=\; \big( \sigma_{\BLS{}},\; \sigma_{\text{Ringtail}},\; \pi_{\MLDSA{}} \big)
+\]
+
+\noindent where $\sigma_{\BLS{}}$ is the aggregate $\BLS{}_{12\text{-}381}$
+signature from the validator quorum, $\sigma_{\text{Ringtail}}$ is the
+threshold Ring-LWE signature, and $\pi_{\MLDSA{}}$ is a Groth16 proof
+that every signing key was bound to a valid $\MLDSA{}\text{-}65$
+credential at block height $h$.
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item Forging $\sigma_{\BLS{}}$ alone requires breaking discrete log on
+  BLS12-381. Classical adversary; quantum adversary breaks this in
+  polynomial time post-Q-day.
+\item Forging $\sigma_{\text{Ringtail}}$ requires solving Ring-LWE for
+  the chosen lattice parameters. Believed secure against both
+  classical and quantum adversaries.
+\item Forging $\pi_{\MLDSA{}}$ requires either breaking
+  $\MLDSA{}\text{-}65$ (a different module-lattice problem from
+  Ring-LWE) or breaking the Groth16 soundness assumption (knowledge
+  of pairing-based extractor).
+\end{itemize}
+
+The hardness assumptions are deliberately heterogeneous: discrete log
+over pairing-friendly curves (classical), Ring-LWE (lattice family A),
+and module lattice signatures with succinct proof (lattice family B
+with pairing-based zero-knowledge). A break in any single family does
+not propagate to the others.
+
+\subsection{Q-day resilience}
+
+Define \emph{Q-day} as the day a cryptographically relevant quantum
+computer breaks $\BLS{}_{12\text{-}381}$ in polynomial wall-clock time.
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item \emph{Pre-Q-day}: all three signatures required. \BLS{} carries
+  liveness; \textsc{pq} layers are belt-and-braces.
+\item \emph{Post-Q-day}: \BLS{} compromise alone does not break
+  finality. The Ringtail + $\MLDSA{}$ pair is sufficient for
+  Byzantine-fault-tolerant finalization. The chain enters
+  ``\textsc{pq}-only'' mode by social-consensus governance vote
+  (Holographic \DAO{}, \S\ref{sec:dao}) until \BLS{} is replaced.
+\item \emph{No silent break}: an attacker who silently obtains a
+  \BLS{} forgery cannot retroactively rewrite history because the
+  Ringtail + $\MLDSA{}$ proofs remain on-chain in every prior block.
+\end{itemize}
+
+\subsection{Settlement guarantees for Zoo / Liquidity workloads}
+
+Every securities trade settled via the \Lux{} chain stack carries a
+\Quasar{} 3.0 certificate. Three concrete guarantees follow for a
+retail user:
+
+\begin{enumerate}[nosep,leftmargin=1.4em]
+\item \textbf{Trade integrity is post-quantum-safe.} The trade match
+  is signed under all three layers; a future quantum adversary cannot
+  rewrite a settled trade.
+\item \textbf{Custody is post-quantum-safe.} M-Chain (\Lux{}
+  \textsc{lp-019}~\cite{lp-019-mchain}) holds threshold custody keys
+  using Ringtail \textsc{pq} threshold signatures.
+\item \textbf{Audit trail is post-quantum-safe.} The Merkle root of
+  every settled block is anchored under \Quasar{} 3.0; the auditor
+  needs only the \textsc{pq} verification key set to verify
+  historical state.
+\end{enumerate}
+
+\subsection{Cross-references}
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item \Lux{} \textsc{lp-020} --- \Quasar{} Consensus 3.0~\cite{lp-020-quasar-3}.
+\item \Lux{} \textsc{lp-070} --- $\MLDSA{}\text{-}65$ profile~\cite{lp-070-mldsa}.
+\item \Lux{} \textsc{lp-073} --- Ringtail Ring-LWE threshold~\cite{lp-073-ringtail}.
+\item \Lux{} \textsc{lp-075} --- $\BLS{}_{12\text{-}381}$ aggregate~\cite{lp-075-bls}.
+\item \Lux{} \textsc{lp-105} --- \Quasar{} 3.0 paper~\cite{lp-105-quasar}.
+\item \Lux{} \textsc{lp-019} --- M-Chain MPC~\cite{lp-019-mchain}.
+\item \Lux{} \textsc{lp-013} --- F-Chain FHE~\cite{lp-013-fchain}.
+\item \Lux{} \textsc{lp-134} --- A/B/M/F chain topology~\cite{lp-134-topology}.
+\end{itemize}

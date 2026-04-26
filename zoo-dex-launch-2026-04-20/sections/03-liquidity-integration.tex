@@ -1,0 +1,149 @@
+\section{Liquidity Protocol Integration}
+\label{sec:liquidity-integration}
+
+The \Liquidity{} Protocol is the compliance-by-construction settlement
+standard for tokenised securities formally launched by \Liquidity{}.io
+on April 1, 2026 with a soundness proof published alongside
+\cite{liquidity-protocol-formal}. \Lux{}, \Hanzo{}, \Zoo{}, and Pars
+adopted the \Liquidity{} Protocol on April 20, 2026; this section
+documents \Zoo{}'s adoption \cite{zoo-adopts-liquidity-protocol}.
+
+\subsection{What the Liquidity Protocol provides}
+
+\Liquidity{} Protocol is the contract a chain accepts to integrate
+with the \Liquidity{}.io control plane. The contract specifies:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item The KYC/AML perimeter: where checks happen, what they verify,
+        what evidence is admissible.
+  \item The broker-dealer interface: which actions require BD
+        signoff, what the BD's signing key looks like on-chain, how
+        BD attestations flow through transactions.
+  \item The transfer-agent interface: how the official record is
+        updated, what events constitute a record update, how the
+        chain's view of beneficial ownership is reconciled with the
+        TA's view.
+  \item The market-center interface: what data the venue must
+        publish (best-bid-best-offer, last-trade, volume), what
+        venue-side reporting goes back to the BD and TA.
+  \item The dispute interface: how a flagged transaction is unwound,
+        what cancel/reverse semantics look like at the chain level.
+\end{enumerate}
+
+The soundness proof in \cite{liquidity-protocol-formal} establishes
+that an integrating chain that follows the contract cannot construct
+a state that is unattributable, unrecoverable, or non-compliant
+under SEC ATS, FINRA BD, and registered TA rules. Zoo inherits this
+soundness by integrating against the formal contract.
+
+\subsection{The Liquidity precompile on Zoo D-Chain}
+
+\Zoo{} D-Chain ships a precompile at a reserved address that
+implements the chain-side half of the \Liquidity{} Protocol. The
+precompile interface exposes:
+
+\begin{lstlisting}[language=C++,caption={Liquidity precompile (Zoo D-Chain)}]
+namespace zoo::dchain::liquidity {
+
+  // KYC/AML perimeter
+  bool is_kyc_clear(Address holder);
+  bool is_aml_clear(Address holder, Hash transaction_intent);
+
+  // Broker-dealer attestations
+  bool bd_authorised(Address holder, ActionId action);
+  Hash bd_signoff_required_for(ActionId action);
+
+  // Transfer agent
+  void notify_ta_of_trade(TradeEvent ev);
+  Hash ta_record_root_at_block(BlockHeight h);
+
+  // Market center
+  void publish_bbo(Pair p, Price bid, Price ask);
+  void publish_last_trade(Pair p, Price px, Quantity qty);
+
+  // Dispute / unwind
+  bool is_action_disputed(Hash action_hash);
+  void execute_unwind(Hash action_hash, UnwindReason reason);
+}
+\end{lstlisting}
+
+The precompile is the only on-chain entity that can mutate the
+\texttt{SecurityClass} state for a regulated security. The matching
+engine, the AMM, the order types --- all of them call into the
+precompile to verify each action before applying state changes.
+Trade requests for which the precompile returns ``not allowed''
+never reach the order book.
+
+\subsection{Cross-chain trade routing through B-Chain}
+
+For pairs where the deepest liquidity lives outside \Zoo{} D-Chain
+(e.g., a security listed on \Zoo{} but with cross-listing liquidity
+on \Lux{} C-Chain or external venues), trades route via B-Chain
+\cite{lp-134}:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item Order submitted on \Zoo{} D-Chain.
+  \item Matching engine determines best route includes a cross-chain
+        leg.
+  \item B-Chain bridge message emitted; \Lux{} \DEX{} \cite{lux-dex}
+        executes the cross-chain leg.
+  \item Settlement leg returns via B-Chain; the cross-chain attestation
+        carries triple-cert proof.
+  \item Local fill is recorded; transfer-agent notify fires; trade
+        finalised.
+\end{enumerate}
+
+The \Liquidity{} precompile is consulted on both sides of the
+B-Chain hop: \Zoo{} D-Chain enforces \Zoo{}-side compliance; \Lux{}
+C-Chain (also a \Liquidity{} Protocol integrator) enforces \Lux{}-side
+compliance. A trade that violates compliance on either side is
+rejected.
+
+\subsection{Why a precompile and not a smart contract}
+
+The \Liquidity{} integration must be unbypassable. If KYC checks
+lived in an EVM contract, an application contract could fork the
+precompile, omit the KYC call, and trade against the matching engine
+directly. By living in the precompile (chain-built-in code, not
+EVM-deployable), the \Liquidity{} integration is enforced at the
+chain interpreter level. There is no application-contract path that
+the matching engine accepts that does not first go through the
+precompile.
+
+This is the compliance-by-construction property that the \Liquidity{}
+Protocol soundness proof relies on.
+
+\subsection{Soundness inheritance}
+
+The \Liquidity{} Protocol formal proof \cite{liquidity-protocol-formal}
+shows that a chain that:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item exposes the \Liquidity{} precompile as the only mutator of
+        \texttt{SecurityClass} state, and
+  \item routes every trade, transfer, and corporate action through
+        the precompile, and
+  \item maintains the cross-chain invariants for B-Chain hops,
+\end{enumerate}
+
+inherits the soundness property: no chain state is reachable that
+violates the SEC ATS, FINRA BD, or registered TA obligations
+encoded in the protocol. Zoo D-Chain meets all three preconditions
+and therefore inherits soundness from April 20, 2026 onward.
+
+\subsection{Operational interfaces}
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{Issuer onboarding.} Issuer registers with
+        \Liquidity{}.io; the resulting attestation is published on
+        A-Chain; \Zoo{} D-Chain's listing-admission flow reads the
+        A-Chain attestation; once verified, the listing becomes
+        active.
+  \item \textbf{Holder onboarding.} Holder onboards via wallet UX
+        through \Liquidity{}.io's KYC flow; the resulting on-chain
+        record sets a holder-eligibility bit on A-Chain that the
+        precompile reads.
+  \item \textbf{Audit interface.} Regulators query the on-chain
+        record directly; the chain log is the audit trail; no
+        secondary database is needed.
+\end{itemize}

@@ -1,0 +1,147 @@
+\section{Activation Roadmap}
+\label{sec:roadmap}
+
+\Zoo{} \DEX{} activates on April 20, 2026, alongside \Lux{},
+\Hanzo{}, and Pars adopting the \Liquidity{} Protocol formally
+launched on April 1, 2026 by \Liquidity{}.io
+\cite{liquidity-protocol-formal,zoo-adopts-liquidity-protocol}.
+
+\subsection{Phase 0 --- spec freeze (2026-04-01)}
+
+This paper, the supporting ZIPs (Zoo \DEX{} V2/V3/V4 contracts,
+\Liquidity{} precompile interface, retail UX, conservation
+allocation), and the activation client release freeze on
+2026-04-01 (the \Liquidity{} Protocol formal launch). After this
+date only spec-clarification PRs are accepted; behaviour-changing
+PRs slip to a post-activation patch release.
+
+\subsection{Phase 1 --- testnet bring-up (2026-04-01 through 2026-04-13)}
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \Zoo{} D-Chain testnet validators come online with
+        activation-candidate binaries.
+  \item AMM V2 / V3 deploy on testnet with seed liquidity for the
+        initial listing set.
+  \item AMM V4 precompile target dummied to a testnet \Lux{} \DEX{}
+        instance for cross-chain test paths.
+  \item \Liquidity{} precompile testnet image deployed; KYC, BD,
+        and TA hooks exercised end-to-end against \Liquidity{}.io
+        sandbox endpoints.
+  \item Initial securities listings onboarded in dry-run mode:
+        equity tokens, treasury tokens, REIT tokens, perpetual
+        contracts on a representative basket.
+  \item Wallet release-candidates exercise the trade flow on
+        testnet for retail UX validation.
+\end{itemize}
+
+\subsection{Phase 2 --- canary (2026-04-13 through 2026-04-19)}
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \Zoo{} D-Chain canary mainnet brought up with a subset of
+        validators.
+  \item Initial market-makers onboarded with rebate-tier
+        agreements.
+  \item Closed-beta retail user cohort tests trade flow on a small
+        subset of listings.
+  \item Cross-chain routing exercised via B-Chain to \Lux{} C-Chain
+        canary.
+  \item \Liquidity{}-precompile attestation flow exercised on
+        production \Liquidity{}.io endpoints.
+\end{itemize}
+
+\subsection{Phase 3 --- activation (2026-04-20)}
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \Zoo{} D-Chain mainnet open to all validators.
+  \item AMM V2 / V3 / V4 production-active.
+  \item Local Zoo \DEX{} CLOB precompile activated.
+  \item Continuous limit book and batch auction modes available
+        for retail and institutional flow.
+  \item Order types matrix (limit, market, stop, IOC, FOK,
+        post-only, hidden, iceberg) available across all listings.
+  \item Wallet GA with \Zoo{} \DEX{} access.
+  \item Initial securities listing cohort opens for trading:
+        equities (tokenised fractional shares), fixed income
+        (corporate bonds, treasuries), RWA (REITs, commodities,
+        carbon credits), derivatives (perpetuals, dated futures,
+        European options).
+  \item NFT migration second cohort opens for trading on the \DEX{}
+        with native fractional V3 pools.
+  \item Conservation allocation begins flowing to the foundation's
+        impact program from the first trade onward.
+\end{itemize}
+
+\subsection{Phase 4 --- post-activation roll-forward}
+
+\Zoo{} \DEX{} continues to ship features incrementally. Roadmap
+items targeted for post-activation patch releases:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Phased pair listings: weekly cohorts of new tokenised
+        securities listings as issuers complete \Liquidity{}.io
+        onboarding.
+  \item Market-maker programme expansion: tiered rebate schedules,
+        bespoke risk-allocation lines, per-pair maker grants from
+        the protocol treasury.
+  \item Institutional bridges: prime-broker integrations for
+        tokenised-securities flow, custody-vault integrations for
+        large holders, on-ramp/off-ramp via existing exchanges via
+        the \Liquidity{} Protocol's BD interface.
+  \item International listings: cohort-by-cohort onboarding of
+        non-US issuers under the \Liquidity{} Protocol's
+        jurisdiction-aware compliance perimeter.
+\end{itemize}
+
+\subsection{Cross-paper relationships}
+
+\Zoo{} \DEX{} sits at the intersection of several \Zoo{} papers:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{Upstream:} \Zoo{} 4.0 \cite{zoo-4-0} (February 14,
+        2026 L1 graduation). \DEX{} runs on the GPU-native L1
+        substrate; the AMM curve math, order-book matching, and
+        cert generation all execute on the GPU.
+  \item \textbf{Upstream:} \Zoo{} 3.0 \cite{zoo-3-0} (October 31,
+        2025 full PQ stack). The \DEX{}'s settlement Q-day
+        resilience, NFT-loan PQ signing, and validator key
+        management all inherit the 3.0 PQ posture.
+  \item \textbf{Lateral:} \Liquidity{} Protocol formal proof
+        \cite{liquidity-protocol-formal} (April 1, 2026
+        \Liquidity{}.io launch). Compliance perimeter and audit
+        interface are inherited.
+  \item \textbf{Lateral:} Zoo Adopts the \Liquidity{} Protocol
+        \cite{zoo-adopts-liquidity-protocol} (April 20, 2026
+        adoption note). The proof artifact for Zoo's specific
+        adoption.
+  \item \textbf{Lateral:} Zoo 2025 securities and \DAO{}
+        \cite{zoo-2025-securities-and-dao} (\$113T market thesis).
+        The market-sizing and governance frame for the \DEX{}'s
+        securities listings.
+  \item \textbf{Lateral:} Per-\LLM{} chains \cite{zoo-per-llm-chains}.
+        Per-\LLM{} token markets list on the \DEX{} alongside
+        traditional securities.
+  \item \textbf{Origin:} \Zoo{} 2021 original whitepaper
+        \cite{zoo-2021}. The \DEX{} is the realisation of the 2021
+        ``NFT Liquidity Protocol'' coinage.
+\end{itemize}
+
+\subsection{Out-of-scope for this launch}
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Synthetic exposures and structured products beyond the
+        listed perpetual / dated future / European option matrix.
+  \item Cross-jurisdictional retail accounts beyond the initial
+        US-centric \Liquidity{}.io perimeter; international
+        retail onboarding ships post-activation.
+  \item Margin lending against tokenised-equity collateral; ships
+        in a follow-up release with dedicated risk parameters.
+\end{itemize}
+
+\subsection{One-line summary}
+
+\Zoo{} \DEX{} is what happens when you take \Zoo{} 4.0's
+\GPU{}-native sovereign L1, settle native securities on a
+\Lux{}-D-Chain white-label, integrate the \Liquidity{} Protocol's
+compliance perimeter, and ship a Robinhood-style retail UX with
+zero commission, fractional shares, 24/7 markets, and sub-1.1s
+T+0 settlement. April 20, 2026.

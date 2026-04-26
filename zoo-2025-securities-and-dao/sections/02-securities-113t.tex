@@ -1,0 +1,125 @@
+\section{\$113 Trillion Digital Securities Market --- Powered by Lux + Liquidity}
+\label{sec:securities}
+
+\subsection{Market size}
+
+The total addressable market for digital securities globally is
+estimated at approximately \textbf{\$113 trillion}. This figure is the
+standard market-size estimate aggregating global capitalization across
+listed equities, fixed income, derivatives, and tokenized real-world
+assets~\cite{bis-tokenization,wfe-market-cap}. We are explicit that
+this is a \emph{market-size estimate}, not a \Zoo{}-specific
+total-value-locked (\textsc{tvl}) claim. The \Zoo{} ecosystem is not
+attempting to custody \$113 trillion; it is positioning itself as the
+open AI / wildlife / metaverse layer of an ecosystem whose addressable
+opportunity is that large.
+
+\subsection{Positioning}
+
+The stack of responsibilities at the \Quasar{} 3.0 activation date is:
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item \textbf{\Zoo{} Labs Foundation} provides the open AI / wildlife /
+  metaverse layer. \Zoo{} is the application surface --- per-\textsc{llm}
+  chains, NFT-native conservation, AR/VR companions, Game-Fi.
+\item \textbf{\Lux{} Network} provides the regulated chain
+  infrastructure: \Quasar{} 3.0 consensus (\Lux{} \textsc{lp-020}),
+  identity proof on Z-Chain, custody on M-Chain MPC, and FHE substrate
+  on F-Chain. Settlement happens here.
+\item \textbf{\Liquidity{}} is \Zoo{}'s \emph{exclusive partner} for
+  actual securities trading at retail scale. \Liquidity{} carries the
+  regulated ATS / broker-dealer / transfer-agent
+  perimeter~\cite{liquidity-perimeter} and is where the regulated
+  market center, control plane, and official records live.
+\end{itemize}
+
+\subsection{Tagline and concrete capabilities}
+
+\begin{quote}\itshape
+Robinhood-style capabilities for everyone --- actually make money like
+the 1\% finally.
+\end{quote}
+
+What that resolves to in concrete economic terms:
+
+\begin{longtable}{p{4.6cm}p{10cm}}
+\toprule
+\textbf{Capability} & \textbf{Description} \\
+\midrule
+\endhead
+Zero-commission trading &
+   No per-trade commission for retail orders routed through
+   \Liquidity{}. Revenue is earned on spread, market-data, and
+   subscription tiers, not on commission per share. \\
+Fractional shares &
+   Position sizes denominated to the cent, not to the share. A
+   \$5 position in a \$200 stock is one-fortieth of a share. \\
+Instant settlement on \Quasar{} &
+   Trades settle in sub-second finality on \Quasar{} 3.0 consensus
+   (\S\ref{sec:quantum}). Cash and securities legs both atomic. \\
+Tokenized real-world securities &
+   Stocks, bonds, commodities, REITs, and private-equity positions
+   issued as on-chain tokens with the official transfer-agent record
+   maintained by \Liquidity{}. \\
+24/7 markets &
+   The chain is always on; market hours are an exchange-side policy,
+   not a settlement-layer constraint. Off-hours trading routes via
+   \Liquidity{} as the market center permits. \\
+Public verifiable order book &
+   Public Merkle commitments of every match; every retail trader can
+   verify their fill against the canonical order book without trusting
+   a private feed. \\
+Compliant by construction &
+   KYC, AML, suitability, and best-execution checks are enforced at
+   the \Liquidity{} perimeter \emph{before} an order is routed to the
+   chain. The chain is not a regulatory loophole; it is the
+   audit-eligible settlement layer behind a regulated front. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Compliance}
+
+The full regulated stack is operated by \Liquidity{}, not by \Zoo{}.
+\Liquidity{} carries:
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item \textbf{SEC ATS} registration --- the alternative trading system
+  is the regulated market center. \Zoo{} does not operate one.
+\item \textbf{FINRA broker-dealer} registration --- order routing,
+  best execution, suitability, KYC/AML.
+\item \textbf{Registered transfer agent} --- maintenance of the
+  official record of securities ownership and transfer.
+\end{itemize}
+
+This separation is deliberate: \Zoo{} Labs Foundation is a 501(c)(3)
+non-profit and cannot itself operate a regulated market center.
+\Liquidity{} carries that perimeter so \Zoo{} can ship the open-AI /
+wildlife / metaverse layer that lives on top of it.
+
+\subsection{Quantum-secure settlement}
+
+Every securities trade routed through this stack settles with a
+\Quasar{} 3.0 certificate (see \S\ref{sec:quantum}): \BLS{}-aggregate
+classical signature, Ringtail Ring-LWE post-quantum threshold
+signature, and an $\MLDSA{}\text{-}65$ identity proof committed via the
+Z-Chain Groth16 rollup. The retail user can therefore truthfully say:
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item \emph{Your trade is post-quantum-safe.}
+\item \emph{Your custody is post-quantum-safe.}
+\item \emph{Your audit trail is post-quantum-safe.}
+\end{itemize}
+
+This is the first time those three properties hold simultaneously for a
+retail-accessible securities stack.
+
+\subsection{Why Zoo (and not a generic chain)}
+
+\Zoo{} is the alignment layer that gives the stack a reason to exist
+beyond pure financial throughput. Conservation-aligned issuance, NFT
+companions that fund real-world sanctuaries, and per-\textsc{llm} chains
+that track research provenance are the durable economic flywheels that
+keep retail traders engaged longer than a fee-rebate program would. The
+\Zoo{} Foundation's 501(c)(3) status binds a portion of every economic
+flow back into endangered-species preservation and open AI research,
+which is the lineage of the founding 2021 vision.

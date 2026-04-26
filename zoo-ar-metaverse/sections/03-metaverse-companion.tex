@@ -1,0 +1,74 @@
+\section{Metaverse Companion}
+\label{sec:metaverse}
+
+\subsection{2021 Commitment}
+
+\S23 described a metaverse companion that follows the user across
+surfaces, persists state, and integrates with games (mini-games,
+Coin Runner, Memory Bridge --- \S24).
+
+\subsection{2025-12-15 Realization}
+
+The companion is the persistent avatar binding the user's Zoo DID
+(\textsc{zip-0033}) to:
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item Wallet (Lux Wallet, white-label per \textsc{lp-134}).
+\item \NFT{} portfolio (Zoo \NFT{} Liquidity Protocol,
+  \texttt{contracts/specs/zoo-nft-liquidity-protocol.md}).
+\item Chat (Zoo Desktop avatar, \S\ref{sec:cute-ai}).
+\item \AR{} (Zoo Field, \S\ref{sec:ar}).
+\item Virtual Habitat Simulation (\textsc{zip-0300}).
+\item Multiplayer Conservation Game (\textsc{zip-0303}).
+\item Spatial Web agents (\textsc{zip-0011}, \textsc{zip-0433}).
+\end{itemize}
+
+\subsection{State Continuity}
+
+The companion's state (XP, KEEPER, attestations, semantic memory) is
+canonically held under the user's Zoo DID. Every surface reads from
+A-Chain attestation; writes back through Hanzo \AI{} Chain receipts.
+Cross-surface continuity is therefore a function of identity, not a
+function of any single platform.
+
+\subsection{Game-Asset Interoperability}
+
+\textsc{zip-0304} (Game Asset Interoperability) defines how items move
+across mini-games. \textsc{zip-0210} (Cross-Collection Composability)
+defines how Zoo \NFT{}s compose with non-Zoo collections through
+attested trait inheritance.
+
+\subsection{Why Holographic}
+
+The companion realizes the ``holographic'' axis named in the 2021
+paper's 2025 update (\S28): every sub-DAO, per-\textsc{llm} chain, and
+regional chapter inherits the same governance topology and the same
+identity primitive. Whether the user is on Desktop, Field (\AR{}), the
+DEX, or a sub-DAO sub-domain, the same DID drives the same companion.
+That is the engineering meaning of ``holographic'' in 2025-12-15
+\Zoo{}: a single template, replicated across every surface, anchored
+on the same chain.
+
+\subsection{Architecture Diagram (Logical)}
+
+\begin{verbatim}
+            ┌──────────────┐
+            │   Zoo DID    │  (ZIP-0033, A-Chain attested)
+            └──────┬───────┘
+                   │
+       ┌───────────┴───────────┐
+       │                       │
+  ┌────▼──────┐         ┌──────▼─────┐
+  │ Companion │ <------>│ Experience │ (Ledger; ZIP-0401)
+  │  State    │         │  Memory    │
+  └────┬──────┘         └────────────┘
+       │
+  ┌────┴──────────────────────────┐
+  │  Surfaces                     │
+  │  - Zoo Desktop (avatar chat)  │
+  │  - Zoo Field (AR)             │
+  │  - Zoo Wallet                 │
+  │  - Zoo NFT Marketplace        │
+  │  - Sub-DAOs (per-LLM chains)  │
+  └───────────────────────────────┘
+\end{verbatim}

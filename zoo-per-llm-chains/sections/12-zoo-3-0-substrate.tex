@@ -1,0 +1,39 @@
+\section{\Zoo{} 3.0 \GPU{}-Native Substrate}
+\label{sec:zoo-3-0-substrate}
+
+The per-\LLM{} chain framework specified in this paper executes on the
+\Zoo{} 3.0 \GPU{}-native substrate. This section anchors the
+relationship between the per-\LLM{} chain abstraction and the underlying
+\GPU{} primitives that make it economically viable.
+
+\subsection{\GPU{}-residency under per-\LLM{} chain workloads}
+
+A per-\LLM{} chain workload is a constant stream of attestation
+verifications, attribution-graph updates, and inference-receipt
+rollups. Each of these operations is dominated by signature
+verification, hash construction, and small-state mutation. Running
+this stream on a CPU \textsc{evm} bottlenecks at the
+verification step. \Zoo{} 3.0 takes the entire stream onto the
+\GPU{} per the \GPU{}-Residency Invariant
+(\textsc{lp-137})~\cite{lp-137-residency}: data lands on the device
+when an attestation enters the mempool and stays on the device through
+verification, ledger mutation, and certificate emission.
+
+\subsection{\QuasarGPU{} adapter (\textsc{lp-132})}
+
+The \QuasarGPU{} adapter~\cite{lp-132-quasargpu} schedules deterministic
+\GPU{} kernels for triple-consensus signature verification. For per-\LLM{}
+chains this matters because the chain emits a high-volume of small,
+heterogeneous transactions (training receipt, eval receipt, attribution
+update) that the adapter batches into a single device-side verification
+pass per block. The result is that a per-\LLM{} chain block clears in
+the same wall-clock time as a generic \Zoo{} block despite the different
+transaction mix.
+
+\subsection{Cross-reference}
+
+The full \Zoo{} 3.0 substrate specification, including the L1 graduation
+mechanics, native \DEX{}, AI desktop, bot, bridge, and privacy paths,
+is in the \emph{Zoo 3.0 Launch} paper~\cite{zoo-3-0-launch}. Per-\LLM{}
+chains are the canonical first-class workload of that substrate; the
+two specifications activate together on 2025-12-25.

@@ -1,0 +1,148 @@
+\section{Top-2 NFT Migration and the Original NFT Liquidity Protocol}
+\label{sec:nft-migration}
+
+The \Zoo{} \DEX{} is the migration destination for \NFT{} markets,
+and the realisation of the original ``NFT Liquidity Protocol''
+coinage from the October 31, 2021 \Zoo{} whitepaper \cite{zoo-2021}.
+
+\subsection{What the 2021 paper coined}
+
+The 2021 \Zoo{} whitepaper introduced ``NFT Liquidity Protocol'' as
+the term for a system in which \NFT{}s become productive collateral
+inside a yield-bearing on-chain market. The 2021 vision had three
+moving parts:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item Wildlife conservation \NFT{}s as on-chain collateral.
+  \item Borrowing and lending against the \NFT{}s without the
+        holder having to sell.
+  \item Yield mechanisms that fed back to conservation.
+\end{enumerate}
+
+The original BSC implementation in 2021 had infrastructural
+limitations (no native fractional secondary trading, no on-chain
+appraisal, no privacy primitives, no triple-cert finality). The
+\Zoo{} \DEX{} on \Zoo{} D-Chain in April 2026 is the first venue
+where every original 2021 commitment is implementable end-to-end.
+
+\subsection{Top-2 NFT migration plan}
+
+\Zoo{} 4.0 launched (February 14, 2026) with an explicit go-to-market
+for \NFT{} migration, targeting the leading \NFT{} collections in
+wildlife/conservation, AI/agent, and metaverse categories
+\cite{zoo-4-0}. The \Zoo{} \DEX{} launch on April 20, 2026 makes that
+go-to-market actionable: the migrating collections now have a venue
+on which to trade and to borrow against.
+
+\subsection{Native fractional NFT trading}
+
+A whole \NFT{} on \Zoo{} D-Chain can be wrapped into a Fractional
+ERC-4626 vault that issues fungible shares. The vault shares trade
+on \Zoo{} \DEX{} V3 as a concentrated-liquidity pair against
+\$ZOO or stablecoin. Properties:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{Continuous price discovery.} The vault share's price
+        is a continuous market quote, not an episodic auction.
+  \item \textbf{Composable.} The vault shares are ZRC-20 tokens;
+        they compose into AMM pools, lending markets, derivatives,
+        and the \Liquidity{}-precompile-protected transfer flow.
+  \item \textbf{Re-aggregable.} Holders accumulating sufficient
+        shares can redeem the underlying \NFT{} from the vault by
+        burning all outstanding shares.
+\end{itemize}
+
+\subsection{Collateral-backed lending (the realised 2021 vision)}
+
+A holder of a high-value \NFT{} can use it as collateral for a loan
+in stablecoin, \$ZOO, or any listed asset. The flow:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item Holder locks the \NFT{} in a loan-escrow contract.
+  \item Loan terms (principal, APR, duration, collateral floor)
+        are agreed with a lender (or pooled-lender market).
+  \item Counterparties sign the loan agreement under the post-quantum
+        scheme inherited from \Zoo{} 3.0 \cite{zoo-3-0} (\Ringtail{}
+        + $\MLDSA{}\text{-}65$).
+  \item Holder receives the loan principal in the chosen denomination.
+  \item Liquidation oracle (A-Chain attested) monitors the
+        collateral floor against the appraisal feed (which can run
+        confidentially via F-Chain \cite{lp-013}).
+  \item Holder repays principal plus interest by the maturity date;
+        the \NFT{} is released. Or the collateral floor is breached
+        and liquidation triggers per \Zoo{} 3.0 NFT Liquidity
+        Protocol semantics.
+\end{enumerate}
+
+This is exactly the 2021 paper's vision, with the missing
+infrastructural pieces filled in by \Zoo{} 3.0 (PQ signing) and
+\Zoo{} 4.0 (\GPU{}-native execution and \DEX{}).
+
+\subsection{Provenance for AI/agent NFT collections}
+
+Collections whose value derives from on-chain AI provenance
+(generative-art collections, agent \NFT{}s, on-chain creatures with
+AI behaviour) benefit from A-Chain-anchored TEE inference receipts
+\cite{lp-134}. The provenance chain on \Zoo{} D-Chain is verifiable
+end-to-end: every act of generation that produced a token in the
+collection is traceable through the inference-receipt chain to a
+TEE-attested execution.
+
+\subsection{Token-bound accounts}
+
+ZRC-721 \NFT{}s on \Zoo{} D-Chain have native ERC-6551-style
+token-bound accounts. The account can hold \$ZOO, per-\LLM{} tokens,
+other \NFT{}s, and accrue yield from staking or LP positions.
+Combined with the \Zoo{} \DEX{}, the \NFT{} becomes a programmable
+agent: it can hold a portfolio, execute trades on its own behalf
+within whitelisted bounds, and participate in governance.
+
+\subsection{Migration mechanics}
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Snapshot.} \Zoo{} Bridge takes a snapshot of holders
+        on the source chain (Ethereum, BSC, etc.).
+  \item \textbf{Lock-and-mint.} The source-chain contract is escrowed
+        via the bridge committee; the \Zoo{} D-Chain native ZRC-721
+        is minted to the same wallet address.
+  \item \textbf{Metadata mirror.} On-chain metadata moves over with
+        provenance hash chain intact; off-chain assets re-pin to
+        \Zoo{}'s decentralised storage layer.
+  \item \textbf{Treasury onboarding.} The collection's treasury is
+        onboarded to a \Zoo{} \DAO{}-governed multisig with optional
+        F-Chain confidential balance.
+  \item \textbf{Royalty redirection.} Future royalties accrue to the
+        D-Chain contract; the bridge keeps the source-chain contract
+        readable for legacy explorers.
+\end{enumerate}
+
+The bridge committee under \Zoo{} 3.0 PQ discipline \cite{zoo-3-0}
+attests the migration; the destination mint carries triple-cert
+finality.
+
+\subsection{Continuous secondary trading}
+
+After migration, every transfer of an \NFT{} from the migrated
+collection trades on \Zoo{} \DEX{}: as a whole-token transfer
+against a price-discovery pair, as a fractional share via the V3
+vault pool, or as collateral inside a loan agreement. The
+collection's secondary-market liquidity is materially better on
+\Zoo{} \DEX{} than on its source chain because of:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Sub-1.1s settlement (vs. multi-block confirmation
+        elsewhere).
+  \item Native fractional secondary market.
+  \item Composable loan agreements.
+  \item Confidential balance and orderflow optionality.
+\end{itemize}
+
+\subsection{Why this closes a 2021 commitment}
+
+The 2021 \Zoo{} whitepaper coined ``NFT Liquidity Protocol'' but
+the BSC infrastructure of the time could not deliver the full
+promise. \Zoo{} \DEX{} on \Zoo{} D-Chain in April 2026 delivers it:
+sub-second-final, post-quantum, compliance-perimetered, with
+native fractional secondary, confidential balances, and a
+collateralised lending primitive. This paper is the activation
+document for that closure.

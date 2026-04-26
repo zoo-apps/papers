@@ -1,0 +1,59 @@
+\section{Mission}
+\label{sec:mission}
+
+The Zoo Foundation was established to harness blockchain technology
+and the global community it connects to help preserve the world's most
+critically endangered animal species. The mission was articulated in
+\S7 of the October 31, 2021 founder whitepaper \cite{zoo-2021}. This
+paper documents what shipped against that mission.
+
+\subsection{Operational Definition}
+
+A 501(c)(3) non-profit organization (Zoo Labs Foundation Inc.) that:
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item Maintains a digital twin (\NFT{}-bound AI companion) for every
+  species in its V1 catalogue.
+\item Routes a 1--3\% sustainability tax on every protocol transaction
+  to a treasury multisig governed by the Zoo \DAO{}.
+\item Disburses treasury funds to named conservation partners
+  through quarterly grant cycles.
+\item Publishes verifiable impact reports under the Conservation Impact
+  Measurement framework (\textsc{zip-0501}) and the Evidence Locker
+  Index (\textsc{zip-0560}).
+\item Operates a sanctuary visit and education program tied to in-situ
+  field operations.
+\end{itemize}
+
+\subsection{2021 Commitment vs.\ 2025-12-15 Realization}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{6.5cm}p{8cm}}
+\toprule
+\textbf{2021 Commitment (\S7)} & \textbf{2025-12-15 Realization} \\
+\midrule
+Digital twins of endangered species &
+V1 \NFT{} catalogue across 8 species (\S\ref{sec:catalogue}); each \NFT{} bears an empathetic-AI avatar (\textsc{zip-0400}, \textsc{zip-0402}). \\
+Monetary contribution to conservation partners &
+Sustainability tax (\texttt{contracts/specs/zoo-sustainability-tax.md}); routed to Foundation Treasury Multisig (M-Chain MPC, \textsc{lp-019}). \\
+Education for all ages worldwide &
+Educational AI Pillar (\textsc{zip-0008} avatar tutors; \textsc{zip-0405} conservation-aware language models). \\
+Fundraising events with partners &
+Quarterly grant cycles and Zoo Foundation events (off-chain, recorded on the Evidence Locker, \textsc{zip-0560}). \\
+Mitigate illegal wildlife trade &
+Anti-poaching alert network (\textsc{zip-0503}); satellite ecological monitoring (\textsc{zip-0425}). \\
+Sustainable animal sanctuaries &
+Habitat-restoration bonds (\textsc{zip-0113}); habitat conservation framework (\textsc{zip-0520}). \\
+Direct-save monthly contribution &
+Micro-donation streaming (\textsc{zip-0112}); gasless conservation transactions (\textsc{zip-0029}). \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The treasury is custodial under threshold-key signing on M-Chain
+(\textsc{lp-019}, MPC ceremonies) and settles under \Quasar{} 3.0
+(\textsc{lp-020}). Every grant disbursement is post-quantum-secure,
+end-to-end auditable, and lineage-traceable to a specific 2021
+whitepaper commitment.

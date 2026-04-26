@@ -1,0 +1,193 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage{caption}
+\usepackage{listings}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+    pdftitle={Zoo 3.0 - Full Post-Quantum Stack},
+    pdfauthor={Antje Worring, Zach Kelling},
+    pdfsubject={Zoo Labs Foundation - Full Post-Quantum Stack 2025},
+    pdfkeywords={Zoo 3.0, post-quantum, Ringtail, ML-DSA-65, BLS12-381, triple cert, Quasar 3.0}
+}
+
+% Macros (match Zoo 2.0 / 4.0 style)
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\Zen}{\textsc{Zen}}
+\newcommand{\Quasar}{\textsc{Quasar}}
+\newcommand{\Liquidity}{\textsc{Liquidity}}
+\newcommand{\PoAI}{\textsc{PoAI}}
+\newcommand{\TEE}{\textsc{tee}}
+\newcommand{\LLM}{\textsc{llm}}
+\newcommand{\GPU}{\textsc{gpu}}
+\newcommand{\DAO}{\textsc{dao}}
+\newcommand{\AMM}{\textsc{amm}}
+\newcommand{\DEX}{\textsc{dex}}
+\newcommand{\NFT}{\textsc{nft}}
+\newcommand{\FHE}{\textsc{fhe}}
+\newcommand{\ZKP}{\textsc{zkp}}
+\newcommand{\BLS}{\textsc{bls}}
+\newcommand{\MLDSA}{\textsc{ml-dsa}}
+\newcommand{\Ringtail}{\textsc{Ringtail}}
+\newcommand{\PQ}{\textsc{pq}}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    tabsize=2,
+    captionpos=b,
+}
+
+\title{\textbf{Zoo 3.0 --- Full Post-Quantum Stack}\\
+\large Every signature, every commitment, every proof in PQ-safe schemes}
+
+\author{
+Antje Worring, Zach Kelling\thanks{research@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{October 31, 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+\noindent \Zoo{} 3.0 is the full post-quantum era of the \Zoo{} stack.
+\Zoo{} 2.0 (October 2024) shipped a post-quantum L2 \textsc{evm} on
+\Lux{} with a precompile suite covering NIST PQC standards
+\cite{zoo-2-0}; \Zoo{} 3.0 (2025) hardens \emph{every} hot-path
+primitive across the \Zoo{} ecosystem to PQ-safe schemes.
+Specifically: every consensus signature is a triple cert
+($\BLS{}_{12\text{-}381}$ classical fast path, \Ringtail{} Ring-LWE
+threshold proof, $\MLDSA{}\text{-}65$ identity proof) inherited from
+the \Lux{} \Quasar{} 3.0 lane (\textsc{lp-020}); every governance
+commitment is a $\MLDSA{}\text{-}65$-signed Merkle root; every loan
+agreement under the Zoo \NFT{} Liquidity Protocol is \Ringtail{}-signed
+and bridge-attested; every inference receipt and training-data
+attribution carries PQ-safe witnesses. The \Zoo{} Bridge committee
+re-keys to threshold \MLDSA{} + \Ringtail{} on M-Chain. The Zoo \DAO{}
+migrates governance keys to threshold \MLDSA{}-65. zLLM commitments
+for training artefacts, governance votes, and inference receipts
+adopt PQ-safe Merkle accumulators. This paper documents the full
+PQ stack, the migration roadmap, and the cross-references to \Lux{}
+LP-020 (Quasar 3.0), LP-070 (\MLDSA{}), LP-073 (\Ringtail{}), and
+LP-075 (\BLS{}). Spec freeze: 2025-10-31. Phased rollout through
+2025; full activation aligned with \Lux{} \Quasar{} 3.0 cutover.
+
+\textbf{Keywords}: \Zoo{} 3.0, post-quantum, \Ringtail{}, $\MLDSA{}\text{-}65$,
+$\BLS{}_{12\text{-}381}$, triple cert, \Quasar{} 3.0, zLLM, NFT Liquidity
+Protocol
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\input{sections/01-context}
+\input{sections/02-triple-cert}
+\input{sections/03-zllm-pq}
+\input{sections/04-bridge-pq}
+\input{sections/05-nft-liquidity-pq}
+\input{sections/06-dao-migration}
+\input{sections/07-roadmap}
+
+\begin{thebibliography}{99}
+
+\bibitem{lp-009}
+Lux Foundation.
+\newblock LP-009: \GPU{}-Native \textsc{evm}.
+\newblock Lux Improvement Proposal, 2025.
+\newblock \url{https://github.com/luxfi/lps/lp-009}.
+
+\bibitem{lp-016}
+Lux Foundation.
+\newblock LP-016: B-Chain Bridge VM and Cross-Chain Attestation.
+\newblock Lux Improvement Proposal, 2025.
+
+\bibitem{lp-017}
+Lux Foundation.
+\newblock LP-017: Threshold Bridge Committee Key Schedule.
+\newblock Lux Improvement Proposal, 2025.
+
+\bibitem{lp-020}
+Lux Foundation.
+\newblock LP-020: \Quasar{} Consensus 3.0 (Triple Consensus: \BLS{} + \Ringtail{} + \MLDSA{}).
+\newblock Lux Improvement Proposal, 2025.
+
+\bibitem{lp-070}
+Lux Foundation.
+\newblock LP-070: $\MLDSA{}\text{-}65$ Identity Proof Lane.
+\newblock Lux Improvement Proposal, 2025.
+
+\bibitem{lp-073}
+Lux Foundation.
+\newblock LP-073: \Ringtail{} Ring-LWE Threshold Signature.
+\newblock Lux Improvement Proposal, 2025.
+
+\bibitem{lp-075}
+Lux Foundation.
+\newblock LP-075: $\BLS{}_{12\text{-}381}$ Aggregate Signature Lane.
+\newblock Lux Improvement Proposal, 2025.
+
+\bibitem{lp-105}
+Lux Foundation.
+\newblock LP-105: \Quasar{} Consensus Family Specification (Photon, Wave, Focus, Nova, Nebula).
+\newblock Lux Improvement Proposal, 2025.
+
+\bibitem{lp-134}
+Lux Foundation.
+\newblock LP-134: \Lux{} Chain Topology (P/C/X/Q/Z/A/B/M/F-Chains).
+\newblock Lux Improvement Proposal, 2025.
+
+\bibitem{zoo-2-0}
+Zoo Labs Foundation.
+\newblock Zoo \textsc{evm}: A Post-Quantum Safe L2 Blockchain with AI-Native Precompiles on the \Lux{} Network.
+\newblock Zoo Whitepaper, October 2024.
+
+\bibitem{zoo-4-0}
+Zoo Labs Foundation.
+\newblock Zoo 4.0 --- \GPU{}-Native Sovereign L1.
+\newblock Zoo Whitepaper, February 14, 2026.
+
+\bibitem{zoo-2021}
+Antje Worring et al.
+\newblock Zoo: A Decentralized Wildlife Conservation Platform.
+\newblock Zoo Whitepaper (Original), October 31, 2021.
+
+\bibitem{zoo-2025-securities-and-dao}
+Zoo Labs Foundation.
+\newblock Zoo 2025: Digital Securities, Quantum-Secure Settlement, and the Holographic Consensus \DAO{}.
+\newblock Zoo Whitepaper, December 15, 2025.
+
+\bibitem{nist-fips-204}
+NIST.
+\newblock FIPS 204: Module-Lattice-Based Digital Signature Standard ($\MLDSA{}$).
+\newblock NIST Federal Information Processing Standards, August 2024.
+
+\bibitem{ringtail-paper}
+Lux Foundation.
+\newblock The \Ringtail{} Ring-LWE Threshold Signature Scheme: Construction and Analysis.
+\newblock Lux Cryptography Note, 2025.
+
+\end{thebibliography}
+
+\end{document}

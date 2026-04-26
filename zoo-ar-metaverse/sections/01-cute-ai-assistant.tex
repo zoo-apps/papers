@@ -1,0 +1,89 @@
+\section{The Cute \AI{} Assistant}
+\label{sec:cute-ai}
+
+\subsection{2021 Commitment}
+
+\S21 of the founder whitepaper described an \AI{} assistant fused
+with each Zoo \NFT{}: emotionally attuned, conversational, capable of
+recognizing user context and personalizing responses, and ``ready to
+cheer you up.'' Each species would have a distinct personality
+profile.
+
+\subsection{2025-12-15 Realization}
+
+Ships as the on-device avatar within \textbf{Zoo Desktop}
+(Tauri + React, \texttt{\textasciitilde/work/zoo/app/}). Backed by the
+\Zen{} model family co-developed with \Hanzo{} \AI{}: \texttt{eco-1},
+\texttt{coder-1}, \texttt{nano-1} (see \textsc{zip-0010}). Personality
+is realized through:
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item Per-species system prompt and persona file shipped with each
+  \NFT{} (deterministic; on-chain hash committed under
+  \textsc{zip-0204}).
+\item Persistent semantic memory backed by the Experience Ledger
+  (\textsc{zip-0401}, content-addressable semantic memory).
+\item Real-time conversational UX (\textsc{zip-0417}).
+\item Multimodal conservation knowledge (\textsc{zip-0406}).
+\item Local-first inference on the user's device (Hanzo Network
+  GPU/CPU), with fallback to a Hanzo cluster when local resources are
+  insufficient.
+\end{itemize}
+
+\subsection{Personality Profiles (2021 Catalogue)}
+
+The eight V1 species each have a distinct, named personality
+articulated in the 2021 paper \S21.1 and instantiated in
+2025-12-15:
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{4cm}p{10cm}}
+\toprule
+\textbf{Species} & \textbf{Persona (canonical, 2021)} \\
+\midrule
+Red Wolf & Loyal pack-mate; encourages teamwork. \\
+Amur Leopard & Reserved scholar; surfaces obscure facts. \\
+Nubian Giraffe & Optimistic horizon-scout; long-term planner. \\
+Sumatran Elephant & Memory-keeper; reminds the user of past
+  interactions. \\
+Pygmy Hippo & Shy comedian; light comfort and small talk. \\
+Javan Rhinoceros & Gentle giant; encourages slow deep work. \\
+Siberian Tiger & Focused mentor; pushes mastery and discipline. \\
+Emperor Penguin & Stoic companion; weather-aware, calm. \\
+\bottomrule
+\end{tabular}
+\caption{Canonical V1 personalities, instantiated in 2025-12-15 as
+prompt + behaviour files.}
+\end{table}
+
+\subsection{Architecture}
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item \textbf{Frontend.} Zoo Desktop (Tauri 2 + React 19), with the
+  avatar rendered via the in-app 3D scene; voice synthesis local-only.
+\item \textbf{Inference.} \Zen{} models served by Hanzo Network on a
+  per-\textsc{llm} chain (one chain per model, each model is a
+  sovereign \Quasar{} appchain --- see \cite{zoo-perllm-chains}).
+\item \textbf{Memory.} Experience Ledger (content-addressable;
+  semantic-vector indexed); BitDelta personalization
+  (\textsc{zip-0007}); DeltaSoup community merging
+  (\textsc{zip-0009}).
+\item \textbf{Identity.} Avatar is bound to the user's Zoo DID
+  (\textsc{zip-0033}); on-device key custody.
+\item \textbf{Receipts.} Every inference call emits a TEE-attested
+  receipt anchored on A-Chain (\textsc{lp-134}, Hanzo \AI{} Chain).
+\end{itemize}
+
+\subsection{Pre-ChatGPT Provenance}
+
+\textbf{Notable historical fact}: \S21 of the October 31, 2021
+whitepaper described a \textsc{gui}-based conversational \AI{} avatar
+\emph{thirteen months before} \textsc{chatgpt}'s public launch
+(November 30, 2022). Zoo's avatar \AI{} concept --- including persistent
+semantic memory and personality binding --- predates the mainstream
+\textsc{llm}-chat paradigm. The Experience Ledger
+(\texttt{papers/zoo-experience-ledger/}) predates mainstream vector
+databases and \textsc{chatgpt}'s native conversation memory feature
+(February 2024).

@@ -2,7 +2,7 @@
 \label{sec:consensus}
 %% ============================================================
 
-\Beluga{} adapts the Proof of AI (\PoAI{}) consensus mechanism \cite{zoo-poai} to the L3 setting. In the original \PoAI{} design, validators contribute AI compute to earn block production rights. On \Beluga{}, we preserve this principle while leveraging the inherited Zoo validator set for liveness guarantees.
+\Beluga{} adapts the Proof of AI (\PoAI{}) consensus mechanism \cite{zoo-poai} to the L3 setting. In the original \PoAI{} design, validators contribute AI compute to earn block production rights. On \Beluga{}, we preserve this principle while leveraging the inherited Zoo validator set for liveness guarantees. The L3 itself runs on the Quasar-Native App Stack (Lux LP-133) and settles into Quasar 3.0 (Lux LP-020), with GPU scheduling delegated to the QuasarGPU adapter (Lux LP-132) when \Beluga{} contracts route inference to per-LLM chain operators \cite{zoo-per-llm-chains}.
 
 \subsection{Validator Roles}
 

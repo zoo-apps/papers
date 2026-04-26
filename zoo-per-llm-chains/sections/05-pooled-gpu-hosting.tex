@@ -1,0 +1,56 @@
+\section{Pooled GPU Hosting}
+\label{sec:gpu}
+
+\subsection{Capacity is staked, not just announced}
+
+Operators commit \GPU{} capacity to a per-LLM chain's pool by locking stake proportional to announced capacity. Announcement-only schemes (such as legacy compute marketplaces) cannot punish no-shows. Stake-backed announcements can: when an operator fails to fulfill a claimed shard within the SLA window, stake is slashed.
+
+\begin{definition}[Capacity commitment]
+A capacity commitment is the tuple $(\texttt{operator}, \texttt{gpu\_class}, \texttt{count}, \texttt{stake})$ such that
+\[
+\texttt{stake} \ge \kappa \cdot \texttt{count} \cdot \texttt{price}(\texttt{gpu\_class})
+\]
+where $\kappa$ is the chain's capacity-stake multiplier (default $\kappa = 2$, meaning operators stake 2x the spot price of one hour of capacity).
+\end{definition}
+
+\subsection{Federation through \Lux{} Cloud}
+
+\Lux{} Cloud (\textsc{lp-136}) is the broader cloud-capacity layer that aggregates \GPU{}, CPU, and storage offers from operators across the \Lux{} ecosystem. Per-LLM chains specialize in AI training workloads and federate through \Lux{} Cloud rather than running their own discovery layer:
+
+\begin{itemize}[nosep]
+\item \textbf{Discovery}: \Lux{} Cloud exposes the operator catalog, hardware claims, and price feeds.
+\item \textbf{Specialization}: per-LLM chains accept only operators whose announced \GPU{} class meets the model's minimum (e.g., $\ge$80\,GB HBM for $\ge$30B-parameter models).
+\item \textbf{Settlement}: capacity payments settle on the per-LLM chain in its native reward token, not on \Lux{} Cloud directly. \Lux{} Cloud is a discovery and federation layer, not a settlement layer for AI workloads.
+\end{itemize}
+
+\subsection{SLA and slashing}
+
+Per shard claim, the SLA is parameterized by:
+\begin{itemize}[nosep]
+\item \texttt{deadline}: wall-clock time to submit gradient.
+\item \texttt{loss\_band}: $[\ell_{\min}, \ell_{\max}]$ acceptable loss range.
+\item \texttt{tee\_required}: whether \TEE{} attestation is mandatory (default true for $\ge$8B models).
+\end{itemize}
+
+Breach conditions and slashing fractions are specified in \S\ref{sec:training}. Slashed stake is partially burned and partially redistributed to validators that signed the slashing block.
+
+\subsection{Pricing}
+
+Capacity is paid out per accepted gradient, not per claimed shard. The price formula:
+\begin{equation}
+\texttt{payout} = \texttt{base\_rate}(\texttt{gpu\_class}) \cdot \texttt{flops\_consumed} \cdot \mu(\texttt{loss\_improvement})
+\end{equation}
+where $\mu$ is a multiplier rewarding operators whose gradients drive larger loss decreases. The base rate is set by the chain's price oracle (which may peg to \Lux{} Cloud spot prices).
+
+\subsection{Hosting beyond training}
+
+Pooled \GPU{} hosting is not exclusive to training. The same operator pool serves:
+\begin{itemize}[nosep]
+\item \textbf{Inference for the \Hanzo{} AI Chain.} When a user buys inference through \Hanzo{}, the inference workload routes to operators registered on the model's chain. The operator selection is stake-weighted; payouts settle through cross-chain messaging (\S\ref{sec:crosschain}).
+\item \textbf{Evaluation runs.} Benchmark commits in the research registry can include execution receipts pointing to operators that ran the evaluation.
+\item \textbf{Private inference via F-Chain.} Encrypted inference (\textsc{lp-013}) routes through F-Chain but uses the same operator pool for the underlying compute, with FHE wrappers applied at the edge.
+\end{itemize}
+
+\subsection{Operator economics}
+
+An operator running a single H100 80\,GB at 90\% utilization across one year of staking is the reference economic unit. Sustained payouts are determined by the chain's training schedule, the inference demand routed from \Hanzo{}, and the operator's stake share. Detailed economics are model-specific and recorded in each chain's genesis configuration.

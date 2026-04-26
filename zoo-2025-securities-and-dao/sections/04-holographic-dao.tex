@@ -1,0 +1,156 @@
+\section{Homomorphic / Holographic Consensus DAO}
+\label{sec:dao}
+
+\subsection{Two adjectives, two distinct properties}
+
+The \Zoo{} \DAO{} is described as both \emph{homomorphic} and
+\emph{holographic}. They are independent properties:
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item \textbf{Homomorphic} means votes are tallied while still encrypted.
+  Tallying happens under fully homomorphic encryption (\FHE{})
+  on \Lux{} F-Chain (\Lux{} \textsc{lp-013}~\cite{lp-013-fchain}).
+  The aggregate result is decryptable; individual ballots are not.
+\item \textbf{Holographic} means every part of the \DAO{} encodes the
+  whole's intent. Nested sub-\DAO{}s (per-\textsc{llm} chains, per
+  research vertical, per regional chapter) inherit governance
+  topology from the meta-\DAO{} but can also propose and ratify
+  locally. Each shard is structurally a small copy of the whole.
+\end{itemize}
+
+\subsection{Homomorphic vote tallying}
+
+A vote is encoded as a ciphertext under an F-Chain
+\FHE{} public key. The protocol:
+
+\begin{enumerate}[nosep,leftmargin=1.4em]
+\item Each participant submits $\mathrm{Enc}_{\text{pk}}(v_i \cdot w_i)$
+  where $v_i \in \{-1, 0, +1\}$ is the vote (against / abstain / for)
+  and $w_i$ is the participant's voting weight (\S\ref{sec:weighted}).
+\item F-Chain~\cite{lp-013-fchain} computes $\sum_i \mathrm{Enc}(v_i w_i)$
+  homomorphically. The encrypted sum is published on-chain.
+\item Decryption of the aggregate is performed only by the
+  M-Chain MPC custodial threshold (\Lux{} \textsc{lp-019}~\cite{lp-019-mchain})
+  after the voting window closes.
+\item Individual ballots remain encrypted forever. Aggregate result
+  is published with a Quasar 3.0 finality proof.
+\end{enumerate}
+
+This eliminates voter coercion: a participant cannot prove how they
+voted to a coercer because nobody --- not even the M-Chain custodians
+acting jointly --- can decrypt an individual ciphertext. Only the sum
+is decryptable.
+
+\subsection{Holographic structure}
+
+The meta-\DAO{} is the apex. Sub-\DAO{}s exist for:
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item Each per-\textsc{llm} chain (one sub-\DAO{} per Zen model;
+  see~\cite{zoo-per-llm-chains}).
+\item Each research vertical (Conservation AI, Educational AI,
+  Frontier AI, DeSci).
+\item Each regional chapter (geographic conservation cells).
+\end{itemize}
+
+Each sub-\DAO{} inherits the meta-\DAO{}'s governance topology
+(weighted voting, \FHE{} tally, M-Chain custody) and can propose and
+ratify locally on issues scoped to its shard. Issues that cross shards
+escalate to the meta-\DAO{}. The structural property is
+\emph{self-similarity}: a sub-\DAO{} looks like a smaller meta-\DAO{}
+in every governance dimension.
+
+This is what we mean by \emph{holographic}: every part contains the
+whole's pattern. A sub-\DAO{} can fork into its own chain with the same
+governance machinery and remain interoperable with the meta-\DAO{}
+without bespoke integration.
+
+\subsection{Weighted voting}
+\label{sec:weighted}
+
+Voting weight is computed as a weighted sum across four axes:
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item \textbf{Advocacy} --- public posts, citations, and social
+  engagement, attested through Z-Chain (anti-Sybil; see below).
+\item \textbf{Involvement} --- contributor activity: commits, code
+  reviews, training submissions, ceremony participation, validator
+  uptime.
+\item \textbf{Contribution} --- landmark research artifacts, model
+  releases, novel architectures, dataset curation, reproducibility
+  attestations.
+\item \textbf{Token stake} --- locked $\$$ZOO stake. Always present
+  but deliberately the smallest weight, to prevent plutocracy.
+\end{itemize}
+
+The formula:
+
+\begin{equation}
+\text{weight}(p) \;=\; \alpha \cdot a_p \;+\; \beta \cdot i_p \;+\; \gamma \cdot c_p \;+\; \delta \cdot s_p
+\end{equation}
+
+\noindent subject to $\alpha + \beta + \gamma + \delta = 1$, where
+$a_p, i_p, c_p, s_p$ are the participant's normalized advocacy,
+involvement, contribution, and token-stake scores respectively.
+
+Default initial weights at activation (2025-12-25) are governed by the
+meta-\DAO{} and start as:
+
+\[
+(\alpha, \beta, \gamma, \delta) \;=\; (0.20,\ 0.30,\ 0.40,\ 0.10)
+\]
+
+\noindent i.e.\ 20\% advocacy, 30\% involvement, 40\% contribution,
+10\% token stake. These weights can be adjusted by meta-\DAO{} vote
+(itself a homomorphic, weighted vote).
+
+\subsection{Anti-Sybil}
+
+Each input score is gated by attestation:
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item Advocacy ($a_p$) requires the social platform to be
+  attestation-rooted (i.e.\ the platform itself runs an attestation
+  endpoint anchored on Z-Chain). Posts on un-rooted platforms do not
+  count.
+\item Involvement ($i_p$) is computed from the contribution-graph
+  attestation pipeline anchored on \Lux{} A-Chain
+  (\Lux{} \textsc{lp-134}~\cite{lp-134-topology}). Each commit and
+  review is signed by a \textsc{tee}-attested identity.
+\item Contribution ($c_p$) requires reproducibility attestation
+  (per ZIP-0606 in the Zoo \textsc{zip} corpus); a paper, model, or
+  dataset must verify before it confers contribution weight.
+\item Token stake ($s_p$) is unforgeable on-chain by definition but
+  is rate-limited by the $\delta = 0.10$ default to bound plutocracy.
+\end{itemize}
+
+A purely token-rich attacker can buy at most $\delta = 0.10$ of total
+voting weight. To dominate, the attacker must also generate provable
+advocacy, involvement, and contribution --- which the attestation
+pipeline rejects unless backed by real activity.
+
+\subsection{Threshold custody of governance keys}
+
+Governance keys (the master key for upgrade proposals, treasury
+movements above policy thresholds, and emergency halts) are held in
+threshold custody on M-Chain (\Lux{} \textsc{lp-019}~\cite{lp-019-mchain}).
+A successful proposal pulls a threshold partial signature from each
+custodian; the resulting Ringtail \textsc{pq} aggregate signature
+authorizes the on-chain action. No single custodian can act
+unilaterally; no custodian can be compelled by physical coercion of
+one party.
+
+\subsection{Cross-references}
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item \Lux{} \textsc{lp-013} --- F-Chain FHE substrate (vote
+  tally)~\cite{lp-013-fchain}.
+\item \Lux{} \textsc{lp-019} --- M-Chain MPC (governance key
+  custody)~\cite{lp-019-mchain}.
+\item \Lux{} \textsc{lp-134} --- A/B/M/F topology (contributor
+  attestation on A-Chain)~\cite{lp-134-topology}.
+\item \textsc{zip-0017} --- DAO Governance Framework (Zoo \textsc{zip}
+  corpus).
+\item \textsc{zip-0026} --- Ecosystem Reputation System (the
+  involvement-score input).
+\end{itemize}

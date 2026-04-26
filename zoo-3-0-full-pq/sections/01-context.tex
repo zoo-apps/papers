@@ -1,0 +1,107 @@
+\section{Context: from 2.0 to 3.0}
+\label{sec:context}
+
+\Zoo{} 3.0 is the post-quantum hardening epoch of the \Zoo{} stack.
+This section lays out where \Zoo{} stood at the start of 2025, what
+\Zoo{} 2.0 left unfinished, and what 3.0 commits to deliver.
+
+\subsection{The arc up to 3.0}
+
+\paragraph{1.0 (2021, BSC).}
+The original \Zoo{} whitepaper of October 31, 2021 \cite{zoo-2021}
+positioned \Zoo{} as a wildlife-conservation platform on Binance Smart
+Chain. That paper coined the term ``NFT Liquidity Protocol'' --- the
+mechanism by which \NFT{}s become productive collateral inside a
+yield-bearing system. Cryptographic posture was inherited from BSC:
+ECDSA over secp256k1, Ethereum-style Merkle Patricia tries, no
+post-quantum guarantees.
+
+\paragraph{2.0 (October 2024, Lux L2).}
+\Zoo{} 2.0 \cite{zoo-2-0} re-launched on the \Lux{} Network as an
+\textsc{evm}-compatible L2. The 2.0 paper introduced 20 native
+precompiles including NIST PQC standards ($\MLDSA{}$, SLH-DSA,
+ML-KEM), threshold signatures (FROST, CGGMP21), privacy primitives
+(\FHE{}, \ZKP{}, ring signatures), and an AI Mining precompile. 2.0
+delivered \emph{first-pass} post-quantum: PQ primitives were available
+to applications via precompile, but the chain consensus, governance,
+bridge, and the legacy 2021 \NFT{} Liquidity Protocol commitments
+still relied on classical cryptography for some edges.
+
+\paragraph{3.0 (2025, full PQ).}
+\Zoo{} 3.0 closes those edges. The contract: every signature on the
+hot path, every commitment in governance, every proof in the bridge,
+every receipt under the \NFT{} Liquidity Protocol uses post-quantum
+schemes. PQ is no longer optional or per-application; it is the
+chain-wide default.
+
+\paragraph{4.0 (2026, GPU-native L1).}
+\Zoo{} 4.0 \cite{zoo-4-0} graduates \Zoo{} from L2 application to
+sovereign L1 with $100\%$ \GPU{}-powered consensus, \textsc{evm},
+\DEX{}, AI mining, and \FHE{}. 4.0 inherits 3.0's full-PQ posture
+unchanged.
+
+\subsection{The threat model that drives 3.0}
+
+\Zoo{}'s threat model in 3.0 is the harvest-now-decrypt-later
+adversary plus a near-term Q-day adversary. Harvest-now is already
+operational: a passive observer can snapshot any classical signature
+ever recorded on a public chain and decrypt years later when a
+cryptographically relevant quantum computer (CRQC) becomes available.
+This means classical signatures recorded today on hot-path data
+(governance commitments, bridge attestations, \NFT{} loan agreements)
+already need to be PQ-safe, because the value those signatures
+authenticate may persist far past Q-day.
+
+A near-term Q-day adversary further means the chain must be able
+to validate the integrity of pre-Q-day records using post-Q-day
+verifiers. \Zoo{} 3.0's triple-cert design (see \S\ref{sec:triple-cert})
+addresses this directly: every block carries a classical proof and
+two independent post-quantum proofs, so even when the classical layer
+is broken the post-quantum layers continue to validate.
+
+\subsection{What 3.0 changes (one-page summary)}
+
+\begin{longtable}{p{0.32\textwidth}p{0.30\textwidth}p{0.32\textwidth}}
+\toprule
+\textbf{Component} & \textbf{2.0 (October 2024)} & \textbf{3.0 (2025)} \\
+\midrule
+Consensus signatures & inherited L2 from \Lux{} 2.x & triple cert via \Quasar{} 3.0 \cite{lp-020} \\
+Governance keys & ECDSA per signer & threshold $\MLDSA{}\text{-}65$ + \Ringtail{} \\
+Bridge attestations & classical multisig & threshold \MLDSA{} on M-Chain (\textsc{lp-016}, \textsc{lp-017}) \\
+zLLM commitments & SHA-256 Merkle & PQ-safe accumulator + \MLDSA{}-signed root \\
+NFT Liquidity loans & ECDSA loan agreements & \Ringtail{}-signed loan agreements \\
+DAO vote receipts & on-chain ECDSA & \MLDSA{}-65 signed, optional \FHE{} ballot \\
+Inference receipts & A-Chain TEE quote & TEE quote + \Ringtail{}-anchored attribution \\
+Wallet signing keys & secp256k1 only & dual-key (secp256k1 + \MLDSA{}-65) \\
+\bottomrule
+\end{longtable}
+
+The remaining sections expand each row into its specification and
+migration plan.
+
+\subsection{What 3.0 explicitly does \emph{not} change}
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \Zoo{} stays an L2 on \Lux{}; the L1 graduation is a 4.0
+        concern \cite{zoo-4-0}.
+  \item \textsc{evm} bytecode semantics are unchanged; only the
+        signature scheme over transactions and state commitments
+        moves to PQ-safe forms.
+  \item Application contracts written for 2.0 continue to work in 3.0;
+        new precompiles for \Ringtail{} verification are additive,
+        not breaking.
+  \item Token standards (ZRC-20, ZRC-721, ZRC-1155) are unchanged; only
+        the underlying signing key types are extended.
+\end{itemize}
+
+\subsection{Why 2025 is the right epoch for full PQ}
+
+NIST finalised FIPS 204 ($\MLDSA{}$) in August 2024 \cite{nist-fips-204},
+which gives \Zoo{} a standardised lattice signature with broad
+ecosystem support. The \Lux{} Network shipped \Quasar{} 3.0 triple
+consensus \cite{lp-020} in 2025, giving \Zoo{} a chain-level
+substrate for triple-cert proofs without per-app integration. The
+remaining work in 2025 is the application-layer migration: governance,
+bridge, NFT Liquidity, zLLM commitments, wallet keys. \Zoo{} 3.0
+sequences that migration through the rest of the year so that 4.0
+inherits a uniformly post-quantum stack.

@@ -1,0 +1,149 @@
+\section{Quantum-Secure Trading}
+\label{sec:quantum-secure}
+
+Every trade on \Zoo{} \DEX{} settles under a \Quasar{} 4.0 triple-cert
+inherited from the \Lux{} L1 \cite{lp-020}. The cert composes three
+independent signature layers; a trade is final only when all three
+have signed.
+
+\subsection{The triple cert at the trade level}
+
+A finalised trade carries:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{$\BLS{}_{12\text{-}381}$ aggregate.} 48 bytes.
+        Classical fast-path proof from the \Lux{} validator quorum.
+        Useful for the low-latency check that gates pre-final block
+        propagation.
+  \item \textbf{\Ringtail{} threshold.} Post-quantum threshold
+        proof, Ring-LWE-based. $\sim$2.0--2.4 KB.
+  \item \textbf{$\MLDSA{}\text{-}65$ identity proof.} FIPS 204
+        conforming, $\sim$3.3 KB per validator. Establishes which
+        validator authorised the cert layer.
+\end{enumerate}
+
+A trade with only $\BLS{}$ is not final under \Zoo{} \DEX{}; the
+matching engine waits for the full triple-cert before marking the
+trade as settled.
+
+\subsection{Q-day resilience}
+
+Under a near-term Q-day adversary --- a cryptographically relevant
+quantum computer (CRQC) capable of breaking ECDSA and pairing-based
+schemes --- the trade record continues to validate because the
+\Ringtail{} and $\MLDSA{}$ proofs do not depend on classical hardness
+assumptions. A trade settled on \Zoo{} \DEX{} on April 20, 2026
+remains independently verifiable post-Q-day; the chain does not
+need a flag day to invalidate pre-Q-day records.
+
+This matters for tokenised securities specifically because
+beneficial-ownership records persist for the lifetime of the asset
+(potentially decades for fixed-income or equity holdings). A
+classical-only signature on a 2026 trade in a 30-year corporate
+bond would be retroactively forgeable by a CRQC available in, say,
+2034. The triple-cert design eliminates that exposure.
+
+\subsection{Harvest-now-decrypt-later resistance}
+
+A passive observer can record every public on-chain transaction
+today and decrypt the classical proofs later when a CRQC becomes
+available. This is the harvest-now adversary. The triple-cert
+discipline means the harvest-now record is not exploitable: even
+once $\BLS{}$ falls, the \Ringtail{} and $\MLDSA{}$ proofs continue
+to authenticate the trade. The settlement record is immune to the
+harvest-now class.
+
+\subsection{Validator key management}
+
+Validators run dual-key wallets:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Classical key for $\BLS{}$ operations (fast path).
+  \item Threshold $\MLDSA{}\text{-}65$ key for identity proofs.
+  \item Threshold \Ringtail{} key for post-quantum threshold
+        operations.
+\end{itemize}
+
+Key rotation runs on the LP-017 schedule: every 90 days the
+validator set runs a re-keying ceremony on M-Chain \cite{lp-134}.
+Stake is anchored to the \emph{validator}, not the per-epoch key,
+so rotation is non-disruptive to staked-balance accounting.
+
+\subsection{Trade-finality semantics}
+
+A wallet showing ``filled, final'' to the user is showing the
+following on-chain state:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item The trade event is in a block sealed by \Zoo{} D-Chain.
+  \item The block hash is referenced inside a \Quasar{}Cert.
+  \item The \Quasar{}Cert carries valid signatures on all three
+        lanes ($\BLS{}$, \Ringtail{}, $\MLDSA{}$).
+  \item The transfer-agent notify has fired and been acknowledged.
+\end{enumerate}
+
+If any of these four conditions fail at the time of display, the
+wallet shows ``filled, pending finality''. Time-to-final is sub-1.1s
+in normal operation.
+
+\subsection{Light-client verification}
+
+A retail wallet does not have to trust a full node to verify
+finality. The triple-cert verifier is small enough to run inside
+the wallet:
+
+\begin{lstlisting}[language=C++,caption={Light-client cert verifier}]
+bool verify_trade_finality(
+    TradeEvent ev,
+    QuasarCert4 cert,
+    ValidatorSet vs
+) {
+    // Block contains the trade
+    if (!merkle_proof_valid(ev, cert.block_root)) return false;
+    // Triple-cert valid against the validator set
+    if (!bls_verify(cert.bls, cert.block_root, vs))           return false;
+    if (!ringtail_verify(cert.ringtail, cert.block_root, vs)) return false;
+    if (!mldsa_verify(cert.mldsa, cert.block_root, vs))       return false;
+    // Liquidity precompile attested the trade
+    if (!liquidity_attestation_valid(ev.attestation)) return false;
+    return true;
+}
+\end{lstlisting}
+
+Practical wallet verification budget is well under 100ms per trade
+on consumer hardware (the dominant cost is the $\MLDSA{}$ aggregate
+verification scaling with the threshold size).
+
+\subsection{Disaster recovery}
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{Single lattice scheme break.} If a published break
+        of either \Ringtail{} or $\MLDSA{}$ surfaces, trading halts
+        pending parameter re-issuance. Existing settled trades
+        remain valid because they carry the unbroken lane plus the
+        classical lane; new trades require new parameters.
+  \item \textbf{Both lattice schemes break.} Trading halts; the
+        \DAO{} convenes an emergency response. Pre-existing trades
+        retain partial validation (classical lane), but new trades
+        are paused until a new PQ scheme is integrated.
+  \item \textbf{Classical scheme break only.} Trading continues;
+        the classical lane is downgraded to advisory; PQ lanes
+        continue to authenticate. This is the steady-state under
+        Q-day.
+\end{itemize}
+
+\subsection{Why this matters for the asset classes the DEX lists}
+
+Equity, fixed income, RWA, and derivatives all carry long-lived
+ownership records. A retail user buying tokenised treasuries with
+a 10-year term needs to know the record of that purchase will be
+verifiable for the term of the bond. The triple-cert is the
+minimum bar for that guarantee.
+
+The \Zoo{} \DEX{}'s value proposition --- ``make money like the 1\%
+finally'' (\S\ref{sec:retail-ux}) --- is meaningless without
+end-to-end Q-day-resilient settlement. A retail user holding a
+30-year corporate bond as a tokenised position must be confident
+that the position record is valid when the bond matures, regardless
+of cryptographic developments in the intervening decades. The
+triple-cert is what makes that promise creditable.

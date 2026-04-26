@@ -1,0 +1,115 @@
+\section{Zoo Bridge Post-Quantum Attestations}
+\label{sec:bridge-pq}
+
+The \Zoo{} Bridge moves assets between \Zoo{} L2 and external
+chains: \Lux{} C-Chain (canonical), Ethereum, BSC, and other EVM
+ecosystems for which the bridge committee has stood up adapters.
+In 2.0 the bridge attestation was a classical multisig over the
+mint event. In 3.0 the bridge attestation lives on M-Chain and is
+secured by post-quantum threshold signatures per
+LP-016 \cite{lp-016} and LP-017 \cite{lp-017}.
+
+\subsection{Bridge attestation flow under 3.0}
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Source observation.} The bridge committee observes a
+        finalised burn or lock event on the source chain.
+  \item \textbf{Quorum vote.} The committee runs a threshold
+        $\MLDSA{}\text{-}65$ ceremony on M-Chain: each member submits
+        an $\MLDSA{}$ signature over the event digest. The threshold
+        is $t$-of-$n$ with $t \geq \lceil 2n/3 \rceil$.
+  \item \textbf{\Ringtail{} co-attestation.} The committee additionally
+        emits a \Ringtail{} threshold proof over the same digest.
+        Both proofs must succeed for a mint message to be valid.
+  \item \textbf{B-Chain emission.} The pair of proofs is wrapped into
+        a B-Chain bridge message (\textsc{lp-016}) and delivered
+        across to the destination chain.
+  \item \textbf{Destination mint.} The destination contract verifies
+        both proofs --- $\MLDSA{}$ via on-chain precompile and
+        \Ringtail{} via the verifier shipped in 3.0 --- and only
+        then mints.
+\end{enumerate}
+
+\subsection{Why two PQ proofs on the bridge}
+
+Bridges are the highest-value targets in the ecosystem. A break of
+either lattice scheme would compromise mint authority on the
+destination chain. Requiring both \Ringtail{} (Ring-LWE) and
+$\MLDSA{}$ (Module-LWE/SIS) means the attacker must break two
+distinct lattice problems --- not just two parameter sets of the
+same family --- to forge a mint. Combined with the source-chain
+finality requirement and the threshold $t \geq \lceil 2n/3 \rceil$
+on the committee, this is the strongest practical defence against
+both Q-day and committee compromise.
+
+The classical $\BLS{}$ proof is also recorded for fast-path
+verification on legacy explorers and as defence-in-depth, but
+it is not load-bearing in 3.0; verifiers ignore it for mint
+authorisation.
+
+\subsection{Committee key schedule (LP-017)}
+
+Per LP-017 \cite{lp-017}, the committee re-keys on a defined
+schedule:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Every 90 days the committee runs a key-refresh ceremony,
+        rotating each member's $\MLDSA{}$ and \Ringtail{} share.
+  \item The ceremony is itself M-Chain-anchored: the new shares
+        are committed under the previous round's threshold key,
+        so an attacker who compromises a single member at one
+        round cannot persist the compromise through the rotation.
+  \item Members who fail to participate in two consecutive rotations
+        are removed from the committee by L1 governance.
+\end{itemize}
+
+\subsection{Cross-chain message format}
+
+A 3.0 bridge mint message carries:
+
+\begin{lstlisting}[language=C++,caption={Bridge mint message v3}]
+struct BridgeMintMsg3 {
+    ChainId   src_chain;
+    ChainId   dst_chain;
+    Hash      src_event;            // finalised burn/lock event
+    Hash      asset;
+    Address   beneficiary;
+    Amount    amount;
+    Hash      committee_epoch;      // identifies key schedule epoch
+    MlDsa::Sig    mldsa_threshold;  // t-of-n ML-DSA-65
+    Ringtail::Sig ringtail_threshold; // t-of-n Ringtail
+    Bls::Agg      bls_legacy;       // for fast-path observers, advisory
+};
+\end{lstlisting}
+
+The destination-chain verifier rejects on a missing or invalid
+$\MLDSA{}$ or \Ringtail{} proof. The $\BLS{}$ field is optional under
+3.0.
+
+\subsection{2021 BSC migration adapter}
+
+The \Zoo{} Bridge supports a one-way migration adapter for legacy
+2021-cohort BSC \Zoo{} holders. Holders burn the legacy BEP-20
+token; the bridge committee attests the burn under the 3.0
+attestation discipline; the holder receives the \Zoo{} 3.0 native
+asset on \Zoo{} L2. The legacy-side burn cannot itself be PQ-attested
+(BSC does not implement \MLDSA{} or \Ringtail{} verification), but
+the destination-side mint is fully PQ-attested. This is the
+correct posture: the chain we control is post-quantum; the chain
+we are migrating from continues to be classical for as long as
+upstream chooses.
+
+\subsection{Failure modes and recovery}
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{Quorum failure.} If the committee cannot reach the
+        threshold, the message is not emitted. Mint does not happen.
+        No silent fallback to a smaller quorum.
+  \item \textbf{Single-member compromise.} The threshold structure
+        absorbs up to $n - t$ compromised members. Compromise above
+        that triggers L1 governance to slash and rotate.
+  \item \textbf{Lattice scheme break.} If a published break of either
+        \Ringtail{} or $\MLDSA{}$ surfaces, the bridge halts pending
+        emergency re-parameterisation; the committee proposes new
+        parameters via L1 governance and re-keys before resuming.
+\end{itemize}
