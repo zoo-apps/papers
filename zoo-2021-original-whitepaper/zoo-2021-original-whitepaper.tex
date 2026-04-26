@@ -1,0 +1,121 @@
+\documentclass[11pt,letterpaper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{titling}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=black,
+    pdftitle={Zoo Whitepaper - Founder Vision (October 31, 2021)},
+    pdfauthor={Antje Worring},
+    pdfsubject={Zoo Labs Foundation - Game-Fi Multiverse for Endangered Species},
+    pdfkeywords={NFT, DeFi, Game-Fi, AI, Metaverse, Conservation, DAO}
+}
+
+\graphicspath{{figures/}}
+
+% Title information
+\title{\textbf{Zoo}\\\large A Game-Fi Multiverse Ecosystem for the Preservation of Endangered Species}
+\author{Antje Worring\\\textit{Founder, Zoo Labs Foundation}\\\texttt{antje@zoo.ngo}}
+\date{October 31, 2021}
+
+% Page style
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Zoo Whitepaper}}
+\fancyhead[R]{\small\textit{October 31, 2021}}
+\fancyfoot[L]{\scriptsize Originally published October 31, 2021. Reconstructed from \texttt{zoolabs.gitbook.io/whitepaper/} on 2025-12-15 for archival purposes.}
+\fancyfoot[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\begin{document}
+
+% --- Cover page ---
+\begin{titlepage}
+  \thispagestyle{empty}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries Zoo\par}
+  \vspace{0.6cm}
+  {\Large A Game-Fi Multiverse Ecosystem for the\\Preservation of Endangered Species\par}
+  \vspace{2cm}
+  {\large \textbf{Antje Worring}\par}
+  \vspace{0.2cm}
+  {\itshape Founder, Zoo Labs Foundation\par}
+  \vspace{0.1cm}
+  {\small \texttt{antje@zoo.ngo}\par}
+  \vspace{2cm}
+  {\large \textbf{October 31, 2021}\par}
+  \vfill
+  {\itshape A founder-vision whitepaper at the intersection of\\Open AI Protocol, Blockchain, Metaverse, and Gaming.\par}
+  \vspace{1cm}
+  {\small Zoo Labs Foundation \quad $\cdot$ \quad \texttt{zoo.ngo}\par}
+  \vspace{0.4cm}
+  {\scriptsize Originally published October 31, 2021. Reconstructed from \texttt{zoolabs.gitbook.io/whitepaper/}\\on 2025-12-15 for archival purposes. All graphics, prose, and structure derive from the\\canonical Zoo Labs Foundation whitepaper.\par}
+  \vspace{0.3cm}
+  {\scriptsize\itshape Forward note: Zoo 3.0 (2025-12-25) brings the original 2021 vision to a\\GPU-native sovereign L1 --- see \emph{Zoo 3.0 Launch} (zoo-3-0-launch).\par}
+\end{titlepage}
+
+% Abstract pseudo-page (front matter)
+\pagenumbering{roman}
+\setcounter{page}{1}
+
+\begin{center}
+{\Large \textbf{Foreword from the Founder}}
+\end{center}
+\medskip
+
+\noindent When I founded Zoo Labs Foundation, I wanted to build something that married three forces I believed would define the next decade: open AI, blockchain, and the metaverse. The thread connecting them, for me, was always the animals. I grew up loving wildlife, and I could not stand by while species after species disappeared. Zoo is my answer: a Game-Fi ecosystem where every digital animal is at once a financial primitive, an emotionally intelligent AI companion, and a conservation token whose economics route real value to the non-profits saving their real-world counterparts.
+
+This document is the canonical record of that founding vision, dated to the night I first wrote it. It captures \emph{why} Zoo exists, the protocol-level mechanics that make it work, the V1 drop catalogue, and the roadmap that took us from a Tamagotchi-like pet game to a full multiverse companion. Decentralization, scarcity, on-chain provenance, and an open AI protocol are non-negotiable pillars. Conservation is the alignment objective.
+
+To everyone who joins this journey: thank you. Every animal you raise, every NFT you mint, every conversation you have with one of our intelligent avatars contributes to the survival of a real species in the real world.
+
+\vspace{0.4cm}
+\noindent --- Antje Worring, Founder, Zoo Labs Foundation \\
+\noindent \textit{October 31, 2021}
+
+\vspace{1cm}
+
+\tableofcontents
+
+\clearpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\input{sections/01-abstract-mission}
+\input{sections/02-utility-market}
+\input{sections/03-sustainability-conservation}
+\input{sections/04-differentiators}
+\input{sections/05-token-collateral}
+\input{sections/06-marketplace-gameplay}
+\input{sections/07-animals-feeding}
+\input{sections/08-ai-ar-metaverse}
+\input{sections/09-roadmap-extras}
+\input{sections/10-2025-update}
+
+\clearpage
+\section*{Colophon}
+\addcontentsline{toc}{section}{Colophon}
+
+This document is a faithful reconstruction of the Zoo Labs Foundation whitepaper, originally published online at \url{https://zoolabs.gitbook.io/whitepaper/}. The reconstruction was performed on 2025-12-15 to preserve the founder vision in archival LaTeX form. Every section corresponds to a page in the source whitepaper. All images were retrieved from the live gitbook CDN and are reproduced here under the Zoo Labs Foundation's own publication.
+
+The original publication date of October 31, 2021 reflects when Antje Worring first articulated this vision as the canonical founder document for the Zoo Labs Foundation.
+
+For the most current version of the Zoo ecosystem, including post-2021 evolutions of the AI protocol and DAO governance, see the companion papers in the Zoo Labs research series at \url{https://zoo.ngo/papers}.
+
+\end{document}

@@ -1,0 +1,133 @@
+\section{Activation Roadmap}
+\label{sec:roadmap}
+
+\Zoo{} 3.0 is a phased migration through 2025, ending with a fully
+post-quantum stack ready to be inherited by \Zoo{} 4.0 \cite{zoo-4-0}
+on its February 14, 2026 activation.
+
+\subsection{Phase 0 --- LP coordination (2025-Q1 to 2025-Q2)}
+
+The \Lux{} LPs that 3.0 depends on land in this window:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item LP-070 ($\MLDSA{}\text{-}65$ identity lane) \cite{lp-070}.
+  \item LP-073 (\Corona{} threshold signature) \cite{lp-073}.
+  \item LP-075 ($\BLS{}_{12\text{-}381}$ aggregate lane) \cite{lp-075}.
+  \item LP-020 (\Quasar{} 3.0 triple cert composer) \cite{lp-020}.
+  \item LP-016 (B-Chain bridge VM) \cite{lp-016}.
+  \item LP-017 (threshold bridge committee key schedule)
+        \cite{lp-017}.
+\end{itemize}
+
+Zoo's role in Phase 0 is to participate in the LP review process and
+ensure that the \Zoo{} L2 settlement contract, the bridge committee
+adapter, and the \DAO{} key custody specifications can compose
+cleanly with each LP. No on-chain action on Zoo's side.
+
+\subsection{Phase 1 --- bridge re-keying (2025-Q3)}
+
+The bridge committee runs the first 3.0-discipline DKG ceremony
+(\S\ref{sec:bridge-pq}). The committee's $\MLDSA{}$ + \Corona{}
+threshold key replaces the classical multisig as the load-bearing
+authority for mint authorisation. Legacy multisig remains valid for
+inbound migration messages from BSC during a 90-day sunset.
+
+Concurrently the \Zoo{} L2 chain ships a binary release that
+includes \Corona{} verifier and $\MLDSA{}$ verifier precompiles,
+so application contracts can begin signing with PQ keys.
+
+\subsection{Phase 2 --- DAO migration (2025-Q3 to 2025-Q4)}
+
+The \DAO{} ceremony per \S\ref{sec:dao-migration} runs in this window.
+Treasury custody, contract-upgrade authority, and proposal-signing
+keys all rotate to threshold PQ. The dual-key wallet update ships
+to all eligible voters.
+
+Per-\LLM{} chain governance keys rotate per the same template, in
+parallel with the global \DAO{} rotation. Each per-\LLM{} chain runs
+its own DKG; rotation order is by chain age (older chains first, so
+the highest-value chains are migrated first).
+
+\subsection{Phase 3 --- zLLM and NFT Liquidity migration (2025-Q4)}
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Experience-library accumulator commitments re-signed under
+        threshold $\MLDSA{}$ (\S\ref{sec:zllm-pq}).
+  \item Inference-receipt schema cuts over to the 3.0 form.
+  \item Outstanding NFT loans walked, counterparties co-sign 3.0
+        agreements (\S\ref{sec:nft-liquidity-pq}).
+  \item Liquidation oracle re-keys to threshold $\MLDSA{}$.
+\end{itemize}
+
+\subsection{Phase 4 --- spec freeze and full-PQ activation (2025-10-31)}
+
+This paper, the supporting ZIPs (zLLM PQ commitments, NFT Liquidity
+PQ, Bridge PQ, DAO PQ migration), and the precompile-set release
+freeze on the founder's anniversary date 2025-10-31. After this
+date only spec-clarification PRs are accepted.
+
+The full-PQ enforcement cutover --- after which legacy-only
+signatures fail validation --- is staged through Q4 in line with the
+sunset windows defined per subsystem:
+
+\begin{longtable}{p{0.30\textwidth}p{0.20\textwidth}p{0.42\textwidth}}
+\toprule
+\textbf{Subsystem} & \textbf{Sunset end} & \textbf{Behaviour after} \\
+\midrule
+Bridge committee & 90 days post Phase 1 & PQ-only mint authorisation \\
+DAO governance & 90 days post Phase 2 & PQ-only ballots accepted \\
+zLLM commitments & 90 days post Phase 3 & PQ-only experience admissions \\
+NFT loans & 90 days post Phase 3 & PQ-only new loans; legacy flagged \\
+\bottomrule
+\end{longtable}
+
+\subsection{Phase 5 --- Quasar 3.0 inheritance (2025 cutover)}
+
+\Lux{} \Quasar{} 3.0 ships its triple-cert lane in 2025
+\cite{lp-020}. \Zoo{} L2 settlement contracts begin requiring
+\Quasar{} 3.0 cert references on every batch finalisation. Light
+clients adopt the triple-cert verifier (\S\ref{sec:triple-cert}).
+At this point the entire \Zoo{} stack is end-to-end post-quantum.
+
+\subsection{Phase 6 --- handoff to 4.0 (2026-02-14)}
+
+\Zoo{} 4.0 \cite{zoo-4-0} graduates \Zoo{} from L2 to sovereign L1
+on February 14, 2026. The 4.0 chain inherits the entire 3.0 PQ stack
+unchanged; the 4.0 work is graduating execution to GPU-native, not
+re-doing PQ. This is intentional: PQ is a 2025 commitment, GPU-native
+is a 2026 commitment, and the two epochs do not overlap.
+
+\subsection{Out-of-scope for 3.0}
+
+The following remain out of scope for 3.0 and ship in 4.0 or later:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item L1 graduation (Quasar-Native App Stack \cite{zoo-4-0}).
+  \item GPU-native consensus and \textsc{evm} execution
+        \cite{lp-009}, \cite{zoo-4-0}.
+  \item Native securities trading on Zoo \DEX{} (April 20, 2026).
+\end{itemize}
+
+\subsection{Cross-paper relationships}
+
+\Zoo{} 3.0 sits between two papers:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Upstream: \Zoo{} 2.0 \cite{zoo-2-0} (October 2024 L2
+        re-launch). The PQ precompile suite that 3.0 promotes from
+        application-level option to chain-wide default originates
+        in 2.0.
+  \item Downstream: \Zoo{} 4.0 \cite{zoo-4-0} (February 14, 2026 L1
+        graduation). 4.0 inherits 3.0's PQ posture unchanged.
+  \item Lateral: Zoo 2025 securities and \DAO{}
+        \cite{zoo-2025-securities-and-dao}. The holographic-consensus
+        \DAO{} mechanics referenced for vote weighting and \FHE{}
+        ballots are designed to compose with 3.0's PQ governance keys.
+\end{itemize}
+
+\subsection{One-line summary}
+
+\Zoo{} 3.0 is the year of full PQ: every signature, every commitment,
+every proof in the \Zoo{} stack moves to post-quantum schemes. By
+the end of 2025 the chain is end-to-end harvest-now-decrypt-later
+resistant. October 31, 2025 (founder's anniversary).

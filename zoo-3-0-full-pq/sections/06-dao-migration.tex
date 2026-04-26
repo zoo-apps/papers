@@ -1,0 +1,114 @@
+\section{DAO Key Migration}
+\label{sec:dao-migration}
+
+The Zoo \DAO{} authorises treasury disbursements, governance votes,
+contract upgrades, and per-\LLM{} chain admissions. In 2.x the
+\DAO{}'s authority surface used classical multisig and ECDSA. In 3.0
+the entire \DAO{} authority moves to threshold post-quantum signing.
+
+\subsection{What moves}
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{Treasury custody key.} Threshold $\MLDSA{}\text{-}65$
+        on M-Chain (per LP-017 schedule \cite{lp-017}).
+  \item \textbf{Governance proposal-signing key.} Threshold
+        \Corona{} for proposal hashes (PQ-safe with smaller
+        per-signer state than $\MLDSA{}$, useful for high-frequency
+        proposal flows).
+  \item \textbf{Contract-upgrade authority key.} Threshold
+        $\MLDSA{}\text{-}65$ with optional human-in-the-loop second
+        factor (a hardware-key-attested \MLDSA{} from each
+        upgrade-authorised member).
+  \item \textbf{Per-\LLM{} chain admission key.} Per-chain
+        threshold $\MLDSA{}$, scoped so that a compromise of one
+        chain's admission key does not propagate to others.
+\end{itemize}
+
+\subsection{Why threshold ML-DSA + Corona and not just one}
+
+The \DAO{} runs two independent PQ schemes for the same reason as
+the \Quasar{} 3.0 cert design (\S\ref{sec:triple-cert}): two
+different lattice problems, so a structural break in one does not
+unlock the other. Treasury custody --- the highest-stakes authority
+--- uses $\MLDSA{}\text{-}65$ because FIPS 204 conformance maximises
+ecosystem auditability. Proposal-signing uses \Corona{} because
+its smaller per-signer state suits high-frequency vote production.
+
+\subsection{Ceremony for the migration}
+
+The \DAO{} cannot simply self-rotate to PQ keys without a public
+ceremony, because the legacy ECDSA holders need an auditable transfer
+event. The ceremony:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Pre-announcement.} A governance proposal, signed
+        under the legacy multisig, announces the migration window
+        and target threshold parameters.
+  \item \textbf{Distributed key generation (DKG).} Each member runs
+        a $\MLDSA{}$ DKG to produce the new threshold key shares.
+        Output is the threshold public key plus per-member secret
+        shares.
+  \item \textbf{Co-signed handover.} A single transaction signed by
+        \emph{both} the legacy ECDSA multisig and the new threshold
+        $\MLDSA{}$ key transfers custody from the legacy address
+        to the threshold address.
+  \item \textbf{Sunset.} The legacy multisig is retired after a
+        defined window during which any member can challenge the
+        ceremony with a fraud proof.
+\end{enumerate}
+
+A failed ceremony reverts to the legacy multisig and the migration
+proposal must be re-issued. The ceremony is itself anchored to
+\Quasar{} 3.0 cert \cite{lp-020}, providing triple-cert finality on
+the handover record.
+
+\subsection{Vote-signing migration}
+
+Voter wallets in 3.0 carry dual keys: a legacy ECDSA key for backwards
+compatibility, and a new $\MLDSA{}\text{-}65$ key. During the sunset
+period both signature types count toward quorum. After sunset, only
+$\MLDSA{}$ ballots count; legacy-only voters who have not co-signed
+a wallet upgrade are silently dropped from the eligible set.
+
+The wallet's UX presents the dual-key state explicitly so users
+understand which signature scheme is in use for each action.
+
+\subsection{Optional FHE ballots}
+
+Per the holographic-consensus \DAO{} design \cite{zoo-2025-securities-and-dao},
+ballots can be cast in \FHE{}-encrypted form so vote direction is
+private until tally. In 3.0 the encryption is layered with the PQ
+signature: the ballot is FHE-encrypted, then the FHE ciphertext is
+signed under the voter's $\MLDSA{}$ key. The tally process operates
+over ciphertexts; the result is decrypted only at the published tally
+round. Voter authentication remains PQ-safe even though vote content
+is privacy-preserving.
+
+\subsection{Recovery in case of share loss}
+
+Threshold key share loss is a known operational hazard. The 3.0
+recovery procedure:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item If $\leq n - t$ shares are lost, the threshold remains
+        operable. Lost members are removed via governance and the
+        committee re-keys at the next rotation epoch.
+  \item If more than $n - t$ shares are lost, the threshold is
+        broken; recovery requires a governance-authorised
+        re-DKG signed by a quorum of the remaining live members
+        plus a delay-locked failsafe authority that can authorise
+        re-key after a multi-week timelock if even the remaining
+        live members are insufficient.
+  \item All recovery actions are publicly logged and anchored to L1
+        cert.
+\end{itemize}
+
+\subsection{Effect on per-LLM chain governance}
+
+Per-\LLM{} chains \cite{zoo-2025-securities-and-dao} run their own
+local governance for model-specific decisions (parameter votes,
+experience-library admissions, dataset whitelist changes).
+Each per-\LLM{} chain inherits the 3.0 governance template: dual-key
+ballots, threshold $\MLDSA{}$ for binding decisions, optional \FHE{}
+voting. This means a chain compromise on one \LLM{} chain does not
+require a global Zoo \DAO{} re-key.

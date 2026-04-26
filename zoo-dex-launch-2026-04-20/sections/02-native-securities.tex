@@ -1,0 +1,128 @@
+\section{Native Securities}
+\label{sec:native-securities}
+
+The \Zoo{} \DEX{} lists tokenised securities as first-class assets,
+not as wrapped derivatives or synthetic exposures. Each security
+class settles directly on \Zoo{} D-Chain with \Quasar{} 4.0 triple-cert
+finality \cite{lp-020}.
+
+\subsection{Equities (fractional shares)}
+
+Tokenised equity positions, fractional down to one millionth of a
+share, settle on \Zoo{} D-Chain. The transfer-agent hook in the
+\Liquidity{} precompile (\S\ref{sec:liquidity-integration}) updates
+the official record at \Liquidity{}.io's registered transfer agent
+on every trade. A holder's beneficial-owner record is updated within
+the same block as the trade. Voting rights on equity tokens propagate
+to the holder's wallet via the same record.
+
+\paragraph{Fractional liquidity.}
+A position of $0.0001$ shares is tradeable. The matching engine has
+no minimum-quantity floor; the only floor is the gas cost per trade,
+which under \Zoo{} 4.0 \GPU{}-native gas is sub-cent for typical
+order sizes.
+
+\paragraph{Corporate actions.}
+Splits, dividends, mergers, and tender offers propagate via on-chain
+events emitted by the issuer's \Liquidity{}-attested action contract.
+Holder wallets reconcile automatically.
+
+\subsection{Fixed income}
+
+\paragraph{Corporate bonds.}
+Tokenised corporate debt with on-chain coupon distributions. Issuer
+deposits coupon principal in a custody contract; the contract
+distributes pro-rata to holders on the coupon date; holders' wallets
+reflect the distribution as native \texttt{\$ZOO}-denominated income
+(or a configurable denomination per bond series).
+
+\paragraph{Treasuries.}
+Tokenised US Treasury exposures (T-bills, notes, bonds) settled
+through the \Liquidity{} broker-dealer interface. Real-time
+mark-to-market against published rates.
+
+\paragraph{Yield strips.}
+Coupon-stripping into separately tradeable principal and interest
+tokens. Useful for laddered yield products served to retail.
+
+\subsection{Real-world assets (RWA)}
+
+\paragraph{REITs.}
+Tokenised real estate trust shares with quarterly distributions.
+
+\paragraph{Commodities.}
+Tokenised gold, silver, copper, energy --- spot exposure backed by
+warehouse-attested holdings. The attestations live on A-Chain
+\cite{lp-134} so verification of physical backing is on-chain.
+
+\paragraph{Private equity.}
+Tokenised LP interests in private equity funds, gated by
+accredited-investor status checks via the Z-Chain selective
+disclosure path (\S\ref{sec:privacy}).
+
+\paragraph{Carbon and conservation credits.}
+On-chain carbon credits and conservation impact tokens (consistent
+with \Zoo{} Labs Foundation's 501(c)(3) mission), tradeable like any
+other asset and burnable on-chain when retired against an emissions
+or impact reporting obligation.
+
+\subsection{Tokenised derivatives}
+
+\paragraph{Perpetual futures.}
+Continuous funding-rate perpetuals on equity, commodity, and crypto
+underlyings. Funding-rate calculation, mark-price oracle, and
+liquidation engine all run on-chain. Cross-margined accounts permit
+capital efficiency across positions.
+
+\paragraph{Dated futures.}
+Calendar futures on commodities and equity indexes, with monthly
+expiry rolls and physical or cash settlement at expiry.
+
+\paragraph{Options.}
+European-style options on supported underlyings with on-chain
+exercise. American-style and exotic structures gated by regulator
+approval and \Liquidity{} broker-dealer review.
+
+\subsection{Compliance-by-construction}
+
+Every security listing requires:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item Issuer onboarding through \Liquidity{}.io (the SEC ATS,
+        FINRA broker-dealer, and registered transfer agent control
+        plane).
+  \item A \texttt{SecurityClass} contract on \Zoo{} D-Chain that
+        delegates the regulator-relevant checks (transfer
+        eligibility, holder eligibility, jurisdiction) to the
+        \Liquidity{} precompile.
+  \item A continuous attestation feed from the issuer's transfer
+        agent to A-Chain, which the \DEX{} reads before allowing
+        listing changes.
+  \item Z-Chain \ZKP{} circuits for any holder-side eligibility
+        checks where the holder must prove a property (accreditation
+        status, geography, source-of-funds).
+\end{enumerate}
+
+Trades on a security class that has lost good-standing status (e.g.,
+a delisting, a corporate-action freeze, a regulatory hold) are
+automatically blocked at the precompile level; the matching engine
+does not even see the order. This is the compliance-by-construction
+discipline: the rules are not policy in a contract; they are gates
+in the precompile that the matching engine cannot bypass.
+
+\subsection{Settlement economics}
+
+T+0 settlement is the default. The \Quasar{} 4.0 cert provides
+sub-1.1s finality \cite{lp-020}; the transfer-agent hook fires within
+the same block; the official record is updated atomically with the
+chain state. There is no T+1 / T+2 settlement window because there
+is nothing to wait for.
+
+\subsection{Why this is materially different from a CEX listing}
+
+A CEX listing tokenises a hold-on-balance-sheet position. The
+exchange owns the asset; the user owns a claim against the exchange.
+A \Zoo{} D-Chain listing is the asset. The transfer-agent record
+\emph{is} the chain record. There is no exchange-balance-sheet
+intermediary. This is what ``native securities'' means in this
+paper: the chain is the ledger of record, not a mirror of one.

@@ -1,0 +1,213 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes,arrows,positioning,calc,decorations.pathreplacing}
+\usepackage{listings}
+% Solidity language definition (listings does not include it by default)
+\lstdefinelanguage{Solidity}{
+    morekeywords={contract,function,returns,return,if,else,for,while,do,
+        mapping,address,uint256,uint,int,bool,string,bytes,bytes32,
+        public,private,internal,external,view,pure,payable,memory,storage,
+        calldata,event,emit,modifier,require,struct,enum,interface,
+        abstract,override,virtual,is,new,delete,import,pragma,solidity,
+        library,using,constructor,msg,sender,block,timestamp,this,super},
+    sensitive=true,
+    comment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    morestring=[b]",
+}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{longtable}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{definition}{Definition}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\Zen}{\textsc{Zen}}
+\newcommand{\Quasar}{\textsc{Quasar}}
+\newcommand{\Liquidity}{\textsc{Liquidity}}
+\newcommand{\PoAI}{\textsc{PoAI}}
+\newcommand{\TEE}{\textsc{tee}}
+\newcommand{\LLM}{\textsc{llm}}
+\newcommand{\GPU}{\textsc{gpu}}
+\newcommand{\DAO}{\textsc{dao}}
+\newcommand{\LoRA}{\textsc{LoRA}}
+\newcommand{\BlockSTM}{\textsc{Block-STM}}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    tabsize=2,
+    captionpos=b,
+}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\title{\textbf{Per-LLM Chains}\\
+\large One Sovereign Chain per Model: Unified Training, Research, and Pooled GPU Hosting on \Quasar{} 3.0}
+
+\author{
+Antje Worring, Zach Kelling\thanks{research@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{December 15, 2025}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We introduce the \emph{Per-LLM Chain} architecture: a sovereign \Quasar{}-certified appchain dedicated to the lifetime of a single large language model. Each chain binds together training-data provenance, compute receipts, research artifact registries, contributor attribution graphs, and inference revenue distribution into a single consensus-ordered ledger. Per-LLM chains settle on \Lux{} \Quasar{} 3.0 (\textsc{lp-020}) via the \Quasar{}-Native App Stack (\textsc{lp-133}), use the \Quasar{}\GPU{} adapter (\textsc{lp-132}) for deterministic GPU scheduling, anchor TEE-attested compute receipts to the \Lux{} A-Chain (\textsc{lp-134}), and federate cloud capacity through \Lux{} Cloud (\textsc{lp-136}). The canonical deployment hosts the \Zen{} model family---eighteen open-weight frontier models from \texttt{zen4-nano} (0.8B) through \texttt{zen4-ultra-max} (1T+)---each with its own chain. The \Zoo{} per-LLM stack complements the \Hanzo{} AI Chain (which operates the inference and commerce marketplace) by providing the upstream training, research, and capacity layer. Spec freeze: 2025-12-15. Activation alongside \Quasar{} 3.0: 2025-12-25.
+
+\textbf{Keywords}: per-LLM chains, decentralized training, GPU pooling, model provenance, \Quasar{} 3.0, appchain, attribution graphs, \Zen{} models
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\input{sections/01-introduction}
+\input{sections/02-architecture}
+\input{sections/03-unified-training}
+\input{sections/04-unified-research}
+\input{sections/05-pooled-gpu-hosting}
+\input{sections/06-zen-models}
+\input{sections/07-cross-chain}
+\input{sections/08-token-economics}
+\input{sections/09-privacy-provenance}
+\input{sections/10-activation}
+\input{sections/11-securities-and-dao}
+\input{sections/12-zoo-3-0-substrate}
+
+\begin{thebibliography}{99}
+
+\bibitem{lp-020-quasar-3}
+Lux Foundation.
+\newblock LP-020: Quasar Consensus 3.0.
+\newblock Lux Improvement Proposal, December 2025.
+\newblock \url{https://github.com/luxfi/lps/lp-020}.
+
+\bibitem{lp-010-blockstm}
+Lux Foundation.
+\newblock LP-010: Quasar Block-STM 3 Parallel Execution.
+\newblock Lux Improvement Proposal, December 2025.
+\newblock \url{https://github.com/luxfi/lps/lp-010}.
+
+\bibitem{lp-105-quasar-consensus}
+Lux Foundation.
+\newblock LP-105: Quasar Consensus Family Specification.
+\newblock Lux Improvement Proposal, December 2025.
+
+\bibitem{lp-132-quasargpu}
+Lux Foundation.
+\newblock LP-132: QuasarGPU Adapter for Deterministic GPU Scheduling.
+\newblock Lux Improvement Proposal, December 2025.
+
+\bibitem{lp-137-residency}
+Lux Foundation.
+\newblock LP-137: GPU-Residency Invariant.
+\newblock Lux Improvement Proposal, December 2025.
+
+\bibitem{zoo-3-0-launch}
+Zoo Labs Foundation.
+\newblock Zoo 3.0 Launch: GPU-Native L1.
+\newblock Zoo Whitepaper, December 15, 2025.
+
+\bibitem{lp-133-app-stack}
+Lux Foundation.
+\newblock LP-133: Quasar-Native App Stack for Sovereign Appchains.
+\newblock Lux Improvement Proposal, December 2025.
+
+\bibitem{lp-134-topology}
+Lux Foundation.
+\newblock LP-134: Lux Chain Topology and A-Chain/B-Chain Specification.
+\newblock Lux Improvement Proposal, December 2025.
+
+\bibitem{lp-136-cloud}
+Lux Foundation.
+\newblock LP-136: Lux Cloud Capacity Federation Layer.
+\newblock Lux Improvement Proposal, December 2025.
+
+\bibitem{lp-013-fchain}
+Lux Foundation.
+\newblock LP-013: F-Chain FHE-Protected Inference.
+\newblock Lux Improvement Proposal, December 2025.
+
+\bibitem{hanzo-ai-chain}
+Hanzo AI.
+\newblock The Hanzo AI Chain: Inference Marketplace and Commerce Layer.
+\newblock Hanzo Whitepaper, December 2025.
+
+\bibitem{zen-models}
+Zen LM.
+\newblock The Zen Model Family: Open-Weight Frontier Models.
+\newblock \url{https://huggingface.co/zenlm}, December 2025.
+
+\bibitem{zoo-poai}
+Zoo Labs Foundation.
+\newblock PoAI Consensus and Decentralized Semantic Optimization.
+\newblock Zoo Whitepaper, 2025.
+
+\bibitem{zoo-gym}
+Zoo Labs Foundation.
+\newblock Zoo Gym: Unified Training Platform.
+\newblock Zoo Whitepaper, 2025.
+
+\bibitem{zoo-2025-securities-and-dao}
+Zoo Labs Foundation.
+\newblock Zoo 2025: Digital Securities, Quantum-Secure Settlement, and the Holographic Consensus DAO.
+\newblock Zoo Whitepaper, December 15, 2025.
+
+\bibitem{block-stm}
+Gelashvili, R., et al.
+\newblock Block-STM: Scaling Blockchain Execution by Turning Ordering Curse to a Performance Blessing.
+\newblock arXiv:2203.06871, 2022.
+
+\bibitem{tee-attestation}
+Costan, V., Devadas, S.
+\newblock Intel SGX Explained.
+\newblock IACR Cryptology ePrint Archive, 2016.
+
+\bibitem{nvidia-cc}
+NVIDIA.
+\newblock H100 Confidential Computing.
+\newblock NVIDIA Technical Brief, 2024.
+
+\bibitem{dp-sgd}
+Abadi, M., et al.
+\newblock Deep Learning with Differential Privacy.
+\newblock CCS, 2016.
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,133 @@
+\section{Securities, Holographic DAO, and Quantum-Secure Settlement}
+\label{sec:securities-and-dao}
+
+This section extends the per-\LLM{} chain framework into four
+dimensions that the activation roadmap (\S\ref{sec:activation}) does
+not separately specify: digital-securities positioning, the holographic
+consensus \DAO{}, the quantum-secure settlement floor, and the
+democratized-access mission. The full-length treatment is in the
+companion paper \emph{Zoo 2025: Digital Securities, Quantum-Secure
+Settlement, and the Holographic Consensus DAO}~\cite{zoo-2025-securities-and-dao}.
+What follows is the per-\LLM{}-chain-specific summary.
+
+\subsection{\$113 trillion digital-securities market positioning}
+\label{sec:113t}
+
+The total addressable market for digital securities globally is
+estimated at approximately \$113 trillion across listed equities,
+fixed income, derivatives, and tokenized real-world assets. This is a
+market-size estimate, not a \Zoo{}-specific TVL claim. \Zoo{} sits in
+this stack as the open-AI / wildlife / metaverse layer; \Lux{}
+provides the regulated chain infrastructure (per \textsc{lp-020}); and
+\Liquidity{} (\Zoo{}'s exclusive partner for retail-scale securities
+trading) carries the regulated ATS / broker-dealer / transfer-agent
+perimeter. Per-\LLM{} chains do not custody securities, but inference
+revenue and research-attribution flows from per-\LLM{} chains to the
+\Liquidity{}-operated trading stack are an in-protocol use of the
+chain receipts.
+
+\paragraph{Concrete capabilities.}
+Through the \Zoo{} + \Lux{} + \Liquidity{} stack, retail users get
+zero-commission trading, fractional shares to the cent, instant
+settlement on \Quasar{} 3.0, tokenized stocks/bonds/commodities/REITs
+with the official transfer-agent record at \Liquidity{}, 24/7 markets,
+and a public verifiable order book. Tagline: \emph{Robinhood-style
+capabilities for everyone --- actually make money like the 1\%
+finally.}
+
+\subsection{Quantum-secure settlement}
+\label{sec:pq-settlement}
+
+Every per-\LLM{} chain block, every research-artifact commit, and
+every receipts-tree update settles under \Quasar{} 3.0
+(\Lux{} \textsc{lp-020}). \Quasar{} 3.0 composes three independent
+hardness assumptions:
+
+\newcommand{\BLS}{\textsc{bls}}
+\newcommand{\MLDSA}{\textsc{ml-dsa}}
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item $\BLS{}_{12\text{-}381}$ aggregate (classical), per
+   \Lux{} \textsc{lp-075}.
+\item Corona Ring-LWE threshold (\textsc{pq} lattice), per
+   \Lux{} \textsc{lp-073}.
+\item $\MLDSA{}\text{-}65$ identity proof via Z-Chain Groth16 rollup
+   (\textsc{pq} lattice with succinct proof), per \Lux{} \textsc{lp-070}.
+\end{itemize}
+
+An adversary must break all three to forge a per-\LLM{} chain block.
+A \BLS{} compromise alone (Q-day) does not break finality: the
+Corona + $\MLDSA{}$ pair remains secure. Custody on M-Chain
+(\Lux{} \textsc{lp-019}) and FHE substrate on F-Chain
+(\Lux{} \textsc{lp-013}) inherit the same composition. The retail
+user can therefore say: \emph{trade post-quantum-safe, custody
+post-quantum-safe, audit-trail post-quantum-safe.}
+
+\subsection{Homomorphic / holographic consensus DAO}
+\label{sec:dao-perllm}
+
+Each per-\LLM{} chain operates a sub-\DAO{} that inherits the
+meta-\DAO{} governance topology: weighted voting under FHE tally on
+F-Chain (\Lux{} \textsc{lp-013}), threshold key custody on M-Chain
+(\Lux{} \textsc{lp-019}), and contributor attestation on A-Chain
+(\Lux{} \textsc{lp-134}). The \DAO{} is described as
+\emph{homomorphic} because votes are tallied while encrypted
+(individual ballots stay private; only the aggregate decrypts), and
+\emph{holographic} because every sub-\DAO{} is structurally a small
+copy of the meta-\DAO{}. A per-\LLM{} chain can fork into its own
+sub-chain and keep the same governance machinery without bespoke
+integration.
+
+\paragraph{Weighted voting.}
+Voting weight per participant is
+
+\[
+\text{weight}(p) \;=\; \alpha \cdot a_p \;+\; \beta \cdot i_p \;+\; \gamma \cdot c_p \;+\; \delta \cdot s_p
+\]
+
+\noindent with $\alpha + \beta + \gamma + \delta = 1$. The four axes
+are advocacy ($a_p$, attestation-rooted social signal), involvement
+($i_p$, contribution-graph activity attested on A-Chain), contribution
+($c_p$, landmark research artifacts with reproducibility attestation),
+and token stake ($s_p$, locked $\$$ZOO). Default initial weights at
+2025-12-25 activation:
+$(\alpha, \beta, \gamma, \delta) = (0.20,\ 0.30,\ 0.40,\ 0.10)$, set
+by meta-\DAO{} vote. The bound on $\delta$ prevents plutocracy; the
+A-Chain attestation gate prevents Sybil inflation of $i_p$ and $c_p$.
+
+\subsection{Democratized end-to-end access to information}
+\label{sec:democratized}
+
+The per-\LLM{} chain is the mechanism that makes ``democratized
+end-to-end'' a protocol invariant rather than a marketing claim:
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item \textbf{User} --- selective disclosure via Z-Chain Groth16
+   attestations: prove eligibility without revealing identity.
+\item \textbf{Model} --- weights, architecture, and training-data
+   lineage all on the per-\LLM{} chain.
+\item \textbf{Data} --- every training shard's hash is committed to
+   the chain's receipts tree.
+\item \textbf{Output} --- every inference call produces a
+   \textsc{tee}-attested receipt anchored on A-Chain via Hanzo AI
+   Chain~\cite{hanzo-ai-chain}.
+\item \textbf{Reward} --- royalties flow back along the on-chain
+   contribution graph automatically; no central treasurer.
+\end{itemize}
+
+Closed AI labs (OpenAI, Anthropic) treat weights, data, and
+architecture as competitive secrets. \Zoo{} per-\LLM{} chains treat
+them as public goods whose provenance is the protocol. This is the
+durable distinction.
+
+\subsection{Cross-references to companion paper and ZIPs}
+
+The full-length specification of these four planks --- with formal
+definitions, receipts-tree layout, and the contribution-graph
+attestation pipeline --- is in~\cite{zoo-2025-securities-and-dao}.
+Relevant Zoo \textsc{zip}s: \textsc{zip-0017} (DAO Governance
+Framework), \textsc{zip-0026} (Ecosystem Reputation System),
+\textsc{zip-0407} (Decentralized AI Training Architecture),
+\textsc{zip-0413} (Foundation Language Model Architecture),
+\textsc{zip-0606} (Reproducibility Attestation), and \textsc{zip-0570}
+(Zoo Labs Impact Thesis).

@@ -1,0 +1,134 @@
+\section{2025 Update --- Securities, Quantum-Secure Settlement, Holographic DAO, and Open Information}
+\label{sec:2025-update}
+
+\textit{This section is an editorial addendum dated 2025-12-15, four
+years after the original whitepaper. It exists to surface five planks
+that descend from the founding vision but were not specified in the
+2021 text. The original document above is unchanged; this addendum is
+the canonical bridge from the founder vision to the activation state
+on 2025-12-25.}
+
+\subsection{Updated team and mission (2025)}
+
+\textbf{Founder}: Antje Worring (author of this October~31, 2021
+whitepaper). \textbf{Chief Scientist}: Zach Kelling. \textbf{Mission} (as
+of 2025-12-15): \emph{An open AI protocol for research aligned with
+environment-saving, endangered AI, and the intersection of AI,
+blockchain, metaverse, and gaming.} Full team page is the canonical
+\texttt{team.md} in the Zoo \textsc{zip} repository. Allied
+organizations: Lux Network (chain infrastructure), Hanzo AI (Techstars
+'17, AI compute and Zen LM co-development), and Liquidity (exclusive
+partner for retail-scale digital-securities trading).
+
+\subsection{\$113 trillion digital-securities market}
+
+The total addressable market for digital securities globally is
+estimated at approximately \textbf{\$113 trillion} (BIS / WFE 2025
+estimates of global capitalization across equities, fixed income,
+derivatives, and tokenized real-world assets). Zoo positions itself as
+the open AI / wildlife / metaverse layer in this stack. Lux provides
+the regulated chain infrastructure. \textbf{Liquidity} is Zoo's
+exclusive partner for retail-scale securities trading, carrying the
+regulated ATS / broker-dealer / transfer-agent perimeter.
+
+\paragraph{Tagline.} \emph{Robinhood-style capabilities for everyone ---
+actually make money like the 1\% finally.}
+
+\paragraph{Concrete capabilities.} Zero-commission trading, fractional
+shares to the cent, instant settlement on Quasar 3.0, tokenized
+real-world securities (stocks, bonds, commodities, REITs, private
+equity), 24/7 markets, and a public verifiable order book. Compliance
+(KYC, AML, suitability, best execution) lives at the Liquidity
+perimeter; the chain is the audit-eligible settlement layer.
+
+\paragraph{Honest framing.} \$113T is a market-size figure, not a
+Zoo-specific TVL. Zoo Labs Foundation is a 501(c)(3) and does not
+operate a regulated market center; Liquidity does.
+
+\subsection{Quantum-secure settlement (Quasar 3.0)}
+
+Every securities trade, every Zoo block, every NFT mint, and every DAO
+vote settles under \textbf{Quasar 3.0} (Lux LP-020). Quasar 3.0
+composes three independent cryptographic hardness assumptions:
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item BLS12-381 aggregate signature (classical), Lux LP-075.
+\item Corona Ring-LWE threshold signature (post-quantum lattice),
+   Lux LP-073.
+\item ML-DSA-65 identity proof via Z-Chain Groth16 rollup
+   (post-quantum lattice with succinct proof), Lux LP-070.
+\end{itemize}
+
+An adversary must break \emph{all three} to forge a Lux/Zoo block. A
+BLS compromise on Q-day does not break finality: the Corona +
+ML-DSA pair stays secure. M-Chain (Lux LP-019) holds threshold custody
+of governance and settlement keys; F-Chain (Lux LP-013) provides FHE
+substrate. The retail user can therefore truthfully say: trade
+post-quantum-safe, custody post-quantum-safe, audit-trail
+post-quantum-safe.
+
+\subsection{Homomorphic / Holographic Consensus DAO}
+
+The Zoo DAO described in §19 of the 2021 text now formalizes as a
+\emph{homomorphic} (votes tallied while encrypted via F-Chain FHE,
+Lux LP-013) and \emph{holographic} (every sub-DAO is structurally a
+copy of the meta-DAO; per-LLM chains, research verticals, and regional
+chapters all inherit the same governance topology) consensus DAO.
+
+Voting weight is
+
+\[
+\text{weight}(p) \;=\; \alpha \cdot a_p \;+\; \beta \cdot i_p \;+\; \gamma \cdot c_p \;+\; \delta \cdot s_p
+\]
+
+\noindent with $\alpha + \beta + \gamma + \delta = 1$, where the four
+axes are advocacy ($a_p$), involvement ($i_p$), contribution ($c_p$),
+and token stake ($s_p$). Default initial weights at 2025-12-25:
+$(0.20, 0.30, 0.40, 0.10)$. Token stake is bounded at 10\% to prevent
+plutocracy. Anti-Sybil: contribution and involvement scores require
+TEE attestation through A-Chain (Lux LP-134); advocacy must be on
+attestation-rooted social platforms. Threshold custody of governance
+keys lives on M-Chain MPC (Lux LP-019).
+
+\subsection{Democratized end-to-end access to information}
+
+The Open AI Protocol named in §\ref{sec:open-ai-protocol} now operates
+as an end-to-end-verifiable pipeline:
+
+\begin{enumerate}[nosep,leftmargin=1.4em]
+\item User --- proves eligibility via zero-knowledge selective
+   disclosure (Z-Chain Groth16 attestations).
+\item Model --- weights, architecture, and training-data lineage all
+   committed on-chain via Zoo per-LLM chains.
+\item Data --- every training shard's hash is on the receipts tree;
+   contributors are attributable.
+\item Output --- every inference call produces a TEE-attested receipt
+   anchored on A-Chain via the Hanzo AI Chain.
+\item Reward --- royalties flow back along the contribution graph
+   automatically.
+\end{enumerate}
+
+Closed labs (OpenAI, Anthropic) treat weights, data, and architecture
+as competitive secrets. Zoo treats them as public goods whose
+provenance is the protocol. This is the durable distinction between
+the open AI protocol named in the 2021 founding vision and the
+proprietary AI services that came after.
+
+\subsection{Cross-references}
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item Companion paper: \emph{Zoo 2025: Digital Securities,
+   Quantum-Secure Settlement, and the Holographic Consensus DAO}
+   (full-length treatment of the five planks).
+\item Companion paper: \emph{Zoo Per-LLM Chains: One Sovereign Chain
+   per Model}.
+\item Lux LP-020 (Quasar 3.0), LP-013 (F-Chain), LP-019 (M-Chain),
+   LP-070 (ML-DSA), LP-073 (Corona), LP-075 (BLS), LP-105 (Quasar
+   3.0 paper), LP-134 (A/B/M/F topology).
+\item Hanzo AI Chain whitepaper.
+\item Zoo \textsc{zip-0017} (DAO governance), \textsc{zip-0026}
+   (reputation), \textsc{zip-0570} (impact thesis).
+\end{itemize}
+
+\medskip
+\noindent\textit{Editorial addendum closes 2025-12-15.}

@@ -1,0 +1,49 @@
+\section{Augmented Reality App (Zoo Field)}
+\label{sec:ar}
+
+\subsection{2021 Commitment}
+
+\S22 described an \AR{} app that lets the user encounter their Zoo
+\NFT{} animal in real-world space, supporting in-the-field engagement
+and conservation education.
+
+\subsection{2025-12-15 Realization}
+
+Ships as \textbf{Zoo Field}, a mobile \AR{} companion published under
+\texttt{\textasciitilde/work/zoo/apps/}. Anchored to:
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item \textbf{Geo-attested quest completion.} On-site visits to
+  partnered sanctuaries and conservation sites complete quests under
+  \textsc{zip-0034} (XP \& Quests) with \texttt{ATTESTATION}
+  verification.
+\item \textbf{Species-ID classification.} On-device species
+  classification (\textsc{zip-0510}, Species Protection Monitoring)
+  recognizes real animals and rewards the user for verified
+  observations.
+\item \textbf{Habitat overlays.} Visualizes habitat-restoration data
+  fed from \textsc{zip-0505} (Reforestation Verification) and
+  \textsc{zip-0520} (Habitat Conservation).
+\item \textbf{Citizen-science contribution.} Submitted observations
+  flow into the Citizen Science Contribution Protocol
+  (\textsc{zip-0602}) and are eligible for impact-attestation.
+\end{itemize}
+
+\subsection{Architecture}
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item \textbf{Stack.} Native iOS (\textsc{arkit}) and Android
+  (\textsc{arcore}) with shared Rust core for protocol bindings.
+\item \textbf{Inference.} Local on-device for species classification
+  and pose estimation; offloaded to Hanzo Network for harder cases.
+\item \textbf{Identity.} DID-bound (\textsc{zip-0033}); offline-capable
+  with deferred attestation submission.
+\item \textbf{Privacy.} Geo data is selectively disclosed on Z-Chain
+  (\textsc{lp-134}); raw \textsc{gps} is never written publicly.
+\end{itemize}
+
+\subsection{Field-Trip Mode}
+
+A guided mode for sanctuary visits (Foundation events). The visitor's
+DID accrues XP and unlocks limited-edition wildlife photography \NFT{}s
+(\textsc{zip-0205}).

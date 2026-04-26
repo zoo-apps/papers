@@ -1,0 +1,63 @@
+\section{Treasury and Grant Cycles}
+\label{sec:treasury}
+
+\subsection{Custody}
+
+The Zoo Foundation Treasury is held under M-Chain MPC threshold custody
+(Lux \textsc{lp-019}) with a 2-of-3 split between board signatories,
+the Foundation operations multisig, and a community-elected
+\textsc{dao}{} representative. Every disbursement is co-signed and
+emits an on-chain receipt anchored on Q-Chain (\Quasar{} 3.0,
+\textsc{lp-020}).
+
+\subsection{Funding Sources}
+
+Treasury inflows come from four channels:
+
+\begin{enumerate}[nosep,leftmargin=1.4em]
+\item \textbf{Sustainability tax} --- 1--3\% on every protocol
+  transaction (see \texttt{contracts/specs/zoo-sustainability-tax.md}).
+\item \textbf{Direct micro-donations} --- streaming via
+  \textsc{zip-0112}.
+\item \textbf{Conservation bonds} --- yield-bearing tokenized donations
+  (\textsc{zip-0101}).
+\item \textbf{Validator-rewards conservation split} --- a percentage of
+  validator rewards (\textsc{zip-0019}).
+\end{enumerate}
+
+\subsection{Grant Cycle (Quarterly)}
+
+Each cycle follows the framework in \textsc{zip-0023} (Community Grant
+Program) and \textsc{zip-0104} (Research Funding \textsc{dao} Treasury):
+
+\begin{enumerate}[nosep,leftmargin=1.4em]
+\item \textbf{Open call.} Proposals submitted on-chain; gated by DID
+  Tier (\textsc{zip-0033}) and minimum reporting commitment.
+\item \textbf{Review.} Domain reviewers (catalogue partners, in-situ
+  ecologists, citizen-science contributors) score proposals.
+  Reviewers' DIDs are published; reputation drift is bounded by
+  \textsc{zip-0026}.
+\item \textbf{Vote.} Weighted vote per the 2021 paper \S28 formula:
+  $\text{weight}(p) = \alpha \cdot a_p + \beta \cdot i_p + \gamma \cdot c_p + \delta \cdot s_p$
+  with stake capped at 10\% of weight.
+\item \textbf{Disbursement.} M-Chain co-signs payment; on-chain
+  receipt anchors evidence to the Evidence Locker
+  (\textsc{zip-0560}).
+\item \textbf{Reporting.} Recipients commit to the Reproducibility
+  Attestation framework (\textsc{zip-0606}) and a 90-day field-results
+  report.
+\end{enumerate}
+
+\subsection{Allocation Limits}
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item Operations expense capped at 15\% of treasury per cycle (the
+  remainder must be programmatic or in-situ).
+\item Per-grant cap of 10\% of treasury (avoids single-project
+  concentration).
+\item Reserve floor of 25\% retained against multi-year obligations.
+\end{itemize}
+
+The \textsc{dao}{} can override these limits only by supermajority vote
+under \textsc{zip-0017} (Treasury Spend $\geq 60\%$, $\geq 10\%$
+quorum, 72-hour timelock).

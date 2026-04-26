@@ -1,0 +1,63 @@
+\section{Impact Measurement}
+\label{sec:impact}
+
+\subsection{Framework}
+
+Every grant cycle's outcome is measured under the Conservation Impact
+Measurement framework (\textsc{zip-0501}) and indexed in the Evidence
+Locker (\textsc{zip-0560}). Impact data is published as open
+biodiversity data (\textsc{zip-0601}, Open Biodiversity Database
+Standard).
+
+\subsection{Verifiable Metrics}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{5cm}p{4cm}p{5.5cm}}
+\toprule
+\textbf{Metric} & \textbf{Source} & \textbf{Verification} \\
+\midrule
+Population census delta & Field partner & Multi-observer attestation; satellite cross-check (\textsc{zip-0425}). \\
+Habitat hectares restored & Reforestation log & Satellite verification (\textsc{zip-0505}). \\
+Anti-poaching incidents prevented & Anti-poaching alert network & On-chain alert log (\textsc{zip-0503}). \\
+Educational reach & Avatar-tutor sessions (\textsc{zip-0008}) & Session attestations on A-Chain (\textsc{lp-134}). \\
+Citizen-science contributions & Citizen-science protocol (\textsc{zip-0602}) & Reproducibility attestation (\textsc{zip-0606}). \\
+\bottomrule
+\end{tabular}
+\caption{Verifiable impact metrics. Every metric has a defined source,
+a defined verifier, and a defined chain anchor.}
+\end{table}
+
+\subsection{Annual Impact Report}
+
+The Foundation publishes an annual impact report each calendar year
+end. The 2025 edition is the first operating under \Quasar{} 3.0 and
+the first end-to-end-verifiable report in the Foundation's history.
+
+\subsection{Open Data}
+
+All non-sensitive impact data is published under \textsc{zip-0601}
+(Open Biodiversity Database Standard), licensed CC-BY for research
+reuse. Sensitive location data (e.g., poaching-vulnerable species
+coordinates) is published behind selective-disclosure attestations
+(Z-Chain, \textsc{lp-134}) gated by researcher DID tier.
+
+\subsection{Cross-References}
+
+\begin{itemize}[nosep,leftmargin=1.2em]
+\item 2021 Whitepaper \S5--7 (Sustainability, Non-Profits, Foundation).
+\item Companion paper: \emph{Zoo Foundation Mission} (Pillars I/II/III).
+\item Companion paper: \emph{Zoo Conservation AI}.
+\item \textsc{zip-0500} series (Conservation).
+\item \textsc{zip-0570} (Zoo Labs Impact Thesis).
+\item \texttt{contracts/specs/zoo-sustainability-tax.md}.
+\item Lux \textsc{lp-019} (M-Chain), \textsc{lp-020} (\Quasar{} 3.0),
+  \textsc{lp-134} (chain topology).
+\end{itemize}
+
+\begin{thebibliography}{9}
+\bibitem{zoo-2021} A.~Worring, \emph{Zoo: A Game-Fi Multiverse Ecosystem
+for the Preservation of Endangered Species}, Zoo Labs Foundation,
+October 31, 2021. Reconstructed 2025-12-15.
+\end{thebibliography}

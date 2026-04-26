@@ -1,0 +1,47 @@
+\section{Introduction}
+\label{sec:introduction}
+
+Foundation-model development is a coordination problem disguised as a compute problem. The visible cost of training a frontier model---tens of millions of dollars in \GPU{}-hours---obscures four invisible coordination failures that no centralized lab has solved:
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Training-data provenance.} Who contributed which examples? Were they licensed, consented, or scraped? Can a contributor revoke participation? In a centralized lab the answer is a spreadsheet, a contract, and a hope that nobody asks for receipts.
+\item \textbf{Compute provenance.} Which \GPU{}s ran which gradient steps? Was the reported loss the loss that actually occurred? In a centralized lab the answer is internal logs that cannot be audited externally.
+\item \textbf{Research credit attribution.} Whose ablation produced the architecture variant that shipped? Which intern's hyperparameter sweep found the working learning rate? In a centralized lab the answer is whatever the publication's author list says.
+\item \textbf{Inference revenue distribution.} When the model earns revenue at serving time, who is paid? In a centralized lab the answer is: only the company that owns the weights.
+\end{enumerate}
+
+Each failure is a missing audit trail. Each is solvable by binding the trail to a consensus ledger. The architecture proposed here---one chain per model---is the smallest design that makes all four trails first-class citizens.
+
+\subsection{Why one chain per LLM, not one chain for all LLMs}
+
+A single chain holding state for every model creates state-explosion (one weight checkpoint of an 80B model is $\approx$160\,GB) and mixes economic incentives across unrelated communities. The contributors to \texttt{zen4-coder} have no shared interest with the contributors to \texttt{zen4-omni-vision}. Treating each model as a sovereign appchain---following the \emph{Quasar-Native App Stack} pattern (\textsc{lp-133})---isolates state, isolates economics, and isolates governance, while still letting models share security through \Quasar{} 3.0 settlement (\textsc{lp-020}).
+
+A per-LLM chain is the minimum unit at which:
+\begin{itemize}[nosep]
+\item training data, compute receipts, and research artifacts share a coherent dependency graph;
+\item contributor reward distributions can be specified and enforced without renegotiating with unrelated communities;
+\item the model's lifecycle---from initial pretraining shard to deprecation snapshot---fits inside a single state machine.
+\end{itemize}
+
+\subsection{Position vs centralized AI labs}
+
+OpenAI, Anthropic, and Google operate the closed end of the spectrum: closed weights, closed data, closed contributor graph, closed revenue. Centralized model marketplaces (Hugging Face, Replicate, Together AI) host open weights but do not record provenance and cannot prove which compute ran which step.
+
+The per-LLM chain occupies a strict superset of capabilities:
+\begin{itemize}[nosep]
+\item \textbf{vs closed labs}: open weights, open data lineage, open contributor graph, open revenue rules;
+\item \textbf{vs open marketplaces}: cryptographic provenance, attested compute, deterministic reproduction, on-chain revenue distribution.
+\end{itemize}
+
+The \Hanzo{} AI Chain \cite{hanzo-ai-chain} runs the marketplace---listing, discovery, paid inference, commerce. The \Zoo{} per-LLM chains run the upstream lab---training, research, contributor attribution, capacity sourcing. The split is orthogonal: \Hanzo{} answers ``where do I rent inference?''; \Zoo{} answers ``who built this model and how?''.
+
+\subsection{Contributions}
+
+\begin{enumerate}[leftmargin=*]
+\item A per-LLM chain specification atop the \Quasar{}-Native App Stack (\textsc{lp-133}), with state schemas for weight checkpoints, training-data Merkle commitments, attested compute receipts, and contributor attribution graphs (\S\ref{sec:architecture}).
+\item A unified training protocol using \BlockSTM{} (\textsc{lp-010}) for deterministic ordering of gradient submissions and \Quasar{}\GPU{} (\textsc{lp-132}) for capacity scheduling (\S\ref{sec:training}).
+\item An on-chain research artifact registry: every architecture, hyperparameter, ablation result, and benchmark commitment is reproducible from chain state (\S\ref{sec:research}).
+\item A pooled \GPU{}-hosting protocol with stake-weighted slashing for SLA breaches, federated through \Lux{} Cloud (\textsc{lp-136}) (\S\ref{sec:gpu}).
+\item Documentation of the canonical \Zen{} family deployment---eighteen models, each on its own chain (\S\ref{sec:zen}).
+\item Cross-chain protocols against \Lux{} C-Chain, the \Hanzo{} AI Chain, \Lux{} F-Chain (\textsc{lp-013}), and \Lux{} B-Chain (\textsc{lp-134}) (\S\ref{sec:crosschain}).
+\end{enumerate}

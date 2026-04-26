@@ -1,0 +1,63 @@
+\section{Unified Research}
+\label{sec:research}
+
+\subsection{Research as on-chain artifacts}
+
+Research outputs that influence the model---architecture variants, hyperparameter choices, ablation results, benchmark scores---are stored as first-class on-chain artifacts. The \texttt{RegisterArtifact} instruction commits an artifact of one of four kinds:
+
+\begin{longtable}{p{3cm}p{4cm}p{7cm}}
+\toprule
+\textbf{Kind} & \textbf{Hashed object} & \textbf{Use} \\
+\midrule
+\endhead
+\texttt{architecture} & model definition file & defines the structure trained in subsequent epochs \\
+\texttt{hyperparams} & training config (yaml/json) & locks the schedule used for the run \\
+\texttt{ablation} & experiment log + result tuple & records what was tried and the outcome \\
+\texttt{benchmark} & dataset commitment + scores & committed evaluation result \\
+\bottomrule
+\end{longtable}
+
+\subsection{Research artifact registry contract}
+
+The chain ships with a \texttt{ResearchRegistry} precompile-backed contract whose state-changing methods are restricted to addresses on the model's contributor allowlist (a list managed by the model's governance). Reads are unrestricted.
+
+\begin{lstlisting}[language=Solidity,caption=Registry interface (excerpt)]
+interface IResearchRegistry {
+    function commitArchitecture(bytes32 hash, bytes calldata meta) external;
+    function commitHyperparams(uint256 epoch, bytes32 hash) external;
+    function commitAblation(bytes32 parentArch, bytes32 hash, int256 deltaScore) external;
+    function commitBenchmark(bytes32 dataset, bytes32 scoresHash) external;
+    function get(bytes32 artifactId) external view returns (Artifact memory);
+}
+\end{lstlisting}
+
+\subsection{Reproducibility from artifacts}
+
+Because the artifact registry, the data tree, and the receipts tree are all on the same chain, reproducing any reported result is mechanical:
+\begin{enumerate}[nosep]
+\item Look up the architecture artifact and hyperparameters for the target epoch.
+\item Walk the receipts tree to enumerate the gradient transactions that built the epoch's checkpoint.
+\item Replay deterministically per \S\ref{sec:training}.
+\item Look up the benchmark artifact and re-run on the committed dataset.
+\end{enumerate}
+
+The chain itself does not run benchmarks (they require model inference, which the \Hanzo{} AI Chain serves), but it provides a tamper-evident bibliography for any reported number.
+
+\subsection{Citation graph}
+
+Ablations form a directed graph rooted at architecture artifacts. The graph is queryable via standard subgraph indexers; the chain emits typed events on every commit. This produces a transparent research history: any claim of the form ``architecture X improves Y by $\delta$'' has a chain transaction that records the parent artifact, the child artifact, and the delta.
+
+\subsection{Research credit attribution}
+
+Research artifacts contribute to the attribution tree the same way training shards do, but with a configurable multiplier. The default policy:
+\begin{equation}
+w_{\text{author} \to \text{epoch}} \mathrel{+}=
+\begin{cases}
+\alpha_{\text{arch}} \cdot \mathbf{1}[\text{arch adopted}] & \text{if architecture} \\
+\alpha_{\text{hp}} \cdot \mathbf{1}[\text{hp adopted}] & \text{if hyperparams} \\
+\alpha_{\text{abl}} \cdot \max(0, \delta) & \text{if ablation} \\
+\alpha_{\text{bench}} \cdot \log(1 + \text{citations}) & \text{if benchmark}
+\end{cases}
+\end{equation}
+
+with $\alpha_{\text{arch}} = 1.0$, $\alpha_{\text{hp}} = 0.1$, $\alpha_{\text{abl}} = 0.5$, $\alpha_{\text{bench}} = 0.2$ as defaults. The values are amendable by chain governance.

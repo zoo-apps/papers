@@ -1,0 +1,62 @@
+\section{Token Economics}
+\label{sec:economics}
+
+\subsection{Two-token model}
+
+Each per-LLM chain operates with two distinct economic instruments:
+
+\begin{enumerate}[nosep]
+\item \textbf{ZOO} (network-wide) --- the \Zoo{} Network governance and staking token, fixed supply, used for cross-chain validator stake and DAO governance. ZOO is shared across all per-LLM chains and is not minted by any individual chain.
+\item \textbf{\$<MODEL>} (chain-specific) --- a per-chain reward unit (e.g., \$ZEN4-CODER, \$ZEN4-MAX). Minted by the chain to pay training, hosting, and research contributors.
+\end{enumerate}
+
+The split mirrors the established \Zoo{} pattern: \$ZOO is a fixed-supply ecosystem token; per-application reward tokens are emitted at the application layer to compensate work specific to that application. Per-LLM chains apply this pattern to model lifecycle work.
+
+\subsection{Per-chain token supply}
+
+A per-LLM chain's reward token has a fixed cap of $10^9$ units. The default allocation:
+
+\begin{longtable}{p{4cm}rp{6cm}}
+\toprule
+\textbf{Bucket} & \textbf{Share} & \textbf{Purpose} \\
+\midrule
+\endhead
+Training rewards & 50\% & Distributed to gradient submitters per attribution \\
+Hosting rewards & 20\% & Distributed to inference operators \\
+Research rewards & 10\% & Distributed to artifact authors \\
+Data contributors & 10\% & Distributed to contributors of training data \\
+DAO treasury & 5\% & On-chain governance treasury \\
+DEX liquidity & 5\% & Initial liquidity on \Zoo{} DEX \\
+\bottomrule
+\end{longtable}
+
+\subsection{Emission schedule}
+
+Emissions follow a halving schedule. Default parameters:
+\begin{itemize}[nosep]
+\item Block reward $r_0$: chain genesis.
+\item Halving period: $2^{22}$ blocks ($\approx$ 13 months at 1\,s blocks).
+\item Total emissions converge to the fixed cap.
+\end{itemize}
+
+The emission rate per block is split across buckets in proportion to the allocation. For example, in any given block, 50\% of the emitted reward token enters the training-rewards distribution pool and is paid out per accepted gradient that block.
+
+\subsection{Inference revenue split}
+
+When the \Hanzo{} AI Chain forwards a fraction (default 30\%) of inference revenue to the per-LLM chain, the funds enter the chain in stable units (USDC-equivalent on \Lux{}) and are distributed without conversion to the chain's reward token:
+
+\begin{equation}
+\text{contributor share} = \text{revenue} \cdot \frac{w_{\text{contributor}}}{\sum_c w_c}
+\end{equation}
+
+Distribution is per-epoch: the attribution graph snapshot at billing time governs the payout vector for that epoch's revenue.
+
+\subsection{Staking and governance}
+
+Validators that produce blocks for a per-LLM chain stake \$ZOO; operators that commit \GPU{} capacity stake \$ZOO plus a per-chain capacity stake; contributors hold the chain's reward token to vote on chain governance (slashing parameter changes, attribution policy amendments, license amendments).
+
+The chain's reward token is non-transferable for an initial vesting period (default 90 days) to prevent spot-flipping of training rewards.
+
+\subsection{Slashing economics}
+
+Slashed stake is split: 50\% burned, 30\% redistributed to the validator that signed the slashing block, 20\% returned to the chain's DAO treasury. The split discourages collusive slashing while still giving validators an incentive to detect violations.
