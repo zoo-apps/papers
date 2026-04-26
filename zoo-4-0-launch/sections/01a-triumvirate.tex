@@ -1,55 +1,93 @@
-\section{The Lux-Family Triumvirate on \Zoo{}}
-\label{sec:triumvirate}
+\section{\Zoo{} L1 Chain Set and Tenant Hierarchy}
+\label{sec:chain-set}
 
-A \Lux{}-family L1 is \emph{triumvirate-complete} when it carries
-three first-class subsystems: a native decentralised exchange
-(\DEX{}), a Cancun-equivalent Ethereum Virtual Machine (\textsc{evm}),
-and a fully-homomorphic encryption substrate (\FHE{}). Networks lacking
-any of the three are toy. \Zoo{} 4.0 is the third network in the
-family to ship the triumvirate, after \Lux{} 4.0 and \Hanzo{} 4.0
-(all on 2026-02-14), and the first purpose-built around conservation,
-wildlife \NFT{}s, and \DAO{}-governed funding.
+\Zoo{} 4.0 is a sovereign L1 with a chain set strictly broader than
+the financial-rail core. The financial-rail core is \DEX{} + \textsc{evm}
++ \FHE{} --- the same three subsystems \Hanzo{} 4.0 carries as its
+canonical \emph{triumvirate}\cite{hanzo-4-0}. \Zoo{} carries that core
+and more: it inherits the majority of the \Lux{}-family primary chains
+(\textsc{lp-134}\cite{lp-134}) and natively hosts L2/L3/L4 tenants on
+top.
 
-\subsection{\DEX{} on \Zoo{}}
+\subsection{Inherited \Lux{} primary chains}
 
-The \Zoo{} \DEX{} (\S\ref{sec:zoo-dex}) is a native \AMM{} pair in V2
-(constant product) and V3 (concentrated liquidity), with V4 as a
-precompile interface to the \Lux{} \DEX{}. Liquidity Protocol
-integration follows in the April 20, 2026 launch wave, exposing
-\Zoo{} pools to the cross-chain settlement router shared with \Lux{}
-D-Chain, \Hanzo{} HMM, and Pars PARSWAP.
-
-\subsection{\textsc{evm} on \Zoo{}}
-
-\Zoo{} 4.0 inherits the \Lux{}-family \GPU{}-native \textsc{evm}
-(\textsc{lp-009}). \textsc{evm} bytecode evaluation runs as
-deterministic \GPU{} kernels through the \QuasarGPU{} adapter
-(\textsc{lp-132}) under the \GPU{}-Residency Invariant
-(\textsc{lp-137}). Per-block parallelism is materially higher than a
-CPU \textsc{evm} of the same gas configuration; the public benchmark
-of $360{,}000$ TPS sustained on \Lux{} C-Chain at $h_0$ applies
-identically to \Zoo{} L1 since the kernels are shared.
-
-The \Zoo{} \textsc{evm} adds three precompiles specific to
-conservation/securities use cases: confidential ERC-20 (via
-\textsc{lp-067}), \NFT{}-fractional vault aggregator, and \DAO{}
-holographic-consensus weight evaluation. All three are \GPU{}-resident.
-
-\subsection{\FHE{} on \Zoo{}}
-
-\Zoo{} 4.0 reaches the \FHE{} substrate through F-Chain
-(\textsc{lp-013}). Three application patterns activate at $h_0$:
+\Zoo{} 4.0 enables every \Lux{} primary chain except those reserved for
+the parent network's cross-cutting infrastructure:
 
 \begin{itemize}[leftmargin=1.2em]
-  \item Confidential \NFT{} bids (price hidden, ownership public).
-  \item Private \DAO{} voting on conservation grants
-        (\S\ref{sec:privacy}).
-  \item Confidential ERC-20 transfers for high-value collections
-        (\textsc{lp-067}).
+  \item \textbf{P-Chain} (PVM) --- platform, staking, validators, epochs.
+  \item \textbf{C-Chain} (\textsc{evm}, cevm) --- general smart
+        contracts, GPU-native bytecode evaluation per \textsc{lp-009}.
+  \item \textbf{X-Chain} (XVM) --- UTXO assets, swaps, native \textsc{tx}s.
+  \item \textbf{Q-Chain} (QVM) --- \Quasar{} threshold-key ceremony
+        (Ringtail \textsc{dkg}).
+  \item \textbf{F-Chain} (FVM) --- \FHE{} compute, encrypted
+        \textsc{evm}, confidential ERC-20 (\textsc{lp-013} v2,
+        \textsc{lp-067}).
+  \item \textbf{D-Chain} (white-labeled \DEX{} template) --- the \Zoo{}
+        \DEX{} (\S\ref{sec:zoo-dex}), with native securities,
+        \NFT{}-fractional pools, and Liquidity Protocol routing.
 \end{itemize}
 
-The triumvirate is therefore complete: \DEX{} provides the venue,
-\textsc{evm} provides the logic, \FHE{} provides the confidentiality.
-The remainder of this paper is structured around how each piece is
-realised on \Zoo{} L1 and how the four-network family co-activates on
-2026-02-14.
+\Zoo{} L1 \emph{does not} run M-Chain (MPC ceremonies), B-Chain
+(cross-ecosystem bridge), A-Chain (attestation/AI provenance), or
+Z-Chain (\textsc{zk} rollups). Those remain \Lux{}-primary
+infrastructure and \Zoo{} accesses them \emph{natively} via the
+\Lux{} primary network --- same \Quasar{} cert lanes, same
+subject-binding, same finality, no wrapped assets, no cross-chain
+hop tax. Bridge withdrawals run on \Lux{} B-Chain natively; AI
+provenance is recorded on \Lux{} A-Chain (AIVM) natively;
+attestation, MPC ceremonies, and ZK rollups follow the same
+pattern. The boundary between \Zoo{}'s chain set and \Lux{} primary
+is cert-lane subject-binding, not a bridge.
+
+\subsection{\Zoo{}-specific chains}
+
+On top of the inherited \Lux{} primary chains, \Zoo{} L1 ships:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{Per-\LLM{} chains}~\cite{zoo-per-llm-chains} --- one
+        chain per frontier model, where weights are commitments and
+        inference is block production. Provenance, attribution, and
+        royalty distribution are first-class.
+  \item \textbf{Conservation chains} --- domain-specific subchains
+        for wildlife \NFT{}s, carbon credits, and impact bonds, with
+        the 1--3\% sustainability tax routed to the Foundation
+        Treasury per ZIP-0017 and ZIP-0034.
+  \item \textbf{Experience-Ledger DSO chain} --- the curated
+        experience library backing training-free model adaptation.
+\end{itemize}
+
+\subsection{Native L2/L3/L4 tenancy}
+\label{sec:zoo-tenancy}
+
+A \Zoo{} L1 design constraint at the 4.0 boundary is that any
+sovereign chain template inherited from \Lux{} primary (per
+\textsc{lp-134} white-label) is \emph{also} a tenant host. Every
+\Zoo{} chain in the set above can host:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{L2} --- tenant appchains, sovereign over their own
+        validator set, inheriting \Quasar{} cert lanes from \Zoo{} L1.
+  \item \textbf{L3} --- per-product subchains, typically deployed by
+        L2 tenants for isolation of orderflow, compute, or
+        compliance domains.
+  \item \textbf{L4} --- per-user/org subchains, ephemeral or
+        long-lived, useful for confidential lanes and
+        organisation-private DAOs.
+\end{itemize}
+
+The L1$\rightarrow$L4 ladder is identical to the \Lux{} primary
+hierarchy and uses the same cert-lane subject-binding to prevent
+cross-chain replay.
+
+\subsection{Financial-rail core}
+
+The financial-rail core (\DEX{} + \textsc{evm} + \FHE{}) is what makes
+\Zoo{} L1 a complete venue for digital securities, conservation
+finance, and confidential \DAO{} grant execution. \DEX{} provides the
+venue, \textsc{evm} provides the logic, \FHE{} provides the
+confidentiality. The remainder of this paper details how the
+financial-rail core, the inherited \Lux{} primary chains, the
+\Zoo{}-specific chains, and the L1$\rightarrow$L4 tenancy interlock at
+the 2026-02-14 activation boundary.
