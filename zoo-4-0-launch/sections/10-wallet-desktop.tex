@@ -1,0 +1,111 @@
+\section{\Lux{} Wallet and Desktop}
+\label{sec:wallet-desktop}
+
+\Zoo{} 4.0 plugs into the \Lux{} Wallet and the \Lux{} Desktop app. The
+\Lux{} Wallet is the canonical signing surface for \Lux{}-ecosystem
+chains; the \Lux{} Desktop app is the canonical management UI. \Zoo{}
+L1 appears as a chain target on both, alongside \Lux{} P/C/X/Q/Z/A/B/M/F-
+Chains.
+
+\subsection{Account / portfolio view}
+
+The portfolio screen aggregates balances across \Lux{} ecosystem
+assets and \Zoo{}-specific assets:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \$LUX (P-Chain stake, C-Chain balance, X-Chain UTXO).
+  \item \$AI (A-Chain mining rewards, Hanzo network earnings).
+  \item \$ZOO (Zoo L1 native, plus bridged wrappers).
+  \item Per-\LLM{} tokens (one per active per-\LLM{} chain
+        \cite{zoo-per-llm-chains}: \texttt{ZEN4-NANO}, \texttt{ZEN4-MINI},
+        \dots, \texttt{ZEN4-ULTRA-MAX}).
+  \item ZRC-721 \NFT{}s with thumbnails, provenance chain, and
+        token-bound account holdings.
+  \item Optional confidential ERC-20 balances (F-Chain), shown as
+        ``encrypted'' until the user unwraps locally.
+\end{itemize}
+
+\subsection{Send / receive}
+
+The send flow signs with the user's local key, submits to the chosen
+chain, and surfaces \Quasar{}Cert finality progress: classical
+fast-path acknowledgement first, then \Corona{} threshold
+confirmation, then \MLDSA{} identity proof. The wallet shows the
+triple-consensus state visually, so the user understands the
+post-quantum side of the certificate is in place before treating
+the transfer as final.
+
+\subsection{\DEX{} swap}
+
+The swap screen exposes a chain selector --- \Lux{} C-Chain or \Zoo{}
+L1 --- because the same trading pair can have liquidity on both. The
+selector remembers per-pair preferences. Behind the scenes:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item C-Chain swap routes via the \Lux{} \DEX{} (\textsc{lp-009}
+        + \cite{lux-dex}).
+  \item Zoo L1 swap routes via \Zoo{} \DEX{} V2 / V3
+        (\S\ref{sec:zoo-dex}).
+  \item Cross-chain swap (Zoo asset $\rightarrow$ Lux asset) routes
+        via Zoo \DEX{} V4 (the precompile to \Lux{} \DEX{}) plus
+        a B-Chain bridge hop.
+\end{itemize}
+
+\subsection{Staking}
+
+The staking screen splits between \Lux{} validator delegation
+(P-Chain) and \Zoo{} validator delegation (Zoo L1 native staking
+contract). Slashing risk is shown per-validator with on-chain
+attestation history pulled from A-Chain.
+
+\subsection{Bridge}
+
+The bridge screen is a wrapper around the B-Chain bridge VM and
+\Zoo{} Bridge. The user picks source chain, destination chain, and
+asset; the wallet computes the bridge route, surfaces the threshold
+ceremony progress, and shows the final mint event.
+
+\subsection{AI inference}
+
+The AI inference screen integrates \Zoo{} AI Desktop:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Local-only mode: queries to a local \Zen{} model. No network.
+  \item Zoo Cloud mode: queries dispatched to federated \GPU{}
+        capacity, paid in \$AI, attested via A-Chain.
+  \item Hanzo Marketplace mode: queries dispatched to the Hanzo AI
+        Chain inference marketplace \cite{hanzo-ai-chain}, paid in
+        \$AI, with HMM (Hanzo Model Marketplace) routing.
+  \item Confidential mode toggle: routes via F-Chain \FHE{}
+        (\S\ref{sec:privacy}) so neither the worker nor the chain
+        sees the plaintext prompt.
+\end{itemize}
+
+\subsection{Privacy mode}
+
+A toggle at the top of the wallet enables privacy mode for the active
+session:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Transfers route via F-Chain Confidential ERC-20 (\textsc{lp-067}).
+  \item Identity proofs route via Z-Chain selective disclosure
+        (\textsc{lp-063}).
+  \item Wallet displays show ciphertext indicators rather than
+        cleartext balances when in privacy mode.
+\end{itemize}
+
+\subsection{Mobile and desktop parity}
+
+The \Lux{} Wallet ships in three form factors --- browser extension,
+mobile (iOS/Android), and \Lux{} Desktop --- with the same screen
+inventory. The desktop variant additionally surfaces validator
+operator panes (block production stats, slashing exposure,
+threshold-ceremony participation) for users running Zoo or Lux
+validators.
+
+\subsection{Screen inventory summary}
+
+The full screen specifications --- ASCII mocks, flow diagrams, and
+edge cases --- live in the wallet repo at
+\texttt{\textasciitilde/work/lux/wallet/SCREENS.md}, which is the
+canonical UX reference for engineering.

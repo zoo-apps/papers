@@ -1,0 +1,80 @@
+\section{Graduating to L1}
+\label{sec:l1-graduation}
+
+Through 2.x, \Zoo{} ran as a \Lux{} L2 application: an \textsc{evm}-compatible
+chain (Chain ID 200200) settling state commitments to \Lux{}'s C-Chain. With
+4.0 \Zoo{} graduates to a sovereign L1 with its own validator set, its own
+\Quasar{}Cert finality, and its own economic security parameters, while
+remaining inside the \Lux{} chain topology.
+
+\subsection{What changes}
+
+\begin{longtable}{p{0.30\textwidth}p{0.30\textwidth}p{0.34\textwidth}}
+\toprule
+\textbf{Concern} & \textbf{Zoo 2.x (L2)} & \textbf{Zoo 4.0 (L1)} \\
+\midrule
+Validator set & inherited from Lux & sovereign Zoo validators \\
+Finality & via Lux C-Chain & \Quasar{}Cert local finality \\
+Economic security & rented from Lux & \$ZOO + \$AI staking \\
+Slashing & N/A & enforced by Q-Chain ceremony \\
+Block production & sequencer & full BFT replication \\
+Bridge to Lux & state commitments & B-Chain (\textsc{lp-134}) \\
+Settlement guarantees & rollup proof & sovereign certificate \\
+Native gas asset & ZOO (bridged) & ZOO (native) \\
+\bottomrule
+\end{longtable}
+
+\subsection{Why graduate}
+
+\paragraph{Determinism for AI workloads.} Per-\LLM{} chain execution
+\cite{zoo-per-llm-chains} requires deterministic scheduling of training-data
+attestations, attribution graph updates, and inference receipt rollups.
+Running these as L2 transactions inside a generic L1 sequencer was a
+solvable problem in 2.x; running them as native operations on a sovereign
+chain whose mempool, consensus, and finality are tuned for AI is materially
+better.
+
+\paragraph{Native confidential compute.} \Zoo{} 4.0 exposes
+F-Chain-backed \FHE{} (\textsc{lp-013}) and Z-Chain-backed \ZKP{}
+(\textsc{lp-063}) as first-class precompiles. As an L2, every confidential
+operation paid the cross-domain message tax. As an L1 with chain-local
+precompiles, the same operations are a single transaction.
+
+\paragraph{Sovereign tokenomics.} Zoo's PoAI ledger and AI mining rewards
+need a chain where the validator subsidy schedule, fee burn policy, and
+\$ZOO/\$AI dual-asset gas semantics are governance variables, not L2
+constants inherited from upstream. L1 graduation puts these levers where
+the Zoo \DAO{} can move them.
+
+\subsection{Constructive embedding in Lux topology}
+
+L1 graduation is not departure. The \Quasar{}-Native App Stack
+(\textsc{lp-133}) defines exactly how a sovereign appchain settles into the
+broader \Lux{} topology (\textsc{lp-134}):
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{Q-Chain} runs the \Corona{} threshold ceremonies that
+        validate \Zoo{}'s validator key material.
+  \item \textbf{A-Chain} (AIVM) anchors TEE quotes for AI mining receipts;
+        \Zoo{} validators submit attestations there.
+  \item \textbf{B-Chain} (BVM) carries \Zoo{}$\leftrightarrow$\Lux{} bridge
+        messages and \Zoo{}$\leftrightarrow$external-chain transfers via
+        \Zoo{} Bridge (\S\ref{sec:zoo-bridge}).
+  \item \textbf{F-Chain} (FVM) and \textbf{Z-Chain} (ZVM) provide
+        confidential compute substrate that \Zoo{} dispatches to via
+        precompiles.
+\end{itemize}
+
+This is the appchain pattern: sovereign block production, shared cross-chain
+plumbing.
+
+\subsection{Validator economics}
+
+Validators stake \$ZOO and optionally \$AI. Block rewards are paid in the
+gas asset of the block. Quasar 4.0 triple-consensus
+(\textsc{lp-020}: BLS + Corona + ML-DSA) means every signed block carries
+both a classical fast path proof and a post-quantum proof; validators
+running compromised classical keys still cannot forge blocks because the
+\Corona{} layer must independently authorize. Slashing is enforced via
+Q-Chain ceremonies for double-sign and via A-Chain attestation gaps for
+liveness failures.
