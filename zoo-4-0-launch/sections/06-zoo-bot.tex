@@ -1,0 +1,89 @@
+\section{\texttt{zoo-bot}}
+\label{sec:zoo-bot}
+
+\texttt{zoo-bot} is \Zoo{}'s pure-Go re-write of the \Hanzo{} OpenClaw bot
+(at \texttt{\textasciitilde/work/hanzo/bot}). The original is a TypeScript
+agentic bot framework that powers content automation, on-chain triggers,
+and Discord/Slack integrations across the Hanzo ecosystem. \Zoo{}'s
+re-write keeps the surface --- skills, tools, MCP integration, web
+hooks --- but re-implements the runtime in Go for size, speed, and
+attack surface.
+
+\subsection{Why a re-write}
+
+The OpenClaw original is good. It is also a Node runtime carrying its
+TypeScript ecosystem of dependencies: hundreds of npm packages, an
+asynchronous event loop, a JIT, and a garbage collector tuned for
+front-end-style workloads. For agentic workflows that run in
+continuous-loop mode on a server, this is overhead. \texttt{zoo-bot}
+trades the front-end ergonomic toolchain for a single static binary.
+
+\subsection{Goals}
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Smaller binary.} Single static Go binary. Target $<$50 MB
+        stripped, versus the original's roughly 200 MB Node
+        runtime + dependencies.
+  \item \textbf{Lower memory.} Idle footprint under 80 MB resident,
+        versus the original's typical 250+ MB.
+  \item \textbf{Faster cold start.} Sub-100 ms startup to first
+        accepting connection, versus several seconds for the original.
+  \item \textbf{Smaller attack surface.} No npm dependency tree. No
+        post-install scripts. No
+        transitive supply-chain exposure beyond Go's standard library
+        plus a vetted set of direct module dependencies.
+  \item \textbf{Drop-in surface.} Agents written for OpenClaw run on
+        \texttt{zoo-bot} via a compatibility shim that translates the
+        TS skill manifest to Go's plugin descriptor.
+\end{enumerate}
+
+\subsection{Architecture}
+
+\texttt{zoo-bot} is organised into three layers:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{Core.} Event loop, scheduler, MCP server/client,
+        tool dispatcher, persistence (SQLite or Postgres).
+  \item \textbf{Skills.} Pluggable Go modules implementing the
+        \texttt{Skill} interface. Each skill is a small struct with
+        \texttt{Plan}, \texttt{Execute}, and \texttt{Observe}
+        methods.
+  \item \textbf{Adapters.} Connectors to Discord, Slack, Matrix,
+        webhook endpoints, and on-chain trigger streams from \Zoo{}
+        L1 / \Lux{} chains.
+\end{itemize}
+
+\subsection{Use cases}
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{Agentic workflows.} An agent that monitors a per-\LLM{}
+        chain attribution graph and posts contributor leaderboards to
+        Discord.
+  \item \textbf{Content automation.} An agent that watches an A-Chain
+        attestation feed and publishes provenance-verified inference
+        outputs to a public mirror.
+  \item \textbf{On-chain triggers.} An agent that fires when a wildlife
+        \NFT{} crosses a price threshold or when a per-\LLM{} chain
+        emits a new training-data attestation.
+  \item \textbf{Validator-side automation.} An agent that watches the
+        \Zoo{} validator's mempool, surfaces anomalies, and pages the
+        operator.
+\end{itemize}
+
+\subsection{Security model}
+
+Each skill runs in a Goroutine sandboxed by a capability set: filesystem
+paths it can read/write, network endpoints it can dial, RPC endpoints
+it can call. The sandbox is enforced by a syscall-level hook (Linux
+seccomp profile, macOS sandbox profile) that the bot loads at startup.
+Skills cannot escape their declared capabilities without a code
+modification and a re-deploy.
+
+\subsection{Relationship to OpenClaw}
+
+OpenClaw remains the upstream reference. \texttt{zoo-bot} is a
+re-implementation that interoperates with the OpenClaw skill manifest
+format, so a skill author can target both. \Hanzo{} continues to
+maintain OpenClaw; \Zoo{} maintains \texttt{zoo-bot}. The two share
+the MCP wire protocol so a \texttt{zoo-bot} agent can call OpenClaw
+tools and vice versa.

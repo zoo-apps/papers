@@ -1,0 +1,55 @@
+\section{The Lux-Family Triumvirate on \Zoo{}}
+\label{sec:triumvirate}
+
+A \Lux{}-family L1 is \emph{triumvirate-complete} when it carries
+three first-class subsystems: a native decentralised exchange
+(\DEX{}), a Cancun-equivalent Ethereum Virtual Machine (\textsc{evm}),
+and a fully-homomorphic encryption substrate (\FHE{}). Networks lacking
+any of the three are toy. \Zoo{} 4.0 is the third network in the
+family to ship the triumvirate, after \Lux{} 4.0 and \Hanzo{} 4.0
+(all on 2026-02-14), and the first purpose-built around conservation,
+wildlife \NFT{}s, and \DAO{}-governed funding.
+
+\subsection{\DEX{} on \Zoo{}}
+
+The \Zoo{} \DEX{} (\S\ref{sec:zoo-dex}) is a native \AMM{} pair in V2
+(constant product) and V3 (concentrated liquidity), with V4 as a
+precompile interface to the \Lux{} \DEX{}. Liquidity Protocol
+integration follows in the April 20, 2026 launch wave, exposing
+\Zoo{} pools to the cross-chain settlement router shared with \Lux{}
+D-Chain, \Hanzo{} HMM, and Pars PARSWAP.
+
+\subsection{\textsc{evm} on \Zoo{}}
+
+\Zoo{} 4.0 inherits the \Lux{}-family \GPU{}-native \textsc{evm}
+(\textsc{lp-009}). \textsc{evm} bytecode evaluation runs as
+deterministic \GPU{} kernels through the \QuasarGPU{} adapter
+(\textsc{lp-132}) under the \GPU{}-Residency Invariant
+(\textsc{lp-137}). Per-block parallelism is materially higher than a
+CPU \textsc{evm} of the same gas configuration; the public benchmark
+of $360{,}000$ TPS sustained on \Lux{} C-Chain at $h_0$ applies
+identically to \Zoo{} L1 since the kernels are shared.
+
+The \Zoo{} \textsc{evm} adds three precompiles specific to
+conservation/securities use cases: confidential ERC-20 (via
+\textsc{lp-067}), \NFT{}-fractional vault aggregator, and \DAO{}
+holographic-consensus weight evaluation. All three are \GPU{}-resident.
+
+\subsection{\FHE{} on \Zoo{}}
+
+\Zoo{} 4.0 reaches the \FHE{} substrate through F-Chain
+(\textsc{lp-013}). Three application patterns activate at $h_0$:
+
+\begin{itemize}[leftmargin=1.2em]
+  \item Confidential \NFT{} bids (price hidden, ownership public).
+  \item Private \DAO{} voting on conservation grants
+        (\S\ref{sec:privacy}).
+  \item Confidential ERC-20 transfers for high-value collections
+        (\textsc{lp-067}).
+\end{itemize}
+
+The triumvirate is therefore complete: \DEX{} provides the venue,
+\textsc{evm} provides the logic, \FHE{} provides the confidentiality.
+The remainder of this paper is structured around how each piece is
+realised on \Zoo{} L1 and how the four-network family co-activates on
+2026-02-14.
