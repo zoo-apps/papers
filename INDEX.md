@@ -19,11 +19,10 @@
 | **2024** | BitDelta / DeltaSoup | 1-bit personalization and community model merging |
 | **2024-2025** | 70+ additional papers | Infrastructure, governance, conservation, tokenomics |
 | **2025-12-15** | Zoo Per-LLM Chains | One sovereign Quasar appchain per model -- canonical Zen family deployment, activation 2025-12-25 |
-| **2025-12-15** | Zoo 2025: Securities and DAO | Five planks: updated team, $113T digital-securities positioning (Lux + Liquidity), Quasar 3.0 quantum-secure settlement (BLS + Corona + ML-DSA), Homomorphic / Holographic Consensus DAO with weighted voting, democratized end-to-end information access |
+| **2025-12-15** | Zoo 2025: Securities and DAO | Five planks: updated team, $113T digital-securities positioning, Quasar 3.0 quantum-secure settlement (BLS + Corona + ML-DSA), Homomorphic / Holographic Consensus DAO with weighted voting, democratized end-to-end information access |
 | **2025-12-15** | Zoo 3.0 Launch | GPU-native L1 graduation -- Quasar 3.0 substrate, Zoo DEX (V2/V3 native, V4 = Lux DEX precompile), Zoo AI Desktop, zoo-bot, Zoo Bridge, F-Chain FHE + Z-Chain ZKP privacy, NFT migration program; activation 2025-12-25 |
 | **2025-10-31** | Zoo 3.0 Full Post-Quantum Stack | Full PQ era -- every signature, every commitment, every proof in Corona + ML-DSA-65 + BLS schemes. Triple-cert inheritance from Lux Quasar 3.0 (LP-020). DAO migration, Bridge re-keying, NFT Liquidity PQ, zLLM PQ commitments. Spec freeze 2025-10-31 (founder's anniversary) |
 | **2026-02-14** | Zoo 4.0 Launch (renamed from 3.0 Launch directory) | GPU-native sovereign L1 -- graduation from Lux L2 application to sovereign L1 with own validator set, Quasar 4.0 cert finality, GPU-Residency Invariant. Spec freeze 2026-01-15. Activation alongside Lux Quasar 4.0 |
-| **2026-04-20** | Zoo DEX Launch | Native securities trading on Zoo D-Chain (Lux D-Chain white-label) -- equities, fixed income, RWA, derivatives. Liquidity Protocol integration (Liquidity.io launched 2026-04-01; Lux/Hanzo/Zoo/Pars adopted 2026-04-20). Robinhood-style retail UX. Sub-1.1s T+0 settlement |
 
 **Key fact**: Zoo's October 2021 whitepaper describes a GUI-based conversational AI interface backed by large language models with blockchain-persistent memory. OpenAI's ChatGPT launched November 30, 2022. That is a 13-month gap. The Experience Ledger's content-addressable semantic memory predates both mainstream vector databases (2023) and ChatGPT's conversation memory feature (February 2024).
 
@@ -131,7 +130,6 @@
 | Zoo 2025 Securities and DAO | `zoo-2025-securities-and-dao/zoo-2025-securities-and-dao.tex` |
 | Zoo 3.0 Full PQ Stack | `zoo-3-0-full-pq/zoo-3-0-full-pq.tex` |
 | Zoo 4.0 Launch (GPU-Native Sovereign L1) | `zoo-4-0-launch/zoo-4-0-launch.tex` |
-| Zoo DEX Launch (Native Securities, 2026-04-20) | `zoo-dex-launch-2026-04-20/zoo-dex-launch-2026-04-20.tex` |
 
 ### Cryptography and Security
 
@@ -237,7 +235,6 @@ The following papers explicitly cross-reference the per-LLM chain framework and 
 | `zoo-2021-original-whitepaper` (§10 update) | LP-013, LP-019, LP-020, LP-070, LP-073, LP-075, LP-105, LP-134, Hanzo AI Chain |
 | `zoo-3-0-full-pq` | LP-009, LP-016, LP-017, LP-020, LP-070, LP-073, LP-075, LP-105, LP-134, plus `zoo-2-0`, `zoo-4-0`, `zoo-2021`, `zoo-2025-securities-and-dao` |
 | `zoo-4-0-launch` | LP-009, LP-013, LP-020, LP-063, LP-067, LP-105, LP-132, LP-133, LP-134, LP-137, Hanzo AI Chain, `zoo-per-llm-chains`, `zoo-2025-securities-and-dao`, `zoo-2-0`, `zoo-3-0`, `zoo-dex-launch`, Lux DEX |
-| `zoo-dex-launch-2026-04-20` | LP-009, LP-013, LP-020, LP-063, LP-105, LP-132, LP-133, LP-134, LP-137, plus `zoo-4-0`, `zoo-3-0`, `zoo-2-0`, `zoo-2021`, `zoo-per-llm-chains`, `zoo-2025-securities-and-dao`, Liquidity Protocol formal proof, Zoo Adopts Liquidity Protocol, Lux DEX |
 | `zoo-per-llm-chains` (§12) | adds LP-132, LP-137, plus `zoo-4-0-launch` |
 
 **Spec freeze**: 2025-12-15. **Activation**: 2025-12-25 alongside Lux Quasar 3.0 mainnet upgrade.
