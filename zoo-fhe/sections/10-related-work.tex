@@ -3,13 +3,20 @@
 \label{sec:related}
 %----------------------------------------------------------------------
 
-\textbf{Lux TFHE.} The \Lux{} \texttt{lux-tfhe} paper~\cite{lux-tfhe} introduced GPU-accelerated TFHE for the Lux L0 base layer. \Zoo{} extends this work with threshold decryption, \CKKS{} support, and deeper VM integration via FHE-specific opcodes on \TChain{}.
-
-\textbf{Zama fhEVM.} Zama's fhEVM~\cite{zama-fhevm} pioneered FHE smart contracts on EVM-compatible chains. \Zoo{} differs in three respects: (1)~\CKKS{} support for approximate arithmetic, enabling ML inference; (2)~threshold decryption rather than single-operator key management; (3)~formal verification of noise bounds and GPU scaling in Lean~4.
+\textbf{Lux-FHE substrate.} \Zoo{} consumes the \Lux{} FHE stack
+unchanged: \texttt{lux/fhe} (Go TFHE on \texttt{luxfi/lattice}~\cite{lux-fhe-go}),
+the \texttt{lux/precompile/fhe} native EVM precompiles, and the
+\texttt{luxcpp/gpu} dispatcher routing PBS / key-switch /
+blind-rotate to backend plugins in
+\texttt{lux-private/gpu-kernels/\{cuda,metal,wgsl,mlx\}/fhe/}. The
+\Lux{} \texttt{lux-fhe-smart-contracts}~\cite{lux-fhe-smart-contracts}
+paper documents the native-precompile architecture (addresses
+\texttt{0x...80}--\texttt{0x...83}) that \Zoo{}'s \TChain{} extends
+with threshold decryption, \CKKS{} support for approximate arithmetic
+(enabling ML inference), and formal verification of noise bounds in
+Lean~4.
 
 \textbf{Sunscreen FHE.} The Sunscreen compiler~\cite{sunscreen2023} provides a Rust-based FHE toolkit targeting BFV and CKKS. \Zoo{} builds on similar compiler infrastructure but integrates it directly into the blockchain VM with gas metering and threshold key management.
-
-\textbf{Concrete/TFHE-rs.} Zama's \texttt{tfhe-rs} library~\cite{zama-tfhers} provides a Rust implementation of TFHE with GPU support. \Zoo{}'s GPU kernels build on this foundation, extending it with batched bootstrapping optimizations and \TChain{} integration.
 
 \textbf{Threshold FHE in MPC.} Boneh et al.~\cite{boneh2018threshold} formalized threshold FHE for multi-party computation. \Zoo{} adapts this framework to the blockchain setting, replacing interactive MPC rounds with asynchronous partial-decryption collection anchored by BFT consensus.
 
