@@ -3,7 +3,7 @@
 
 \textbf{FHE for ML}: CryptoNets~\cite{gilad2016cryptonets} demonstrated CNN inference on encrypted data using leveled HE. Subsequent work improved performance~\cite{brutzkus2019low} but remained off-chain.
 
-\textbf{On-chain FHE}: Zama's fhEVM~\cite{lux-fhevm} brought \TFHE{} to the EVM but uses a single scheme without CKKS for efficient linear algebra.
+\textbf{On-chain FHE}: Lux FHEVM~\cite{lux-fhevm} brings \TFHE{} to the EVM via native precompiles at \texttt{0x...80}--\texttt{0x...83} with consensus-deterministic keygen. Zoo FHE extends this with \CKKS{} support for efficient linear algebra (ML inference) and threshold decryption at the \TChain{} layer.
 
 \textbf{Federated Learning}: McMahan et al.~\cite{mcmahan2017communication} introduced FedAvg for distributed training. Zoo FHE adds encryption to prevent gradient leakage attacks~\cite{zhu2019deep}.
 
