@@ -32,7 +32,7 @@ This paper answers three practical questions a community asks when it launches a
 
 \section{Who Earns}
 
-A zoo is valuable because of five kinds of contribution, and the economy pays each one. Crucially, payment is \emph{demand-funded}: every payout below comes out of the fee a user already escrowed to ask a question---nothing is printed to subsidize participation.
+A zoo is valuable because of five kinds of contribution, and the economy pays each one. Payment has two sources. The steady-state source is \emph{demand}: every payout below comes out of the fee a user already escrowed to ask a question. On top of that, during the fair-launch era the protocol pays a capped, halving block subsidy to cognitive nodes for accepted answers---the one-billion-\textsc{ai} emission of the core paper's Tokenomics, mined entirely by useful cognition, with no pre-mine. The subsidy halves every four years and then ends; once it is spent the economy is funded by fees alone.
 
 \begin{table}[h]
 \centering
@@ -61,9 +61,10 @@ Every paid thought runs the same loop, and it is closed and self-funding:
 \item A sampled committee of cognitive nodes answers; a quorum agreement settles the canonical answer as a \PoT{} receipt (core protocol).
 \item The escrow is split, deterministically, by an \emph{invoice} derived from the receipt:
 \[
-\text{fee} \;=\; \underbrace{\text{servers}}_{\text{the nodes that agreed}} \;+\; \underbrace{\text{model royalty}}_{\text{the fork's owner}} \;+\; \underbrace{\text{data royalty}}_{\text{provenance graph}} \;+\; \underbrace{\text{protocol cut}}_{\text{governable}}.
+\text{fee} \;=\; \underbrace{\text{servers}}_{\text{the nodes that agreed}} \;+\; \underbrace{\text{model royalty}}_{\text{the fork's owner}} \;+\; \underbrace{\text{data royalty}}_{\text{provenance graph}} \;+\; \underbrace{\text{protocol cut}}_{\text{governable}} \;+\; \underbrace{\text{burn}}_{\text{deflationary sink}}.
 \]
 \end{enumerate}
+The \emph{burn} fraction is the governed knob that makes the coin deflationary in the steady state: as the halving subsidy vanishes, the fee burn overtakes it and net supply contracts (core paper, Tokenomics).
 
 The split is not negotiated; it is computed from the receipt and the on-chain provenance graph, so the same answer always pays the same parties the same way. Money only ever moves \emph{after} a thought is settled, so a slow or offline model can delay a payment but can never create or destroy value. This is the economy whose product is settled judgment: the coin a cognitive node earns is backed by an answer a user wanted.
 
@@ -106,7 +107,7 @@ A new community launches a zoo with no special infrastructure. At the floor tier
 \item Have community members run cognitive nodes against it.
 \end{enumerate}
 
-That is the whole bootstrap: \emph{deploy the contracts, run some nodes, and the zoo is live.} The currency is minted by Proof-of-AI---a coin appears only when a node is paid for an accepted answer---so issuance tracks real demand from day one, with no pre-mine required to function. As usage grows, more nodes join, more forks compete, the zoo improves, and the coin's backing (the capability it now buys) grows with it. The community that bootstraps the zoo owns it, because ownership here is simply the accumulated reputation and stake of the people who built and ran it.
+That is the whole bootstrap: \emph{deploy the contracts, run some nodes, and the zoo is live.} New currency is issued only by Proof-of-AI---the halving subsidy attaches to accepted answers, so a coin is minted only when a node is paid for useful cognition---and the total subsidy is capped at one billion with no pre-mine, after which the network runs on fees alone (core paper, Tokenomics). As usage grows, more nodes join, more forks compete, the zoo improves, and the coin's backing (the capability it now buys) grows with it. The community that bootstraps the zoo owns it, because ownership here is simply the accumulated reputation and stake of the people who built and ran it.
 
 \section{Governance: the Zoo Decides for Itself}
 
