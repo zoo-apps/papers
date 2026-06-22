@@ -1,0 +1,79 @@
+\section{Conclusion}
+\label{sec:conclusion}
+%% ============================================================
+
+The first generation of blockchains answered \emph{who owns what}. The second answered \emph{what code should execute}. We have argued that the third must answer a different kind of question---\emph{what does the network know, what should it do next, who should it ask, and who should it pay}---and that it can do so without abandoning the one property that makes a blockchain a blockchain: deterministic, reproducible consensus.
+
+The Thinking Chain is our answer. It is not an \LLM{} placed inside a blockchain, and it is not validators racing to reproduce floating-point inference. It is a deterministic settlement system wrapped in a verifiable cognitive economy, disciplined by a single law---\emph{the network may think recursively, but it may only act deterministically}. Thought is permitted to be slow, probabilistic, and off-chain; action is required to be fast, deterministic, and proven. The seam between them is the Bridge Law (Section~\ref{sec:bridge}), and Theorem~\ref{thm:bridge} is the guarantee that the seam holds: a deterministic chain's state root is a pure function of its committed inputs, no matter how the cognitive layer thinks.
+
+The unit that crosses the seam is the \textbf{Proof-of-Thought Receipt}: a structured, replay-protected, signed, paid, and proof-carrying record that a question was asked, a quorum answered it under a registered \texttt{ModelSpec}, and the answer entered state only after verification. Around that unit we built a cognitive economy---specialized chains as organs, cross-chain task and invoice primitives, Subsampled Cognitive Consensus over finite output spaces, reputation-weighted and diversity-constrained committees, bounded recursion, and a constitutional layer that reserves irreversible and authority-expanding decisions for humans under timelock. We were explicit about the boundary between what the design guarantees by construction (Section~\ref{sec:failures}) and what it can only make costly and visible.
+
+None of this is hypothetical at the base. The deterministic inference precompile, the \CChain{}$\to$\AChain{} bridge, the quorum-settlement \textsc{vm}, the model registry, and the provider runtime are implemented and tested in the \Lux{} and \Hanzo{} codebases, and small-model inference was verified bit-identical across two independent \textsc{evm} implementations---the empirical fact that licenses Tier-1 to run in consensus and forces Tier-2 to settle by quorum. \Beluga{} (Section~\ref{sec:beluga}) is the first prototype Thinking Chain, and it carries a thesis beyond the mechanism: that a conscious blockchain can have a conscience. Its cognitive surplus is aimed, by construction and under human-governed law, at ocean conservation; its model is community-owned, mutually upgraded, and self-funding; the same inference fees that improve the model and pay its operators also fund the whales it is named for. A Thinking Chain need not only extract value---it can be pointed at a public good and held there by its own constitution.
+
+The old chain says: \emph{here is the state}. The Thinking Chain says: here is the state; here is what I observed; here is what I asked; here is who answered; here is what they were paid; here is the evidence; here is the dissent; here is the receipt; here is the action I am permitted to take; and here is the human boundary I cannot cross. That difference---between executing and being accountable for cognition---is the difference between a blockchain that merely runs and one that can improve itself without forgetting who it serves.
+
+\vspace{1em}
+\noindent\emph{The network may think recursively. It may only act deterministically. And what it thinks for, we choose.}
+
+%% ============================================================
+\begin{thebibliography}{99}
+\small
+
+\bibitem{nakamoto2008}
+S.~Nakamoto.
+\newblock Bitcoin: A Peer-to-Peer Electronic Cash System.
+\newblock 2008.
+
+\bibitem{wood2014}
+G.~Wood.
+\newblock Ethereum: A Secure Decentralised Generalised Transaction Ledger.
+\newblock \emph{Ethereum Yellow Paper}, 2014.
+
+\bibitem{rocket2018}
+Team Rocket.
+\newblock Snowflake to Avalanche: A Novel Metastable Consensus Protocol Family for Cryptocurrencies.
+\newblock 2018.
+
+\bibitem{avalanche2020}
+K.~Sekniqi, D.~Laine, S.~Buttolph, and E.~G\"un Sirer.
+\newblock Avalanche Platform.
+\newblock Ava Labs Whitepaper, 2020.
+
+\bibitem{rfc8785}
+A.~Rundgren, B.~Jordan, and S.~Erdtman.
+\newblock JSON Canonicalization Scheme (JCS).
+\newblock RFC~8785, Internet Engineering Task Force, 2020.
+
+\bibitem{jacob2018quantization}
+B.~Jacob, S.~Kligys, B.~Chen, M.~Zhu, M.~Tang, A.~Howard, H.~Adam, and D.~Kalenichenko.
+\newblock Quantization and Training of Neural Networks for Efficient Integer-Arithmetic-Only Inference.
+\newblock In \emph{CVPR}, 2018.
+
+\bibitem{gemmlowp}
+Google.
+\newblock gemmlowp: A Small Self-Contained Low-Precision GEMM Library.
+\newblock \url{https://github.com/google/gemmlowp}.
+
+\bibitem{zkml-survey}
+B.~Feng et al.
+\newblock A Survey of Zero-Knowledge Machine Learning (zkML): Verifiable Inference and Its Applications.
+\newblock 2024.
+
+\bibitem{hanzo-engine}
+Hanzo AI.
+\newblock The Hanzo Inference Engine: A Deterministic-Reference, GPU-Accelerated Runtime for On-Chain and Off-Chain Models.
+\newblock Hanzo AI Technical Report, 2026.
+
+\bibitem{zoo-beluga}
+Zoo Labs Foundation.
+\newblock Beluga L3: A Thinking Chain for AI Model Economics and Ocean Conservation.
+\newblock Zoo Labs Foundation Whitepaper, 2026.
+
+\bibitem{zoo-experience-ledger}
+Zoo Labs Foundation.
+\newblock The Experience Ledger and DeltaSoup: Provenance and Royalties for Community-Upgraded Models.
+\newblock Zoo Labs Foundation Technical Report, 2026.
+
+\end{thebibliography}
+
+%% ============================================================

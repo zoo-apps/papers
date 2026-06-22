@@ -1,0 +1,42 @@
+\section{Minimum Viable Thinking Chains}
+\label{sec:mvps}
+%% ============================================================
+
+The architecture is large, but it does not have to be deployed all at once. It admits a strict build order in which each stage is independently useful, independently testable, and a strict prerequisite of the next. We give the order, the success criteria for each stage, and note which stages are already realized in the \Lux{} and \Hanzo{} codebases (Section~\ref{sec:beluga}).
+
+\subsection{MVP-0: Deterministic In-Consensus Inference}
+
+The smallest useful Thinking Chain runs Tier-1 alone: a deterministic integer model compiled into a precompile, executed identically by every validator (Section~\ref{sec:twotier}). No committee, no off-chain provider, no receipt---just a pure, gas-metered, bit-reproducible forward pass that any contract can call.
+
+\textbf{Success criteria.} A precompile \texttt{generate(tokens)} returns identical output on every validator and across independent EVM implementations; gas is a function of token count; the model is pinned by a registered \texttt{ModelSpec}. \emph{Status: realized}---the \texttt{zen-nano} int8 port at \texttt{precompile/inference} (\texttt{0x03\dots03}) is pure-Go \texttt{CGO=0} and was verified byte-identical across the Go and Rust EVMs.
+
+\subsection{MVP-1: Paid Inference Across the Bridge}
+
+The first true cognitive economy: a contract on the \CChain{} pays for a large-model answer that a sampled provider quorum produces off-chain on the \AChain{}, and the \CChain{} consumes the result only after verifying its committed receipt.
+
+\begin{enumerate}[leftmargin=2em,itemsep=2pt]
+  \item A \CChain{} contract calls \texttt{submitInferenceIntent(modelSpecHash, promptHash, fee)}; the chain locks the fee and records a deterministic intent (Pattern~A).
+  \item The \AChain{} imports the committed intent under its own consensus and samples eligible providers.
+  \item Providers run the model (the \Hanzo{} engine), commit, and reveal; the \AChain{} settles the canonical output hash by quorum and exports a receipt under its receipt root.
+  \item The \CChain{} verifies the receipt and proof (Pattern~B), releases payment to the winning providers, and the contract consumes the canonical output hash.
+\end{enumerate}
+
+\textbf{Success criteria.} The \CChain{} state root never depends on a live \AChain{} query; the canonical hash equals the real engine output; divergent providers are excluded and withholders slashable; replay is impossible; payment conserves value. \emph{Status: realized in component form}---\texttt{aivmbridge} (Patterns~A/B), \texttt{chains/aivm} (quorum settlement), and the \Hanzo{} provider runtime exist, compile, and are tested; an end-to-end deployment on \Beluga{} is the integration step.
+
+\subsection{MVP-2: Governance Thought Receipts}
+
+The first \emph{deliberative} Thinking Chain: a governance proposal is routed to a sampled reasoning committee that returns a \emph{structured} recommendation over a finite ballot (\textsc{yes}/\textsc{no}/\textsc{delay}/\textsc{unsafe}) with a confidence bucket and a hash-addressed evidence bundle. Humans retain the vote; the committee informs it.
+
+\textbf{Success criteria.} The recommendation is structured (Section~\ref{sec:finite}); rationale is hash-addressed evidence, never consensus; the confidence and dissent distribution is recorded; payment settles; and the human-loop level for the proposal class is enforced (Section~\ref{sec:governance}). The consensus object is the governance preimage $\{\text{vote}, \text{confidence\_bucket}\}$ bound to the \texttt{ModelSpec}, with free-form prose excluded so that honest committees can actually converge.
+
+\subsection{MVP-3: Recursive Deliberation}
+
+The first \emph{recursive} Thinking Chain: a deliberation task decomposes into sub-tasks routed to specialized organs---simulation on the \SChain{}, reputation on the \RChain{}, economic impact on the \DChain{}, adversarial review by a red-team committee---each returning its own receipt, aggregated into an evidence root that feeds the final thought receipt.
+
+\textbf{Success criteria.} Recursion is bounded by a budget tree (\texttt{max\_depth}, \texttt{max\_total\_fee}, deadline; Section~\ref{sec:recursion}); sub-receipts are included in the aggregate evidence root; payments distribute across the budget tree; and depth beyond the configured bound triggers the human loop. This is the stage at which the network's seven organs (Section~\ref{sec:organs}) operate as one deliberating system.
+
+\subsection{Build Order as a Dependency Chain}
+
+The stages are a strict prerequisite chain: MVP-1 requires MVP-0's reproducible substrate and \texttt{ModelSpec} discipline; MVP-2 requires MVP-1's bridge, receipts, and payment; MVP-3 requires MVP-2's structured-output and committee machinery, plus budget trees. \Beluga{} (Section~\ref{sec:beluga}) is positioned at MVP-1 with MVP-0 realized and MVP-2 specified---the first chain on this ladder, with a purpose (Section~\ref{sec:beluga-telos}) waiting at the top of it. Each rung is shippable; none requires believing in the whole organism before the first useful chain runs.
+
+%% ============================================================

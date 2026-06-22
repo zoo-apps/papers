@@ -1,0 +1,66 @@
+\section{The Cross-Chain Cognitive Economy}
+\label{sec:economy}
+%% ============================================================
+
+If chains pay each other to think, there must be a settled vocabulary for posing, fulfilling, and billing thought. The cognitive economy has exactly three message types, and they mirror a commercial transaction: a request, a fulfillment, and an invoice. All three are finite, hash-addressed, and verifiable; none carries trust by itself (Principle~\ref{prin:zap}).
+
+\subsection{The Three Messages}
+
+\begin{description}[style=nextline,leftmargin=0pt]
+\item[\textnormal{\texttt{TaskRequest}}] --- the demand side. A requesting chain or agent poses a structured cognitive question: the question hash, the admitted \texttt{ModelSpec}, the finite output space $\mathcal{O}$, the aggregation mode $\kappa$, the committee size $N$ and threshold, the budget (max fee and, for recursion, max depth), and a deterministic routing tag. A \texttt{TaskRequest} is escrow-backed: the maximum fee is locked before any provider is asked to think, so no provider works for a promise.
+
+\item[\textnormal{\texttt{Receipt}}] --- the supply side. The \PoT{} receipt of Section~\ref{sec:receipts}, emitted by \AChain{} once a quorum settles the question. The receipt is the proof of fulfillment; it is what the requester verifies before acting and what the providers present to be paid.
+
+\item[\textnormal{\texttt{Invoice}}] --- the settlement side. The accounting record that splits the escrowed fee among the winning providers (by stake and reputation), the model owner (a royalty on the admitted \texttt{ModelSpec}), the data contributors whose data trained that model (via \DChain{}'s provenance graph), and the protocol. The invoice is derived deterministically from the receipt's \texttt{WinnersRoot} and \DChain{}'s royalty graph; it is not negotiated.
+\end{description}
+
+\subsection{Pricing a Thought}
+
+The price of a thought is a function of its cognitive cost and the demand for it. We price a Tier-2 task by the committee size, the model scale, the question's structured complexity (output-space size and sequence length), and a demand-surge term, paralleling the inference pricing already deployed for the first prototype (Section~\ref{sec:beluga}):
+\begin{equation}
+\label{eq:price}
+\mathit{fee}(\tau) \;=\; N \cdot p_m \cdot \Big(\tfrac{|q|}{q_0}\Big)^{1.2} \cdot \big(1 + \beta\, u\big),
+\end{equation}
+where $N$ is the committee size (each member is paid to think), $p_m$ is the admitted model's base price, $|q|$ is the question's token length normalized to a reference $q_0$, the super-linear exponent reflects attention's quadratic cost, $u$ is current cognitive-load utilization on \AChain{}, and $\beta$ is the surge coefficient. The escrowed maximum is $N \cdot p_m \cdot (\dots)$ at the cap; unspent escrow is refunded if fewer than $N$ providers are paid or the task fails to reach quorum.
+
+\subsection{The Settled Loop}
+
+Figure~\ref{fig:loop} is the canonical request$\to$pay loop that every cognitive transaction follows. It is the operational realization of Principle~\ref{prin:settle}, drawn end to end. Each stage is a committed on-chain action except the providers' generation (stage 3, off-chain, nondeterministic), which is exactly the stage the determinism partition isolates.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    stage/.style={rectangle, rounded corners, draw, minimum width=2.3cm, minimum height=0.95cm, align=center, font=\scriptsize\sffamily},
+    det/.style={stage, fill=black!6},
+    nondet/.style={stage, fill=blue!8, dashed},
+    a/.style={->, thick, >=stealth},
+    node distance=0.55cm and 0.7cm
+]
+\node[det] (req) {1. request\\\& escrow};
+\node[det, right=of req] (sample) {2. sample\\committee};
+\node[nondet, right=of sample] (gen) {3. generate\\(off-chain)};
+\node[det, right=of gen] (commit) {4. commit};
+\node[det, below=of commit] (reveal) {5. reveal};
+\node[det, left=of reveal] (settle) {6. settle\\\PoT{}};
+\node[det, left=of settle] (verify) {7. verify\\on \CChain{}};
+\node[det, left=of verify] (pay) {8. pay\\\& act};
+
+\draw[a] (req) -- (sample);
+\draw[a] (sample) -- (gen);
+\draw[a] (gen) -- (commit);
+\draw[a] (commit) -- (reveal);
+\draw[a] (reveal) -- (settle);
+\draw[a] (settle) -- (verify);
+\draw[a] (verify) -- (pay);
+\draw[a, gray] (pay) to[bend left=18] node[above,font=\scriptsize]{(recurse: subtask)} (req);
+\begin{scope}[on background layer]
+\node[draw, dotted, thick, fit=(gen), inner sep=4pt, label={[font=\scriptsize\itshape]above:nondeterministic, isolated}] {};
+\end{scope}
+\end{tikzpicture}
+\caption{The cognitive transaction loop: \emph{request $\to$ sample $\to$ commit $\to$ reveal $\to$ settle $\to$ verify $\to$ pay}. Every stage is a committed deterministic action except generation (stage 3), the single nondeterministic step, which is isolated off-chain and never enters consensus. A settled task may spawn subtasks (recursion, Section~\ref{sec:recursion}) subject to the inherited budget.}
+\label{fig:loop}
+\end{figure}
+
+The loop is closed and self-funding: escrow in at stage 1, paid out at stage 8, with the protocol's cut and the model/data royalties flowing to the organs that made the thought possible. A Thinking Chain is therefore not a cost center bolted onto a ledger; it is an economy whose product is settled judgment. Sections~\ref{sec:bridge} through \ref{sec:scc} formalize the dangerous middle of this loop---the bridge from action to thought and back (stages 1, 7), and the consensus that settles the answer (stages 2--6).
+
+%% ============================================================

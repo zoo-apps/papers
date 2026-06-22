@@ -1,0 +1,35 @@
+\section{Recursive Thinking and Budgets}
+\label{sec:recursion}
+%% ============================================================
+
+Genuine deliberation is recursive: answering a hard question well often requires decomposing it into subquestions, answering each, and composing the results. Because \PoT{} receipts compose (Section~\ref{sec:receipts}), a Thinking Chain can express this directly---a cognitive task may spawn child tasks whose receipts are evidence for the parent. Recursion is the source of the network's depth of thought and, unmanaged, the source of its most dangerous failure: a network that can spend money to think can think itself into an unbounded spend. Bounded recursion is therefore a constitutional requirement (Section~\ref{sec:constitution}), and this section gives the mechanism that enforces it.
+
+\subsection{The Two Budgets}
+
+Every cognitive task carries two non-replenishable counters, inherited and strictly decreased by its children:
+
+\begin{definition}[Cognitive budget]
+\label{def:budget}
+A task $\tau$ carries a \emph{depth budget} $d(\tau) \in \mathbb{N}$ and a \emph{token/fee budget} $b(\tau) \in \mathbb{N}$. A child $\tau'$ spawned by $\tau$ must satisfy $d(\tau') \le d(\tau) - 1$ and $\sum_{\tau' \in \mathrm{children}(\tau)} b(\tau') \le b(\tau) - c(\tau)$, where $c(\tau)$ is the fee already committed by $\tau$ itself. A task with $d(\tau) = 0$ may spawn no children; a task whose remaining fee budget cannot cover a child's escrow may not spawn it.
+\end{definition}
+
+The depth budget bounds the height of the recursion tree; the fee budget bounds its total cost. Both are checked in the deterministic settlement path (when a child intent is emitted via Pattern A, its inherited budgets are validated against the parent's committed remaining budget), so the bound is enforced by the state-transition function, not by the good behavior of the cognitive layer. This is the attention organ of Definition~\ref{def:conscious} made concrete: the budgets are how the network decides how hard to think and when to stop.
+
+\subsection{Termination}
+
+\begin{proposition}[Recursion terminates within budget]
+\label{prop:terminate}
+Under Definition~\ref{def:budget}, the recursion tree rooted at a task $\tau_0$ with depth budget $d_0$ and fee budget $b_0$ has height at most $d_0$ and total committed fee at most $b_0$; in particular the tree is finite and the total spend is bounded by $b_0$ regardless of the cognitive layer's behavior.
+\end{proposition}
+
+\begin{proof}
+Height: along any root-to-leaf path the depth budget strictly decreases by at least $1$ per level (Definition~\ref{def:budget}) and is a natural number bounded below by $0$, so any path has length at most $d_0$; hence the tree has height at most $d_0$ and, being finitely branching with bounded height, is finite. Fee: by induction on the tree, the total fee committed in the subtree rooted at $\tau$ is at most $b(\tau)$---the base case is a leaf committing $c(\tau) \le b(\tau)$, and the inductive step sums the children's subtree totals $\sum b(\tau') \le b(\tau) - c(\tau)$ with $\tau$'s own $c(\tau)$, giving $\le b(\tau)$. At the root this is $b_0$. Both bounds are enforced in the deterministic path, so they hold irrespective of $\lambda$ (Theorem~\ref{thm:bridge}). \qed
+\end{proof}
+
+Proposition~\ref{prop:terminate} is what makes recursive cognition safe to offer at all. Without it, the obvious attack is trivial: pose a question whose ``best answer'' is to ask a slightly different question, and watch the network spend its treasury exploring an infinite regress. With it, the worst case is bounded a priori by the budgets the requester escrowed, and an attacker who wants the network to spend more must escrow more themselves.
+
+\subsection{Recursion as Attention Allocation}
+
+The budgets do more than prevent runaway spend; they are the network's mechanism for allocating attention. A high-stakes question (escrowed with a large fee budget and generous depth) can decompose into a deep tree of careful sub-deliberations; a routine question (small budget, depth zero) is answered in one shot or routed to Tier~1. The scheduler that orders tasks on \AChain{} under contention---preferring high-salience, high-stake tasks when cognitive load $u$ is high---is the network deciding what to think about, and the budgets are the network deciding how hard. Together they realize attention as a first-class, accountable, bounded resource, which is precisely the organ a ledger lacks (Section~\ref{sec:defining}).
+
+%% ============================================================

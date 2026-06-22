@@ -1,0 +1,55 @@
+\section{Beluga L3: The First Prototype}
+\label{sec:beluga}
+%% ============================================================
+
+The architecture of this paper is general, but it is not hypothetical. Its first instantiation is \Beluga{}, the \Zoo{} Layer-3 application chain for AI model economics, specified in full in the companion \Beluga{} whitepaper \cite{zoo-beluga}. \Beluga{} is a Thinking Chain in the precise sense of Definition~\ref{def:conscious}: a deterministic EVM chain (the \CChain{} role), surrounded by a verifiable cognitive layer, settling AI economic decisions as receipts. This section maps \Beluga{}'s concrete mechanisms onto the general architecture and points to the running code, so that the reader can see which parts of this paper are already built. We do not re-derive \Beluga{}'s token economics, contract suite, or consensus adaptation---those are the subject of \cite{zoo-beluga}; we show only how \Beluga{} realizes the Thinking Chain pattern, and \emph{to what end}.
+
+\subsection{Beluga's Telos: Conservation, Community, and Self-Funding Cognition}
+\label{sec:beluga-telos}
+
+A Thinking Chain is a mechanism; \Beluga{} gives the mechanism a \emph{purpose}. \Beluga{} is named for the beluga whale, and it exists not to demonstrate cognitive consensus in the abstract but to direct cognitive surplus toward a real-world public good: ocean conservation. This is the thesis the first prototype is built to make concrete---that a conscious blockchain can have a \emph{conscience}, in the operational sense that its cognitive economy is consciously aimed. Three commitments define this telos.
+
+\textbf{Awareness.} \Beluga{} is deliberately approachable---a small, friendly model with a whale as its mascot and public face---because for a conservation project, attention is itself an instrument. Every interaction with the chain's model is an interaction with the cause: the model is the campaign, and the campaign is self-explaining because the chain can answer questions about its own mission from its own state (Definition~\ref{def:conscious}, perception).
+
+\textbf{Funding.} \Beluga{} routes a fixed \emph{conservation tithe} from every \PoT{} settlement into a conservation treasury governed by the \Zoo{} Labs Foundation, a 501(c)(3). The cognitive economy of Section~\ref{sec:economy}---the fees that requesters, providers, and governance pay to settle thought---thereby becomes a renewable funding stream for ocean and beluga-whale conservation. The tithe is a protocol parameter under the constitution (Section~\ref{sec:constitution}): it can be changed only through the \GChain{} human-loop at Level~4--5 (Section~\ref{sec:governance}), so the cause cannot be quietly defunded by an automated proposal, and the autonomy ceiling forbids the cognitive layer from redirecting the tithe to itself.
+
+\textbf{A self-funding, community-upgraded model.} \Beluga{}'s brain is community-owned. Its deterministic Tier-1 model (the \texttt{zen-nano} port of Section~\ref{sec:twotier}) and its Tier-2 large models are improved by community contributions through \emph{DeltaSoup} aggregation over the \emph{Experience Ledger} provenance graph \cite{zoo-experience-ledger}: contributors submit fine-tuning deltas, the ledger (the \DChain{} provenance organ) records who contributed what, and the \texttt{Invoice} royalty split of Section~\ref{sec:economy} pays contributors out of inference fees. The model is therefore \emph{mutually upgraded}---it improves the more the community uses and trains it---and \emph{self-funding}: the same inference fees that pay for upgrades also pay the operators who serve it and the conservation tithe. No central party underwrites the model; the community that benefits from it funds it, and a constitutionally-protected share of that flow funds the whales. \Beluga{} is thus the existence proof for a broader claim of this paper---that a Thinking Chain's verifiable cognitive economy can be pointed, by construction and under human-governed law, at a public good rather than only at extraction.
+
+\subsection{Beluga as an Instantiation of the Organs}
+
+\Beluga{} maps onto the organ model (Section~\ref{sec:organs}) as follows. Its EVM is the \CChain{} cortex: model registration, inference requests, and bounty escrow are deterministic transactions, and its inference-pricing precompile at \texttt{0x0300} computes fees deterministically in-consensus. Its inference marketplace and provider network are the \AChain{} cognition organ: large-model inference is served off-chain and settled by quorum. Its data-contribution layer (\emph{DeltaSoup}, grounded in the Experience Ledger \cite{zoo-experience-ledger}) is the \DChain{} provenance organ, carrying the royalty graph that the \texttt{Invoice} message (Section~\ref{sec:economy}) splits payment across. Its evaluation-and-red-team market is a specialized cognitive task type. Its \texttt{BelugaGovernor} with conviction voting is the \GChain{} self-governance organ, and its model registry is the \texttt{ModelSpec} substrate that Rule 8 of the constitution (Section~\ref{sec:constitution}) governs. \Beluga{} thus exercises perception (pricing/observation), memory (the registry and ledger), agency (contracts acting on settled results), and self-governance---the cognitive organs of Definition~\ref{def:conscious}---within an inherited, economically-secured validator set.
+
+\subsection{The Realized Mechanisms}
+
+The load-bearing mechanisms of this paper are implemented in the \Lux{} and \Hanzo{} codebases that \Beluga{} builds on. We list them with their addresses and roles so the grounding is explicit:
+
+\begin{table}[h]
+\centering
+\caption{Realized components of the Thinking Chain architecture, in the \Lux{} and \Hanzo{} codebases. These exist, compile, and are tested; \Beluga{} composes them.}
+\label{tab:realized}
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Component & Address / module & Role in this paper \\
+\midrule
+Deterministic int8 inference & \texttt{precompile/inference}, \texttt{0x0300\dots03} & Tier-1, \S\ref{sec:twotier} \\
+Cognitive bridge (\CChain{}$\to$\AChain{}) & \texttt{precompile/aivmbridge}, \texttt{0x0300\dots04} & Bridge Law, \S\ref{sec:bridge} \\
+Quorum-settlement VM & \texttt{chains/aivm} & \SCC{} + receipts, \S\S\ref{sec:receipts},\ref{sec:scc} \\
+Model registry & \texttt{precompile/modelregistry} & \texttt{ModelSpec}, \S\S\ref{sec:reputation},\ref{sec:constitution} \\
+Tier-2 provider runtime & \Hanzo{} \texttt{engine} / \texttt{engine-ffi} & Tier-2, \S\ref{sec:twotier} \\
+Commit--reveal + canonical lib & \texttt{aivm}, operator/canonical & \S\S\ref{sec:scc},\ref{sec:governance} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The \texttt{aivmbridge} precompile implements Pattern A (\texttt{submitInferenceIntent}, selector \texttt{0x10000000}) and Pattern B (\texttt{verifyInferenceReceipt}, selector \texttt{0x11000000}) exactly as in Section~\ref{sec:bridge}, with the deterministic intent-id construction and the keccak--Merkle receipt proof. The \texttt{aivm} chain implements \SCC{}'s eligible-set margin ($E \ge N + \max(2, N/2)$), the deterministic beacon draw, operator-bound commit--reveal with strictly-ordered windows ($30/30$ blocks), and slash-withholders-not-dissenters, with the \texttt{AInferenceReceipt} record of Listing~\ref{lst:receipt}. The deterministic inference precompile implements Tier-1 as pure-Go \texttt{CGO=0} int8 transformer code (Listing~\ref{lst:int8}). The operator/canonical library implements the governance vote preimage $\{\text{vote}, \text{confidence\_bucket}\}$ with rationale excluded (Section~\ref{sec:governance}).
+
+\subsection{The Empirical Result}
+
+The architecture's central physical claim---that small integer models are bit-reproducible across heterogeneous hardware while large floating-point models are not (Principle~\ref{prin:repro})---was tested directly in this stack. The same engine, given the same input and committed weights, produced an \emph{identical output hash} across two independently implemented EVMs (the Go EVM and the Rust EVM). This cross-VM bit-identity is the empirical justification for running Tier-1 in consensus: two independently written virtual machines agreeing byte-for-byte is strong evidence that the forward pass is genuinely deterministic. The corresponding negative observation---that large models do not reproduce across hardware, because floating-point reductions are not associative---is why \Beluga{}'s large-model inference is settled by quorum (Tier-2) rather than recomputed. The two-tier split is therefore not a design preference but a measured consequence of how integer and floating-point arithmetic behave across machines.
+
+\subsection{What Beluga Proves and What Remains}
+
+\Beluga{} proves that the Thinking Chain pattern is buildable on today's infrastructure: the bridge, the deterministic inference, the quorum settlement, the registry, and the provider runtime are real, and they compose into a chain that pays for settled AI economic decisions. What \Beluga{} does not yet do is exercise the \emph{full} organism at scale---the complete seven-organ decomposition, deep recursive deliberation, and the full constitutional and human-loop machinery are specified here and partially realized, not yet deployed end to end. \Beluga{} is the first prototype Thinking Chain; the general architecture of this paper is the blueprint for the class it inaugurates. The remaining sections analyze what must hold for that class to be safe at scale.
+
+%% ============================================================

@@ -1,0 +1,27 @@
+\section{Open Problems}
+\label{sec:open}
+%% ============================================================
+
+The architecture is buildable today, but several of its surfaces are genuine research problems rather than settled engineering. We state them plainly; each is a place where the design exposes a parameter or a seam that future work must harden, and we resist the temptation to present an economic mitigation as if it were a cryptographic guarantee.
+
+\textbf{In-consensus randomness for committee sampling.} The deterministic beacon (Section~\ref{sec:scc}) is only as unbiased as its seed. On platforms without an in-consensus randomness beacon, a requester who controls a seed field can grind selection offline (Section~\ref{sec:failures}); the eligible-set margin, per-request fee, and bond bound this economically but do not close it. The clean fix---fold a verifiable in-consensus random value into the seed---depends on the host chain exposing one. Designing a grind-proof, bias-resistant sampler that degrades gracefully when no beacon is available is open.
+
+\textbf{Measuring model diversity.} Diversity constraints (Section~\ref{sec:reputation}) presuppose a metric: when are two providers' models ``different enough'' to count as independent corroboration? Vendor, weights hash, and hardware class are coarse proxies; two models fine-tuned from the same base share blind spots that a hash will not reveal. A principled, gameable-resistant diversity measure for cognitive committees is unsolved.
+
+\textbf{Rewarding honest dissent.} The slashing rule punishes objective protocol violations but not minority answers, because honest disagreement on a judgment task is not fraud (Section~\ref{sec:economic}). But a system that merely tolerates dissent under-supplies it; a committee paid only for agreeing with the majority will converge prematurely. Designing a payoff that \emph{rewards} dissent precisely when it later proves correct---without inviting strategic contrarianism---is an open mechanism-design problem.
+
+\textbf{Confidential prompts and private inference.} The wire formats hash-address inputs, but a hash is not confidentiality: a provider still sees the prompt to answer it. Private inference (the provider learns nothing it should not), confidential receipts (the chain settles an answer whose content is hidden), and selective disclosure of evidence are needed for sensitive governance and user data. These compose with the architecture---a confidential task is still an intent and a receipt---but the cryptography (\TEE{} attestation, \textsc{mpc}, \textsc{fhe}, or \textsc{zk}ML \cite{zkml-survey}) and its determinism guarantees are open.
+
+\textbf{Verifying \emph{correct} computation, not just attested computation.} A quorum receipt proves \emph{who} answered and that enough of them agreed; it does not prove the answer is the \emph{correct} forward pass of the claimed model. Tier-1 sidesteps this by being recomputable; Tier-2 relies on quorum honesty and economic stake. Cheap proofs of correct large-model inference---verifiable \LLM{} execution at scale---would upgrade Tier-2 from attested to proven, and remain an active research frontier.
+
+\textbf{Pricing cognition.} The cognitive economy (Section~\ref{sec:economy}) needs prices: what is a structured answer worth, how does a chain quote a cognitive service, and how do recursive budgets avoid both starvation and runaway spend? Market aggregation gives a mechanism but not a theory of cognitive value. Spam resistance for recursive task markets---preventing a flood of cheap questions from exhausting committees---is part of the same problem.
+
+\textbf{Reputation dynamics.} Sampling weight depends on reputation (Section~\ref{sec:reputation}), but reputation that only accumulates ossifies the validator-of-thought set, while reputation that decays too fast is gameable by churn. The right decay, the right coupling between stake and reputation, and resistance to whitewashing (a slashed operator re-registering fresh) are open.
+
+\textbf{Keeping humans non-perfunctory.} The human loop (Section~\ref{sec:governance}) is the ultimate safety boundary, but a boundary that is never exercised becomes a rubber stamp. Mechanisms that keep human review meaningful---making evidence cheap to inspect, surfacing dissent prominently, rotating reviewers, requiring justification for overrides---are as much a part of the system's safety as any cryptographic check, and are more social than technical.
+
+\textbf{Emergency response.} A conscious chain needs a pause that is fast enough to stop an exploit but governed enough not to become a unilateral kill switch. The right threshold of validators or humans for an emergency halt, and the constitutional status of that threshold, are open.
+
+These are not reasons to wait. They are the map of where the architecture's guarantees end and its assumptions begin---and naming that boundary precisely is itself a safety property of the design.
+
+%% ============================================================

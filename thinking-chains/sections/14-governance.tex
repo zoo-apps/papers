@@ -1,0 +1,45 @@
+\section{Governance: AI-Assisted, Not AI-Ruled}
+\label{sec:governance}
+%% ============================================================
+
+A network that can think will be asked to govern itself. The central design question is not whether AI participates in governance---it should, and powerfully---but where the line falls between AI \emph{assisting} a decision and AI \emph{making} it. We place that line explicitly and enforce it in the deterministic path. The governing principle is that cognition may inform, draft, analyze, and recommend, but the act of binding the network is gated by humans and time.
+
+\begin{principle}[AI-assisted, not AI-ruled]
+\label{prin:assisted}
+The cognitive layer may produce governance \emph{recommendations}---as \PoT{} receipts over a finite ballot (e.g.\ \texttt{APPROVE}/\texttt{REJECT}/\texttt{NEEDS-REVISION})---and these recommendations may be authoritative inputs to a decision. But every binding governance action passes through a deterministic, human-gated, timelocked path that no quantity of AI deliberation can bypass. The network may recommend any change to itself; it may enact, unilaterally, only the changes the constitution already permits it to enact (Section~\ref{sec:constitution}).
+\end{principle}
+
+\subsection{The Governance Vote Preimage}
+
+Governance votes are settled as cognitive receipts, and therefore obey finite-output discipline (Section~\ref{sec:finite}). The consensus preimage of a governance vote is exactly $\{\text{vote}, \text{confidence\_bucket}\}$---the finite ballot choice and a quantized confidence---with the free-text rationale \emph{excluded} from the preimage and committed only by hash as evidence. This is the same discipline applied to provider rationales in Section~\ref{sec:finite}, and it is realized in the operator/canonical governance-consensus code. The exclusion is load-bearing: if rationale text were in the preimage, two voters who agree in substance but differ in wording would fail to form a quorum, and governance would deadlock on prose. By settling on $\{\text{vote}, \text{confidence\_bucket}\}$ and preserving the rationale as inspectable evidence, the network reaches deterministic agreement on \emph{what} was decided while retaining a readable record of \emph{why} each participant decided it.
+
+\subsection{The Human-in-the-Loop Hierarchy}
+
+Different governance actions warrant different degrees of human control. We define six levels, from fully autonomous to fully manual, so that each action can be assigned the minimum human burden consistent with its risk. Level assignment is itself a constitutional parameter (Section~\ref{sec:constitution}) and can only be \emph{raised} (more human control) by the cognitive layer, never lowered.
+
+\begin{table}[h]
+\centering
+\caption{Human-in-the-loop levels. Each governance or agentic action is assigned a level; the cognitive layer may raise an action's level but never lower it.}
+\label{tab:hitl}
+\small
+\begin{tabular}{@{}clp{8.2cm}@{}}
+\toprule
+Level & Name & Human role \\
+\midrule
+0 & Autonomous & None. AI acts on its settled receipt within pre-authorized bounds (e.g.\ route a Tier-1 classification, pay a quorum). \\
+1 & Notified & AI acts; humans are notified and may audit after the fact. \\
+2 & Vetoable & AI acts after a delay during which any authorized human may veto (timelock as circuit-breaker). \\
+3 & Approved & AI proposes; a human (or quorum of humans) must approve before the action fires. \\
+4 & Co-decided & AI recommends with confidence; a human decides, with the AI recommendation as a binding input of record. \\
+5 & Manual & AI may analyze and advise but may not propose a binding action; a human originates and enacts. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Routine, low-stakes, reversible actions sit at Level 0--1 (the network must be allowed to act on its own conclusions, or it is not an agent at all). High-stakes or irreversible actions---treasury disbursements above a threshold, changes to quorum parameters, additions to the eligible model set---sit at Level 3--4. Anything touching the constitution or the authority structure itself sits at Level 5 and additionally requires the constitutional amendment path (Section~\ref{sec:constitution}). The hierarchy is a dial, not a switch: it lets a network grant its cognition broad autonomy in the safe regions of its action space while reserving human judgment for the dangerous ones.
+
+\subsection{Conviction and Dissent in Governance}
+
+Governance aggregation preserves the same properties as cognitive aggregation. Voting power may scale with conviction (stake duration), as in the first prototype's conviction-voting model (Section~\ref{sec:beluga}), to weight committed long-term participants over transient capital. And the dissent distribution is preserved on-chain: a proposal that passed $51{-}49$ is recorded as contested, and the constitution may require a higher human-loop level or a longer timelock for narrowly-decided actions than for broadly-supported ones. The network remembers not just what it decided but how divided it was, and it can be made more cautious precisely when it is most divided.
+
+%% ============================================================

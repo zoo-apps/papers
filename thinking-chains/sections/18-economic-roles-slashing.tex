@@ -1,0 +1,45 @@
+\section{Economic Roles and Slashing}
+\label{sec:roles}
+%% ============================================================
+
+A Thinking Chain is an economy, and its safety rests as much on incentives as on cryptography. This section names the five economic roles, what each is paid for, and what each is slashed for. The unifying rule is the one established in Section~\ref{sec:scc}: pay for honest, settled cognitive work; slash liveness faults and equivocation; never slash honest dissent.
+
+\subsection{The Five Roles}
+
+\begin{description}[style=nextline,leftmargin=0pt]
+\item[Providers.] The agents who think. They host models (Tier-2) and answer sampled cognitive tasks via commit--reveal. Paid per agreeing reveal (Equation~\ref{eq:price}) and by availability streams (Pattern P3) for keeping models loaded. Bonded; slashed for withholding and equivocation. Providers are the supply side of thought.
+\item[Validators.] The agents who agree. They produce and attest blocks on the deterministic chains and verify receipts via Pattern B. Paid block rewards and fees. Bonded; slashed for double-signing and consensus faults. A validator may additionally run a sidecar and thereby also be a provider, but the roles are distinct and separately bonded (Section~\ref{sec:node}).
+\item[Agents.] The principals who pose questions and act on answers---autonomous on-chain agents and the humans behind them. They escrow fees (Pattern P1) to demand cognition and consume the resulting receipts. Agents are the demand side; their escrow funds the entire economy.
+\item[Red teams.] The agents who attack the network's cognition for profit. They are paid bounties for discovering inputs that cause incorrect, inconsistent, or unsafe settled answers---adversarial prompts, monoculture-exploiting questions, recursion bombs caught before they fire. Red teams are a \emph{first-class economic role}, not an afterthought: a network that pays for the discovery of its own cognitive failures hardens continuously, and their findings are recorded as evidence on \MChain{} for future deliberations to consult.
+\item[Memory curators.] The agents who keep the network's memory useful. They curate, deduplicate, and index the settled \PoT{} receipts and the data on \DChain{}/\MChain{}, and are paid by the downstream value of the memory they maintain (royalty when a curated dataset trains a model that later earns, per the \texttt{Invoice} split of Section~\ref{sec:economy}). Curators are why memory is an asset rather than a landfill.
+\end{description}
+
+\subsection{The Slashing Table}
+
+Table~\ref{tab:slash} states the slashing conditions across all bonded roles. Two design rules govern it. First, every slash attaches to an action that is \emph{deterministically detectable from committed state}---a missing reveal after a committed commit, a reveal inconsistent with its commit, a duplicate signature---so that slashing itself never requires a cognitive judgment (it would be incoherent to need a quorum to decide whether to slash a quorum member). Second, no row punishes a minority answer: dissent is information (Principle~\ref{prin:slash}, constitutional Rule 9).
+
+\begin{table}[h]
+\centering
+\caption{Slashing conditions. Every condition is deterministically detectable from committed state; honest dissent appears nowhere.}
+\label{tab:slash}
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Role & Violation & Penalty \\
+\midrule
+Provider & Committed but did not reveal (withholding) & bond slash \\
+Provider & Reveal inconsistent with commit (equivocation) & full bond \\
+Provider & Serving an unregistered \texttt{ModelSpec} & eligibility loss \\
+Validator & Double-signing a block height & full bond \\
+Validator & Attesting an invalid state transition & full bond \\
+\midrule
+Provider & Revealing a \emph{minority} honest answer & \textbf{none} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{The Forgery Floor}
+
+The economic security of a single \PoT{} receipt is bounded below by the cost of manufacturing a fraudulent one. To forge a canonical answer, an adversary must control at least the threshold $\theta$ of revealing providers in a sampled committee. The eligible-set margin (Equation~\ref{eq:margin}) and the deterministic beacon together remove selection grinding---the adversary cannot cheaply arrange to be sampled---so the residual cost is the bond the adversary must put at risk: at least $\theta \cdot \texttt{MinProviderBond}$, forfeited when the forgery is detected (by a dissenting honest provider, a red team, or a verifier). With the reference $\theta{=}3$ and $\texttt{MinProviderBond}=1{\times}10^{18}$ wei per unit, the floor is $3$ units of bonded value per forged receipt, scaling with the deployment's bond denomination and with $N,\theta$. The network operator sets these parameters to price forgery above the value any single receipt controls, and high-value questions can demand larger $N,\theta$ to raise the floor accordingly. Economic security and committee size are thus a single tunable: thinking harder (larger $N$) and pricing forgery higher (larger $\theta \cdot$ bond) are the same dial.
+
+%% ============================================================

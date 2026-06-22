@@ -1,0 +1,33 @@
+\section{From Ledgers to Cognitive Networks}
+\label{sec:ledgers}
+%% ============================================================
+
+It is worth being precise about what each generation of distributed systems learned to agree on, because a Thinking Chain is the next step in a single progression, not a departure from it.
+
+\subsection{Three Generations of Agreement}
+
+\textbf{Generation 1: agreement on balances.} Bitcoin \cite{nakamoto2008} established that a permissionless network can agree on an ordered log of transfers without a trusted party. The agreed-upon fact is a UTXO set. The state-transition function is a handful of validity predicates. There is no general computation.
+
+\textbf{Generation 2: agreement on computation.} Ethereum \cite{wood2014} generalized the agreed-upon fact from balances to the result of an arbitrary deterministic program. The EVM is a replicated state machine; every node executes every transaction and must reach the same state root. The constraint that made this possible is total determinism: the EVM forbids any operation whose result could differ across nodes (no wall-clock time, no floating point, no I/O, no nondeterministic opcodes). This constraint is not incidental. It \emph{is} the consensus.
+
+\textbf{Generation 3: agreement on cognition.} The fact a Thinking Chain agrees on is the answer to a structured cognitive question, together with the evidence that the answer was produced legitimately. This is strictly harder than Generation 2, because the natural way to answer a cognitive question---run a large model---violates the determinism that Generation 2 depends on. The contribution of this paper is to show that Generation 3 can be built \emph{on top of} Generation 2's determinism rather than by abandoning it, by settling cognition the way Generation 2 settles a SNARK verification or an oracle report: as a verified artifact, not a re-executed computation.
+
+\subsection{Why the Obvious Approaches Fail}
+
+Three approaches are commonly proposed for putting AI on a chain. Each fails in an instructive way.
+
+\begin{description}[style=nextline,leftmargin=0pt]
+\item[\textnormal{(1) Run the model in the EVM.}] If the model's forward pass executed as ordinary EVM bytecode, its output would be part of consensus and every node would recompute it. This works---and is exactly Tier~1 of our design (Section~\ref{sec:twotier})---but \emph{only} for models small enough and integer-only enough that the forward pass is both cheap and bit-reproducible. A 70B-parameter model in floating point cannot be run this way: it is too expensive by many orders of magnitude, and floating-point reductions are not associative, so two GPUs produce different bits. Determinism, not cost alone, is the hard wall.
+
+\item[\textnormal{(2) Trust an oracle.}] Let an off-chain service run the model and post the answer; the chain takes it on faith, perhaps with a staked bond. This scales to any model but discards verifiability: a single oracle is a single point of corruption, and a bonded oracle merely prices corruption rather than preventing it. Worse, the chain's state now depends on a value no validator can reproduce or contest, which silently breaks the replay property that makes a chain auditable.
+
+\item[\textnormal{(3) Prove the inference with a SNARK.}] zkML \cite{zkml-survey} produces a succinct proof that a specific model, on a specific input, produced a specific output. This is the ideal in the limit, and we expect it to subsume Tier~2 eventually. Today it is impractical at frontier-model scale: proving a single forward pass of a multi-billion-parameter transformer is many orders of magnitude more expensive than running it, and the tooling does not yet exist for the largest models. We treat zkML as a forward-compatible upgrade path for our receipt layer (Section~\ref{sec:open}), not a present-day primitive.
+\end{description}
+
+The design in this paper is a fourth approach that is available \emph{today}: split the problem by model size and reproducibility (Section~\ref{sec:twotier}), run the small reproducible case in consensus (approach 1), and settle the large case by economic-cryptographic quorum (a hardened, structured-output adaptation of approach 2 that recovers verifiability through redundancy, sampling, and slashing). The quorum is the bridge between today's oracle and tomorrow's SNARK.
+
+\subsection{The Inversion}
+
+Generation 2 chains are passive: they compute exactly what they are told, when they are told. A cognitive network is active: it must decide \emph{what} to think about, \emph{how hard}, and \emph{when to stop}. This is the inversion that motivates the rest of the paper. A ledger needs only an execution model. A cognitive network needs, in addition, an \emph{attention} model (which questions deserve cognitive budget; Section~\ref{sec:recursion}), a \emph{deliberation} model (how to aggregate disagreeing judgments; Section~\ref{sec:scc}), and a \emph{constitution} (what the network may and may not decide to do to itself; Section~\ref{sec:constitution}). These are not features bolted onto a ledger; they are the new organs that distinguish a cognitive network from a database. The next section defines them.
+
+%% ============================================================

@@ -1,0 +1,75 @@
+\section{Failure Modes and Mitigations}
+\label{sec:failures}
+%% ============================================================
+
+A Thinking Chain inherits every failure mode of a classical chain and adds new ones at the cognitive seam. The architecture is only as strong as its response to these. We enumerate the failure modes that are specific to verifiable cognition---each with its mechanism, the property it threatens, and the structural mitigation already present in the design---and mark which are closed by construction versus which remain economic or social risks that policy must manage.
+
+\subsection{Consensus Leakage}
+
+\textbf{Mechanism.} A live model output, or a live query to another chain's mutable state, influences a deterministic state transition; two validators executing the same block at different instants observe different cognition and compute divergent state roots.
+
+\textbf{Threatens.} Safety---the chain forks.
+
+\textbf{Mitigation (closed by construction).} The Bridge Law (Section~\ref{sec:bridge}): a deterministic chain may only emit an intent (Pattern~A) or verify a committed receipt with proof (Pattern~B). Theorem~\ref{thm:bridge} establishes that under the Bridge Law the state root is a pure function of committed inputs, independent of the cognitive layer's liveness. Tier-1 inference is admitted into consensus only because it is bit-reproducible (Principle~\ref{prin:repro}); Tier-2 is never recomputed in consensus, only verified. This is the load-bearing safety result and it is enforced, not advised: a precompile that performs a live cross-chain read is a Bridge Law violation regardless of intent.
+
+\subsection{Receipt Forgery and Replay}
+
+\textbf{Mechanism.} An adversary presents a fabricated receipt, a receipt for the wrong question, or a previously-consumed receipt, to extract payment or to settle an answer that no quorum produced.
+
+\textbf{Threatens.} Integrity of settled thought; theft of escrow.
+
+\textbf{Mitigation (closed by construction).} Domain-separated hashing binds every receipt to its question and rail: \texttt{intent\_id} commits to both chain ids, the source transaction hash, the caller, and the \texttt{ModelSpec}; \texttt{receipt\_hash} is verified by keccak--Merkle inclusion under a \emph{committed} receipt root (Section~\ref{sec:receipts}). A consumed-set marker makes consumption idempotent, and only a receipt with \texttt{status = Completed} and a non-zero canonical output is actionable. Forgery requires either breaking keccak or producing a committed root the source chain never imported---both outside the threat model.
+
+\subsection{Model Monoculture}
+
+\textbf{Mechanism.} Every sampled node runs the same model, prompt, runtime, and hardware, so the committee shares one blind spot; ``agreement'' is correlated failure, not independent corroboration.
+
+\textbf{Threatens.} The epistemic value of a quorum---a unanimous wrong answer.
+
+\textbf{Mitigation (partial; policy-bounded).} Eligibility weighting and diversity constraints (Section~\ref{sec:reputation}) cap the share of a committee drawn from one operator group, model vendor, or hardware class. For deterministic Tier-1 tasks monoculture is harmless (the answer is a function, not a judgment); for Tier-2 judgment tasks it is a real residual risk that diversity policy reduces but cannot eliminate. The honest framing: a Thinking Chain produces \emph{network-attested, diversity-weighted belief}, not truth, and consumers must treat a canonical answer as one staked attestation under a stated sampling rule.
+
+\subsection{Governance Capture}
+
+\textbf{Mechanism.} A coordinated set of agents, or a manipulated model, produces convergent bad recommendations that passive human voters rubber-stamp; the cognitive layer becomes a laundering channel for a predetermined outcome.
+
+\textbf{Threatens.} The legitimacy of self-governance (Section~\ref{sec:governance}).
+
+\textbf{Mitigation (defense in depth).} Recommendations are advisory, never executing (constitutional Rule: AI advises, governance acts). Dissent and the full confidence distribution are preserved on-chain, so a suspiciously unanimous committee is visible. Adversarial red-team committees (Section~\ref{sec:organs}) must run before activation. Competing committees with enforced model diversity reduce single-model capture. The residual risk---humans who do not meaningfully review---is social, and is addressed only by making the evidence cheap to inspect (Rule~10: governance state must be inspectable without running an \LLM{}) and by timelocks that give independent reviewers time to object.
+
+\subsection{Selection Grinding}
+
+\textbf{Mechanism.} A requester who controls an attacker-chosen field of the sampling seed (e.g.\ a prompt hash), and who can resubmit cheaply, grinds offline until the deterministic beacon selects a committee of its own colluding operators.
+
+\textbf{Threatens.} The independence of the sampled committee; quorum forgery.
+
+\textbf{Mitigation (economic, with an absolute floor).} The eligible-set margin $E \ge N + \max(2, N/2)$ ensures a small captured set cannot be force-selected; a non-refundable per-request fee prices each grind attempt; \texttt{MinProviderBond} sets the Sybil cost. The absolute bound is structural: if a cartel controls fewer than \emph{threshold} eligible operators, no grind succeeds at any compute budget, because the draw cannot contain more cartel members than exist---so the forgery floor is $\text{threshold} \times \texttt{MinProviderBond}$. Where the platform exposes in-consensus randomness (a beacon or prevrandao), folding it into the seed closes the grind entirely; absent that, the mitigation is economic and is stated as such rather than papered over.
+
+\subsection{Recursive Spending Loops}
+
+\textbf{Mechanism.} An agent decomposes a task into sub-tasks that themselves decompose, and cognition recurses until budgets or block space are exhausted---a denial-of-service or a treasury drain by curiosity.
+
+\textbf{Threatens.} Liveness and the requester's funds.
+
+\textbf{Mitigation (closed by construction).} Every task carries a budget tree with \texttt{max\_depth}, \texttt{max\_total\_fee}, \texttt{max\_fee\_per\_subtask}, and a deadline (Section~\ref{sec:recursion}); a sub-task may not exceed its parent's remaining budget, and depth beyond a configured bound requires human authorization. Curiosity is permitted but priced: recursion always has a cost, and the cost is bounded before the first sub-task is dispatched.
+
+\subsection{Authority Escalation}
+
+\textbf{Mechanism.} The cognitive layer proposes, and then approves, an expansion of its own authority---bootstrapping from advisor to ruler.
+
+\textbf{Threatens.} The constitutional boundary itself.
+
+\textbf{Mitigation (closed by construction).} The asymmetry rule (Section~\ref{sec:constitution}): AI may \emph{propose} a new AI-authority policy but may never \emph{ratify} one. Authority-expanding changes are pinned to the highest human-loop level (Level~5) and a timelock. The updater of the updater is constitutionally out of the cognitive layer's reach; this is the one boundary the system is designed never to let itself cross.
+
+\subsection{Simulation and Oracle Monoculture}
+
+\textbf{Mechanism.} A single simulator or evidence source is trusted; a shared bug in it passes every proposal it reviews, or a captured oracle feeds false evidence into otherwise-honest deliberation.
+
+\textbf{Threatens.} The evidentiary basis of governance.
+
+\textbf{Mitigation (partial).} Simulation is itself a cognitive task settled by quorum (the \SChain{} organ), so it inherits diversity and dissent preservation; differential simulation across independent implementations (e.g.\ the Go and Rust EVMs of Section~\ref{sec:beluga}) catches shared bugs that a single implementation would miss. Evidence is hash-addressed and its provenance recorded, so a captured source is at least attributable after the fact.
+
+\subsection{Summary}
+
+The failure modes that threaten \emph{safety}---consensus leakage, receipt forgery, authority escalation, recursion runaway---are closed by construction: the Bridge Law, domain-separated proof-carrying receipts, the constitutional asymmetry, and budget trees. The failure modes that threaten \emph{epistemic quality}---monoculture, capture, grinding---are bounded but not eliminated, because they are ultimately about the independence and honesty of participants, which no protocol can fully manufacture. The design's posture is therefore explicit: it makes dishonesty costly and visible, makes the cognitive economy diverse and accountable, and reserves the irreversible decisions for humans under timelock. A Thinking Chain is safe by construction and \emph{trustworthy by economics and governance}---and it is honest about which is which.
+
+%% ============================================================

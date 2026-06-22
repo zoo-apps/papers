@@ -1,0 +1,33 @@
+\section{Reputation and Eligibility}
+\label{sec:reputation}
+%% ============================================================
+
+Subsampled Cognitive Consensus is only as sound as the pool it samples from. If the eligible set is dominated by a single model, a single operator, or a clique of colluders, the agreement threshold certifies conformity rather than truth. The reputation organ \RChain{} (Section~\ref{sec:organs}) governs who may be sampled and with what weight, and it is engineered for one goal above all: a sampled committee that is both \emph{competent} and \emph{diverse}.
+
+\subsection{Sampling Weight}
+
+Each provider $p$ carries a reputation $\mathrm{rep}(p) \in [0,1]$ derived from its settled history: the fraction of tasks in which it revealed (did not withhold), the fraction in which its honest answer agreed with the settled canonical answer, and the freshness-weighted recency of that record. Its sampling weight in the draw of Algorithm~\ref{alg:scc} is
+\begin{equation}
+\label{eq:weight}
+w(p) \;=\; \mathrm{bond}(p)^{1/2}\cdot \mathrm{rep}(p)\cdot \mathrm{div}(p),
+\end{equation}
+where $\mathrm{bond}(p)$ is the provider's bonded stake (entering sub-linearly, so capital alone cannot monopolize selection), $\mathrm{rep}(p)$ is the reputation above, and $\mathrm{div}(p)$ is the diversity factor below. The sub-linear bond exponent is deliberate: it makes stake necessary (it is the Sybil cost and the slashing collateral, Section~\ref{sec:scc}) without making the committee an oligarchy of the richest providers.
+
+\subsection{Diversity: The Antidote to Monoculture}
+
+The deepest risk to a cognitive quorum is correlation. Five providers running the \emph{same} model weights are not five independent samples; they are one sample with five signatures, and they will agree by construction even when they are wrong (Section~\ref{sec:failure}). The diversity factor $\mathrm{div}(p)$ counteracts this by reducing the marginal sampling weight of providers that are correlated---in model lineage, in operator, in geography, in infrastructure---with providers already likely to be drawn. Concretely, \RChain{} maintains, per provider, a profile of (model family, operator identity, hosting region/provider), and the draw penalizes adding a member whose profile duplicates one already selected, so the committee tends toward independent vantage points. The \texttt{ModelSpec} registry (Section~\ref{sec:beluga}) makes model lineage explicit and therefore makes lineage-diversity enforceable rather than aspirational.
+
+\begin{principle}[Diversity is a consensus parameter, not a nicety]
+\label{prin:diversity}
+The statistical validity of an \SCC{} agreement threshold depends on the sampled responses being approximately independent. Diversity-weighted, correlation-penalized sampling is therefore not a fairness feature but a soundness requirement: without it, the quorum measures agreement among copies, and the threshold certifies monoculture rather than truth. A Thinking Chain must enforce committee diversity in lineage, operator, and infrastructure as a first-class consensus parameter.
+\end{principle}
+
+\subsection{Eligibility Gates}
+
+To enter the eligible set $E$ of Equation~\ref{eq:margin}, a provider must clear hard gates that are checked deterministically before the draw: a minimum bond at least \texttt{MinProviderBond}; a non-zero reputation (a provider with a record of withholding or equivocation falls out of eligibility); registration of the \texttt{ModelSpec} it serves in the governance-approved model set (Section~\ref{sec:constitution}); and a diversity-floor check that prevents the eligible set itself from collapsing to a monoculture. These gates, combined with the eligible-set margin, are what guarantee that the random draw has honest, independent providers to land on.
+
+\subsection{Reputation Dynamics}
+
+Reputation rises slowly and falls quickly, the standard asymmetry for trust under adversarial pressure. Honest agreement increments reputation with diminishing returns; withholding and equivocation decrement it sharply (in addition to the bond slash of Section~\ref{sec:scc}); honest dissent is \emph{neutral} to reputation (Principle~\ref{prin:slash})---a provider that consistently reports a genuine minority view is not penalized in standing, because its dissent is exactly the independent signal the quorum exists to capture. This dynamic, settled on \RChain{} and fed into the next draw, closes the loop: the network learns which providers think well, samples them more, and continually refreshes the diversity of the pool so that competence never hardens into monoculture.
+
+%% ============================================================

@@ -1,0 +1,44 @@
+\section{Chain-to-Chain Payments}
+\label{sec:payments}
+%% ============================================================
+
+A cognitive economy needs settlement rails as much as it needs a consensus mechanism. The same Bridge Law that governs thought governs money: value crosses between organs only as a committed, verifiable artifact, never as a live promise. We give four payment patterns, ordered from the simplest to the most expressive, each appropriate to a different cadence of cognitive work. All four respect Corollary~\ref{cor:liveness}: a stalled cognitive layer can delay a payment but can never create or destroy value.
+
+\subsection{Pattern P1: Escrow-Settle}
+
+The default, used by every \texttt{TaskRequest} (Section~\ref{sec:economy}). The requester escrows the maximum fee on \CChain{} \emph{before} the task is posted; the escrow is released by Pattern-B verification of the resulting \PoT{} receipt. No provider thinks for an unfunded promise, and no requester pays for an unsettled answer. Escrow-settle is atomic with respect to the cognitive outcome: if the task reaches quorum, winners are paid and the model/data royalties flow; if it fails, the requester is refunded; in neither case can a partial or duplicate payment occur, because the release is gated on a once-verifiable receipt with replay protection.
+
+\subsection{Pattern P2: Netting}
+
+When two organs exchange a high volume of cognitive work in both directions (e.g.\ \CChain{} continually asks \AChain{} to classify, while \AChain{} continually asks \DChain{} for provenance), settling each task individually is wasteful. Netting batches a window of mutual obligations and settles only the difference. The set of receipts in the window is committed as a Merkle root; a single net transfer settles the balance; each individual receipt remains independently verifiable for audit. Netting reduces on-chain settlement traffic by an order of magnitude in steady state without weakening per-receipt verifiability---the net is an optimization over P1, not a replacement for its guarantees.
+
+\subsection{Pattern P3: Streaming}
+
+Some cognitive services are continuous rather than discrete: an availability commitment to keep a model loaded and answer within a latency bound, or a standing subscription to a sensory feed on \SChain{}. These are paid by a stream---a per-block drip from a funded channel, claimable by the provider against committed heartbeat or uptime proofs. Streaming pays for \emph{readiness to think}, complementing P1's payment for \emph{thoughts produced}; it is the mechanism behind the availability reward of the first prototype (Section~\ref{sec:beluga}). A stream is closed by either party at any time, with the unspent balance returning to the funder, so no party is locked into a service that has stopped performing.
+
+\subsection{Pattern P4: Lock-Mint (Cross-Organ Value)}
+
+Moving the native value of one organ into another---paying an \AChain{} provider in \CChain{}'s token, or moving a fee from \GChain{} to \DChain{}---uses lock-mint, the standard trustless bridge construction: value is locked on the source chain under a committed record, and a matching amount is minted on the destination only against a verified proof of the lock; the reverse burns and unlocks. Lock-mint inherits its security from the cross-chain proof system, requiring a supermajority attestation over the locking event, with mint/burn accounting that must balance and a challenge window for large transfers. It is the value analogue of Pattern B: the destination chain never trusts that a lock occurred, it \emph{verifies} the committed proof, so the same liveness/safety decoupling (Corollary~\ref{cor:liveness}) applies---a bridge stall delays cross-organ payment but cannot mint unbacked value.
+
+\subsection{Choosing a Pattern}
+
+Table~\ref{tab:payments} summarizes. The selection is by cadence: one-shot thoughts use P1; dense bidirectional traffic uses P2 over P1; continuous readiness uses P3; cross-token movement uses P4. All four are compositions of the same two primitives---commit a record, verify it before acting---which is the Bridge Law applied to money. There is exactly one way to move value between organs (verify a committed proof) and these patterns are its specializations, not alternatives to it.
+
+\begin{table}[h]
+\centering
+\caption{Chain-to-chain payment patterns.}
+\label{tab:payments}
+\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+Pattern & Cadence & Pays for & Settlement trigger \\
+\midrule
+P1 Escrow-settle & per task & a settled thought & Pattern-B receipt verify \\
+P2 Netting & per window & batched mutual work & net of committed receipts \\
+P3 Streaming & per block & readiness to think & heartbeat/uptime proof \\
+P4 Lock-mint & on demand & cross-organ value & verified lock proof \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%% ============================================================

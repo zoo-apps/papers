@@ -1,0 +1,86 @@
+\section{The Bridge Law}
+\label{sec:bridge}
+%% ============================================================
+
+Everything in this paper rests on one safety discipline. We state it as a law, give the two patterns that implement it, exhibit the on-chain mechanism that enforces it, and prove the property it guarantees.
+
+\begin{principle}[The Bridge Law]
+\label{prin:bridge}
+A consensus state transition must never depend on live thought or on a live cross-chain query. A deterministic chain may interact with the cognitive layer in exactly two ways: \textbf{Pattern A}, by emitting a deterministic \emph{intent} (a committed record of a question, with no answer); and \textbf{Pattern B}, by verifying a previously \emph{committed receipt and its proof of inclusion} against committed state. There is no third pattern. In particular, no opcode, precompile, or contract may block on, or branch on, a value that is being computed by the cognitive layer at the moment of execution.
+\end{principle}
+
+The Bridge Law is the formal content of ``the network may think recursively, but may only act deterministically.'' Pattern A is how the deterministic chain \emph{asks}; Pattern B is how it \emph{learns the answer}, but only after the answer has become a committed historical fact that every validator can verify identically. The two patterns are separated in time by the entire cognitive process: the chain emits an intent in one transaction and verifies the resulting receipt in a strictly later one, never in the same execution.
+
+\subsection{Pattern A: Submit a Deterministic Intent}
+
+Pattern A records a question without learning its answer. Listing~\ref{lst:patterna} is the actual interface and intent-id construction from the \Lux{} \texttt{aivmbridge} precompile. The key property is that \texttt{submitInferenceIntent} returns an \emph{id}, never an output: the call is total, deterministic, and depends on nothing but its committed arguments and committed chain context.
+
+\begin{lstlisting}[language=Solidity,caption={Pattern A: a deterministic chain emits an intent. The call records a question and returns a deterministic id; it cannot return an answer (Lux \texttt{aivmbridge}, selector \texttt{0x10000000}).},label=lst:patterna]
+// Pattern A -- ask, do not learn the answer.
+function submitInferenceIntent(
+    bytes32 modelSpecHash,  // admitted cognitive model
+    bytes32 promptHash,     // hash of the structured question
+    uint16  n,              // requested committee size  (1..MaxFanout)
+    uint16  threshold,      // agreement threshold       (1..n)
+    uint256 fee,            // escrowed maximum
+    bytes32 routing         // deterministic routing tag
+) external returns (bytes32 intentID);
+\end{lstlisting}
+
+The returned \texttt{intentID} is not random. It is a deterministic hash over the originating chain id, the originating transaction hash, the call index within that transaction, the caller, the model identity, and the prompt---so that a re-executed or reorged transaction maps to the \emph{same} intent (idempotence) and two genuinely distinct questions get distinct ids. Determinism of the id is what lets every validator agree that this intent was emitted, without any of them knowing what the answer will be.
+
+\subsection{Pattern B: Verify a Committed Receipt}
+
+Pattern B is how the answer re-enters the deterministic world. The chain is handed a \PoT{} receipt and a Merkle proof that the receipt is included under a committed receipts root, and it verifies---it does not trust, and it does not query \AChain{} live. Listing~\ref{lst:patternb} is the actual verification interface and the proof structure.
+
+\begin{lstlisting}[language=Solidity,caption={Pattern B: a deterministic chain verifies a committed receipt against committed state. No live query to the cognition chain occurs; verification is a pure function of the inputs (Lux \texttt{aivmbridge}, selector \texttt{0x11000000}).},label=lst:patternb]
+// Pattern B -- learn the answer only after it is committed and proven.
+function verifyInferenceReceipt(
+    bytes receiptBytes,   // canonical AInferenceReceipt encoding
+    bytes proofBytes      // keccak-Merkle inclusion proof
+) external returns (
+    bytes32 intentID,           // must match a pending intent
+    bytes32 canonicalOutputHash,// o*: the settled finite answer
+    uint8   status              // Completed iff fully verified
+);
+\end{lstlisting}
+
+\begin{lstlisting}[language=Go,caption={The inclusion proof verified in Pattern B: a keccak--Merkle path. \texttt{VerifyMerkle} recomputes the root and rejects index/depth aliasing---it is a deterministic decision procedure.},label=lst:proof]
+type AInferenceProof struct {
+    ReceiptRoot [32]byte   // committed root the receipt is proven under
+    Path        [][32]byte // sibling hashes, leaf -> root
+    Index       uint64     // leaf position (must fit in len(Path) bits)
+}
+\end{lstlisting}
+
+Verification performs only deterministic checks: recompute the keccak--Merkle root from the receipt leaf and path and compare it to a committed root; confirm \texttt{intentID} matches a pending intent emitted earlier by Pattern A; confirm the receipt's \texttt{ModelSpecHash}, \texttt{PromptHash}, \texttt{Requester}, $N$, threshold, and chain ids match the intent; confirm \texttt{Status} is \texttt{Completed}; and enforce replay protection by retiring the pending intent on success. Every one of these is a pure function of the call's inputs and committed state. \emph{Pattern B never depends on the cognition chain being live}---a verifier can check a receipt long after \AChain{} has moved on, or even if \AChain{} is offline, because it is checking committed history, not asking a question.
+
+\subsection{The Safety Theorem}
+
+The Bridge Law buys a precise, provable property: the deterministic chain's state is unaffected by the cognitive layer's nondeterminism, latency, or liveness. We formalize the state-transition function and prove it.
+
+Let $\Sigma$ be the \CChain{} state space and let $\delta : \Sigma \times \mathcal{T} \to \Sigma$ be its state-transition function, where $\mathcal{T}$ is the space of transactions. Let $\Lambda$ denote the cognitive layer (all of \AChain{} and its providers), and let $\lambda_t \in \Lambda_{\mathrm{live}}$ be the live cognitive state at the moment transaction $t$ executes (model weights actually loaded, sampling RNG, GPU rounding, network latency, which providers happen to be online). A transaction's execution may read committed \CChain{} state and its own committed arguments; under the Bridge Law it may additionally invoke only Pattern A and Pattern B.
+
+\begin{theorem}[Determinism of \CChain{} under the Bridge Law]
+\label{thm:bridge}
+If every interaction between \CChain{} and the cognitive layer obeys the Bridge Law (Principle~\ref{prin:bridge}), then for all states $\sigma \in \Sigma$ and transactions $t \in \mathcal{T}$, the successor state $\delta(\sigma, t)$ is independent of the live cognitive state $\lambda_t$. Equivalently, the \CChain{} state root after applying any committed block is a pure function of committed inputs, and any two honest validators replaying the same committed history compute the same state root, regardless of the behavior, timing, or availability of the cognitive layer.
+\end{theorem}
+
+\begin{proof}
+Consider the only points at which $t$'s execution could come to depend on $\lambda_t$. By the Bridge Law, $t$ touches the cognitive layer only via Pattern A or Pattern B; we show neither introduces a dependence on $\lambda_t$.
+
+\emph{Pattern A.} The call \texttt{submitInferenceIntent} computes \texttt{intentID} as a deterministic hash of (originating chain id, originating tx hash, call index, caller, \texttt{modelSpecHash}, \texttt{promptHash}) and records a pending intent; it returns this id. Every argument to the hash is either a committed argument of $t$ or committed \CChain{} context (the tx hash and call index are fixed once $t$ is included). None is a function of $\lambda_t$: in particular no answer is produced, so no model is run during $t$. Hence the call's effect on $\sigma$ and its return value are functions of committed inputs alone, independent of $\lambda_t$.
+
+\emph{Pattern B.} The call \texttt{verifyInferenceReceipt} takes \texttt{receiptBytes} and \texttt{proofBytes} as ordinary committed call data of $t$. Its checks are: (i) recompute the keccak--Merkle root from the receipt leaf and the supplied path and compare to a root committed in \CChain{} state; (ii) match the receipt's fields to a pending intent recorded in \CChain{} state; (iii) check \texttt{Status}; (iv) retire the intent. Each check reads only committed call data and committed \CChain{} state and applies a fixed (keccak, comparison, lookup) function. The receipt and proof were produced by $\Lambda$ at some earlier time, but at the moment of $t$'s execution they are immutable bytes in $t$'s call data and an immutable committed root; the call does not re-run inference and does not query $\Lambda$. A receipt that is forged, stale, or never produced does not make the call depend on $\lambda_t$; it merely makes verification \emph{fail} deterministically (the root mismatches, or no matching pending intent exists), and a failed verify is a deterministic outcome of committed inputs.
+
+No other interaction with $\Lambda$ exists, by hypothesis. Therefore $t$'s read set and write set are functions solely of committed \CChain{} state and $t$'s committed arguments, so $\delta(\sigma, t)$ is independent of $\lambda_t$. By induction over the transactions of a block and over blocks, the post-block state root is a pure function of committed history. Two honest validators replaying the same committed history apply the same $\delta$ to the same inputs and obtain the same root, irrespective of $\Lambda$'s behavior, timing, or availability. \qed
+\end{proof}
+
+\begin{corollary}[Liveness/safety decoupling]
+\label{cor:liveness}
+The availability of the cognitive layer affects only \CChain{} \emph{liveness} of cognition-dependent actions (a receipt that is never produced is a receipt that is never verified, so the dependent action never fires), never \CChain{} \emph{safety}. A halted, slow, or partially adversarial cognitive layer cannot fork \CChain{} or corrupt its state; in the worst case, cognition-gated actions simply wait.
+\end{corollary}
+
+Theorem~\ref{thm:bridge} is the license for everything that follows. Because the deterministic chain is provably insulated, we are free to make the cognitive layer as nondeterministic, as model-heavy, and as economically intricate as we like---sampling committees, large language models, market aggregation, recursive subtasks---without ever endangering the property that makes a blockchain a blockchain. The cognitive layer is where we relax determinism; Theorem~\ref{thm:bridge} guarantees that the relaxation stays on its own side of the valve.
+
+%% ============================================================
