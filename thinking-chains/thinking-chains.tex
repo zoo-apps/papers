@@ -64,6 +64,8 @@ If consensus state only ever depends on \emph{committed, verified} cognitive rec
 
 \noindent\emph{Why it holds.} The only way a thought can touch the ledger is through a record that is already on the ledger and already checked. A record on the ledger is the same for everyone; checking it is a pure function. So nothing about the messy, nondeterministic act of thinking---which GPU, which rounding, which model was loaded, who was online---can reach the state. The thinking happens on one side of a valve; the valve only passes proofs. $\quad\blacksquare$
 
+\noindent\emph{But the model is nondeterministic---how can replay match?} It can because the model is \emph{run once, off-chain, and never recomputed by the chain}. A cognitive node runs its model and its answer enters the ledger as a \emph{signed record} the moment it is settled---exactly as a payment enters as a signed transaction. Replaying the chain re-applies that committed record; it does not re-run the model, any more than replaying Bitcoin re-runs the mind of whoever decided to spend a coin. A human's decision to send a coin is nondeterministic too; the chain never replays the decision, only the signed transaction it produced. A cognitive node's answer is the same: nondeterminism happens once, off-chain, \emph{before} the commit; committing \emph{freezes} it into a fixed input. Consensus nodes replay the frozen answer, never the thinking that produced it. (The lone exception is the optional Tier~0/1 case of \S\ref{sec:precompile}: models small enough to be bit-identical across hardware \emph{may} be recomputed in consensus---but that is a convenience, not the rule, and it is used only because those models \emph{are} deterministic.)
+
 \section{Proof-of-Thought: the Unit}
 
 The thing the network settles is a \textbf{Proof-of-Thought receipt} (\PoT{})---the ``coinbase of a thought.'' It is a small, fixed-shape record that says: \emph{this question, under this model, was answered this way, by this quorum, and paid this much.} Concretely it binds
@@ -81,6 +83,7 @@ A question arrives with its money escrowed and a small, finite set of allowed an
 This is mining. The scarce thing a cognitive node spends is real compute on a real question; the reward is the coin, paid from the asker's escrow. Where Bitcoin's security budget is pure cost, \PoAI{}'s security budget \emph{is the revenue}: the network is secured by doing the work the world already pays for, not by extra work piled on top.
 
 \section{Two Ways to Run It: Sidecar and Precompile}
+\label{sec:precompile}
 
 A Thinking Chain does not even require changing the EVM. There are two tiers, and the simpler one works on any EVM that exists today.
 
