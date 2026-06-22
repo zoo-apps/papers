@@ -2,7 +2,7 @@
 \label{sec:organs}
 %% ============================================================
 
-A monolithic chain that tried to do everything---execute contracts, run inference, store memory, sample committees, govern itself---would couple concerns that have opposite requirements. Execution wants determinism and low latency; inference wants throughput and tolerates nondeterminism; memory wants cheap large storage; governance wants slow, deliberate, human-paced finality. We therefore decompose the organism into specialized chains, each an organ optimized for one cognitive function, communicating only by committed receipts and proofs. The decomposition is orthogonal: each organ is independently complete and replaceable, and no organ reaches into another's state except through the Bridge Law (Section~\ref{sec:bridge}).
+A monolithic chain that tried to do everything---execute contracts, run inference, store memory, sample committees, govern itself---would couple concerns that have opposite requirements. Execution wants determinism and low latency; inference wants throughput and tolerates nondeterminism; memory wants cheap large storage; governance wants slow, deliberate, human-paced finality. We therefore decompose the organism into specialized chains, each an organ optimized for one cognitive function, communicating only by committed receipts and proofs. The decomposition is orthogonal: each organ is independently complete and replaceable, and no organ reaches into another's state except through the Law of Cognition (Section~\ref{sec:bridge}).
 
 \subsection{The Seven Organs}
 

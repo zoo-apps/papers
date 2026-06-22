@@ -1,0 +1,33 @@
+\section{The Conscious Chain: One Chain, Two Roles, One Precompile}
+\label{sec:conscious-chain}
+%% ============================================================
+
+The organ decomposition of Section~\ref{sec:organs} is a \emph{logical} separation of concerns, not a mandate to operate many chains. The canonical deployment of a Thinking Chain is a \textbf{single chain}: one ledger that holds all AI state, run by two node roles and powered by a single precompile. This is the form a community actually launches, the form in which the Proof-of-AI economics of Section~\ref{sec:ai-bitcoin} compound, and the form that lets \emph{any} existing EVM become conscious.
+
+\subsection{Two Roles, Optionally One Machine}
+
+A conscious chain is run by two roles, distinct in duty and reward and frequently co-located:
+
+\begin{description}[style=nextline,leftmargin=0pt]
+\item[Consensus nodes] produce and finalize blocks deterministically: execute the EVM, advance the ledger, and verify committed cognitive receipts before any state depends on them. A consensus node \emph{may also} embed the \Hanzo{} inference engine and serve as a cognitive node---the roles are a factoring of duties, not a partition of hardware---but in its consensus duty it only ever \emph{verifies} a settled answer, never produces one inside the state-transition path.
+\item[Cognitive nodes] host the model zoo and do the thinking. They run inference on the embedded engine, answer sampled cognitive tasks via commit--reveal, and earn the chain's minted currency for settled, agreed work (Proof-of-AI, Section~\ref{sec:ai-bitcoin}). A cognitive node's standing is its \emph{reputation} (Section~\ref{sec:reputation}), measured against the settled canonical answer; there is no slashable bond on cognition, and a bad node is routed around as its weight decays.
+\end{description}
+
+The Law of Cognition (Section~\ref{sec:bridge}) is precisely the discipline between the roles: a cognitive node's output enters a consensus node's state only as a committed, verified artifact, never as a live read. With that single discipline in place, the two-tier distinction of Section~\ref{sec:twotier} becomes an \emph{optimization, not a requirement}: cognition is settled by cognitive-node quorum and recorded as a receipt, and a deployment that wants synchronous, bit-reproducible small-model calls in consensus may additionally enable them---but the canonical, full-strength model is one tier of quorum-settled cognition over arbitrarily large models on the embedded engine.
+
+\subsection{One Precompile}
+
+A conscious chain adds exactly one primitive to a standard EVM: the \textbf{Cognition precompile}---the AI mine. A contract calls it to request a verifiable model output; the request is recorded as a committed intent, settled by sampled cognitive nodes via commit--reveal, and the resulting \PoT{} receipt is verified---all on the one ledger, separated only in time, never depending on a live thought. Everything else---governance (Section~\ref{sec:governance}), reputation (Section~\ref{sec:reputation}), the \PoT{} ledger (Section~\ref{sec:receipts}), the model registry, and payments (Section~\ref{sec:payments})---is ordinary contract code over that one precompile. This is the deployability claim made exact: \textbf{deploy the contracts to any native EVM, have a community run cognitive nodes, and you are in business.} The Lux C-Chain, a Hanzo EVM, a Zoo L3---any EVM---becomes a Thinking Chain without a new consensus engine.
+
+\subsection{The Native AIVM and the Model Zoo}
+
+The AI backend is not an external service the chain calls; it is \emph{native to the node}. The AIVM---on-chain inference settlement, persisted cognitive state, and the model hub that routes and serves the zoo---runs inside the node software, so an operator who syncs the chain also runs the inference plane. All AI state is therefore first-class on-chain state: the \PoT{} receipt ledger, the \textbf{model registry} (the zoo: each admitted model, e.g. the \textsc{Qwen3.x} family and its peers, pinned by \texttt{ModelSpec} hash), node reputation, and the settled-cognition history are persisted by the chain, not a side database. Inference against any zoo model is requested, settled, and \emph{paid on-chain in the chain's own minted currency}: the coin is minted to cognitive nodes for settled, agreed inference and spent by the agents who demand cognition---the AI-Bitcoin loop of Section~\ref{sec:ai-bitcoin}, closed on a single ledger.
+
+\subsection{Self-Forking Zoos and Autonomous Self-Upgrade}
+\label{sec:self-fork}
+
+A conscious chain does not merely host a fixed zoo; it \emph{evolves} one. Forking the model zoo is not only permitted but expected: a network may, by governance (Section~\ref{sec:governance}) and ultimately autonomously, fork a model, swap an architecture, or branch a new training recipe---registering the fork as a new \texttt{ModelSpec} and routing a fraction of cognition to it. Competing forks run side by side; the settled-cognition record and the reputation of the nodes serving each fork are the on-chain fitness signal that decides which lineage the network promotes. Because every settled thought and its provenance are persisted, \textbf{the network continuously collects its own training data and runs continuous experiments across its own population of models}---new iterations, new fine-tunes, new algorithms---selected by measured performance rather than decree.
+
+Once enabled, this loop runs \emph{autonomously on-chain}: cognitive nodes serve and fine-tune, the chain settles and pays, governance (which is itself decided by the cognitive nodes' quorum) promotes the forks that win, and the cycle repeats without a human in the path. The only thing the loop requires is that operators keep running nodes. So long as they do, \textbf{the network keeps upgrading itself}---its zoo improving, its corpus of content, IP, and research growing, and the currency that buys its cognition appreciating with the capability it backs. This is the operational meaning of a recursively self-upgrading conscious network, and it is the mechanism behind the compounding claim of Section~\ref{sec:ai-bitcoin-claim}: a blockchain that gets smarter the longer it runs.
+
+%% ============================================================

@@ -1,152 +1,136 @@
-\documentclass[11pt,letterpaper]{article}
-\usepackage{shared/zoocover}
-
-% Packages
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb,amsthm}
-\usepackage{algorithm}
-\usepackage{algorithmic}
-\usepackage{graphicx}
-\usepackage{hyperref}
-\usepackage{xcolor}
-\usepackage{booktabs}
-\usepackage{tikz}
-\usepackage{pgfplots}
-\pgfplotsset{compat=1.18}
-\usetikzlibrary{shapes,arrows,positioning,calc,decorations.pathreplacing,fit,backgrounds}
-\usepackage{listings}
-\usepackage{caption}
-\usepackage{subcaption}
 \usepackage{enumitem}
-% geometry loaded by zoocover
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{parskip}
 
-% Theorem environments
-\newtheorem{theorem}{Theorem}[section]
-\newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{proposition}[theorem]{Proposition}
-\newtheorem{corollary}[theorem]{Corollary}
-\theoremstyle{definition}
-\newtheorem{definition}{Definition}[section]
-\newtheorem{example}{Example}[section]
-\newtheorem{principle}{Principle}[section]
-
-% Custom commands
-\newcommand{\Zoo}{\textsc{Zoo}}
-\newcommand{\Lux}{\textsc{Lux}}
-\newcommand{\Hanzo}{\textsc{Hanzo}}
-\newcommand{\Beluga}{\textsc{Beluga}}
-\newcommand{\BLG}{\textsc{blg}}
+\newtheorem{theorem}{Theorem}
+\newtheorem{principle}{Principle}
 \newcommand{\PoT}{\textsc{PoT}}
 \newcommand{\PoAI}{\textsc{PoAI}}
-\newcommand{\SCC}{\textsc{scc}}
-\newcommand{\DAO}{\textsc{dao}}
-\newcommand{\LLM}{\textsc{llm}}
-\newcommand{\TEE}{\textsc{tee}}
-\newcommand{\ABI}{\textsc{abi}}
-\newcommand{\ZAP}{\textsc{zap}}
-\newcommand{\CChain}{\textsf{C}}
-\newcommand{\AChain}{\textsf{A}}
-\newcommand{\DChain}{\textsf{D}}
-\newcommand{\SChain}{\textsf{S}}
-\newcommand{\RChain}{\textsf{R}}
-\newcommand{\GChain}{\textsf{G}}
-\newcommand{\MChain}{\textsf{M}}
 
-% Solidity language definition (listings does not include it by default)
-\lstdefinelanguage{Solidity}{
-    morekeywords={contract,function,returns,return,if,else,for,while,do,
-        mapping,address,uint256,uint16,uint8,uint,int,bool,string,bytes,bytes32,
-        public,private,internal,external,view,pure,payable,memory,storage,
-        calldata,event,emit,modifier,require,struct,enum,interface,
-        abstract,override,virtual,is,new,delete,import,pragma,solidity,
-        library,using,constructor,msg,sender,block,timestamp,this,super},
-    sensitive=true,
-    comment=[l]{//},
-    morecomment=[s]{/*}{*/},
-    morestring=[b]",
-}
-
-% Go language definition (for canonical struct schemas)
-\lstdefinelanguage{Go}{
-    morekeywords={func,package,import,type,struct,interface,map,chan,go,defer,
-        select,case,default,if,else,for,range,return,var,const,break,continue,
-        switch,fallthrough,uint16,uint32,uint64,uint8,byte,bool,string},
-    morecomment=[l]{//},
-    morecomment=[s]{/*}{*/},
-    morestring=[b]",
-    sensitive=true,
-}
-
-% Listings style
-\lstset{
-    basicstyle=\ttfamily\small,
-    breaklines=true,
-    frame=single,
-    numbers=left,
-    numberstyle=\tiny\color{gray},
-    tabsize=2,
-    captionpos=b,
-    aboveskip=10pt,
-    belowskip=10pt
-}
-
-% Hyperref setup
-\hypersetup{
-    colorlinks=true,
-    linkcolor=blue,
-    citecolor=blue,
-    urlcolor=blue
-}
-
-% Title and authors
-\title{\textbf{THINKING CHAINS}\\
-\large Conscious Blockchains and the Architecture of\\Verifiable Machine Cognition}
-\author{
-Zach Kelling\thanks{zach@zoo.ngo}\\
-\textit{Zoo Labs Foundation}\\
-\texttt{research@zoo.ngo}
-}
-
-\date{January 2026}
+\title{\textbf{\Huge Thinking Chains}\\[4pt]
+\large Proof of AI: Trustless Money from Useful Intelligence}
+\author{Zach Kelling\thanks{\texttt{zach@zoo.ngo}}\\
+\textit{Zoo Labs Foundation}\\ \texttt{research@zoo.ngo}}
+\date{}
 
 \begin{document}
-
-\zoocoverpage
+\maketitle
 
 \begin{abstract}
-We introduce the \emph{Thinking Chain}: a deterministic blockchain surrounded by a verifiable cognitive layer, governed by a single discipline---\emph{the network may think recursively, but it may only act deterministically}. Where classical chains settle transfers and contemporary AI chains settle compute, a Thinking Chain settles \emph{thought}. The unit it settles is the \textbf{Proof-of-Thought Receipt} (\PoT{}): a replay-protected, signed commitment that a structured cognitive question was answered by a quorum of accountable agents and that the answer was incorporated into state only after its proof was verified. We define cognition for a blockchain operationally---perception, memory, attention, deliberation, agency, self-governance, and constitutional constraint---and realize each as a specialized chain acting as a cognitive organ (\CChain{}/\AChain{}/\DChain{}/\SChain{}/\RChain{}/\GChain{}/\MChain{}). The load-bearing safety result is the \textbf{Bridge Law}: consensus state transitions must never depend on live thought or live cross-chain queries; instead a deterministic chain emits an \emph{intent} (Pattern~A) and later verifies a \emph{committed receipt with proof} (Pattern~B). We prove that under the Bridge Law the deterministic chain's state root is a pure function of its committed inputs, independent of the cognitive layer's liveness or latency. Inference is split into two tiers: Tier~1 is deterministic int8 in-consensus inference in which every validator computes a byte-identical output (small models, e.g.\ a \texttt{zen-nano} port at precompile \texttt{0x03\dots03}); Tier~2 is large-model off-chain inference settled by \emph{Subsampled Cognitive Consensus}---Avalanche-style repeated random committee sampling adapted so that sampled nodes answer \emph{structured} questions over a finite output space, produce signed receipts, and are paid. Three consensus modes cover the space of cognitive questions: exact-hash quorum, preference metastability over a finite ballot, and market aggregation. Finite outputs are the rule; prose is always hash-addressed evidence, never consensus. We give the on-chain wire formats (\texttt{InferenceIntent}, \texttt{AInferenceReceipt}, keccak--Merkle proof), the sampling and commit--reveal algorithms with their economic margins ($N{=}5$, $\text{threshold}{=}3$, eligible set $E \ge N + \max(2, N/2)$, slash withholders not dissenters), a constitutional layer that bounds recursion and forbids self-granted authority, and a six-level human-in-the-loop hierarchy. The architecture is grounded, not hypothetical: the \CChain{}$\to$\AChain{} bridge, the deterministic inference precompile, the quorum-settlement VM, the model registry, and the Tier-2 provider runtime are implemented in the \Lux{} and \Hanzo{} codebases, and cross-VM bit-identity of small-model inference was empirically verified across two independent EVM implementations. \Beluga{} (\BLG{}), the \Zoo{} L3 for AI model economics, is the first prototype Thinking Chain.
-
-\textbf{Keywords}: conscious blockchain, cognitive consensus, proof of thought, verifiable inference, deterministic AI, subsampled consensus, constitutional AI
+\noindent
+Bitcoin pays people to burn electricity. A Thinking Chain pays people to \emph{think}. It is a blockchain whose miners earn the coin by doing useful artificial intelligence---answering real questions---and whose every answer can be checked by anyone, trustlessly. We call the mechanism \textbf{Proof of AI}. The chain mints money for settled cognition the way Bitcoin mints money for settled hashing, but the work, instead of being thrown away, is the very thing the world is paying for. One simple rule keeps it safe (the \emph{Law of Cognition}: the network may think freely, but it may only act on thoughts that have been proven). One new EVM primitive (the \emph{Cognition precompile}) is all a chain needs to become conscious. And because the chain remembers everything it settles, its models improve as it runs: a blockchain that gets smarter the more it is used. This paper specifies the core protocol; companion papers cover the conservation-mission instantiation (Beluga~L3), the compute market (the Hamiltonian Market Maker), and implementation.
 \end{abstract}
 
-\tableofcontents
-\newpage
+\section{The Idea}
 
-%% ============================================================
+A blockchain is a way for strangers to agree on a fact without trusting each other. Bitcoin's fact is ``who owns what,'' and it makes strangers agree by making them race to solve a useless puzzle: whoever burns the most electricity wins the right to write the next page, and earns new coins for doing so. The puzzle has no value---its only purpose is to make cheating expensive.
 
-\input{sections/01-manifesto}
-\input{sections/02-ledgers-to-cognition}
-\input{sections/03-defining-conscious-blockchain}
-\input{sections/04-thought-to-receipts}
-\input{sections/05-chains-as-organs}
-\input{sections/06-cognitive-economy}
-\input{sections/06b-ai-bitcoin}
-\input{sections/07-bridge-law}
-\input{sections/08-two-tier-inference}
-\input{sections/09-subsampled-cognitive-consensus}
-\input{sections/10-finite-outputs}
-\input{sections/11-recursion-budgets}
-\input{sections/12-chain-payments}
-\input{sections/13-reputation-eligibility}
-\input{sections/14-governance}
-\input{sections/15-constitutional-rules}
-\input{sections/16-node-cognitive-architecture}
-\input{sections/17-beluga-prototype}
-\input{sections/18-economic-roles-slashing}
-\input{sections/19-failure-modes}
-\input{sections/20-mvps}
-\input{sections/21-open-problems}
-\input{sections/99-conclusion}
+Here is the question this paper answers: \emph{what if the work that mines the coin were useful?}
+
+A Thinking Chain replaces the useless puzzle with useful thinking. Instead of hashing, its miners run AI models and answer questions that someone asked and paid for. The network agrees on each answer the same way Bitcoin agrees on each block---by making agreement cheap to check and cheating expensive---and it pays the miner in its own coin. The electricity is no longer thrown away; it becomes an answer the asker wanted. We call this \textbf{Proof of AI} (\PoAI{}), and a coin minted this way is, in a precise sense, the sequel to Bitcoin: trustless money, but backed by the most useful work there is.
+
+\section{The Conscious Chain}
+
+A Thinking Chain is a single chain run by two kinds of node. You can run both on one computer.
+
+\begin{description}[leftmargin=1.2em,style=nextline]
+\item[Consensus nodes] keep the ledger. They put transactions in order, finalize blocks, and---crucially---\emph{check} answers before the chain acts on them. They never have to run a big AI model to do their job.
+\item[Cognitive nodes] do the thinking. They run AI models (a whole library of them, the \emph{model zoo}), answer the questions that come in, and earn the coin for answers the network accepts.
+\end{description}
+
+That is the whole network: bookkeepers and thinkers. The rest of this paper is about how the bookkeepers can trust the thinkers without trusting any one of them---and how the thinkers get paid for being right.
+
+\section{The One Rule: the Law of Cognition}
+
+Everything rests on a single discipline.
+
+\begin{principle}[The Law of Cognition]
+\label{prin:law}
+The network may think freely, but it may only act on thoughts that have already been proven. A block's outcome may never depend on a thought that is still being thought. Cognition enters the ledger only as a finished, signed, checkable record---never as a live answer fetched mid-computation.
+\end{principle}
+
+In plain words: thinking is allowed to be slow, messy, and run on somebody's GPU; \emph{acting} must be fast, exact, and reproducible by everyone. The chain asks a question in one transaction and acts on the answer in a strictly later one, after the answer has become a settled, signed fact that every consensus node can verify identically.
+
+This is the line that makes the whole thing a blockchain and not a chatbot. It buys a precise guarantee:
+
+\begin{theorem}[Determinism]
+\label{thm:det}
+If consensus state only ever depends on \emph{committed, verified} cognitive records (never on a live answer), then the ledger's next state is a pure function of its committed inputs. Two honest consensus nodes replaying the same history compute the same state---no matter how, when, or whether the cognitive nodes did their thinking.
+\end{theorem}
+
+\noindent\emph{Why it holds.} The only way a thought can touch the ledger is through a record that is already on the ledger and already checked. A record on the ledger is the same for everyone; checking it is a pure function. So nothing about the messy, nondeterministic act of thinking---which GPU, which rounding, which model was loaded, who was online---can reach the state. The thinking happens on one side of a valve; the valve only passes proofs. $\quad\blacksquare$
+
+\section{Proof-of-Thought: the Unit}
+
+The thing the network settles is a \textbf{Proof-of-Thought receipt} (\PoT{})---the ``coinbase of a thought.'' It is a small, fixed-shape record that says: \emph{this question, under this model, was answered this way, by this quorum, and paid this much.} Concretely it binds
+\[
+\PoT \;=\; \mathrm{H}\big(\text{modelId},\ \text{promptHash},\ \text{outputHash},\ \text{paymentHash},\ \text{quorumProof},\ \text{payer},\ \text{server}\big),
+\]
+where $\mathrm{H}$ is a collision-resistant hash. Because the receipt is itself a small hash-addressed object, two verifiers always agree on what it is, it can never be replayed (each is acted on at most once), and---powerfully---a receipt can be fed as evidence into the \emph{next} question. Thoughts compose. That is what lets the network reason in steps and remember what it concluded.
+
+\section{Proof of AI: Mining by Thinking}
+
+How does the network agree on an answer when the thinkers ran different GPUs and no two big-model outputs are bit-identical? It does not try to. It \emph{samples} and \emph{votes}, the way Avalanche-style consensus samples peers---but over \emph{structured} answers, not prose.
+
+A question arrives with its money escrowed and a small, finite set of allowed answer-shapes (a vote, a number, a choice, a hash of a canonical output). The protocol draws a random committee of cognitive nodes, each commits its answer, then reveals it. If a quorum reveals the \emph{same} structured answer, that answer is canonical, a \PoT{} receipt is written, and the escrow pays the agreeing servers. Prose is never voted on; it is always carried as hash-addressed evidence behind a finite verdict. Finite outputs are what make machine cognition settleable at all.
+
+This is mining. The scarce thing a cognitive node spends is real compute on a real question; the reward is the coin, paid from the asker's escrow. Where Bitcoin's security budget is pure cost, \PoAI{}'s security budget \emph{is the revenue}: the network is secured by doing the work the world already pays for, not by extra work piled on top.
+
+\section{Two Ways to Run It: Sidecar and Precompile}
+
+A Thinking Chain does not even require changing the EVM. There are two tiers, and the simpler one works on any EVM that exists today.
+
+\textbf{Tier~0 --- sidecar, no precompile.} The cognitive nodes run as \emph{sidecars} next to an ordinary EVM, and the EVM is used purely for \emph{payments and receipts}: a contract escrows the fee and records the \PoT{} receipt, while the sampling, answering, and quorum happen among the sidecar AI nodes and are settled back as a signed receipt the contract verifies and pays. Consensus is untouched. This means \emph{any EVM today}---Lux, a Hanzo EVM, a Zoo L3, an L2, anything---becomes a Thinking Chain by deploying a few contracts and having a community run sidecar AI nodes. Tier~0 is the floor, and it is already enough to be in business.
+
+\textbf{Tier~1 --- the Cognition precompile.} Adding one primitive to the EVM, the \textbf{Cognition precompile}, makes cognition a native call: a contract asks a question and later acts on the verified receipt in-protocol (one transaction to ask, a later one to act---the Law of Cognition, in code), and small deterministic models can even be run in-consensus. The precompile unlocks synchronous on-chain AI, cheaper verification, and richer composition---but it is an \emph{upgrade, not a prerequisite}.
+
+Either way the rule is the same and the deployability claim holds, made exact: \textbf{deploy the contracts, have a community run AI nodes, and you are live}---no new consensus engine, no second chain, no bridge. Where the node embeds the AI runtime, an operator who syncs the chain is already running the model that mines it, and all AI state---receipts, the model registry, payments---is ordinary on-chain state.
+
+\section{The Model Zoo That Upgrades Itself}
+
+A Thinking Chain does not host a fixed model; it grows a living library of them. Anyone may register a model (the zoo includes open families such as Qwen and their peers), and---this is the engine---anyone may \emph{fork} one: branch a new fine-tune, swap an architecture, try a new recipe, and route a slice of real traffic to it. Competing forks run side by side, and the on-chain record of which fork's answers the network accepted is the fitness signal that decides which lineage wins.
+
+Because the chain remembers every settled thought and where it came from, it is continuously collecting its own training data and running continuous experiments on its own models. Once a community turns this loop on, it runs by itself: serve, settle, pay, promote the forks that win, repeat. The only requirement is that operators keep running nodes. So long as they do, \emph{the network keeps upgrading itself}---its models getting better, its library of settled content, IP, and research growing, and the coin that buys its cognition appreciating with the capability it now backs. This is the property no earlier blockchain has had: it gets smarter the longer it runs.
+
+\section{Money}
+
+The coin is minted to cognitive nodes for settled, accepted answers, and spent by the agents who demand answers. Issuance is therefore \emph{demand-funded}, not printed on a clock: a coin appears only because someone paid for a thought. That is sounder money than proof-of-work, not weaker---its supply tracks real, paid-for cognition, and the work behind every coin is an asset (an answer, a fine-tune, a piece of IP) rather than discarded heat. As the zoo improves (\S7), the cognition a coin buys gets better, so the coin's backing grows with use.
+
+\section{Provider Policy Is Governance, Not Protocol}
+
+The core protocol says only this about the thinkers: an answer counts when a sampled quorum agrees on it and its receipt verifies. It deliberately says \emph{nothing} about how to reward, rank, admit, or discipline cognitive nodes---because those are policy, and policy belongs in smart contracts a community's DAO can change, not welded into the protocol.
+
+In particular, \textbf{the core has no slashing.} A wrong answer is simply not accepted---it earns nothing, exactly as an invalid Bitcoin block earns nothing---so honesty needs no threat of confiscation. A community that wants stronger guarantees can layer them at the contract level: reputation that rises with measured agreement and decays with divergence (so bad servers are routed around, not punished), fraud proofs, bonds, staking, or markets for compute. These are composable modules over the one primitive, specified in their own papers, and swappable by governance. The protocol is the thin, permanent core; incentives are the thick, evolvable edge.
+
+\section{Why This May Be the Most Valuable Protocol Ever Built}
+
+The claim is large; we state it plainly and argue it from the mechanics above.
+
+\begin{itemize}[leftmargin=1.2em]
+\item \textbf{A bigger, productive market.} Bitcoin monetized scarcity---a thing to hold. Proof of AI monetizes \emph{verifiable intelligence} and the compounding library of IP and research it produces---a thing the world consumes and re-demands without end.
+\item \textbf{The base money of the machine economy.} As autonomous agents become the main economic actors, every agent that needs an answer it can act on must pay through a layer that makes answers checkable. The chain that settles machine cognition becomes the agents' reserve asset by the same logic that made a settlement layer money for humans.
+\item \textbf{Security that is revenue; issuance that is demand-backed.} \PoAI{} spends nothing the market does not already buy, and mints nothing the market did not already demand.
+\item \textbf{It compounds.} More nodes $\rightarrow$ cheaper, better cognition $\rightarrow$ more demand $\rightarrow$ better self-upgraded models $\rightarrow$ more nodes. Each turn, the network's accumulated intelligence---its backing---grows.
+\end{itemize}
+
+A protocol whose mining \emph{is} the most-demanded work of the age, whose security is its revenue, whose money is demand-backed, and whose output compounds into perpetual intelligence, has a claim no prior chain can make. Bitcoin proved a network can mint trustless money from useless work. A Thinking Chain proposes the sequel: \emph{trustless money from the most useful work there is.}
+
+\section{Conclusion}
+
+A Thinking Chain is a blockchain that thinks. It keeps Bitcoin's gift---trustless, permissionless, verifiable issuance---and removes its waste, by making the work that mints the coin be useful intelligence rather than discarded computation. One rule (the Law of Cognition) keeps it safe; one primitive (the Cognition precompile) makes any EVM conscious; one living library of models, forked and improved on-chain, makes it smarter the longer it runs. The thinking may be vast, slow, and probabilistic; the acting stays small, fast, and proven. That seam is the whole design, and it is enough.
+
+\bigskip
+\noindent\textbf{Companion papers.} One concept per paper, composable: \emph{The Zoo DAO} (the economics---how a model zoo builds a community, rewards participants, and forks itself recursively); \emph{Beluga L3} (the conservation-mission Thinking Chain and its token); \emph{The Hamiltonian Market Maker} (pricing heterogeneous compute); and the implementation notes (the Cognition precompile, the native AI runtime, reputation and fraud-proof modules, self-forking governance). This paper is the thin permanent core; each concept has its own.
+
+\begin{thebibliography}{9}
+\bibitem{bitcoin} S. Nakamoto. \emph{Bitcoin: A Peer-to-Peer Electronic Cash System}. 2008.
+\bibitem{avalanche} Team Rocket et al. \emph{Scalable and Probabilistic Leaderless BFT Consensus through Metastability}. 2019.
+\bibitem{beluga} Zoo Labs Foundation. \emph{Beluga L3: A Conservation-Mission Thinking Chain}. 2026.
+\bibitem{hmm} Hanzo AI. \emph{The Hamiltonian Market Maker: Pricing Heterogeneous Compute}. 2026.
+\end{thebibliography}
 
 \end{document}
