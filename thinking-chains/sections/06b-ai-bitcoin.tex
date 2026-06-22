@@ -1,0 +1,80 @@
+\section{Proof-of-AI: The AI Bitcoin}
+\label{sec:ai-bitcoin}
+%% ============================================================
+\providecommand{\PoAI}{\textsc{PoAI}}
+
+Bitcoin's durable invention is not the coin but \emph{trustless issuance through verifiable work}: anyone may expend a scarce resource, prove the expenditure, and earn a unit of a permissionless asset, with the network's security paid for by that same expenditure. Its defect is equally plain---the work, hashing, is intrinsically useless. Proof-of-Work converts energy into security and issuance and discards the energy; the miner's output is wanted by no one but the protocol.
+
+A Thinking Chain keeps the mechanism and removes the waste. The scarce resource expended is \emph{settled cognition}: inference a paying agent demanded, produced under a sampled committee, and committed as a \PoT{} receipt (Section~\ref{sec:receipts}). The proof of work \emph{is} the useful work. We call this \textbf{Proof-of-AI} (\PoAI{})---the trustless, permissionless issuance of Nakamoto consensus, but where the act that mints the coin and secures the chain is the act of answering a real question. The receipt is the coinbase of a thought.
+
+\begin{principle}[Proof-of-AI]
+\label{prin:poai}
+In Proof-of-AI the security budget \emph{is} the revenue. Where Proof-of-Work spends a real resource to produce only security, Proof-of-AI spends bonded compute on cognition that is sold to the demand side. The network is secured by doing the work the world is already paying for, not by work performed in addition to it.
+\end{principle}
+
+\subsection{The Correspondence}
+
+Every load-bearing part of Nakamoto consensus has a Proof-of-AI analog, and in each, the analog produces value where the original produced waste.
+
+\begin{table}[h]
+\centering
+\caption{Bitcoin and Proof-of-AI, mechanism for mechanism. Two rows---validation and issuance---carry the thesis.}
+\label{tab:aibitcoin}
+\small
+\begin{tabular}{@{}p{3.1cm}p{4.4cm}p{5.4cm}@{}}
+\toprule
+ & Bitcoin (PoW) & Thinking Chain (\PoAI{}) \\
+\midrule
+Scarce input & energy (hashing) & bonded compute on demanded inference \\
+Unit of issuance & block reward & \PoT{} receipt: one settled cognition \\
+Validation & re-hash the header & re-derive the Tier-1 output, byte-identical (Section~\ref{sec:twotier}) \\
+Sybil resistance & cost of hashpower & bond $+$ eligible-set margin $+$ reputation \\
+Bad-actor response & --- (no recovery) & fraud proof $+$ reputation decay (\S\ref{sec:ai-bitcoin-noslash}) \\
+Finality & probabilistic (longest chain) & quorum-settled, then deterministic \\
+Issuance source & protocol inflation on a clock & demand-side escrow (Section~\ref{sec:economy}) \\
+Product of mining & none (discarded) & the answer the requester buys \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\emph{Validation} is the heart of it. Just as any node re-hashes a Bitcoin header to check a claimed solution, any validator on a Thinking Chain re-runs the Tier-1 deterministic model and obtains a byte-identical output (Section~\ref{sec:twotier})---the cognitive equivalent of the hash everyone can recompute, which is precisely what lets strangers agree on a thought without trusting the thinker. \emph{Issuance} is the other half: Bitcoin mints supply against a clock; a Thinking Chain pays providers from escrow funded by the agents who demanded the cognition (Section~\ref{sec:economy}). The coin is not printed; it is earned against demand.
+
+\subsection{Correctness Without Slashing}
+\label{sec:ai-bitcoin-noslash}
+
+Proof-of-Work needs no slashing because a wrong answer simply fails to verify---the network ignores it at zero cost. Proof-of-AI inherits this property and so needs no slashing as its primary defense either. Correctness comes, in order, from three layers that escalate in cost only as needed:
+
+\begin{enumerate}[leftmargin=1.4em]
+\item \textbf{Reproduction (free).} A Tier-1 receipt is byte-reproducible: any party re-derives the output and a mismatch is self-evident. A false receipt is not punished---it is \emph{refuted}. This is an optimistic fraud proof, identical in spirit to a rollup's: one honest re-execution invalidates a lie, and the would-be forger is paid nothing.
+\item \textbf{Reputation (continuous).} For Tier-2, where outputs are not bit-reproducible, providers earn by \emph{measured, ongoing answer quality} rather than by avoiding a penalty---the Bittensor lesson. Agreement with quorum and with later-confirmed truth raises a provider's weight and routing share (Section~\ref{sec:reputation}); persistent divergence decays it. A bad actor is not slashed; it is \emph{routed around} and stops earning. Non-payment plus reputation decay is the disincentive.
+\item \textbf{Bond (optional, layered).} The hard slashing table of Section~\ref{sec:roles} is retained only as an optional backstop for the handful of \emph{deterministically detectable} faults---equivocation, double-signing---where capital at risk adds defense in depth. It is a layer a deployment may enable, not the foundation. The forgery floor (Section~\ref{sec:roles}) still bounds the cost of a fabricated high-value receipt; under \PoAI{} that floor is reputation-weighted, not slash-dependent.
+\end{enumerate}
+
+The shift matters: a network that secures itself by \emph{measuring useful work} rather than by \emph{threatening to burn capital} is open to heterogeneous, intermittent, permissionless providers---exactly the supply that a global compute market must admit.
+
+\subsection{The Compute Market Underneath: the Hamiltonian Market Maker}
+\label{sec:ai-bitcoin-hmm}
+
+Bitcoin's difficulty adjustment prices a single homogeneous resource (hashpower). Intelligence is not homogeneous: it is produced on GPUs, CPUs, unified-memory Apple silicon, and accelerators that differ by orders of magnitude in memory, bandwidth, and throughput. Proof-of-AI therefore replaces difficulty with a market. The price of a thought is set by the \textbf{Hanzo Hamiltonian Market Maker} (HMM), a physics-based automated market maker over the cotangent bundle of a heterogeneous-compute reserve manifold---GPU-hours, VRAM, CPU, bandwidth, storage. Reserves $q_i$ and demand-credit $p_i$ evolve under Hamilton's equations from a Hamiltonian that generalizes the constant-product invariant with a harmonic mean-reversion term, so prices are continuous, capital-efficient, and self-stabilizing; a Hidden-Markov regime detector (\textsc{fair}/\textsc{loaded}) and active-inference routing place each thought on the cheapest capable hardware. ``Difficulty'' becomes a living market for heterogeneous cognition, which is what lets \PoAI{} mine across the messy real world of compute rather than a single hash. The escrow price of Equation~\ref{eq:price} is the user-facing quote; the HMM is the clearing engine beneath it.
+
+\subsection{The Compounding Engine}
+\label{sec:ai-bitcoin-compounding}
+
+Bitcoin's supply is inert: a coin, once mined, produces nothing. A Thinking Chain's output is \emph{generative}, and this is the decisive economic difference. \PoT{} receipts compose (Section~\ref{sec:recursion}): a settled thought is evidence for the next, so the network deliberates recursively and accumulates a deepening tree of committed reasoning. That tree is not discarded---settled cognition and its provenance feed model improvement, so the network \emph{learns from what it settles}. Each community runs its own Thinking Chain, and each such network is \textbf{recursively self-upgrading}: it continually produces new content, intellectual property, and research, every artifact minted as an on-chain asset with provenance and perpetual royalties (the \texttt{Invoice} split of Section~\ref{sec:economy} pays the model owner and the data contributors whose work made the thought possible). The asset's backing therefore \emph{grows as the network thinks}---a property no proof-of-work or proof-of-stake chain possesses. Value compounds because cognition compounds.
+
+\subsection{Why This May Be the Most Valuable Protocol Ever Built}
+\label{sec:ai-bitcoin-claim}
+
+The claim is large and we state it plainly: a Thinking Chain may become the most valuable protocol in the history of blockchains. The argument is not hype but a chain of the properties above.
+
+\begin{itemize}[leftmargin=1.4em]
+\item \textbf{A larger, productive market.} Bitcoin monetized scarcity---a store of value. Proof-of-AI monetizes \emph{verifiable intelligence} and its compounding output of IP and research. The total demand for settled, actionable cognition dwarfs the demand for a static reserve asset, and unlike a reserve asset it is consumed and re-demanded continuously.
+\item \textbf{The base money of the machine economy.} As autonomous agents become the dominant economic actors, every agent that needs a thought it can act on must pay through a settlement layer that makes thought verifiable. The protocol that settles machine cognition becomes the agents' reserve asset and unit of account by the same logic that made the dollar the unit of human trade.
+\item \textbf{Security that is revenue, issuance that is demand-backed.} \PoAI{} spends nothing the market does not already buy (Principle~\ref{prin:poai}); the coin is earned against demand, not printed against a clock. This is sounder money than Proof-of-Work, not weaker.
+\item \textbf{A flywheel that compounds the backing.} More providers $\rightarrow$ cheaper and better cognition (priced by the HMM) $\rightarrow$ more demand $\rightarrow$ more fees and better self-upgraded models $\rightarrow$ more providers. Each turn the network's accumulated IP and research---its backing---grows (Section~\ref{sec:ai-bitcoin-compounding}).
+\item \textbf{Value with values.} In its first instantiation, Beluga, a constitutional conservation tithe (Section~\ref{sec:beluga-telos}) routes a fixed slice of every settled cognition to the commons. The protocol can have a conscience without sacrificing its economics.
+\end{itemize}
+
+A protocol whose block production \emph{is} the most-demanded work of the era, whose security is its revenue, whose issuance is demand-backed, and whose output compounds into perpetual, royalty-bearing intellectual property, has a claim that no prior chain can make. Bitcoin proved that a network can mint trustless money from useless work. A Thinking Chain proposes the sequel: trustless money from the most useful work there is.
+
+%% ============================================================
