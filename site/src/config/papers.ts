@@ -48,7 +48,7 @@ export const siteConfig: SiteConfig = {
       latexUrl: 'https://github.com/zooai/papers/blob/main/thinking-chains/thinking-chains.tex',
       githubUrl: 'https://github.com/zooai/papers',
       date: '2026-06-22',
-      authors: ['Zach Kelling', 'Zoo Labs Foundation'],
+      authors: ['Zach Kelling', 'Antje Worring', 'Zoo Labs Foundation'],
       tags: ['Proof of AI', 'Thinking Chains', 'Conscious Blockchain', 'Proof-of-Thought', 'AI Mining'],
     },
     {
