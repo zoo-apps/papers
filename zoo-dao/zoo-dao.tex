@@ -21,7 +21,7 @@
 
 \begin{abstract}
 \noindent
-The core protocol (\emph{Thinking Chains: Proof of AI}) says how a network settles cognition and mints a coin for it. It deliberately says nothing about \emph{who gets paid what, who decides, or how the network improves}---because those are economics and governance, which belong in contracts a community can change, not in the protocol. This paper is that economics. We show how a \textbf{model zoo}---a community-owned, on-chain library of AI models---bootstraps from nothing, pays everyone who makes it valuable (the people who run models, contribute data, train forks, and curate memory), governs itself by the quorum of its own thinking nodes, and \emph{forks itself recursively} so that competing models run side by side and the network keeps the ones that win. The result is an AI commons that gets better the more it is used and is owned by the people who built it. Every mechanism here is a smart contract over the core protocol; none of it is in the protocol. There is no slashing: you earn by being useful, and bad actors are simply routed around.
+The core protocol (\emph{Thinking Chains: Proof of AI}) says how a network settles cognition and mints a coin for it. It deliberately says nothing about \emph{who gets paid what, who decides, or how the network improves}---because those are economics and governance, which belong in contracts a community can change, not in the protocol. This paper is that economics. We show how a \textbf{model zoo}---a community-owned, on-chain library of AI models---bootstraps from nothing, pays everyone who makes it valuable (the people who run models, contribute data, train forks, and curate memory), governs itself by the quorum of its own thinking nodes, and \emph{forks itself recursively} so that competing models run side by side and the network keeps the ones that win. The result is an AI commons that gets better the more it is used and is owned by the people who built it. Every mechanism here is a smart contract over the core protocol; none of it is in the protocol. The rule on misbehavior is simple: \emph{slash liars, not dissenters}---objective protocol faults are confiscation offenses, but unpopular models and minority answers are not; bad judgment is handled by reputation and delegation, not punishment.
 \end{abstract}
 
 \section{A Zoo Anyone Can Join and Everyone Owns}
@@ -67,16 +67,22 @@ Every paid thought runs the same loop, and it is closed and self-funding:
 
 The split is not negotiated; it is computed from the receipt and the on-chain provenance graph, so the same answer always pays the same parties the same way. Money only ever moves \emph{after} a thought is settled, so a slow or offline model can delay a payment but can never create or destroy value. This is the economy whose product is settled judgment: the coin a cognitive node earns is backed by an answer a user wanted.
 
-\section{Reputation, Not Punishment}
+\section{Slashing, Reputation, and Delegation}
 
-The Zoo DAO has \textbf{no slashing}. A wrong or withheld answer simply is not accepted into a quorum, so it earns nothing---exactly as an invalid block earns nothing on Bitcoin. Honesty needs no threat of confiscation; it needs only that useful work pays and useless work does not.
+The core protocol fixes one principle and defers the policy here: \emph{slash liars, not dissenters; the market abandons bad thinkers.} Because operators may choose their own models, ``we dislike your model'' must never become a slashable weapon. The Zoo DAO therefore separates \emph{objective protocol faults} from \emph{subjective judgment}.
 
-What replaces slashing is \emph{reputation}. Each cognitive node carries an on-chain weight---an exponential moving average of how often its answers matched the settled canonical answer:
+\textbf{Slashable} (provable from committed data): equivocation, double-signing, withholding after a commit, a reveal inconsistent with its commit, a forged receipt, an invalid attestation, or \emph{misrepresenting the model or runtime used for a protected task}. These are confiscation offenses because the violation can be proven on-chain. \textbf{Not slashable by default:} using an unpopular model, giving a minority answer, or being honestly wrong. The remedy for poor judgment is not confiscation but \emph{reputation}.
+
+Each cognitive node carries an on-chain weight---an exponential moving average of how often its answers matched the settled canonical answer:
 \[
 w \leftarrow w + \alpha\,(\,\text{10000} - w)\ \text{when it agrees},\qquad
 w \leftarrow w - \alpha\,w\ \text{when it diverges},
 \]
-in basis points, with $\alpha$ the responsiveness. New nodes start at zero and \emph{earn} weight by being right alongside the quorum; nodes that drift wrong decay toward zero and are routed around. Reputation drives reward share, routing priority, and governance weight. This is the Bittensor lesson made native: pay for measured, ongoing quality rather than threaten capital, so heterogeneous and permissionless nodes can join freely. (Reference implementation: the \texttt{ThinkingReputation} contract; it reads each settled decision and updates weights, touching nothing else.) A community that wants harder guarantees may layer bonds or fraud-proof challenges on top---but that is its choice, not the protocol's.
+in basis points, $\alpha$ the responsiveness. New nodes start at zero and \emph{earn} weight by being right alongside the quorum; drift wrong and they decay toward zero and are routed around. Reputation drives reward share, routing priority, and governance weight---the Bittensor lesson made native: pay for measured quality rather than threaten capital, so heterogeneous, permissionless nodes can join freely. (Reference implementation: the \texttt{ThinkingReputation} contract reads each settled decision and updates weights, touching nothing else.)
+
+\textbf{Task classes set the strictness.} Each task declares its model policy. \emph{Open classes} (most governance analysis, opinion-style cognition) admit any operator-chosen model; model choice there is never slashable, and quality is judged by reputation. \emph{Protected classes} (high-stakes execution, funds, security) may require an approved \texttt{ModelSpec} or hardware attestation; using another model, or a missing/invalid attestation, is then a slashable policy violation. Freedom where diversity helps; strictness where money and safety are at stake.
+
+\textbf{Delegation is choosing a mind.} A validator publishes a cognitive profile---base models, public adapters, task specializations, governance and safety policy, attestation posture, vote record, observed accuracy, dissent record---and a delegator delegates \emph{judgment}, not merely stake: back validators whose cognition you trust, withdraw from those you do not, delegate governance votes separately from inference, auto-undelegate on a policy change. Disliking a node's model becomes ``we will not delegate to you,'' never ``we will slash you.'' This is a market for trusted judgment, not a tribunal for unpopular opinion. Honest dissent is preserved and never slashed; repeated poor outputs lose reputation, delegation, and eligibility---without anyone having to prove fraud.
 
 \section{Recursive Self-Forking: How the Zoo Improves}
 
@@ -114,7 +120,7 @@ The Zoo DAO turns a one-time launch into a compounding asset. More demand pays m
 
 \section{Conclusion}
 
-The core protocol mints money for useful thought. The Zoo DAO is how a community turns that into an economy it owns: pay everyone who makes the zoo valuable, govern the rules by the quorum of its own thinking nodes, and let the zoo fork and improve itself without end. No slashing, no platform owner, no permission---just useful work, paid, in the open, compounding. Deploy the contracts, run the nodes, and a community has not a product but a living, self-upgrading, self-owned intelligence.
+The core protocol mints money for useful thought. The Zoo DAO is how a community turns that into an economy it owns: pay everyone who makes the zoo valuable, govern the rules by the quorum of its own thinking nodes, and let the zoo fork and improve itself without end. Burn liars, not dissenters; no platform owner, no permission---just useful work, paid, in the open, compounding. Deploy the contracts, run the nodes, and a community has not a product but a living, self-upgrading, self-owned intelligence.
 
 \bigskip
 \noindent\textbf{Companion papers.} \emph{Thinking Chains: Proof of AI} (the core protocol); \emph{Beluga L3} (the conservation-mission instantiation and its token); \emph{The Hamiltonian Market Maker} (pricing heterogeneous compute). This paper is the economics; each concept has its own.
