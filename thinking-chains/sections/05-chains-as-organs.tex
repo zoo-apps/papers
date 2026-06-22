@@ -1,0 +1,76 @@
+\section{Specialized Chains as Cognitive Organs}
+\label{sec:organs}
+%% ============================================================
+
+A monolithic chain that tried to do everything---execute contracts, run inference, store memory, sample committees, govern itself---would couple concerns that have opposite requirements. Execution wants determinism and low latency; inference wants throughput and tolerates nondeterminism; memory wants cheap large storage; governance wants slow, deliberate, human-paced finality. We therefore decompose the organism into specialized chains, each an organ optimized for one cognitive function, communicating only by committed receipts and proofs. The decomposition is orthogonal: each organ is independently complete and replaceable, and no organ reaches into another's state except through the Bridge Law (Section~\ref{sec:bridge}).
+
+\subsection{The Seven Organs}
+
+\begin{description}[style=nextline,leftmargin=0pt]
+\item[\CChain{} --- Cortex (deterministic execution).] The state machine. A standard deterministic EVM chain where contracts execute, value moves, and receipts are verified. \CChain{} is where agency lives: a verified \PoT{} receipt triggers a state transition here. \CChain{} \emph{never} runs large-model inference or queries another chain's live state; it only emits intents and verifies committed receipts. It is the only organ whose state is the canonical ledger.
+
+\item[\AChain{} --- Cognition (deliberation \& settlement).] The deliberation organ. \AChain{} receives structured questions (as intents imported from \CChain{}), runs Subsampled Cognitive Consensus (Section~\ref{sec:scc}) over a sampled committee of providers, runs commit--reveal to settle a canonical answer, and emits a \PoT{} receipt. \AChain{} is realized by the \texttt{aivm} quorum-settlement chain. Crucially, \AChain{} is itself deterministic \emph{about settlement}: given the committed commits and reveals, the winner and the receipt are a deterministic function. The nondeterminism lives in the providers' off-chain generation, which \AChain{} never re-executes---it only aggregates committed finite responses.
+
+\item[\DChain{} --- Data \& provenance.] The data-commons organ. Holds content-addressed datasets, their provenance, and the royalty graph linking data to the models trained on it. \DChain{} answers ``where did this knowledge come from?'' and routes contribution rewards. It is grounded in the data-contribution mechanisms of the \Zoo{} stack \cite{zoo-experience-ledger}.
+
+\item[\SChain{} --- Sensory (perception).] The perception organ. Ingests external feeds---price oracles, document streams, sensor data, cross-chain events---normalizes them into hash-addressed observations, and (via Tier-1, Section~\ref{sec:twotier}) extracts deterministic features. \SChain{} answers ``what did the network observe, and when?''
+
+\item[\RChain{} --- Reputation (eligibility \& trust).] The trust organ. Maintains, for every provider and agent, a reputation and a diversity profile that determine sampling weight and eligibility (Section~\ref{sec:reputation}). \RChain{} is what makes Subsampled Cognitive Consensus economically sound: it ensures the sampled committee is both competent and diverse.
+
+\item[\GChain{} --- Governance (self-governance).] The self-governance organ. Hosts proposals, votes, timelocks, and the constitutional amendment process (Sections~\ref{sec:governance}--\ref{sec:constitution}). \GChain{} is deliberately slow. AI may draft and analyze proposals here, but only the deterministic, human-gated path can enact constitutional change.
+
+\item[\MChain{} --- Memory.] The long-term memory organ. Stores settled \PoT{} receipts indexed by content, so that prior conclusions are retrievable as evidence for future deliberations (Principle~\ref{prin:settle}). \MChain{} is what distinguishes a cognitive network from a stateless oracle: it remembers what it concluded and how confidently, and it can be asked.
+\end{description}
+
+\subsection{The Organ Network}
+
+Figure~\ref{fig:organs} shows the organism. Note that all inter-organ edges are receipts or proofs---never live queries. \CChain{} is the hub of \emph{action}; \AChain{} is the hub of \emph{thought}; the other organs feed and constrain them. The transport that carries intents and nudges between organs is \ZAP{} (the \Zoo{}/\Lux{} cross-chain transport); \ZAP{} moves messages but never moves trust---trust is established only by verifying a committed receipt at the destination. We state this as the network's transport invariant.
+
+\begin{principle}[Transport carries messages, not trust]
+\label{prin:zap}
+\ZAP{} transports; proofs commit; receipts settle; VMs execute. A message arriving over \ZAP{} grants no authority by its arrival; it is acted upon only after the receiving organ verifies the committed proof or receipt it references against committed state. The transport layer is therefore untrusted and may be lossy, reordered, or adversarial without affecting safety---only liveness.
+\end{principle}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    organ/.style={rectangle, rounded corners, draw, thick, minimum width=2.6cm, minimum height=1.1cm, align=center, font=\small\sffamily},
+    cortex/.style={organ, fill=black!8, line width=1pt},
+    cog/.style={organ, fill=blue!8, line width=1pt},
+    feed/.style={organ, fill=black!3},
+    rcpt/.style={->, thick, >=stealth, blue!60!black},
+    intent/.style={->, thick, >=stealth, black},
+    feedline/.style={->, semithick, >=stealth, gray}
+]
+% central axis
+\node[cortex] (c) at (0,0) {\CChain{}\\\scriptsize Cortex / execution};
+\node[cog]    (a) at (5.4,0) {\AChain{}\\\scriptsize Cognition / settle};
+% feeders
+\node[feed] (s) at (-4.2,1.6) {\SChain{}\\\scriptsize sensory};
+\node[feed] (d) at (-4.2,-1.6) {\DChain{}\\\scriptsize data/provenance};
+\node[feed] (m) at (9.6,1.6) {\MChain{}\\\scriptsize memory};
+\node[feed] (r) at (9.6,-1.6) {\RChain{}\\\scriptsize reputation};
+\node[feed] (g) at (2.7,-2.8) {\GChain{}\\\scriptsize governance};
+
+% the core loop
+\draw[intent] (c) to[bend left=12] node[above,font=\scriptsize]{intent (Pattern A)} (a);
+\draw[rcpt]   (a) to[bend left=12] node[below,font=\scriptsize]{receipt+proof (Pattern B)} (c);
+
+% feeders into the loop
+\draw[feedline] (s) -- node[above,sloped,font=\scriptsize]{observations} (c);
+\draw[feedline] (d) -- node[below,sloped,font=\scriptsize]{provenance} (c);
+\draw[feedline] (r) -- node[below,sloped,font=\scriptsize]{eligibility/weight} (a);
+\draw[feedline] (a) -- node[above,sloped,font=\scriptsize]{settled \PoT{}} (m);
+\draw[feedline] (m) to[bend right=22] node[above,font=\scriptsize]{prior receipts as evidence} (a);
+\draw[feedline] (g) -- node[right,font=\scriptsize]{params / constitution} (c);
+\draw[feedline] (g) to[bend right=12] node[below,sloped,font=\scriptsize]{eligible ModelSpecs} (a);
+\end{tikzpicture}
+\caption{The cognitive organism. \CChain{} (action) and \AChain{} (thought) form the core loop, coupled \emph{only} by intents (Pattern A) and verified receipts (Pattern B). Sensory (\SChain{}) and data (\DChain{}) organs feed perception; memory (\MChain{}) returns prior receipts as evidence; reputation (\RChain{}) sets sampling eligibility; governance (\GChain{}) sets parameters and the constitution. Every edge is a committed message, never a live query (Principle~\ref{prin:zap}).}
+\label{fig:organs}
+\end{figure}
+
+\subsection{Why Decompose}
+
+The decomposition is not architectural decoration; it is what makes each requirement satisfiable. \AChain{} can tolerate high-throughput, GPU-bound, nondeterministic provider work precisely because it is \emph{not} the canonical ledger---its only consensus duty is to aggregate committed finite responses, which is cheap and deterministic. \CChain{} can remain a strict, fast, auditable EVM precisely because it offloads all thinking to \AChain{} and only ever verifies the result. \GChain{} can be slow and human-paced without throttling inference, because inference does not flow through it. This separation of concerns is the same principle that lets an operating system separate the scheduler from the filesystem from the network stack: one mechanism, one place, composable at the boundaries. The boundary discipline is the subject of Section~\ref{sec:bridge}.
+
+%% ============================================================

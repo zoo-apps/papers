@@ -1,0 +1,74 @@
+\section{Two-Tier Inference}
+\label{sec:twotier}
+%% ============================================================
+
+The Bridge Law tells us \emph{how} cognition re-enters state (as a verified receipt). It does not tell us \emph{how the answer is produced}. There are two regimes, divided by a hard physical fact: whether the model's forward pass is bit-reproducible across heterogeneous hardware. This fact, not cost, is the dividing line.
+
+\begin{principle}[The reproducibility line]
+\label{prin:repro}
+A model's forward pass may be admitted \emph{into} consensus (every validator recomputes it) only if it is byte-identical across all honest validators' hardware. Integer-only inference with frozen requantization is byte-identical; floating-point inference is not, because floating-point reduction is not associative and differs across GPU kernels, vendors, and driver versions. Therefore: small integer models run in consensus (Tier~1); large floating-point models run off-chain and are settled by quorum (Tier~2).
+\end{principle}
+
+\subsection{Tier 1: Deterministic In-Consensus Inference}
+
+Tier~1 is the case where the model is small enough and integer-only enough that every validator can run the forward pass and obtain the \emph{same bits}. Here inference is not bridged at all---it is an ordinary deterministic computation, settled by the same mechanism that settles an \texttt{ADD}. There is no quorum, no commit--reveal, no receipt: the model output is consensus, exactly like any other EVM result.
+
+This is realized today by the \Lux{} deterministic inference precompile at address \texttt{0x0300\dots0003} (the AI-mining range, significant byte \texttt{0x03}, suffix \texttt{0x03}). It is a pure-Go int8 transformer compiled with \texttt{CGO=0}---no C dependencies, no platform-specific math---implementing a port of a small \texttt{zen-nano}-class model. Listing~\ref{lst:int8} sketches the integer kernels; the entire pipeline (embedding gather $\to$ RMS-norm $\to$ int8 GEMM $\to$ frozen-LUT softmax attention $\to$ SwiGLU $\to$ requantize $\to$ argmax) uses only integer arithmetic with fixed right-shift requantization and frozen lookup tables, so the result is a deterministic function of the input tokens and the committed weights.
+
+\begin{lstlisting}[language=Go,caption={Tier-1 deterministic kernels: saturating int8 arithmetic and int8 GEMM with a fixed requantization shift. Pure Go, \texttt{CGO=0}; every validator computes byte-identical output (Lux \texttt{precompile/inference}, \texttt{0x0300\dots03}).},label=lst:int8]
+// Saturating int8 cast -- the requantization primitive.
+func satI8(v int32) int8 { /* clamp to [-128,127] */ }
+
+// int8 x int8 -> int8 GEMM with int32 bias and a fixed shift.
+// No floating point anywhere: the result is bit-identical across
+// every honest validator's hardware, which is what admits it to
+// consensus.
+func gemmI8(a, bt []int8, bias []int32, c []int8,
+            m, n, k uint32, shift int32) {
+    for i := uint32(0); i < m; i++ {
+        for j := uint32(0); j < n; j++ {
+            var acc int32 = bias[j]
+            for p := uint32(0); p < k; p++ {
+                acc += int32(a[i*k+p]) * int32(bt[j*k+p])
+            }
+            c[i*n+j] = satI8(acc >> shift) // frozen requant
+        }
+    }
+}
+\end{lstlisting}
+
+The integer-quantization discipline follows the standard low-precision inference recipe established by gemmlowp \cite{gemmlowp} and the int8 quantization literature \cite{jacob2018quantization}: weights and activations are int8, accumulation is int32, and requantization is a fixed multiplier-and-shift. The novelty here is not the arithmetic but the \emph{requirement}: in a normal ML system int8 is an optimization, whereas in Tier~1 it is a consensus precondition---a floating-point version of the same model would be unusable on-chain not because it is slow but because it is nondeterministic.
+
+\textbf{Empirical bit-identity.} The reproducibility claim is not assumed; it was verified. The same engine, fed the same input and the same committed weights, produces an \emph{identical output hash} across two independent EVM implementations---the Go EVM and the Rust EVM. This cross-VM bit-identity is the empirical license for Tier~1: if two independently written virtual machines agree byte-for-byte, the forward pass is genuinely deterministic and safe to admit into consensus. The companion negative result is equally important: the same exercise on a large floating-point model does \emph{not} reproduce across hardware, which is precisely why such models are confined to Tier~2.
+
+\subsection{Tier 2: Large-Model Quorum Inference}
+
+Tier~2 is everything Tier~1 cannot be: frontier-scale models, floating-point, GPU-bound, nondeterministic. These cannot be run in consensus (Principle~\ref{prin:repro}), so they run off-chain on a network of providers and are settled by \emph{Subsampled Cognitive Consensus} (Section~\ref{sec:scc}), producing a \PoT{} receipt verified via Pattern B. The Tier-2 provider runtime is the \Hanzo{} engine with its FFI boundary (\texttt{hanzo-engine} / \texttt{hanzo-engine-ffi}), which hosts the large models and emits the structured, committable responses that the quorum aggregates \cite{hanzo-engine}.
+
+The two tiers are not competitors; they are a routing decision made per question. A cheap, reproducible classification (``is this string a valid address?'', ``which of these four risk buckets?'') routes to Tier~1 and is settled for free as ordinary execution. An expensive, open-ended judgment (``summarize the risk in this 50-page document and rate it'') routes to Tier~2 and is settled by paid quorum. Table~\ref{tab:tiers} contrasts them. The dividing line is always Principle~\ref{prin:repro}: reproducible $\Rightarrow$ Tier~1; not reproducible $\Rightarrow$ Tier~2.
+
+\begin{table}[h]
+\centering
+\caption{The two inference tiers.}
+\label{tab:tiers}
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+ & Tier 1 (in consensus) & Tier 2 (quorum-settled) \\
+\midrule
+Model scale & small (e.g.\ \texttt{zen-nano}) & frontier (e.g.\ 70B+) \\
+Arithmetic & int8, frozen requant & floating point \\
+Reproducible? & yes (byte-identical) & no (cross-hardware drift) \\
+Who computes & every validator & sampled provider committee \\
+Settlement & ordinary EVM result & \PoT{} receipt + Pattern B \\
+Cost to verify & nil (recomputed) & quorum + Merkle proof \\
+Realized by & \texttt{0x0300\dots03} precompile & \Hanzo{} engine + \texttt{aivm} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Why Both}
+
+A network with only Tier~1 could be fully verified but could think only small thoughts. A network with only Tier~2 could think large thoughts but would pay a quorum for every trivial classification. The two-tier design lets the network spend its consensus budget where reproducibility is free and its economic budget where reproducibility is impossible, routing each question to the cheapest mechanism that can answer it safely. This is the same instinct as a CPU's cache hierarchy: do the cheap, exact thing inline; escalate to the expensive, redundant thing only when you must. The escalation policy---which questions deserve Tier~2's paid quorum and how deep recursion may go---is the network's attention, formalized in Section~\ref{sec:recursion}.
+
+%% ============================================================

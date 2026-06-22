@@ -1,0 +1,56 @@
+\section{From Thought to Receipts: The Proof-of-Thought Schema}
+\label{sec:receipts}
+%% ============================================================
+
+A \PoT{} receipt is the object that crosses the determinism valve. It must be (i) self-describing enough that any verifier can check it without re-running the thought, (ii) bound to a specific question at a specific point in committed history, so it cannot be replayed against a different question or a different time, and (iii) finite, so that checking it is a deterministic decision procedure. This section gives the abstract schema, then the concrete on-chain encoding as already realized in the \Lux{} cognitive bridge.
+
+\subsection{Abstract Schema}
+
+\begin{definition}[Proof-of-Thought Receipt]
+\label{def:pot}
+A \PoT{} receipt for a cognitive task $\tau$ is a tuple
+\[
+\mathrm{PoT}(\tau) = \big\langle\, \mathit{id},\; q,\; m,\; o^\ast,\; \pi,\; W,\; \kappa,\; s,\; \sigma \,\big\rangle
+\]
+where $\mathit{id}$ is a deterministic task identifier binding the question to its originating chain, transaction, and caller; $q$ is the hash of the structured question (prompt, ballot, or market terms); $m$ is the \emph{ModelSpec} hash identifying the cognitive model(s) admitted to answer; $o^\ast$ is the canonical answer drawn from a declared finite output space $\mathcal{O}$; $\pi$ is the confidence/dissent distribution over $\mathcal{O}$; $W$ is the set (Merkle root) of winning responders and their stakes; $\kappa$ is the aggregation mode (Section~\ref{sec:finite}); $s$ is the settlement status; and $\sigma$ is the quorum's aggregate signature over the canonical encoding of all the above.
+\end{definition}
+
+Three properties are forced by Definition~\ref{def:pot}. First, $o^\ast \in \mathcal{O}$ with $\mathcal{O}$ finite and declared in advance: verification can enumerate or range-check $\mathcal{O}$, which is what makes it deterministic. Second, $\mathit{id}$ binds the receipt to one question at one point in history, which is the replay protection. Third, $\pi$ is part of the receipt, not discarded: \emph{the network preserves dissent}. A 3-of-5 quorum that split $3{-}2$ settles the same answer as one that was unanimous, but the receipts differ in $\pi$, and downstream policy may treat a contested conclusion differently from a unanimous one (Section~\ref{sec:constitution}).
+
+\subsection{Canonical Encoding (As Realized)}
+
+The abstract schema is instantiated on-chain by the \texttt{AInferenceReceipt} record of the \Lux{} \texttt{aivmbridge} precompile. Listing~\ref{lst:receipt} is the actual struct; it is a fixed-width canonical encoding (every field at a pinned byte offset) so that two verifiers hash it identically---there is exactly one byte string per logical receipt.
+
+\begin{lstlisting}[language=Go,caption={Canonical \PoT{} receipt: the \texttt{AInferenceReceipt} settled by the cognition chain and verified by the deterministic chain (Lux \texttt{aivmbridge}).},label=lst:receipt]
+type AInferenceReceipt struct {
+    Version             uint16      // wire-format version
+    IntentID            [32]byte    // binds receipt to one C->A intent
+    TaskID              [32]byte    // A-Chain quorum task id
+    CChainID            [32]byte    // originating deterministic chain
+    AChainID            [32]byte    // settling cognition chain
+    Requester           Address     // account that posed the question
+    ModelSpecHash       [32]byte    // admitted cognitive model identity
+    PromptHash          [32]byte    // hash of the structured question
+    CanonicalOutputHash [32]byte    // o*: hash of the finite answer
+    Status              ReceiptStatus // Completed / Failed / ...
+    N                   uint16      // sampled committee size
+    Threshold           uint16      // agreement threshold for settlement
+    WinnersRoot         [32]byte    // Merkle root of paid responders
+    OperatorsRoot       [32]byte    // Merkle root of all sampled operators
+    FeePaid             [32]byte    // settled fee (uint256, big-endian)
+    SettledAtHeight     uint64      // A-Chain height of settlement
+}
+\end{lstlisting}
+
+The mapping from Definition~\ref{def:pot} is direct: $\mathit{id}=(\texttt{IntentID},\texttt{TaskID},\texttt{CChainID},\texttt{AChainID})$, $q=\texttt{PromptHash}$, $m=\texttt{ModelSpecHash}$, $o^\ast=\texttt{CanonicalOutputHash}$, $(N,\texttt{Threshold})$ and the two roots witness $W$ and the sampled set, $s=\texttt{Status}$, and the confidence distribution $\pi$ is recoverable from the revealed ballots committed under \texttt{OperatorsRoot}. The aggregate signature $\sigma$ is supplied alongside the receipt at verification time. The canonical output is stored as a \emph{hash}, not the bytes: the answer itself, and any accompanying prose, is hash-addressed evidence retrievable off-chain (Section~\ref{sec:finite}); only its commitment lives in the receipt.
+
+\subsection{Receipts Compose}
+
+Because a receipt is itself a finite, hash-addressed object, it is admissible as evidence to a \emph{further} cognitive task. A deliberation can take prior \PoT{} receipts as inputs (``given that we previously concluded $A$ with confidence $0.9$ and $B$ with confidence $0.4$, is $C$ safe?''). This is what makes recursive thinking possible (Section~\ref{sec:recursion}) and what makes memory cognitively useful rather than a mere log (Section~\ref{sec:organs}). It is also why bounded recursion is a constitutional requirement: composing receipts without a depth bound is how a network thinks itself into an unbounded spend.
+
+\begin{principle}[Receipts settle; thoughts do not]
+\label{prin:settle}
+The settle\-able artifact is always the receipt, never the underlying generation. Consequently every cognitive capability of the network is expressed as: pose a structured question, sample accountable answerers, commit and reveal their finite responses, aggregate to a canonical answer with preserved dissent, sign, and verify the resulting receipt against committed state before any deterministic effect. Everything in the remainder of this paper is an elaboration of one stage of this pipeline.
+\end{principle}
+
+%% ============================================================

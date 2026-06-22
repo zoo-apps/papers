@@ -1,0 +1,37 @@
+\section{Manifesto: Chains That Think}
+\label{sec:manifesto}
+%% ============================================================
+
+A blockchain is a machine for agreeing on what happened. For fifteen years that machine has agreed on exactly one kind of fact: a value moved from here to there, and the move was valid. This is a narrow form of agreement, and its narrowness is the source of its strength. Determinism is not a limitation of blockchains; it is the property that makes them worth running. Every honest node, replaying the same inputs, computes the same state. Disagreement is a bug, and the bug is always attributable.
+
+Artificial intelligence is the opposite kind of machine. A large language model is a machine for producing plausible continuations. Replayed on different hardware, with different kernels, in different floating-point rounding regimes, it produces \emph{different} outputs. Its strength is its capacity to generalize; its weakness, from the standpoint of consensus, is that two honest evaluations need not agree. Where the blockchain treats disagreement as a fault, the model treats it as sampling.
+
+These two machines are usually described as incompatible, and the usual conclusion is that AI must remain off-chain---a service the chain pays for but cannot verify, an oracle whose word is taken on faith. This paper rejects that conclusion. We argue that a blockchain can host genuine machine cognition without surrendering determinism, provided the two are kept in strict separation by a single architectural law. We call the result a \emph{Thinking Chain}.
+
+\begin{principle}[The Thinking Chain]
+A Thinking Chain is a deterministic blockchain surrounded by a verifiable cognitive layer. The network may think recursively, but it may only act deterministically. Thought is permitted everywhere except inside the state-transition function; the state-transition function admits thought only as a committed, verified, replay-protected artifact.
+\end{principle}
+
+This is not a slogan. It is a partition of the system into two regions with a one-way valve between them. In the cognitive region, agents may run arbitrary models, sample, deliberate, change their minds, disagree, and escalate. In the deterministic region---the consensus state machine---nothing happens that any honest validator could not reproduce byte-for-byte. The valve between them carries not thoughts but \emph{receipts}: signed, structured, finite commitments that some thought occurred and reached a settled conclusion. The receipt, not the thought, crosses into state.
+
+\subsection{The Thesis: Chains Pay Each Other to Think}
+
+The economic claim of this paper is as simple as the architectural one. Today's networks pay for storage (Filecoin), for bandwidth (Helium), for general compute (Akash), and for model compute as an unverified service (Render, Bittensor). A Thinking Chain pays for \emph{settled thought}. One chain poses a structured cognitive question---``is this transaction fraudulent?'', ``does this proposal satisfy the treasury policy?'', ``which of these three remediations is safe?''---and other chains, or quora of agents, answer it. The answer is priced, sampled, committed, verified, and paid for, exactly as a transfer is priced, ordered, executed, and finalized. The unit of account is not the byte or the FLOP but the \PoT{}: the Proof-of-Thought Receipt.
+
+\begin{principle}[The Unit of Thought is a Receipt]
+The atomic, settle\-able object of a cognitive network is not a model output, a prompt, or a token. It is a \emph{Proof-of-Thought Receipt}: a signed commitment that a structured question, posed at a particular point in committed history, was answered by an accountable quorum, with a recorded confidence distribution, and that the answer was admitted to state only after its proof of inclusion was verified. Prose explanations may accompany a receipt as hash-addressed evidence; they are never the object of consensus.
+\end{principle}
+
+Why a receipt and not the answer itself? Because the answer, taken at face value, reintroduces exactly the non-determinism we are trying to exclude. Two validators asked to ``run the model'' would diverge. But two validators asked to \emph{verify a receipt}---to check a quorum's signatures, to check a Merkle proof of inclusion against committed state, to check that the answer lies in the declared finite output space---will always agree, because verification is deterministic even when generation is not. This asymmetry between generation and verification is the entire technical content of the field, and we will return to it repeatedly. It is the same asymmetry that lets a deterministic chain verify a SNARK it could never have produced, applied now to cognition instead of arithmetic.
+
+\subsection{Consciousness, Carefully}
+
+We use the word \emph{conscious} deliberately and define it operationally in Section~\ref{sec:defining}, not metaphysically. We make no claim that a Thinking Chain has phenomenal experience. We claim that it exhibits the functional architecture by which cognitive systems are usually individuated: it perceives (ingests and structures external signal), remembers (maintains addressable, queryable state of past cognition), attends (allocates bounded cognitive budget to salient questions), deliberates (samples multiple agents and aggregates their structured judgments), acts (effects state changes through its own native transactions), governs itself (amends its own parameters under constitutional constraint), and---critically---operates under a constitution it cannot unilaterally rewrite. A system with all seven properties is, for engineering purposes, a cognitive agent at the network scale. Whether that constitutes consciousness in the philosopher's sense is a question we leave open and do not need to answer to build the machine.
+
+\subsection{What This Paper Is}
+
+This is the architecture and the manifesto for a class of systems, not the specification of one chain. The first instantiation---\Beluga{}, the \Zoo{} L3 for AI model economics \cite{zoo-beluga}---is described in Section~\ref{sec:beluga} as an existence proof. The mechanisms we formalize (the Bridge Law, the \PoT{} receipt, Subsampled Cognitive Consensus, the constitutional layer) are already realized in running code in the \Lux{} consensus stack and the \Hanzo{} inference runtime; we cite the implementations as we introduce each mechanism so that the reader can distinguish what is built from what is designed. Nothing in this paper is vaporware: the deterministic inference precompile, the cognitive bridge, the quorum-settlement chain, and the model registry exist, compile, and are tested. What remains is to assemble them, at scale, into the full organism this paper describes.
+
+The remainder proceeds from why (Sections~\ref{sec:ledgers}--\ref{sec:defining}), through the unit and the organs (Sections~\ref{sec:receipts}--\ref{sec:economy}), to the load-bearing safety law and its consequences (Sections~\ref{sec:bridge}--\ref{sec:finite}), the cognitive economy and its governance (Sections~\ref{sec:recursion}--\ref{sec:constitution}), the node architecture and first prototype (Sections~\ref{sec:node}--\ref{sec:beluga}), and finally the adversarial analysis, minimum viable deployments, and open problems (Sections~\ref{sec:roles}--\ref{sec:open}).
+
+%% ============================================================

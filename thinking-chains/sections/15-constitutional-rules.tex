@@ -1,0 +1,43 @@
+\section{The Constitutional Layer}
+\label{sec:constitution}
+%% ============================================================
+
+The constitution is the set of rules a Thinking Chain cannot think its way past. It is the seventh organ of Definition~\ref{def:conscious}, the one with no cognitive part (Table~\ref{tab:partition}): pure deterministic predicate, enforced in the state-transition function, amendable only through a path the cognitive layer cannot unilaterally walk. This section enumerates the constitutional rules, states the meta-rule that protects them, and explains why each is necessary. These are not policy preferences; they are the invariants without which the rest of the architecture is unsafe.
+
+\subsection{The Twelve Rules}
+
+\begin{enumerate}[leftmargin=2.2em,itemsep=2pt]
+\item \textbf{Deterministic consensus.} The canonical state transition is deterministic; no consensus-relevant value may be nondeterministic. (Foundation of Theorem~\ref{thm:bridge}.)
+\item \textbf{No live thought in state transition.} A state transition may not depend on live thought or a live cross-chain query; cognition enters only via Pattern A / Pattern B. (The Bridge Law, Principle~\ref{prin:bridge}.)
+\item \textbf{Committed proofs for cross-chain effects.} Any effect of one organ on another's state requires a committed, verifiable proof or receipt; no organ trusts a message by its arrival. (Principle~\ref{prin:zap}.)
+\item \textbf{Structured outputs only.} A settle\-able cognitive answer must lie in a finite, declared output space; prose is evidence, never consensus. (Principle~\ref{prin:finite}.)
+\item \textbf{Bounded recursion.} Every cognitive task carries a depth budget and a fee budget that strictly decrease across children; recursion provably terminates within budget. (Definition~\ref{def:budget}, Proposition~\ref{prop:terminate}.)
+\item \textbf{Replay-protected receipts.} Each \PoT{} receipt may be verified-and-acted-upon at most once; a verified intent is retired on use. (Pattern B, Section~\ref{sec:bridge}.)
+\item \textbf{Authority expansion is human-gated and timelocked.} Any change that enlarges the set of actions the cognitive layer may take without human approval requires a human/\DAO{} signature \emph{and} a timelock. (The meta-rule, below.)
+\item \textbf{ModelSpec-registered governance models.} Only models whose \texttt{ModelSpec} is registered and governance-approved may answer governance questions or be admitted to a governance-relevant quorum; the eligible model set is itself a governed parameter.
+\item \textbf{Preserve dissent and confidence.} The full confidence/dissent distribution $\pi$ of every settled question is recorded; the network may not collapse a contested conclusion into a unanimous one, and may not slash honest dissent. (Principle~\ref{prin:slash}.)
+\item \textbf{Inspectable without an \LLM{}.} The integrity of the network's cognition must be checkable using only hashing and signature verification, with no model execution required. (Principle~\ref{prin:inspect}.)
+\item \textbf{Slash withholding, not dissent.} Economic penalties attach to liveness faults (withholding) and equivocation, never to honest minority answers. (Principle~\ref{prin:slash}.)
+\item \textbf{No self-granted authority.} The cognitive layer may \emph{propose} an expansion of its own authority but may not \emph{enact} one; enactment requires the human-gated, timelocked path of Rule 7. (The meta-rule, below.)
+\end{enumerate}
+
+\subsection{The Meta-Rule}
+
+Rules 7 and 12 are the constitution's self-protection, and they are worth stating as a single principle because together they are what prevents a cognitive network from bootstrapping itself out of every other constraint.
+
+\begin{principle}[AI may propose more authority, but may not grant itself more authority]
+\label{prin:metarule}
+There is an asymmetry, enforced in the deterministic state-transition function, between proposing and enacting an expansion of cognitive authority. The cognitive layer may originate, deliberate on, and recommend---as finite governance receipts---any change to its own powers, including the constitution itself. But the predicate that enacts such a change requires a human/\DAO{} signature and a timelock, and that predicate is not reachable by any sequence of purely cognitive actions. Consequently the network can argue for more power, persuasively and with evidence, but the lever that grants it is, by construction, outside the network's own reach.
+\end{principle}
+
+Why this asymmetry and not, say, a high cognitive quorum? Because any threshold the cognitive layer can satisfy on its own is a threshold it can be argued or manipulated into satisfying; the only robust barrier to self-amplification is one the cognitive layer \emph{cannot} satisfy alone, no matter how much it deliberates. A human signature is exactly such a barrier: it is an input from outside the cognitive system. The timelock adds a second guarantee---that even a compromised human gate cannot enact instantly, leaving a window in which other humans can observe and intervene. The pair (external signature + delay) is the minimal construction that makes ``the network cannot grant itself power'' a theorem about the state machine rather than a hope about its operators.
+
+\subsection{Amending the Constitution}
+
+The constitution is not immutable---an immutable constitution cannot adapt to genuinely new circumstances---but it is the hardest thing in the system to change. A constitutional amendment is a Level-5 governance action (Section~\ref{sec:governance}) that additionally requires: a supermajority of human/\DAO{} signatures, the longest timelock in the system, and a published amendment receipt that records the prior and proposed text by hash so the change is auditable forever. The cognitive layer may draft and advocate an amendment; it cannot ratify one. This is the constitution applying its own meta-rule to itself: the network may propose to change its limits, but only its human principals may enact the change, and only slowly, in the open.
+
+\subsection{Why a Constitution at All}
+
+A reader may ask why a deterministic, Bridge-Law-respecting network needs a constitution beyond the Bridge Law itself. The answer is that the Bridge Law makes the network \emph{safe to its own ledger}---it cannot corrupt its state---but says nothing about whether the network's \emph{actions}, all individually deterministic and well-formed, might in aggregate be undesirable: spending its treasury unwisely, concentrating authority, acting irreversibly on a contested conclusion, or amplifying its own powers. The constitution constrains the \emph{policy} of a network that is already safe in its \emph{mechanism}. Theorem~\ref{thm:bridge} guarantees the network cannot break; the constitution guarantees that an unbroken network stays within bounds its principals chose. Both are required, and they are orthogonal: the first is about determinism, the second about authority.
+
+%% ============================================================

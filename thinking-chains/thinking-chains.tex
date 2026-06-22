@@ -1,0 +1,151 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{shared/zoocover}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes,arrows,positioning,calc,decorations.pathreplacing,fit,backgrounds}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+% geometry loaded by zoocover
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+\newtheorem{principle}{Principle}[section]
+
+% Custom commands
+\newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\Hanzo}{\textsc{Hanzo}}
+\newcommand{\Beluga}{\textsc{Beluga}}
+\newcommand{\BLG}{\textsc{blg}}
+\newcommand{\PoT}{\textsc{PoT}}
+\newcommand{\PoAI}{\textsc{PoAI}}
+\newcommand{\SCC}{\textsc{scc}}
+\newcommand{\DAO}{\textsc{dao}}
+\newcommand{\LLM}{\textsc{llm}}
+\newcommand{\TEE}{\textsc{tee}}
+\newcommand{\ABI}{\textsc{abi}}
+\newcommand{\ZAP}{\textsc{zap}}
+\newcommand{\CChain}{\textsf{C}}
+\newcommand{\AChain}{\textsf{A}}
+\newcommand{\DChain}{\textsf{D}}
+\newcommand{\SChain}{\textsf{S}}
+\newcommand{\RChain}{\textsf{R}}
+\newcommand{\GChain}{\textsf{G}}
+\newcommand{\MChain}{\textsf{M}}
+
+% Solidity language definition (listings does not include it by default)
+\lstdefinelanguage{Solidity}{
+    morekeywords={contract,function,returns,return,if,else,for,while,do,
+        mapping,address,uint256,uint16,uint8,uint,int,bool,string,bytes,bytes32,
+        public,private,internal,external,view,pure,payable,memory,storage,
+        calldata,event,emit,modifier,require,struct,enum,interface,
+        abstract,override,virtual,is,new,delete,import,pragma,solidity,
+        library,using,constructor,msg,sender,block,timestamp,this,super},
+    sensitive=true,
+    comment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    morestring=[b]",
+}
+
+% Go language definition (for canonical struct schemas)
+\lstdefinelanguage{Go}{
+    morekeywords={func,package,import,type,struct,interface,map,chan,go,defer,
+        select,case,default,if,else,for,range,return,var,const,break,continue,
+        switch,fallthrough,uint16,uint32,uint64,uint8,byte,bool,string},
+    morecomment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    morestring=[b]",
+    sensitive=true,
+}
+
+% Listings style
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    tabsize=2,
+    captionpos=b,
+    aboveskip=10pt,
+    belowskip=10pt
+}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Title and authors
+\title{\textbf{THINKING CHAINS}\\
+\large Conscious Blockchains and the Architecture of\\Verifiable Machine Cognition}
+\author{
+Zach Kelling\thanks{zach@zoo.ngo}\\
+\textit{Zoo Labs Foundation}\\
+\texttt{research@zoo.ngo}
+}
+
+\date{January 2026}
+
+\begin{document}
+
+\zoocoverpage
+
+\begin{abstract}
+We introduce the \emph{Thinking Chain}: a deterministic blockchain surrounded by a verifiable cognitive layer, governed by a single discipline---\emph{the network may think recursively, but it may only act deterministically}. Where classical chains settle transfers and contemporary AI chains settle compute, a Thinking Chain settles \emph{thought}. The unit it settles is the \textbf{Proof-of-Thought Receipt} (\PoT{}): a replay-protected, signed commitment that a structured cognitive question was answered by a quorum of accountable agents and that the answer was incorporated into state only after its proof was verified. We define cognition for a blockchain operationally---perception, memory, attention, deliberation, agency, self-governance, and constitutional constraint---and realize each as a specialized chain acting as a cognitive organ (\CChain{}/\AChain{}/\DChain{}/\SChain{}/\RChain{}/\GChain{}/\MChain{}). The load-bearing safety result is the \textbf{Bridge Law}: consensus state transitions must never depend on live thought or live cross-chain queries; instead a deterministic chain emits an \emph{intent} (Pattern~A) and later verifies a \emph{committed receipt with proof} (Pattern~B). We prove that under the Bridge Law the deterministic chain's state root is a pure function of its committed inputs, independent of the cognitive layer's liveness or latency. Inference is split into two tiers: Tier~1 is deterministic int8 in-consensus inference in which every validator computes a byte-identical output (small models, e.g.\ a \texttt{zen-nano} port at precompile \texttt{0x03\dots03}); Tier~2 is large-model off-chain inference settled by \emph{Subsampled Cognitive Consensus}---Avalanche-style repeated random committee sampling adapted so that sampled nodes answer \emph{structured} questions over a finite output space, produce signed receipts, and are paid. Three consensus modes cover the space of cognitive questions: exact-hash quorum, preference metastability over a finite ballot, and market aggregation. Finite outputs are the rule; prose is always hash-addressed evidence, never consensus. We give the on-chain wire formats (\texttt{InferenceIntent}, \texttt{AInferenceReceipt}, keccak--Merkle proof), the sampling and commit--reveal algorithms with their economic margins ($N{=}5$, $\text{threshold}{=}3$, eligible set $E \ge N + \max(2, N/2)$, slash withholders not dissenters), a constitutional layer that bounds recursion and forbids self-granted authority, and a six-level human-in-the-loop hierarchy. The architecture is grounded, not hypothetical: the \CChain{}$\to$\AChain{} bridge, the deterministic inference precompile, the quorum-settlement VM, the model registry, and the Tier-2 provider runtime are implemented in the \Lux{} and \Hanzo{} codebases, and cross-VM bit-identity of small-model inference was empirically verified across two independent EVM implementations. \Beluga{} (\BLG{}), the \Zoo{} L3 for AI model economics, is the first prototype Thinking Chain.
+
+\textbf{Keywords}: conscious blockchain, cognitive consensus, proof of thought, verifiable inference, deterministic AI, subsampled consensus, constitutional AI
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%% ============================================================
+
+\input{sections/01-manifesto}
+\input{sections/02-ledgers-to-cognition}
+\input{sections/03-defining-conscious-blockchain}
+\input{sections/04-thought-to-receipts}
+\input{sections/05-chains-as-organs}
+\input{sections/06-cognitive-economy}
+\input{sections/07-bridge-law}
+\input{sections/08-two-tier-inference}
+\input{sections/09-subsampled-cognitive-consensus}
+\input{sections/10-finite-outputs}
+\input{sections/11-recursion-budgets}
+\input{sections/12-chain-payments}
+\input{sections/13-reputation-eligibility}
+\input{sections/14-governance}
+\input{sections/15-constitutional-rules}
+\input{sections/16-node-cognitive-architecture}
+\input{sections/17-beluga-prototype}
+\input{sections/18-economic-roles-slashing}
+\input{sections/19-failure-modes}
+\input{sections/20-mvps}
+\input{sections/21-open-problems}
+\input{sections/99-conclusion}
+
+\end{document}

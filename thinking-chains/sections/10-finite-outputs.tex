@@ -1,0 +1,37 @@
+\section{Finite Outputs: Prose as Evidence, Never Consensus}
+\label{sec:finite}
+%% ============================================================
+
+The single most important constraint on what a Thinking Chain may settle is that the settled answer must lie in a finite, declared output space. This constraint is what makes \SCC{}'s agreement threshold meaningful and what makes Pattern-B verification a decidable procedure. We state the rule, give the admissible output shapes, and explain how prose is handled without ever entering consensus.
+
+\begin{principle}[Finite outputs only]
+\label{prin:finite}
+A cognitive task admissible to settlement must declare, in advance, a finite output space $\mathcal{O}$, and its canonical answer $o^\ast$ must satisfy $o^\ast \in \mathcal{O}$. Free-form prose is \emph{never} the object of consensus. Where a thought naturally produces prose, the prose is stored off-chain and committed by hash as evidence accompanying the finite answer; consensus is reached on the finite answer and on the hash of the evidence, never on the prose itself.
+\end{principle}
+
+\subsection{Why Finiteness Is Non-Negotiable}
+
+Two honest large models asked an open-ended question produce different prose---different wording, different ordering, different emphasis---even when they agree in substance. If the settled object were the prose, no two providers would ever ``agree,'' and the agreement threshold of \SCC{} would be unreachable. Worse, verification would be undecidable: to check whether two prose answers ``mean the same thing'' is itself a cognitive judgment, which would require another cognitive task, which would require another, without termination. Finiteness cuts this regress: agreement on a finite answer is a hash comparison (exact-hash mode) or a count over a small ballot (preference mode) or a weighted sum (market mode)---each a deterministic, decidable operation. The reproducibility line of Section~\ref{sec:twotier} and the finiteness line here are the two walls that together make cognition settle\-able.
+
+\subsection{Admissible Output Shapes}
+
+The three \SCC{} modes correspond to three families of finite output space:
+
+\begin{description}[style=nextline,leftmargin=0pt]
+\item[Categorical / structured (exact-hash mode).] $\mathcal{O}$ is an enumerated set, or the set of values of a fixed schema (a struct of bounded integer fields, an address, a class label, a JSON object normalized by a canonicalization scheme so that there is exactly one byte string per logical value). Agreement is equality of \texttt{CanonicalOutputHash}. Canonical JSON via RFC~8785 (JCS) \cite{rfc8785} is the recommended normalization for structured answers: it removes whitespace and key-ordering ambiguity so that semantically identical objects hash identically, which is the precondition for two providers' structured answers to be recognized as the same answer.
+\item[Ballot (preference-metastability mode).] $\mathcal{O}$ is a small explicit set of options---e.g.\ $\{\texttt{YES},\texttt{NO},\texttt{DELAY},\texttt{UNSAFE}\}$. Agreement is the option crossing the threshold. The presence of \texttt{DELAY}/\texttt{UNSAFE} as first-class options is deliberate: it lets the network conclude ``do not act yet'' as a settled, safety-preserving answer rather than being forced into a binary.
+\item[Bounded numeric (market-aggregation mode).] $\mathcal{O}$ is a bounded numeric range with a declared quantization (e.g.\ a risk score in $\{0,\dots,100\}$, a probability quantized to basis points). Agreement is a stake-weighted aggregate within the range; the receipt records the aggregate and the distribution $\pi$.
+\end{description}
+
+\subsection{The Role of Prose}
+
+Prose is not banned; it is demoted from \emph{decision} to \emph{evidence}. A Tier-2 provider answering ``rate the risk of this contract'' produces both a finite answer (a bucket in $\{0,\dots,100\}$) and a prose rationale. The finite answer is what \SCC{} settles and what the \PoT{} receipt commits; the rationale is stored off-chain (e.g.\ in content-addressed storage on \MChain{}/\DChain{}) and its hash is the \texttt{embHash} committed in the commit--reveal (Algorithm~\ref{alg:scc}). This yields the best of both: the network reaches deterministic agreement on the decision, while preserving a tamper-evident, retrievable explanation for audit, dispute, and human review. The rationale is excluded from the consensus preimage precisely so that a difference in wording cannot block agreement on substance---a discipline we apply verbatim to governance in Section~\ref{sec:governance}, where the vote preimage is $\{\text{vote}, \text{confidence\_bucket}\}$ with the free-text rationale deliberately excluded.
+
+\begin{principle}[Inspectable without an \LLM{}]
+\label{prin:inspect}
+Because every settled object is finite and every receipt is a fixed-width record, the entire cognitive history of the network is auditable by a verifier that runs \emph{no model at all}. One can check what was asked, what was concluded, by whom, with what dissent, and that each conclusion was legitimately settled and verified, using only hashing and signature checks. The prose evidence is available for a human or a model that wishes to read it, but the integrity of the network's cognition does not depend on anyone re-running an \LLM{}.
+\end{principle}
+
+Principle~\ref{prin:inspect} is a direct corollary of finiteness and is one of the strongest properties of the architecture: a Thinking Chain is not a black box that emits opaque AI verdicts. It is a glass box whose every conclusion is a finite, signed, proven fact, with the reasoning attached as readable but non-binding evidence.
+
+%% ============================================================

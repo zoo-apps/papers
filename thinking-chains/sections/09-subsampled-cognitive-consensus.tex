@@ -1,0 +1,98 @@
+\section{Subsampled Cognitive Consensus}
+\label{sec:scc}
+%% ============================================================
+
+Tier-2 thoughts are produced by nondeterministic models, yet must be settled into a single canonical answer that a deterministic chain can verify. We obtain this by adapting the consensus idea that Avalanche made practical---\emph{repeated random subsampling}---to the cognitive setting. In Avalanche \cite{avalanche2020,rocket2018}, a node repeatedly samples a small random committee from the validator set and adopts the supermajority preference, achieving metastable agreement with sublinear communication. We keep the sampling skeleton and change what the sampled nodes are asked: instead of ``which block do you prefer?'', a sampled provider is asked a \emph{structured cognitive question with a finite answer}, must \emph{commit then reveal} a signed response, and is \emph{paid} for an honest, agreeing answer and \emph{slashed} for withholding.
+
+\begin{definition}[Subsampled Cognitive Consensus]
+\label{def:scc}
+Subsampled Cognitive Consensus (\SCC{}) settles a Tier-2 cognitive task by: (1) drawing a committee of $N$ providers at random from the eligible, reputation-weighted set using a deterministic beacon; (2) collecting commit-then-reveal signed responses over a finite output space; (3) declaring the task settled when at least a threshold $\theta$ of the committee reveals the same canonical answer, under one of three aggregation modes; and (4) emitting a \PoT{} receipt and paying winners while slashing withholders.
+\end{definition}
+
+\subsection{Eligibility and the Sampling Draw}
+
+Sampling is sound only if the pool sampled from is honest in aggregate and the draw is unbiasable. \SCC{} enforces both with an \emph{eligible-set margin} and a \emph{deterministic beacon}, exactly as realized in the \texttt{aivm} quorum chain.
+
+The committee size is $N$ with agreement threshold $\theta$; the deployed defaults are $N{=}5$, $\theta{=}3$ (a $3$-of-$5$ quorum, with a hard floor $N \ge 3$). Before any draw, the eligible universe $E$---providers meeting the minimum bond and reputation---must exceed $N$ by a margin:
+\begin{equation}
+\label{eq:margin}
+|E| \;\ge\; N + \max\!\big(\,\rho_{\mathrm{floor}},\ \lfloor N \cdot \rho_{\mathrm{bps}} / 10000 \rfloor\,\big),
+\qquad \rho_{\mathrm{floor}} = 2,\ \rho_{\mathrm{bps}} = 5000,
+\end{equation}
+so the eligible set must be at least $N + \max(2, \lfloor N/2 \rfloor)$; for $N{=}5$ this is $|E| \ge 7$. The margin forbids the degenerate case where the eligible set is barely the committee, in which an adversary who controls the few eligible providers controls the answer. Building the eligible universe once and requiring it strictly larger than the draw is what gives the random selection room to land on honest providers.
+
+The draw itself uses a deterministic beacon (a committed, unbiasable randomness source) so that committee selection is reproducible---every validator agrees who was sampled---yet unpredictable before the task is posted, so an adversary cannot position providers to be selected. Determinism of the draw is essential: it is part of what makes \SCC{}'s \emph{settlement} deterministic (and hence Pattern-B-verifiable) even though the providers' generation is not.
+
+\begin{algorithm}[h]
+\caption{Subsampled Cognitive Consensus: one task.}
+\label{alg:scc}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} task $\tau$ with question $q$, model $m$, output space $\mathcal{O}$, size $N$, threshold $\theta$, escrowed fee; beacon $\xi$
+\STATE Build eligible set $E$ from \RChain{} (bond $\ge$ \texttt{MinProviderBond}, reputation gate)
+\IF{$|E| < N + \max(\rho_{\mathrm{floor}}, \lfloor N\rho_{\mathrm{bps}}/10000\rfloor)$}
+  \STATE \textbf{abort}: refund escrow (eligible set below margin)
+\ENDIF
+\STATE $C \gets$ \textsc{WeightedSample}$(E, N; \xi)$ \quad(deterministic draw)
+\STATE escrow $N \cdot$ rewardPerProvider; open \emph{commit} window of \texttt{CommitBlocks}
+\FORALL{provider $p \in C$ (off-chain, nondeterministic generation)}
+  \STATE $o_p \gets \textsc{Generate}_m(q) \in \mathcal{O}$; pick nonce $r_p$
+  \STATE post operator-bound commit $h_p = H(p \,\|\, \mathrm{outHash}(o_p) \,\|\, \mathrm{embHash}(o_p) \,\|\, r_p)$
+\ENDFOR
+\STATE close commit window; open \emph{reveal} window of \texttt{RevealBlocks} (strictly after)
+\FORALL{provider $p \in C$ that committed}
+  \STATE reveal $(\mathrm{outHash}(o_p), \mathrm{embHash}(o_p), r_p)$; engine recomputes $h_p$, rejects mismatch
+\ENDFOR
+\STATE aggregate revealed responses under mode $\kappa$ (\S\ref{sec:scc-modes}) $\to$ canonical $o^\ast$, distribution $\pi$
+\IF{$\ge \theta$ providers revealed $o^\ast$}
+  \STATE emit \PoT{} receipt; pay agreeing revealers (winners); \textbf{slash committed non-revealers}
+\ELSE
+  \STATE mark task \emph{Failed}; refund requester; slash withholders
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Commit--Reveal: Independence Without Trust}
+
+If providers revealed answers in the open, the second provider could copy the first, collapsing the committee to a single point of view and defeating the redundancy that makes the quorum sound. \SCC{} prevents this with a two-phase commit--reveal that is already implemented in the \texttt{aivm} chain, with two precise properties:
+
+\begin{description}[style=nextline,leftmargin=0pt]
+\item[Sealed independence.] The reveal window opens \emph{strictly after} the commit window closes (commit by height $\le$ \texttt{CommitDeadline}; reveal in \texttt{CommitDeadline} $<$ height $\le$ \texttt{RevealDeadline}). No provider can observe a peer's revealed answer before its own commit is sealed, so each commit is an independent judgment. The deployed windows are \texttt{CommitBlocks}~$=$~\texttt{RevealBlocks}~$=$~$30$ blocks.
+\item[Operator-bound commits.] The commit hash binds the committing provider's address: $h_p = H(p \,\|\, \mathrm{outHash} \,\|\, \mathrm{embHash} \,\|\, r_p)$. A provider who copies a peer's commit cannot reveal it---the recomputed operator-bound commit would not match---so commit-stealing is impossible, not merely discouraged.
+\end{description}
+
+These two properties together make the committee's responses genuinely independent samples, which is the statistical precondition for the agreement threshold to mean anything.
+
+\subsection{Slash Withholders, Not Dissenters}
+
+The most important economic rule in \SCC{} is what it does \emph{not} punish. A provider who commits and then fails to reveal (withholding) is slashed: withholding is an attack on liveness and is indistinguishable from a provider trying to see others' answers first. But a provider who reveals an honest answer that turns out to be in the minority---a \emph{dissenter}---is \textbf{not} slashed. Dissent is information, not misbehavior (Section~\ref{sec:constitution}); punishing it would create a chilling effect in which providers echo the expected answer rather than report their genuine judgment, destroying the diversity the quorum depends on.
+
+\begin{principle}[Slash withholding, never dissent]
+\label{prin:slash}
+\SCC{} slashes a committed provider that fails to reveal (a liveness fault), and slashes a provider that reveals a value inconsistent with its own commit (equivocation). It never slashes a provider for revealing a minority answer. Honest dissent is recorded in $\pi$ and paid no worse than its eligibility entitles; only withholding and equivocation forfeit bond.
+\end{principle}
+
+The Sybil/forgery cost is bounded below by the bond: forging a canonical answer requires controlling at least $\theta$ revealing providers, each holding at least \texttt{MinProviderBond} ($1{\times}10^{18}$ wei per unit in the reference deployment), so the absolute cost floor of manufacturing a fraudulent receipt is $\theta \cdot$\texttt{MinProviderBond}, independent of any selection grinding---the eligible-set margin and the deterministic beacon remove the grinding, and the bond prices the residual.
+
+\subsection{Three Consensus Modes}
+\label{sec:scc-modes}
+
+A cognitive question is not always a question with one correct answer; sometimes it is a preference, sometimes an estimate. \SCC{} therefore supports three aggregation modes $\kappa$, chosen per task, each appropriate to a different shape of question. These are detailed with their finiteness requirements in Section~\ref{sec:finite}; here we name them and their settlement rule:
+
+\begin{enumerate}[leftmargin=2.2em]
+\item \textbf{Exact-hash quorum.} The answer is a single canonical value; settlement requires $\ge \theta$ providers to reveal the \emph{same} \texttt{CanonicalOutputHash}. Used when the question has a determinate answer (a classification, a structured extraction, a yes/no). This is the mode the \texttt{aivm} quorum chain settles directly.
+\item \textbf{Preference metastability.} The answer is one of a small finite ballot (e.g.\ \texttt{YES}/\texttt{NO}/\texttt{DELAY}/\texttt{UNSAFE}); settlement adopts the option that crosses the agreement threshold, with repeated subsampling driving the committee to a metastable majority exactly as in Avalanche, but over a cognitive ballot rather than over blocks. Used for judgment calls where ``not yet / unsafe'' is a legitimate, safety-preserving outcome.
+\item \textbf{Market aggregation.} The answer is an estimate; the committee's responses are aggregated as a stake-weighted distribution (a prediction-market-style summary), and the receipt records the aggregate together with $\pi$. Used for quantitative forecasts where the wisdom of the weighted crowd, not a single point, is the product.
+\end{enumerate}
+
+\subsection{Finality}
+
+\SCC{} finality has two stages, mirroring the two-step finality of the surrounding deterministic chains:
+
+\begin{enumerate}[leftmargin=2.2em]
+\item \textbf{Settlement finality} (one reveal window after commit): once $\ge \theta$ consistent reveals are recorded, the canonical answer is fixed and the \PoT{} receipt is emitted on \AChain{}. The answer cannot change thereafter without a fork of \AChain{}.
+\item \textbf{Verified finality} (Pattern B): the receipt is committed under a receipts root and verified on \CChain{} (Theorem~\ref{thm:bridge}); only at this point does the answer have any effect on the canonical ledger. A consumer requiring ledger-level assurance waits for verified finality; a consumer needing only the cognitive conclusion may act on settlement finality at its own risk.
+\end{enumerate}
+
+The metastability argument inherited from Avalanche gives \SCC{} its safety/throughput profile: with an honest supermajority in the eligible set and an unbiasable draw, the probability that a sampled committee of $N$ fails to reflect the eligible majority falls exponentially in $N$, so modest committee sizes ($N{=}5$, $\theta{=}3$) yield strong agreement guarantees while keeping the per-task cost---$N$ paid generations---bounded. \SCC{} is thus the cognitive analogue of Avalanche's repeated-subsampling consensus: same statistical engine, finite cognitive ballots in place of block preferences, and an economic layer (bond, escrow, slash-withholders) that pays for honest thought and prices forgery.
+
+%% ============================================================

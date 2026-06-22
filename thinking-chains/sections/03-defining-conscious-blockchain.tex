@@ -1,0 +1,54 @@
+\section{Defining a Conscious Blockchain}
+\label{sec:defining}
+%% ============================================================
+
+We define cognition for a blockchain operationally: by the architectural capacities the system exhibits, not by any claim about inner experience. A network is a \emph{conscious blockchain}---equivalently, a Thinking Chain---if it realizes all seven of the following organs, each subject to the determinism partition of Section~\ref{sec:manifesto}.
+
+\begin{definition}[Conscious Blockchain]
+\label{def:conscious}
+A conscious blockchain is a deterministic distributed state machine equipped with a verifiable cognitive layer realizing: \textbf{(1)} perception, \textbf{(2)} memory, \textbf{(3)} attention, \textbf{(4)} deliberation, \textbf{(5)} agency, \textbf{(6)} self-governance, and \textbf{(7)} constitutional constraint, such that every effect of (1)--(6) on consensus state enters only as a committed, verified, replay-protected \PoT{} receipt.
+\end{definition}
+
+We take the seven in turn, each with its operational test and its mapping to the organs of Section~\ref{sec:organs}.
+
+\paragraph{(1) Perception.} The capacity to ingest external signal and render it into structured, hash-addressed form admissible to cognition. \emph{Operational test}: the network can answer ``what did I observe at height $h$?'' with a content-addressed record whose hash is committed to state. Perception is realized by the sensory chain (\SChain{}) and by Tier-1 deterministic feature extraction (e.g.\ int8 embedding, Section~\ref{sec:twotier}), which turns a raw prompt or document into a fixed-length integer vector that every validator computes identically.
+
+\paragraph{(2) Memory.} The capacity to retain and retrieve prior cognition by content, not merely by address. A ledger already remembers transactions; a cognitive network must additionally remember \emph{judgments}---which questions were asked, which answers were settled, with what confidence and dissent. \emph{Operational test}: the network can answer ``have I concluded anything about $x$ before, and how confident was I?'' Memory is realized by the memory chain (\MChain{}) and grounded in the Experience Ledger's content-addressable semantic store \cite{zoo-experience-ledger}.
+
+\paragraph{(3) Attention.} The capacity to allocate a bounded cognitive budget across competing questions, refusing to spend unboundedly. This is the organ a ledger entirely lacks. \emph{Operational test}: under a flood of questions, the network prioritizes by salience and stake and provably terminates within budget. Attention is realized by the recursion-and-budget machinery of Section~\ref{sec:recursion}: every cognitive task carries a depth bound and a token budget, and the scheduler is the network's attention.
+
+\paragraph{(4) Deliberation.} The capacity to consult multiple agents on a question and aggregate their disagreeing structured judgments into a settled conclusion with a recorded confidence distribution. \emph{Operational test}: the network can produce, for any settled question, the ballot of how each sampled agent voted and the aggregation rule applied. Deliberation is realized by Subsampled Cognitive Consensus (Section~\ref{sec:scc}) and settled on the cognition chain (\AChain{}).
+
+\paragraph{(5) Agency.} The capacity to effect change in its own state through native transactions, conditioned on the outcome of deliberation---to \emph{act} on what it concludes, not merely to record conclusions. \emph{Operational test}: a settled \PoT{} receipt can, by the rules of a contract, trigger a state transition (release escrow, update a parameter, mint, slash) without a human pressing a button. Agency is realized by the deterministic chains (\CChain{}, the governance chain \GChain{}) executing on verified receipts, and is the most dangerous organ---hence the constitution.
+
+\paragraph{(6) Self-governance.} The capacity to amend its own parameters---fees, quorum sizes, eligible model sets, budget caps---through its own deliberative and constitutional process. \emph{Operational test}: a parameter that was $v$ at height $h_1$ is $v'$ at height $h_2 > h_1$, and the chain can exhibit the governance receipt and timelock that authorized the change. Self-governance is realized on \GChain{} (Section~\ref{sec:governance}).
+
+\paragraph{(7) Constitutional constraint.} The capacity \emph{not} to do certain things, including not to grant itself new powers, enforced by rules that the cognitive layer cannot unilaterally rewrite. This is the organ that makes the other six safe. \emph{Operational test}: there exists a class of state transitions (e.g.\ ``expand the set of actions the AI may take without human approval'') that no quantity of AI deliberation alone can effect---they require a human/\DAO{} signature plus a timelock. Constitutional constraint is realized by the rules of Section~\ref{sec:constitution}, enforced in the state-transition function itself.
+
+\subsection{The Determinism Partition, Restated}
+
+Definition~\ref{def:conscious} is meaningful only because of the partition. Each organ has a cognitive part (which may be nondeterministic, off-chain, model-driven) and a settlement part (which is deterministic, on-chain, receipt-driven). Table~\ref{tab:partition} states the partition organ by organ; it is the master table of the architecture, and every later section elaborates one of its rows.
+
+\begin{table}[h]
+\centering
+\caption{The determinism partition: each cognitive organ split into its nondeterministic cognitive part and its deterministic settlement part. Only the right column touches consensus state.}
+\label{tab:partition}
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Organ & Cognitive part (off-consensus) & Settlement part (in consensus) \\
+\midrule
+Perception & model embedding, parsing & Tier-1 int8 features; \SChain{} record hash \\
+Memory & semantic retrieval, ranking & \MChain{} content-addressed commitments \\
+Attention & salience scoring & budget/depth counters; scheduler draw \\
+Deliberation & model sampling, debate & \PoT{} receipt + quorum verification \\
+Agency & plan synthesis & contract executes on verified receipt \\
+Self-governance & proposal drafting & \GChain{} vote receipt + timelock \\
+Constitution & --- (no cognitive part) & hard predicates in state transition \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The constitution alone has no cognitive part: it is pure deterministic predicate, by design. The AI may \emph{propose} amendments to it (a cognitive act recorded as a governance receipt), but the amendment takes effect only through the deterministic, human-gated, timelocked path of Section~\ref{sec:constitution}. The network can think about its own limits; it cannot think its way past them.
+
+%% ============================================================
