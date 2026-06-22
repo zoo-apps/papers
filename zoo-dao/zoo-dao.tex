@@ -1,0 +1,129 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{parskip}
+\usepackage{booktabs}
+
+\newcommand{\PoT}{\textsc{PoT}}
+\newcommand{\PoAI}{\textsc{PoAI}}
+
+\title{\textbf{\Huge The Zoo DAO}\\[4pt]
+\large How a Model Zoo Builds a Community, Rewards Its Builders,\\ and Forks Itself}
+\author{Zach Kelling\thanks{\texttt{zach@zoo.ngo}}\\
+\textit{Zoo Labs Foundation}\\ \texttt{research@zoo.ngo}}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+The core protocol (\emph{Thinking Chains: Proof of AI}) says how a network settles cognition and mints a coin for it. It deliberately says nothing about \emph{who gets paid what, who decides, or how the network improves}---because those are economics and governance, which belong in contracts a community can change, not in the protocol. This paper is that economics. We show how a \textbf{model zoo}---a community-owned, on-chain library of AI models---bootstraps from nothing, pays everyone who makes it valuable (the people who run models, contribute data, train forks, and curate memory), governs itself by the quorum of its own thinking nodes, and \emph{forks itself recursively} so that competing models run side by side and the network keeps the ones that win. The result is an AI commons that gets better the more it is used and is owned by the people who built it. Every mechanism here is a smart contract over the core protocol; none of it is in the protocol. There is no slashing: you earn by being useful, and bad actors are simply routed around.
+\end{abstract}
+
+\section{A Zoo Anyone Can Join and Everyone Owns}
+
+A \emph{model zoo} is a library of AI models---small ones, large ones, specialists, forks---served by a community of nodes and owned by no one in particular. On an ordinary AI platform a company owns the models, takes the revenue, and decides what improves. The Zoo DAO inverts this: the models live on-chain, anyone may serve them or improve them, the revenue flows to whoever did the work, and the community---through its DAO---decides the rules and which models the network promotes.
+
+This paper answers three practical questions a community asks when it launches a zoo: \emph{Who gets paid, and for what? How does it govern itself? And how does it keep getting better?} The answers are all contracts over the Proof-of-AI core, so a community can adopt them as-is, fork them, or replace them by vote.
+
+\section{Who Earns}
+
+A zoo is valuable because of five kinds of contribution, and the economy pays each one. Crucially, payment is \emph{demand-funded}: every payout below comes out of the fee a user already escrowed to ask a question---nothing is printed to subsidize participation.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}p{3.2cm}p{5.0cm}p{4.6cm}@{}}
+\toprule
+Participant & What they do & What they earn \\
+\midrule
+Cognitive nodes & run models, answer sampled questions, mine cognition (\PoAI{}) & the fee for accepted answers \\
+Data contributors & supply training/RAG data, with on-chain provenance & a royalty whenever their data backs a paid answer \\
+Model trainers / forkers & register and fine-tune models; branch new forks & a royalty on every paid call to their model \\
+Curators & curate, deduplicate, and index the zoo and its memory & a share of the value of what they maintain \\
+Governors & stake and vote on the rules and which forks win & governance rewards; the right to steer the zoo \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+There is no sixth role for ``the platform.'' The protocol takes a small, governable cut; the rest is split among the contributors above by a deterministic rule (next section). A node operator who also contributes data and trains a fork simply earns in three of the rows at once.
+
+\section{The Reward Loop}
+
+Every paid thought runs the same loop, and it is closed and self-funding:
+
+\begin{enumerate}[leftmargin=1.4em]
+\item A user escrows a fee to ask a question.
+\item A sampled committee of cognitive nodes answers; a quorum agreement settles the canonical answer as a \PoT{} receipt (core protocol).
+\item The escrow is split, deterministically, by an \emph{invoice} derived from the receipt:
+\[
+\text{fee} \;=\; \underbrace{\text{servers}}_{\text{the nodes that agreed}} \;+\; \underbrace{\text{model royalty}}_{\text{the fork's owner}} \;+\; \underbrace{\text{data royalty}}_{\text{provenance graph}} \;+\; \underbrace{\text{protocol cut}}_{\text{governable}}.
+\]
+\end{enumerate}
+
+The split is not negotiated; it is computed from the receipt and the on-chain provenance graph, so the same answer always pays the same parties the same way. Money only ever moves \emph{after} a thought is settled, so a slow or offline model can delay a payment but can never create or destroy value. This is the economy whose product is settled judgment: the coin a cognitive node earns is backed by an answer a user wanted.
+
+\section{Reputation, Not Punishment}
+
+The Zoo DAO has \textbf{no slashing}. A wrong or withheld answer simply is not accepted into a quorum, so it earns nothing---exactly as an invalid block earns nothing on Bitcoin. Honesty needs no threat of confiscation; it needs only that useful work pays and useless work does not.
+
+What replaces slashing is \emph{reputation}. Each cognitive node carries an on-chain weight---an exponential moving average of how often its answers matched the settled canonical answer:
+\[
+w \leftarrow w + \alpha\,(\,\text{10000} - w)\ \text{when it agrees},\qquad
+w \leftarrow w - \alpha\,w\ \text{when it diverges},
+\]
+in basis points, with $\alpha$ the responsiveness. New nodes start at zero and \emph{earn} weight by being right alongside the quorum; nodes that drift wrong decay toward zero and are routed around. Reputation drives reward share, routing priority, and governance weight. This is the Bittensor lesson made native: pay for measured, ongoing quality rather than threaten capital, so heterogeneous and permissionless nodes can join freely. (Reference implementation: the \texttt{ThinkingReputation} contract; it reads each settled decision and updates weights, touching nothing else.) A community that wants harder guarantees may layer bonds or fraud-proof challenges on top---but that is its choice, not the protocol's.
+
+\section{Recursive Self-Forking: How the Zoo Improves}
+
+A zoo is not a fixed shelf of models; it is an evolving population. \textbf{Forking is the core economic act of improvement.} Anyone may take a model, branch a new fine-tune or a new architecture, register it as a new entry, and route a slice of real traffic to it. The fork costs its creator a registration and some serving capacity; it earns its creator a royalty on every paid call it later wins.
+
+Competing forks run side by side, and the network does not decide between them by decree---it decides by \emph{results}. Because every settled thought and its provenance are recorded, each fork accrues an on-chain track record: how often its answers were accepted, at what confidence, for which kinds of question. That record is the fitness function. Governance (next section), informed by it, shifts traffic and rewards toward the forks that win and lets the losers fade. The economy thereby funds \emph{continuous experimentation}: it is always paying some explorers to try new models on live demand, and always promoting the ones that prove out. New training data is collected from every settled answer, so the next fork trains on a better corpus than the last. The zoo improves the way a species does---variation, selection, inheritance---except the selection pressure is paying customers and the inheritance is on-chain.
+
+Once a community turns this on, it runs autonomously: serve, settle, pay, measure, promote, repeat. The only requirement is that operators keep running nodes. So long as they do, the zoo keeps upgrading itself.
+
+\section{Bootstrapping a Community}
+
+A new community launches a zoo with no special infrastructure. At the floor tier of the core protocol (Tier~0: sidecar nodes, the chain used for payments), the recipe is:
+
+\begin{enumerate}[leftmargin=1.4em]
+\item Deploy the contracts---the governor, the cognition/receipt ledger, the reputation ledger, the invoice splitter---to any EVM.
+\item Register an initial zoo (a handful of open models is enough to start).
+\item Have community members run cognitive nodes against it.
+\end{enumerate}
+
+That is the whole bootstrap: \emph{deploy the contracts, run some nodes, and the zoo is live.} The currency is minted by Proof-of-AI---a coin appears only when a node is paid for an accepted answer---so issuance tracks real demand from day one, with no pre-mine required to function. As usage grows, more nodes join, more forks compete, the zoo improves, and the coin's backing (the capability it now buys) grows with it. The community that bootstraps the zoo owns it, because ownership here is simply the accumulated reputation and stake of the people who built and ran it.
+
+\section{Governance: the Zoo Decides for Itself}
+
+The DAO's job is to set the rules the economy runs under---the protocol cut, the committee size and quorum, which models are admitted, which forks to promote, the responsiveness $\alpha$ of reputation, the conservation tithe (below)---the ``knobs.'' What is distinctive is \emph{who decides}: not token-weighted plutocracy alone, but the quorum of the network's own thinking nodes. A knob change is proposed, the cognitive nodes deliberate it (each running its own model to form a verdict), and a settled quorum---weighted by reputation---sets the knob on-chain. Governance is itself a Proof-of-AI act.
+
+Every such decision is recorded as a \PoT{} receipt and surfaced for inspection, so a member can see exactly what the network decided, how the validators voted, and how each knob's value was reached. (Reference implementation: the \texttt{ThinkingGovernor} sets knobs by operator-quorum; the \texttt{ThinkingChainObservatory} renders the activity; the \texttt{ProofOfThoughtRegistry} is the ledger of decisions.) Visibility into the network's behavior is a first-class feature, not an afterthought: the zoo governs in the open.
+
+\section{The Conservation Option}
+
+A zoo can carry a conscience without sacrificing its economics. A community may set a constitutional \emph{tithe}: a fixed, governed fraction of every settled fee routed to a cause---in the first instantiation, \textbf{Beluga L3}, to a foundation for ocean and beluga-whale conservation. The tithe is a knob like any other, decided by the DAO; a community may set it to zero, or to fund a public good of its choosing. Value can have values.
+
+\section{Why It Compounds}
+
+The Zoo DAO turns a one-time launch into a compounding asset. More demand pays more nodes; more nodes and forks improve the zoo; a better zoo attracts more demand; and every settled thought adds to the corpus the next fork learns from. The network's accumulated intelligence---its models, its data, its settled content and research---is its backing, and that backing grows with use. Unlike a token whose supply is inert, a zoo's output is generative: the coin appreciates with the capability it buys. A community that launches a zoo is not issuing a token; it is starting an institution that gets smarter, richer, and more useful the longer its members run it.
+
+\section{Conclusion}
+
+The core protocol mints money for useful thought. The Zoo DAO is how a community turns that into an economy it owns: pay everyone who makes the zoo valuable, govern the rules by the quorum of its own thinking nodes, and let the zoo fork and improve itself without end. No slashing, no platform owner, no permission---just useful work, paid, in the open, compounding. Deploy the contracts, run the nodes, and a community has not a product but a living, self-upgrading, self-owned intelligence.
+
+\bigskip
+\noindent\textbf{Companion papers.} \emph{Thinking Chains: Proof of AI} (the core protocol); \emph{Beluga L3} (the conservation-mission instantiation and its token); \emph{The Hamiltonian Market Maker} (pricing heterogeneous compute). This paper is the economics; each concept has its own.
+
+\begin{thebibliography}{9}
+\bibitem{core} Z. Kelling, Zoo Labs Foundation. \emph{Thinking Chains: Proof of AI}. 2026.
+\bibitem{beluga} Zoo Labs Foundation. \emph{Beluga L3: A Conservation-Mission Thinking Chain}. 2026.
+\bibitem{hmm} Hanzo AI. \emph{The Hamiltonian Market Maker: Pricing Heterogeneous Compute}. 2026.
+\bibitem{bittensor} Bittensor. \emph{A Peer-to-Peer Intelligence Market}. 2021.
+\end{thebibliography}
+
+\end{document}
