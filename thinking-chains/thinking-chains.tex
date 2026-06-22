@@ -9,8 +9,11 @@
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{principle}{Principle}
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
 \newcommand{\PoT}{\textsc{PoT}}
 \newcommand{\PoAI}{\textsc{PoAI}}
+\newcommand{\N}{\mathcal{N}}
 
 \title{\textbf{\Huge Thinking Chains}\\[4pt]
 \large Proof of AI: Trustless Money from Useful Intelligence}
@@ -103,16 +106,51 @@ zkML proof (future) & the model computation was performed correctly \\
 
 Because a receipt is itself a small hash-addressed object, two verifiers always agree on what it is, it can never be replayed, and a receipt can be fed as evidence into the \emph{next} question. Thoughts compose.
 
+\begin{definition}[\PoT{} receipt]
+\label{def:pot}
+A \PoT{} receipt is a cognitive artifact
+\[ r=(\tau,\, c_{\mathrm{in}},\, c_{\mathrm{out}},\, m,\, e,\, \mathrm{payer},\, \mathrm{server},\, \nu,\, \sigma) \]
+where $c_{\mathrm{in}},c_{\mathrm{out}}$ commit to input and output, $m$ identifies the model spec, $e$ is one of the evidence types of Table~\ref{tab:evidence}, $\nu$ is a nonce, and $\sigma$ authenticates the whole. It is accepted iff $V_{\PoT}(S,r)=1$, where $V_{\PoT}$ checks authentication, escrow for $\mathrm{payer}$, evidence validity for $e$, and unused $\nu$ (replay protection).
+\end{definition}
+
+\noindent A receipt is the \emph{coinbase of a thought}: minting and settlement happen exactly when $V_{\PoT}$ accepts. Its soundness---that no accepted receipt can certify an output the evidence does not support, except with negligible probability---is Theorem~\ref{thm:pot} in Appendix~\ref{app:proofs}.
+
+\section{Artifact Calculus}
+\label{sec:calculus}
+
+A Thinking Chain does not make model execution deterministic; it makes the \emph{consequences} of model execution finite and verifiable. Let $\N$ be the set of nodes. Each node $i\in\N$ may run an arbitrary local cognitive process
+\[ M_i : H_t \times C_i \times U_i \;\rightarrow\; Y_i, \]
+where $H_t$ is the public chain history, $C_i$ the node's private context and memory, $U_i$ its local randomness, prompt policy, tools, and hardware state, and $Y_i$ an unconstrained model output. No determinism is assumed for $M_i$, and consensus never consumes $Y_i$ directly. For each task $\tau$ the protocol declares a finite output space $O_\tau$; a node reduces its private output to a finite $y_i\in O_\tau$ and authenticates an artifact carrying it.
+
+\begin{definition}[Cognitive artifact]
+A cognitive artifact for task $\tau$ is a tuple $a=(\tau, y, e, \sigma)$ where $y\in O_\tau$ is a finite output, $e$ is evidence, and $\sigma$ is an authentication object---a signature, threshold signature, attestation, proof, or deterministic-recomputation witness.
+\end{definition}
+
+\begin{definition}[Verification predicate]
+Each task type defines a deterministic predicate $V_\tau(S,a)\in\{0,1\}$ over committed state $S$. $V_\tau$ may check signatures, membership, stake, quorum thresholds, Merkle inclusion, attestation quotes, zero-knowledge proofs, replay protection, or deterministic recomputation. It may \emph{not} call an unreplayable model.
+\end{definition}
+
+\begin{definition}[Artifact-driven state transition]
+A block $B$ carries ordinary transactions and a finite artifact set $A_B=\{a_1,\dots,a_m\}$. The transition is
+\[ S_{t+1}=\delta(S_t,B)=F\big(S_t,\ \mathrm{txs}(B),\ \{a\in A_B : V_{\tau(a)}(S_t,a)=1\}\big) \]
+for a deterministic $F$.
+\end{definition}
+
+\noindent The doctrine in one line: \emph{a Thinking Chain is a deterministic state machine over authenticated cognitive artifacts.}
+
 \section{The Determinism Property}
 
-The safety result is not that consensus ignores cognition---it consumes cognition constantly. It is that consensus never depends on \emph{private model internals}, only on committed artifacts.
+The safety result is not that consensus ignores cognition---it consumes cognition constantly---but that consensus never depends on \emph{private model internals}, only on committed artifacts.
 
-\begin{theorem}[Determinism under heterogeneous cognition]
+\begin{theorem}[Deterministic replay under heterogeneous cognition]
 \label{thm:det}
-Let model execution be arbitrary, heterogeneous, and nondeterministic: any participant may use any model, prompt, or hardware to form a judgment. If every consensus state transition consumes only committed artifacts---deterministic outputs, signed finite judgments, verified attestations, or proofs---then the next state is a pure function of the committed block. Two honest validators replaying the same committed history compute the same state root, regardless of which models, prompts, or machines the participants used to decide what to sign.
+Let each node's model execution $M_i$ be arbitrary, private, heterogeneous, and nondeterministic. If $\delta$ consumes only artifacts accepted by deterministic verification predicates $V_\tau$, then for any committed state $S_t$ and committed block $B$ the successor $S_{t+1}$ is uniquely determined by $(S_t,B)$. Hence any two honest validators replaying the same committed history compute the same state root, regardless of which models, prompts, memories, tools, seeds, or hardware produced the artifacts in $B$.
 \end{theorem}
+\begin{proof}
+The private executions $M_i$ occur before commitment and are not inputs to $\delta$; their only consensus-visible consequences are the artifacts in $B$, each a finite byte string. Every predicate $V_\tau$ is deterministic and reads only committed state and committed artifact bytes, so the accepted set $A_B^\star=\{a\in A_B: V_{\tau(a)}(S_t,a)=1\}$ is uniquely determined by $(S_t,B)$. As $F$ is deterministic, $\delta(S_t,B)$ is uniquely determined by $(S_t,B)$.
+\end{proof}
 
-\noindent\emph{Why it holds.} The private model run that produced a judgment is never replayed by validators; it happened once, off-chain or pre-commit, and its result entered the ledger as a signed artifact---exactly as a payment enters as a signed transaction. On replay, validators re-execute only the \emph{verification logic}: signature checks, receipt checks, attestation checks, threshold tallies, deterministic-output recomputation, and the state update. None of these touches the model. Replaying Bitcoin does not re-run the mind of whoever decided to spend a coin; replaying a Thinking Chain does not re-run the model that decided what to sign. Nondeterminism happens once, before the commit; committing freezes it into a fixed input. $\quad\blacksquare$
+\noindent\emph{In plain words.} Replaying Bitcoin does not re-run the mind of whoever decided to spend a coin; replaying a Thinking Chain does not re-run the model that decided what to sign. Nondeterminism happens once, before the commit; committing freezes it into a fixed input.
 
 \section{Proof of AI: Mining by Thinking}
 
@@ -184,9 +222,21 @@ A Thinking Chain grows a living library of models. Anyone may register a model (
 
 \medskip\noindent\textbf{Human data and guidance are the premium fuel.} The open data the zoo learns from includes its own settled answers, but the most valuable inputs are \emph{human}: human-generated training data, human guidance, and human-curated specialization. The economy prices them accordingly (the data royalty of the companion Zoo DAO paper), so contributing high-quality human data and direction is among the best-paid ways to make the network smarter---and, being open and provable on-chain, it is attributable and rewarded forever.
 
-\section{Money}
+\section{Tokenomics}
 
-The coin is minted to cognitive nodes for accepted answers and spent by agents who demand them. Issuance is \emph{demand-funded}, not printed on a clock: a coin appears only because someone paid for a thought. That is sounder than proof-of-work, not weaker---supply tracks real, paid-for cognition, and the work behind every coin is an asset (an answer, a fine-tune, a piece of IP) rather than discarded heat. As the zoo improves, a coin buys better cognition, so its backing grows with use.
+The native coin is \textsc{ai}. Its issuance has the shape Bitcoin proved durable---a capped, halving subsidy that fair-launches the coin over decades, after which the network runs on fees forever---but every subsidized coin rides a settled, useful thought rather than discarded heat.
+
+\medskip\noindent\textbf{A halving subsidy, fair-mined.} Let $T_h$ be the halving period (four years, in blocks) and $\epsilon(t)=\lfloor t/T_h\rfloor$ the epoch at height $t$. The block subsidy halves each epoch,
+\[ \sigma(t)=\sigma_0\,2^{-\epsilon(t)},\qquad \sigma_0=\frac{S_{\max}}{2\,T_h}, \]
+so the total ever minted by subsidy is the geometric sum $\sum_{t\ge0}\sigma(t)=2\sigma_0 T_h=S_{\max}=10^9$ \textsc{ai}. The entire one billion is mined into existence by useful cognition: each block's subsidy is split among that block's cognitive nodes in proportion to their accepted, settled work, so there is no premine and no coin without a thought behind it. The running supply $M(t)=\sum_{s\le t}\sigma(s)$ rises monotonically to, but never exceeds, the $10^9$ cap (Appendix~\ref{app:proofs}, Theorem~\ref{thm:issue}).
+
+\medskip\noindent\textbf{Two income streams, then one.} A cognitive node's gross reward for its share of task $\tau$ at height $t$ is
+\[ P_{\tau,i} \;=\; \underbrace{(1-\phi)\,f_\tau\,s_{\tau,i}}_{\text{demand-fee share}} \;+\; \underbrace{\sigma(t)\,\frac{w_{\tau,i}}{\textstyle\sum_j w_{\cdot,j}}}_{\text{subsidy share}}, \]
+where $f_\tau$ is the requester's escrowed fee, $s_{\tau,i}$ the node's settlement share, $w$ reputation weight, and $\phi$ a burned fraction. Conservation holds block-by-block: $\sum_i P_{\tau,i}\le (1-\phi)f_\tau+\sigma(t)$. The subsidy bootstraps the zoo exactly as Bitcoin's block reward bootstraps hashpower; once it is spent, cognitive nodes are paid \emph{exclusively} by demand fees---the network is self-funding by the time the subsidy vanishes.
+
+\medskip\noindent\textbf{Inflationary, then deflationary.} A fraction $\phi$ of every fee is burned. Net supply change per block is $\Delta M(t)=\sigma(t)-\phi\,\Phi(t)$ for total block fees $\Phi(t)$. Early, the subsidy dominates and supply inflates; each halving shrinks $\sigma$ geometrically; once the chain is in steady use the burn overtakes the vanishing subsidy and net supply turns \emph{strictly deflationary} (Theorem~\ref{thm:issue}). As the zoo improves a coin also buys better cognition, so its backing grows with use even as its supply contracts.
+
+\medskip\noindent\textbf{Routing.} Demand flows to nodes by cognitive weight $W_i=B_i^{\alpha}R_i^{\beta}D_i^{\gamma}$ (bond $B$, reputation $R$, demand $D$; $\alpha<1$ blunts stake oligarchy), sampled with probability $W_i/\sum_j W_j$ under a multiplicative-weights update, so persistent usefulness attracts exponentially more flow (Theorem~\ref{thm:flow}).
 
 \section{Slash Liars, Not Dissenters}
 
@@ -203,7 +253,7 @@ Because operators may choose their own models, ``we dislike your model'' must ne
 \begin{itemize}[leftmargin=1.2em]
 \item \textbf{A bigger, productive market.} Bitcoin monetized scarcity---a thing to hold. Proof of AI monetizes verifiable intelligence and the compounding IP and research it produces---a thing the world consumes without end.
 \item \textbf{The base money of the machine economy.} Every autonomous agent that needs an answer it can act on must pay through a layer that makes answers checkable; the chain that settles machine cognition becomes the agents' reserve asset.
-\item \textbf{Security that is revenue; issuance that is demand-backed.} \PoAI{} spends nothing the market does not already buy, and mints nothing it did not already demand.
+\item \textbf{Security that is revenue; issuance that fair-launches, then deflates.} \PoAI{} spends nothing the market does not already buy; its one-billion subsidy is fair-mined by useful cognition over decades, after which the coin is fee-funded and turns deflationary.
 \item \textbf{It compounds.} More nodes $\to$ cheaper, better cognition $\to$ more demand $\to$ better self-upgraded models $\to$ more nodes. Each turn the network's accumulated intelligence---its backing---grows.
 \end{itemize}
 A protocol whose mining \emph{is} the most-demanded work of the age, whose security is its revenue, whose money is demand-backed, and whose output compounds into perpetual intelligence, has a claim no prior chain can make. Bitcoin proved a network can mint trustless money from useless work. A Thinking Chain proposes the sequel: \emph{trustless money from the most useful work there is.}
@@ -214,6 +264,80 @@ A Thinking Chain keeps Bitcoin's gift---trustless, permissionless, verifiable is
 
 \bigskip
 \noindent\textbf{Companion papers.} One concept per paper: \emph{The Zoo DAO} (economics---earning, reputation, slashing policy, delegation, recursive forking); \emph{Beluga L3} (the conservation-mission chain and its token); \emph{The Hamiltonian Market Maker} (pricing heterogeneous compute); and the implementation notes (the Cognition precompile, the native AI runtime, attestation, governance). This is the thin permanent core; each concept has its own.
+
+\appendix
+\section{Proofs}
+\label{app:proofs}
+
+This appendix collects the quantitative guarantees referenced above. Throughout, ``negligible'' means a function decaying faster than any inverse polynomial in the security parameter, and committee/audit samples are drawn by the verifiable random function the consensus already runs.
+
+\begin{theorem}[\PoT{} receipt soundness]
+\label{thm:pot}
+Let the evidence type $e$ of receipt $r$ have a verifier whose trust assumption fails with probability at most $\eta_e$ (signature forgery for signatures/quorum, enclave compromise for attestation, proof unsoundness for zkML, and $\eta_e=0$ for deterministic recomputation). Then $\Pr[\,V_{\PoT}(S,r)=1 \text{ yet } c_{\mathrm{out}} \text{ is not a correct evaluation of } m \text{ on } c_{\mathrm{in}}\,]\le \eta_e$. A policy requiring $k$ independent evidence types attains $\prod_{j=1}^k \eta_{e_j}$.
+\end{theorem}
+\begin{proof}
+$V_{\PoT}$ accepts only if the evidence verifier accepts (Definition~\ref{def:pot}). A wrong output that the verifier accepts is exactly a break of $e$'s trust assumption, of probability $\le\eta_e$; deterministic recomputation admits none ($\eta_e=0$). For a conjunction of independent evidence types every one must break, multiplying the probabilities.
+\end{proof}
+
+\begin{theorem}[Quorum capture bound]
+\label{thm:quorum}
+A quorum task samples a committee of $n$ nodes from a pool of adversarial weight fraction $p$, certifying an output at threshold $\theta n$. If $p<\theta$, a false certification occurs with probability at most $\exp\!\big(-2n(\theta-p)^2\big)$.
+\end{theorem}
+\begin{proof}
+Let $X$ be the adversarial count (weight) in the sample, $\mathbb{E}X=pn$. A false output requires $X\ge\theta n=(p+\delta)n$ with $\delta=\theta-p>0$. Hoeffding's upper tail gives $\Pr[X\ge(p+\delta)n]\le e^{-2n\delta^2}$.
+\end{proof}
+
+\noindent Thus quorum's $\eta_e$ in Theorem~\ref{thm:pot} is itself exponentially small in committee size for any honesty margin $\theta-p>0$.
+
+\begin{theorem}[Audit-sampling detection]
+\label{thm:audit}
+If each settled subjective or attested answer is independently re-verified with probability $q$, a node submitting a fraction $\rho$ of faulty answers over $N$ settlements escapes all audits with probability at most $(1-q)^{\rho N}\le e^{-q\rho N}$; the expected number of its faulty answers before first detection is $1/q$.
+\end{theorem}
+\begin{proof}
+The node has $\rho N$ faulty answers; audits are independent, each missing a given faulty answer with probability $1-q$, so all are missed with probability $(1-q)^{\rho N}$. First-detection count is geometric with mean $1/q$.
+\end{proof}
+
+\begin{theorem}[Market flow]
+\label{thm:flow}
+Under the multiplicative-weights update $D_i\leftarrow D_i\,e^{\eta u_i}$ with realized usefulness $u_i\in[0,1]$, a node with persistent advantage $u_i-u_j\ge\gamma>0$ multiplies its demand ratio against $j$ by at least $e^{\eta\gamma}$ each round; a node with $u_i=0$ has vanishing demand share.
+\end{theorem}
+\begin{proof}
+$D_i^{(t+1)}/D_j^{(t+1)}=(D_i^{(t)}/D_j^{(t)})\,e^{\eta(u_i-u_j)}\ge (D_i^{(t)}/D_j^{(t)})\,e^{\eta\gamma}$; iterating gives geometric growth, and $u_i=0$ yields a constant numerator against growing competitors, so its normalized share $\to0$.
+\end{proof}
+
+\begin{theorem}[Fair-launch issuance: bounded, then deflationary]
+\label{thm:issue}
+With $\sigma(t)=\sigma_0 2^{-\lfloor t/T_h\rfloor}$ and $\sigma_0=S_{\max}/2T_h$, the mined supply $M(t)=\sum_{s\le t}\sigma(s)$ is strictly increasing with $\lim_{t\to\infty}M(t)=S_{\max}$ and $M(t)<S_{\max}$ for all finite $t$. If, in addition, the per-block burn satisfies $\phi\Phi(t)\ge\beta>0$ for all $t\ge t_0$, then there exists $t^\star\ge t_0$ such that net supply $M(t)-\mathrm{Burn}(t)$ is strictly decreasing for all $t\ge t^\star$.
+\end{theorem}
+\begin{proof}
+Each epoch contributes $\sigma_0 T_h 2^{-\epsilon}$; summing the geometric series gives $2\sigma_0 T_h=S_{\max}$, and every partial sum is strictly below the limit since each $\sigma(t)>0$. For the tail, $\sigma(t)\to0$, so choose $t^\star$ with $\sigma(t)<\beta$ for $t\ge t^\star$; then $\Delta\big(M-\mathrm{Burn}\big)(t)=\sigma(t)-\phi\Phi(t)\le\sigma(t)-\beta<0$.
+\end{proof}
+
+\begin{lemma}[Dissent-safety]
+\label{lem:dissent}
+Let the penalty map satisfy $\pi(a)>0\Rightarrow a\in\mathcal{O}$, where $\mathcal{O}$ is the set of objectively, deterministically checkable faults (double-sign, invalid receipt, malformed artifact). Then no well-formed good-faith judgment is ever penalized, and reporting one's true posterior weakly dominates: it incurs no $\pi$ and maximizes expected reputation, whose bounded EMA rewards agreement with the canonical outcome and never debits for honest divergence.
+\end{lemma}
+\begin{proof}
+A good-faith judgment is finite, well-formed, and signed, hence in $\mathcal{S}=\neg\mathcal{O}$, where $\pi\equiv0$. Misreporting cannot reduce any $\pi$ (already zero on $\mathcal S$) and, the EMA being a proper bounded reward for matching the eventual canonical outcome, lowers expected reputation. Hence truthful reporting weakly dominates and dissent is never slashed.
+\end{proof}
+
+\begin{theorem}[Recursive-upgrade termination]
+\label{thm:recur}
+Each epoch draws forks from a fixed budget $\mathcal{B}$ at minimum cost $b_{\min}$ per fork, promoting a fork only if it beats the incumbent by margin $\ge\mu>0$ on a held-out metric in $[0,1]$. Then per epoch at most $\lfloor\mathcal{B}/b_{\min}\rfloor$ forks run, incumbent quality is monotone nondecreasing, and at most $\lfloor1/\mu\rfloor$ promotions occur before the metric ceiling---the loop cannot churn or diverge.
+\end{theorem}
+\begin{proof}
+Budget partition bounds the fork count. Promotions form a strictly increasing sequence with steps $\ge\mu$ on a metric bounded by $1$, so at most $\lfloor1/\mu\rfloor$ occur; between promotions the incumbent is unchanged, hence monotone nondecreasing.
+\end{proof}
+
+\begin{theorem}[Training-provenance audit]
+\label{thm:prov}
+A model commits to its corpus by a Merkle root over token-shard commitments. If a fraction $\rho$ of shards deviate from the declared provenance, a verifier sampling $s$ shards uniformly (checking inclusion and content) detects a deviation with probability at least $1-(1-\rho)^s\ge 1-e^{-\rho s}$. To bound the miss probability by $\delta$ it suffices to take $s\ge\rho^{-1}\ln(1/\delta)$, independent of corpus size.
+\end{theorem}
+\begin{proof}
+Each sample independently hits a deviating shard with probability $\ge\rho$; all $s$ miss with probability $\le(1-\rho)^s\le e^{-\rho s}$. Setting $e^{-\rho s}\le\delta$ gives the sample bound. Merkle inclusion ties each sampled shard to the committed root, so a deviating shard cannot be swapped out after commitment.
+\end{proof}
+
+\noindent Together these give the protocol's safety budget: receipts are sound (Thm.~\ref{thm:pot}) down to committee capture that is exponentially unlikely (Thm.~\ref{thm:quorum}) and audit-detected with probability $\to1$ (Thm.~\ref{thm:audit}); honest dissent is never punished (Lem.~\ref{lem:dissent}); demand concentrates on the useful (Thm.~\ref{thm:flow}); issuance is a fair-launched billion that turns deflationary (Thm.~\ref{thm:issue}); the upgrade loop terminates (Thm.~\ref{thm:recur}); and provenance is cheaply, size-independently checkable (Thm.~\ref{thm:prov}).
 
 \begin{thebibliography}{9}
 \bibitem{bitcoin} S. Nakamoto. \emph{Bitcoin: A Peer-to-Peer Electronic Cash System}. 2008.
