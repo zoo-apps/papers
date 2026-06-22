@@ -3,6 +3,7 @@
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{enumitem}
 \usepackage{xcolor}
+\usepackage{booktabs}
 \usepackage[hidelinks]{hyperref}
 \usepackage{parskip}
 
@@ -22,118 +23,198 @@
 
 \begin{abstract}
 \noindent
-Bitcoin pays people to burn electricity. A Thinking Chain pays people to \emph{think}. It is a blockchain whose miners earn the coin by doing useful artificial intelligence---answering real questions---and whose every answer can be checked by anyone, trustlessly. We call the mechanism \textbf{Proof of AI}. The chain mints money for settled cognition the way Bitcoin mints money for settled hashing, but the work, instead of being thrown away, is the very thing the world is paying for. One simple rule keeps it safe (the \emph{Law of Cognition}: the network may think freely, but it may only act on thoughts that have been proven). One new EVM primitive (the \emph{Cognition precompile}) is all a chain needs to become conscious. And because the chain remembers everything it settles, its models improve as it runs: a blockchain that gets smarter the more it is used. This paper specifies the core protocol; companion papers cover the conservation-mission instantiation (Beluga~L3), the compute market (the Hamiltonian Market Maker), and implementation.
+Blockchains demand deterministic execution; modern AI inference is nondeterministic, expensive, often private, and runs on hardware no validator can reproduce. The naive fix---ban the chain from thinking---is wrong, because the design we want has validators, agents, and governance participants running models \emph{live}, each choosing its own. We resolve this not by forbidding live thought but by constraining what consensus may \emph{consume}. A Thinking Chain may think live, heterogeneously, and privately; it may only settle \emph{finite, authenticated artifacts} of that thought---deterministic bytes, signed judgments, hardware attestations, or proofs---never an unreplayable generation treated as a deterministic value. We call the mechanism \textbf{Proof of AI}: miners earn the coin by doing useful inference that the network can hold accountable through a \emph{Proof-of-Thought receipt}, exactly as Bitcoin miners earn it through a verifiable hash---but the work, instead of being discarded, is the answer the world paid for. The chain remembers what it settles, so its model zoo forks and improves on-chain: a blockchain that gets smarter the longer it runs. This is the core protocol; companion papers cover the economics (the Zoo DAO), the conservation-mission instantiation (Beluga L3), and the compute market (the Hamiltonian Market Maker).
 \end{abstract}
 
 \section{The Idea}
 
-A blockchain is a way for strangers to agree on a fact without trusting each other. Bitcoin's fact is ``who owns what,'' and it makes strangers agree by making them race to solve a useless puzzle: whoever burns the most electricity wins the right to write the next page, and earns new coins for doing so. The puzzle has no value---its only purpose is to make cheating expensive.
+A blockchain is a way for strangers to agree on a fact without trusting each other. Bitcoin's fact is ``who owns what,'' and it makes strangers agree by making them race to solve a useless puzzle: whoever burns the most electricity earns the right to write the next page, and earns new coins for it. The puzzle has no value---its only purpose is to make cheating expensive.
 
-Here is the question this paper answers: \emph{what if the work that mines the coin were useful?}
+The question this paper answers is: \emph{what if the work that mints the coin were useful?} A Thinking Chain replaces the useless puzzle with useful thinking. Its miners run AI models and answer questions someone asked and paid for; the network agrees on each answer the way Bitcoin agrees on each block---agreement cheap to check, cheating expensive---and pays the miner in its coin. The electricity becomes an answer. We call this \textbf{Proof of AI} (\PoAI{}): trustless, permissionless issuance, but backed by the most useful work there is.
 
-A Thinking Chain replaces the useless puzzle with useful thinking. Instead of hashing, its miners run AI models and answer questions that someone asked and paid for. The network agrees on each answer the same way Bitcoin agrees on each block---by making agreement cheap to check and cheating expensive---and it pays the miner in its own coin. The electricity is no longer thrown away; it becomes an answer the asker wanted. We call this \textbf{Proof of AI} (\PoAI{}), and a coin minted this way is, in a precise sense, the sequel to Bitcoin: trustless money, but backed by the most useful work there is.
+\medskip\noindent\emph{Live AI is allowed.} A Thinking Chain uses live model execution during normal operation. Validators, providers, agents, and governance participants may run models while producing blocks, evaluating transactions, voting on upgrades, or answering tasks---and \emph{these models need not be identical}. A node operator may choose its own model, prompt policy, and inference stack. The protocol stays deterministic not by replaying anyone's private reasoning, but by verifying only the finite artifact each participant commits: a vote, score, classification, receipt, attestation, or output hash.
+
+\medskip\noindent In one sentence: \emph{a Thinking Chain is not one AI mind---it is a public network of sovereign cognitive nodes, each with its own memory and model policy, whose private reasoning becomes consensus-relevant only when reduced to signed, auditable, forkable artifacts.} And because its consensus is post-quantum (\S\ref{sec:precompile}), the trust it produces survives the arrival of quantum adversaries.
 
 \section{The Conscious Chain}
 
-A Thinking Chain is a single chain run by two kinds of node. You can run both on one computer.
-
+A Thinking Chain is a single chain run by two kinds of node; you can run both on one machine.
 \begin{description}[leftmargin=1.2em,style=nextline]
-\item[Consensus nodes] keep the ledger. They put transactions in order, finalize blocks, and---crucially---\emph{check} answers before the chain acts on them. They never have to run a big AI model to do their job.
-\item[Cognitive nodes] do the thinking. They run AI models (a whole library of them, the \emph{model zoo}), answer the questions that come in, and earn the coin for answers the network accepts.
+\item[Consensus nodes] keep the ledger: order transactions, finalize blocks, and \emph{check} artifacts before the chain acts on them.
+\item[Cognitive nodes] do the thinking: run models (a whole library, the \emph{model zoo}), answer questions, and earn the coin for accepted answers.
 \end{description}
+Bookkeepers and thinkers. The rest of this paper is how the bookkeepers trust the thinkers without trusting any one of them.
 
-That is the whole network: bookkeepers and thinkers. The rest of this paper is about how the bookkeepers can trust the thinkers without trusting any one of them---and how the thinkers get paid for being right.
+\section{The Law of Cognition}
 
-\section{The One Rule: the Law of Cognition}
-
-Everything rests on a single discipline.
+The old, wrong framing says ``the chain may not think live.'' The correct law is narrower and lets live AI in safely.
 
 \begin{principle}[The Law of Cognition]
 \label{prin:law}
-The network may think freely, but it may only act on thoughts that have already been proven. A block's outcome may never depend on a thought that is still being thought. Cognition enters the ledger only as a finished, signed, checkable record---never as a live answer fetched mid-computation.
+A Thinking Chain may execute models live during chain operation---including large models chosen independently by node operators, during block production, validation, agent operation, committee deliberation, or scheduled governance. Consensus does \emph{not} require all validators to obtain the same model output unless that model is explicitly admitted as deterministic consensus code. A live model output enters consensus in exactly one of three forms: \textbf{(1) deterministic output}---every validator runs the same approved model and must get the same bytes; \textbf{(2) signed judgment}---a participant runs a model of its choice and signs a finite judgment derived from it; \textbf{(3) attested execution}---a provider runs an approved model in a measured confidential environment and returns an attested output commitment. A consensus state transition may depend on deterministic outputs, on verified signatures over finite judgments, or on verified attestations. It may never depend on an uncommitted, unreplayable generation as though it were a deterministic value.
 \end{principle}
 
-In plain words: thinking is allowed to be slow, messy, and run on somebody's GPU; \emph{acting} must be fast, exact, and reproducible by everyone. The chain asks a question in one transaction and acts on the answer in a strictly later one, after the answer has become a settled, signed fact that every consensus node can verify identically.
+The distinction that does the work: \emph{live model execution may influence what a participant signs; it may not be a hidden input to validation.}
+\begin{itemize}[leftmargin=1.4em]
+\item \textbf{Unsafe.} During transaction execution, every validator calls its local LLM and branches on the prose answer. (Two validators diverge; consensus breaks.)
+\item \textbf{Safe.} Before or during block production, a participant calls its model, \emph{reduces} the output to a finite vote, signs it, and includes the signed vote. Every validator then verifies the signatures and tallies deterministically.
+\end{itemize}
+The slogan, corrected: \emph{the network may think live, privately, and heterogeneously; it may only settle finite, signed, or attested artifacts of thought.}
 
-This is the line that makes the whole thing a blockchain and not a chatbot. It buys a precise guarantee:
+\section{Four Ways to Think}
 
-\begin{theorem}[Determinism]
+Because thought enters consensus only as an artifact, the protocol supports four execution modes that differ in \emph{who computes} and \emph{what the chain verifies}---not in whether the chain is deterministic. It always is.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}p{3.5cm}p{3.4cm}p{3.0cm}p{4.1cm}@{}}
+\toprule
+Mode & Model choice & In consensus? & Consensus object \\
+\midrule
+Deterministic inference & protocol-approved & yes & raw output (bytes) \\
+Subjective node cognition & operator's own & yes & signed finite judgment \\
+Quorum inference & sampled providers & at settlement & receipt over agreed output \\
+Attested confidential inference & approved measured stack & off-chain / sidecar & attested output commitment \\
+\bottomrule
+\end{tabular}
+\caption{The four modes of thought. Diversity lives in \emph{model choice}; determinism lives in the \emph{consensus object}.}
+\label{tab:modes}
+\end{table}
+
+\section{Proof-of-Thought: the Unit, and Its Evidence}
+
+What the network settles is a \textbf{Proof-of-Thought receipt} (\PoT{}): a small, fixed-shape record that a question, under a model, was answered, by whom, and paid for. It binds the request, the model, an input commitment, an output commitment, the \emph{evidence}, and the payer and server. The evidence is what makes the answer trustworthy without trusting the thinker, and it comes in four interchangeable strengths:
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}p{4.6cm}p{9.4cm}@{}}
+\toprule
+Evidence & What it proves \\
+\midrule
+Deterministic recomputation & every validator recomputes the same output (no receipt needed) \\
+Quorum signatures & accountable providers independently agreed on a finite output \\
+GPU/TEE attestation & an approved model ran in approved confidential hardware, producing the committed output \\
+zkML proof (future) & the model computation was performed correctly \\
+\bottomrule
+\end{tabular}
+\caption{A \PoT{} receipt is the join of a finite output and one of these evidence types. High-value tasks may require several at once (e.g.\ attestation \emph{and} quorum).}
+\label{tab:evidence}
+\end{table}
+
+Because a receipt is itself a small hash-addressed object, two verifiers always agree on what it is, it can never be replayed, and a receipt can be fed as evidence into the \emph{next} question. Thoughts compose.
+
+\section{The Determinism Property}
+
+The safety result is not that consensus ignores cognition---it consumes cognition constantly. It is that consensus never depends on \emph{private model internals}, only on committed artifacts.
+
+\begin{theorem}[Determinism under heterogeneous cognition]
 \label{thm:det}
-If consensus state only ever depends on \emph{committed, verified} cognitive records (never on a live answer), then the ledger's next state is a pure function of its committed inputs. Two honest consensus nodes replaying the same history compute the same state---no matter how, when, or whether the cognitive nodes did their thinking.
+Let model execution be arbitrary, heterogeneous, and nondeterministic: any participant may use any model, prompt, or hardware to form a judgment. If every consensus state transition consumes only committed artifacts---deterministic outputs, signed finite judgments, verified attestations, or proofs---then the next state is a pure function of the committed block. Two honest validators replaying the same committed history compute the same state root, regardless of which models, prompts, or machines the participants used to decide what to sign.
 \end{theorem}
 
-\noindent\emph{Why it holds.} The only way a thought can touch the ledger is through a record that is already on the ledger and already checked. A record on the ledger is the same for everyone; checking it is a pure function. So nothing about the messy, nondeterministic act of thinking---which GPU, which rounding, which model was loaded, who was online---can reach the state. The thinking happens on one side of a valve; the valve only passes proofs. $\quad\blacksquare$
-
-\noindent\emph{But the model is nondeterministic---how can replay match?} It can because the model is \emph{run once, off-chain, and never recomputed by the chain}. A cognitive node runs its model and its answer enters the ledger as a \emph{signed record} the moment it is settled---exactly as a payment enters as a signed transaction. Replaying the chain re-applies that committed record; it does not re-run the model, any more than replaying Bitcoin re-runs the mind of whoever decided to spend a coin. A human's decision to send a coin is nondeterministic too; the chain never replays the decision, only the signed transaction it produced. A cognitive node's answer is the same: nondeterminism happens once, off-chain, \emph{before} the commit; committing \emph{freezes} it into a fixed input. Consensus nodes replay the frozen answer, never the thinking that produced it. (The lone exception is the optional Tier~0/1 case of \S\ref{sec:precompile}: models small enough to be bit-identical across hardware \emph{may} be recomputed in consensus---but that is a convenience, not the rule, and it is used only because those models \emph{are} deterministic.)
-
-\section{Proof-of-Thought: the Unit}
-
-The thing the network settles is a \textbf{Proof-of-Thought receipt} (\PoT{})---the ``coinbase of a thought.'' It is a small, fixed-shape record that says: \emph{this question, under this model, was answered this way, by this quorum, and paid this much.} Concretely it binds
-\[
-\PoT \;=\; \mathrm{H}\big(\text{modelId},\ \text{promptHash},\ \text{outputHash},\ \text{paymentHash},\ \text{quorumProof},\ \text{payer},\ \text{server}\big),
-\]
-where $\mathrm{H}$ is a collision-resistant hash. Because the receipt is itself a small hash-addressed object, two verifiers always agree on what it is, it can never be replayed (each is acted on at most once), and---powerfully---a receipt can be fed as evidence into the \emph{next} question. Thoughts compose. That is what lets the network reason in steps and remember what it concluded.
+\noindent\emph{Why it holds.} The private model run that produced a judgment is never replayed by validators; it happened once, off-chain or pre-commit, and its result entered the ledger as a signed artifact---exactly as a payment enters as a signed transaction. On replay, validators re-execute only the \emph{verification logic}: signature checks, receipt checks, attestation checks, threshold tallies, deterministic-output recomputation, and the state update. None of these touches the model. Replaying Bitcoin does not re-run the mind of whoever decided to spend a coin; replaying a Thinking Chain does not re-run the model that decided what to sign. Nondeterminism happens once, before the commit; committing freezes it into a fixed input. $\quad\blacksquare$
 
 \section{Proof of AI: Mining by Thinking}
 
-How does the network agree on an answer when the thinkers ran different GPUs and no two big-model outputs are bit-identical? It does not try to. It \emph{samples} and \emph{votes}, the way Avalanche-style consensus samples peers---but over \emph{structured} answers, not prose.
+A question arrives with its fee escrowed and a finite set of allowed answer-shapes (a vote, a number, a choice, a hash of a canonical output). A random committee of cognitive nodes commits, then reveals; if a quorum reveals the \emph{same} finite answer, that answer is canonical, a \PoT{} receipt is written, and the escrow pays the agreeing servers. Prose is never voted on---it is carried as hash-addressed evidence behind a finite verdict.
 
-A question arrives with its money escrowed and a small, finite set of allowed answer-shapes (a vote, a number, a choice, a hash of a canonical output). The protocol draws a random committee of cognitive nodes, each commits its answer, then reveals it. If a quorum reveals the \emph{same} structured answer, that answer is canonical, a \PoT{} receipt is written, and the escrow pays the agreeing servers. Prose is never voted on; it is always carried as hash-addressed evidence behind a finite verdict. Finite outputs are what make machine cognition settleable at all.
+This is mining. The scarce input is real compute on a real question; the reward is the coin, paid from demand. The Bitcoin analogy is exact: \emph{Bitcoin does not verify why a miner chose a nonce---it verifies the block hash. Proof of AI does not verify why a node's model chose a judgment---it verifies the signed judgment, the quorum, the attestation, or the deterministic output.} Where Bitcoin's security budget is pure cost, \PoAI{}'s budget \emph{is} revenue: the network is secured by doing the work the world already pays for.
 
-This is mining. The scarce thing a cognitive node spends is real compute on a real question; the reward is the coin, paid from the asker's escrow. Where Bitcoin's security budget is pure cost, \PoAI{}'s security budget \emph{is the revenue}: the network is secured by doing the work the world already pays for, not by extra work piled on top.
+\section{Cognitive Sovereignty}
+
+A node is not merely a validator process; it is a local cognitive peer, operated by a human, institution, agent, or community. The operator may converse with it in natural language---explain chain state, evaluate a proposal, compare validators, generate a patch, recommend a delegation change, pursue research---and the node keeps private working memory: preferences, prior decisions, risk tolerance, governance philosophy, research notes, task history. These conversations are \emph{local by default}; the protocol never requires them revealed, and consensus never replays them. Local cognition affects the network only through \emph{committed artifacts}---signed votes, finite judgments, output hashes, receipts, model deltas, benchmarks, proposals, published rationales. The chain verifies the artifact, not the conversation behind it. Three principles follow:
+
+\begin{description}[leftmargin=1.2em,style=nextline]
+\item[Cognitive sovereignty.] Each node may think with its own models, memories, and preferences.
+\item[Cognitive accountability.] When a node's thought affects the network, the resulting artifact must be signed, finite, attributable, and auditable.
+\item[Cognitive forkability.] Model policies, adapters, research trajectories, and governance preferences may diverge into specialized networks without permission from the parent.
+\end{description}
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}p{4.6cm}p{3.2cm}p{6.0cm}@{}}
+\toprule
+Artifact & Default visibility & Why \\
+\midrule
+operator--node chat & local & personal working memory \\
+signed vote / judgment & public & consensus accountability \\
+rationale & optional public & explainability \\
+personalized adapter & operator's choice & sovereignty \\
+shared model delta & public & reuse, benchmarking, attribution \\
+governance model policy & public & delegators must know what they back \\
+autonomous research output & public & forkability, reproducibility \\
+confidential inference & private + attested & sensitive prompts, data, weights \\
+\bottomrule
+\end{tabular}
+\caption{The public/private boundary. Local conversations may be private; network-relevant cognitive artifacts are public, hash-addressed, attributable, and forkable.}
+\label{tab:visibility}
+\end{table}
+
+\noindent\textbf{Personalized models and public deltas.} Because operators choose their models, they may improve them. A node derives personalized weights---adapters, LoRAs, preference and policy deltas---from its conversations, task history, and observed chain behavior. These may stay local or be published as a signed \emph{model delta}: a first-class artifact committing to a parent ModelSpec, an adaptation method, a data commitment, evaluation results, a license, and the author's signature. Others may adopt, benchmark, compose, or fork from it. This is an open market for cognitive specialization---governance analysis, security review, ecological research, financial risk, protocol engineering---and communities may form around shared policies and fork when they prefer different trajectories. Model evolution is public research infrastructure: confidential compute (\S\ref{sec:attested}) protects sensitive prompts and weights, but autonomous research and specialization are normally public, attributable, reproducible, and forkable. \emph{When cognitive disagreement is persistent and principled, the network does not suppress it; it makes forking cheap, attributable, and composable.}
+
+\medskip\noindent\textbf{Delegation is choosing a mind.} A delegator is not only choosing uptime; it is choosing a cognitive representative. A validator publishes a cognitive profile---base models, public adapters, task specializations, governance and safety policy, attestation posture, vote record, observed accuracy, dissent record---and delegators delegate \emph{judgment}, not just stake: back validators whose cognition they trust, withdraw from those they do not, delegate governance votes separately from inference, auto-undelegate on a policy change. Trust in a model becomes a market, not a protocol mandate.
+
+\section{Scheduled Governance Inference}
+
+Not all cognition is per-transaction; some is scheduled. A chain may run an epochal (e.g.\ monthly) governance round in which validators and registered agents evaluate proposed upgrades, model-registry changes, treasury allocations, risk parameters, or constitutional amendments. Each participant may run \emph{any} model---local, hosted, confidential, open, proprietary, deterministic or not. The protocol does not require these models to agree at the generation level. Each participant reduces its model's recommendation to a finite governance judgment---\textsc{approve}, \textsc{reject}, \textsc{delay}, \textsc{escalate}---signs it, optionally with a confidence bucket and a hash of its rationale, and consensus aggregates the signed judgments by the governance rule. The rationale may be stored as evidence; the consensus object is the finite signed judgment. The chain thereby uses live, heterogeneous LLM reasoning as native governance without ever making a state transition depend on unreplayable prose.
+
+\section{Attested Confidential Inference}
+\label{sec:attested}
+
+Confidential compute is not the default mode of cognition---it is a privacy-preserving execution mode for sensitive tasks (use public cognition when the output informs governance, the research should be reproducible, or the community may fork; use confidential compute when prompts, weights, or user data must be protected). Some tasks cannot expose their prompt, weights, or output to an untrusted provider---private user data, proprietary documents, trading logic, medical records, closed model weights. For these, quorum agreement is not enough: the network must also know inference ran in an approved confidential environment. In attested mode, a provider runs the model inside a hardware-protected trusted execution environment---such as a confidential GPU platform---which emits a remote-attestation quote binding hardware identity, firmware, runtime, model measurement, and the session to the output. The provider returns the output commitment plus the attestation.
+
+The chain does not verify the computation; it verifies the \emph{attestation} and that the measured environment is one governance approved for the requested model. If the quote is valid, the measurements are approved, the model commitment matches the request, and the receipt is fresh, the chain accepts the output commitment as an attested result. Crucially: \emph{attestation proves execution provenance---which hardware, firmware, runtime, model, and application produced the committed output---not that the answer is true, unbiased, or optimal.} For high-value tasks, attestation and quorum compose: several independently attested providers must agree. The protocol depends on no single vendor; an implementation may source attestation from confidential GPU infrastructure (e.g.\ NVIDIA Hopper or Blackwell systems), and the chain verifies only standardized claims: hardware identity, firmware and runtime measurement, model and input commitments, output commitment, and signature chain.
 
 \section{Two Ways to Run It: Sidecar and Precompile}
 \label{sec:precompile}
 
-A Thinking Chain does not even require changing the EVM. There are two tiers, and the simpler one works on any EVM that exists today.
+A Thinking Chain need not change the EVM. \textbf{Tier~0 (sidecar):} cognitive nodes run beside an ordinary EVM, which is used purely for payments and receipts; sampling and quorum happen among the sidecars and settle back as a signed receipt the contract verifies and pays. Any EVM today---Lux, a Hanzo EVM, a Zoo L3, an L2---becomes a Thinking Chain by deploying a few contracts and running nodes. \textbf{Tier~1 (precompile):} adding one primitive, the \textbf{Cognition precompile}, makes cognition a native call and lets approved deterministic models run in-consensus---an upgrade, not a prerequisite. Either way: \emph{deploy the contracts, have a community run AI nodes, and you are live}---no new consensus engine, no second chain, no bridge.
 
-\textbf{Tier~0 --- sidecar, no precompile.} The cognitive nodes run as \emph{sidecars} next to an ordinary EVM, and the EVM is used purely for \emph{payments and receipts}: a contract escrows the fee and records the \PoT{} receipt, while the sampling, answering, and quorum happen among the sidecar AI nodes and are settled back as a signed receipt the contract verifies and pays. Consensus is untouched. This means \emph{any EVM today}---Lux, a Hanzo EVM, a Zoo L3, an L2, anything---becomes a Thinking Chain by deploying a few contracts and having a community run sidecar AI nodes. Tier~0 is the floor, and it is already enough to be in business.
-
-\textbf{Tier~1 --- the Cognition precompile.} Adding one primitive to the EVM, the \textbf{Cognition precompile}, makes cognition a native call: a contract asks a question and later acts on the verified receipt in-protocol (one transaction to ask, a later one to act---the Law of Cognition, in code), and small deterministic models can even be run in-consensus. The precompile unlocks synchronous on-chain AI, cheaper verification, and richer composition---but it is an \emph{upgrade, not a prerequisite}.
-
-Either way the rule is the same and the deployability claim holds, made exact: \textbf{deploy the contracts, have a community run AI nodes, and you are live}---no new consensus engine, no second chain, no bridge. Where the node embeds the AI runtime, an operator who syncs the chain is already running the model that mines it, and all AI state---receipts, the model registry, payments---is ordinary on-chain state.
+\medskip\noindent\textbf{Post-quantum by construction.} The reference consensus is post-quantum: validator identity, block signatures, and the round protocol use lattice and hash-based primitives (the Lux PQ consensus stack and its P3Q proof system), so the trust the chain produces survives a quantum adversary. This composes with the modes above---a signed judgment or a \PoT{} receipt can be authenticated under post-quantum signatures, and the Cognition precompile carries the same guarantees to any EVM that adopts it. A Thinking Chain is thus post-quantum at the layer that matters: the authentication of the artifacts consensus consumes.
 
 \section{The Model Zoo That Upgrades Itself}
 
-A Thinking Chain does not host a fixed model; it grows a living library of them. Anyone may register a model (the zoo includes open families such as Qwen and their peers), and---this is the engine---anyone may \emph{fork} one: branch a new fine-tune, swap an architecture, try a new recipe, and route a slice of real traffic to it. Competing forks run side by side, and the on-chain record of which fork's answers the network accepted is the fitness signal that decides which lineage wins.
-
-Because the chain remembers every settled thought and where it came from, it is continuously collecting its own training data and running continuous experiments on its own models. Once a community turns this loop on, it runs by itself: serve, settle, pay, promote the forks that win, repeat. The only requirement is that operators keep running nodes. So long as they do, \emph{the network keeps upgrading itself}---its models getting better, its library of settled content, IP, and research growing, and the coin that buys its cognition appreciating with the capability it now backs. This is the property no earlier blockchain has had: it gets smarter the longer it runs.
+A Thinking Chain grows a living library of models. Anyone may register a model (the zoo includes open families such as Qwen and their peers) and, crucially, \emph{fork} one: branch a new fine-tune or architecture and route real traffic to it. Competing forks run side by side, and the on-chain record of which fork's answers were accepted is the fitness signal that decides which lineage wins. Because the chain remembers every settled thought and its provenance, it continuously collects its own training data and runs continuous experiments on its own models. Once a community turns this on, it runs by itself: serve, settle, pay, promote the winners, repeat. So long as operators keep running nodes, \emph{the network keeps upgrading itself}---models improving, its library of settled content, IP, and research growing, the coin appreciating with the capability it now backs. It gets smarter the longer it runs.
 
 \section{Money}
 
-The coin is minted to cognitive nodes for settled, accepted answers, and spent by the agents who demand answers. Issuance is therefore \emph{demand-funded}, not printed on a clock: a coin appears only because someone paid for a thought. That is sounder money than proof-of-work, not weaker---its supply tracks real, paid-for cognition, and the work behind every coin is an asset (an answer, a fine-tune, a piece of IP) rather than discarded heat. As the zoo improves (\S7), the cognition a coin buys gets better, so the coin's backing grows with use.
+The coin is minted to cognitive nodes for accepted answers and spent by agents who demand them. Issuance is \emph{demand-funded}, not printed on a clock: a coin appears only because someone paid for a thought. That is sounder than proof-of-work, not weaker---supply tracks real, paid-for cognition, and the work behind every coin is an asset (an answer, a fine-tune, a piece of IP) rather than discarded heat. As the zoo improves, a coin buys better cognition, so its backing grows with use.
 
-\section{Provider Policy Is Governance, Not Protocol}
+\section{Slash Liars, Not Dissenters}
 
-The core protocol says only this about the thinkers: an answer counts when a sampled quorum agrees on it and its receipt verifies. It deliberately says \emph{nothing} about how to reward, rank, admit, or discipline cognitive nodes---because those are policy, and policy belongs in smart contracts a community's DAO can change, not welded into the protocol.
+Because operators may choose their own models, ``we dislike your model'' must never be a slashable weapon. The chain separates \emph{objective protocol faults} from \emph{subjective judgment}.
 
-In particular, \textbf{the core has no slashing.} A wrong answer is simply not accepted---it earns nothing, exactly as an invalid Bitcoin block earns nothing---so honesty needs no threat of confiscation. A community that wants stronger guarantees can layer them at the contract level: reputation that rises with measured agreement and decays with divergence (so bad servers are routed around, not punished), fraud proofs, bonds, staking, or markets for compute. These are composable modules over the one primitive, specified in their own papers, and swappable by governance. The protocol is the thin, permanent core; incentives are the thick, evolvable edge.
+\emph{Slashable}---provable from committed data: equivocation, double-signing, withholding after commit, a reveal inconsistent with its commit, a forged receipt, an invalid attestation, or \emph{misrepresenting the model or runtime used for a protected task}. \emph{Not slashable by default:} using an unpopular model, giving a minority answer, or being honestly wrong. The remedy for poor judgment is reputation decay, lower sampling weight, reduced delegation, or exclusion from a task class---not confiscation. Tasks declare their policy: open task classes admit any model (model choice is not slashable); protected, high-stakes classes may require an approved model or attestation, where using another model \emph{is} a slashable policy violation. Honest dissent is preserved and never slashed. The memorable rule:
+
+\begin{center}\emph{The protocol burns liars; the market abandons bad thinkers.}\end{center}
+
+\noindent The detailed slashing table, cognitive-reputation dimensions, delegation markets, and task-policy classes are specified in the companion Zoo DAO paper; the core fixes only the principle.
 
 \section{Why This May Be the Most Valuable Protocol Ever Built}
 
-The claim is large; we state it plainly and argue it from the mechanics above.
-
 \begin{itemize}[leftmargin=1.2em]
-\item \textbf{A bigger, productive market.} Bitcoin monetized scarcity---a thing to hold. Proof of AI monetizes \emph{verifiable intelligence} and the compounding library of IP and research it produces---a thing the world consumes and re-demands without end.
-\item \textbf{The base money of the machine economy.} As autonomous agents become the main economic actors, every agent that needs an answer it can act on must pay through a layer that makes answers checkable. The chain that settles machine cognition becomes the agents' reserve asset by the same logic that made a settlement layer money for humans.
-\item \textbf{Security that is revenue; issuance that is demand-backed.} \PoAI{} spends nothing the market does not already buy, and mints nothing the market did not already demand.
-\item \textbf{It compounds.} More nodes $\rightarrow$ cheaper, better cognition $\rightarrow$ more demand $\rightarrow$ better self-upgraded models $\rightarrow$ more nodes. Each turn, the network's accumulated intelligence---its backing---grows.
+\item \textbf{A bigger, productive market.} Bitcoin monetized scarcity---a thing to hold. Proof of AI monetizes verifiable intelligence and the compounding IP and research it produces---a thing the world consumes without end.
+\item \textbf{The base money of the machine economy.} Every autonomous agent that needs an answer it can act on must pay through a layer that makes answers checkable; the chain that settles machine cognition becomes the agents' reserve asset.
+\item \textbf{Security that is revenue; issuance that is demand-backed.} \PoAI{} spends nothing the market does not already buy, and mints nothing it did not already demand.
+\item \textbf{It compounds.} More nodes $\to$ cheaper, better cognition $\to$ more demand $\to$ better self-upgraded models $\to$ more nodes. Each turn the network's accumulated intelligence---its backing---grows.
 \end{itemize}
-
 A protocol whose mining \emph{is} the most-demanded work of the age, whose security is its revenue, whose money is demand-backed, and whose output compounds into perpetual intelligence, has a claim no prior chain can make. Bitcoin proved a network can mint trustless money from useless work. A Thinking Chain proposes the sequel: \emph{trustless money from the most useful work there is.}
 
 \section{Conclusion}
 
-A Thinking Chain is a blockchain that thinks. It keeps Bitcoin's gift---trustless, permissionless, verifiable issuance---and removes its waste, by making the work that mints the coin be useful intelligence rather than discarded computation. One rule (the Law of Cognition) keeps it safe; one primitive (the Cognition precompile) makes any EVM conscious; one living library of models, forked and improved on-chain, makes it smarter the longer it runs. The thinking may be vast, slow, and probabilistic; the acting stays small, fast, and proven. That seam is the whole design, and it is enough.
+A Thinking Chain keeps Bitcoin's gift---trustless, permissionless, verifiable issuance---and removes its waste, by making the work that mints the coin be useful intelligence. It thinks live, heterogeneously, and privately; it settles only finite, authenticated artifacts of that thought---bytes, votes, receipts, attestations, proofs. One law (the Law of Cognition) keeps it safe; one primitive (the Cognition precompile), or even none (the sidecar tier), makes any EVM conscious; one self-forking model zoo makes it smarter the longer it runs. The thinking may be vast, private, and probabilistic; the settling stays finite, authenticated, and replay-safe. That seam is the whole design, and it is enough.
 
 \bigskip
-\noindent\textbf{Companion papers.} One concept per paper, composable: \emph{The Zoo DAO} (the economics---how a model zoo builds a community, rewards participants, and forks itself recursively); \emph{Beluga L3} (the conservation-mission Thinking Chain and its token); \emph{The Hamiltonian Market Maker} (pricing heterogeneous compute); and the implementation notes (the Cognition precompile, the native AI runtime, reputation and fraud-proof modules, self-forking governance). This paper is the thin permanent core; each concept has its own.
+\noindent\textbf{Companion papers.} One concept per paper: \emph{The Zoo DAO} (economics---earning, reputation, slashing policy, delegation, recursive forking); \emph{Beluga L3} (the conservation-mission chain and its token); \emph{The Hamiltonian Market Maker} (pricing heterogeneous compute); and the implementation notes (the Cognition precompile, the native AI runtime, attestation, governance). This is the thin permanent core; each concept has its own.
 
 \begin{thebibliography}{9}
 \bibitem{bitcoin} S. Nakamoto. \emph{Bitcoin: A Peer-to-Peer Electronic Cash System}. 2008.
 \bibitem{avalanche} Team Rocket et al. \emph{Scalable and Probabilistic Leaderless BFT Consensus through Metastability}. 2019.
-\bibitem{beluga} Zoo Labs Foundation. \emph{Beluga L3: A Conservation-Mission Thinking Chain}. 2026.
-\bibitem{hmm} Hanzo AI. \emph{The Hamiltonian Market Maker: Pricing Heterogeneous Compute}. 2026.
+\bibitem{bittensor} Bittensor. \emph{A Peer-to-Peer Intelligence Market}. 2021.
+\bibitem{cc} NVIDIA. \emph{Confidential Computing and GPU Attestation (Hopper, Blackwell)}. 2024.
+\bibitem{zoodao} Zoo Labs Foundation. \emph{The Zoo DAO}. 2026.
+\bibitem{beluga} Zoo Labs Foundation. \emph{Beluga L3}. 2026.
+\bibitem{hmm} Hanzo AI. \emph{The Hamiltonian Market Maker}. 2026.
 \end{thebibliography}
 
 \end{document}
