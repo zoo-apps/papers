@@ -1,0 +1,116 @@
+\section{The Tier Matrix: One Gate, Migrating Backends}
+\label{sec:tiers}
+
+The execution proof of Section~\ref{sec:freivalds} is one of several proof systems a
+deployment can require, trading off trust assumptions, cost, and hardware. This
+section specifies the menu and the single gate that selects from it. The discipline
+is the one used for post-quantum migration elsewhere in the stack: the policy ``what
+proof does a task at this tier require?'' lives in \emph{exactly one place}, every
+consumer reads it the same way, and the proof backends are interchangeable behind a
+common binding so that the menu can change without touching the binding or the
+callers.
+
+\subsection{The proof backends}
+
+A proof system is identified by a $\mathsf{proofType}$ and registered as a backend
+that attests to a $\mathsf{reportData}$ (Section~\ref{sec:binding}). The deployed
+registry recognizes four:
+\begin{equation}
+\mathsf{proofType} \in \{\,
+  \underbrace{1}_{\text{CC-TEE}},\
+  \underbrace{2}_{\text{zkML}},\
+  \underbrace{3}_{\text{optimistic-Freivalds}},\
+  \underbrace{4}_{M\text{-of-}N\ \text{TEE}}
+\,\}.
+\end{equation}
+Each backend exposes the same interface---``does this witness attest to this
+$\mathsf{reportData}$?''---and the verifier dispatches on $\mathsf{proofType}$,
+failing \emph{closed} on any unregistered type. The optimistic-Freivalds backend
+(type $3$) is the software-only path of this paper: a prover escrows a bond and
+commits $(\mathsf{reportData}, \mathsf{activationTraceRoot}, \mathsf{modelWeightsRoot})$;
+within a challenge window any party may dispute by supplying a Freivalds response (or,
+on dispute, by driving the bisection of Section~\ref{sec:freivalds}); an
+unchallenged commitment finalizes and the bond is reclaimable, while a proven fraud
+slashes the bond to the challenger. The heavy check runs off-chain in the inference
+engine; the chain runs the economic state machine the check's verdict drives.
+
+\subsection{The tiers}
+
+Tiers map a task's value and trust requirement to a required proof strength.
+
+\begin{table}[t]
+\centering
+\caption{Tier $\to$ proof matrix. One profile gate
+(Section~\ref{sec:profile-gate}) maps a tier to its required $\mathsf{proofType}$;
+no valid proof of that type means no mint and no settlement.}
+\label{tab:tiers}
+\small
+\begin{tabular}{@{}p{0.7cm}p{3.3cm}p{4.1cm}p{4.0cm}@{}}
+\toprule
+Tier & Proof system & Trust assumption & Use \\
+\midrule
+T0 & zkML (type 2) & none beyond the SNARK's & tiny models; trustless, on-chain succinct verification \\
+T1 & $M$-of-$N$ heterogeneous CC-TEE (type 4) & no single TEE vendor; $M$ of $N$ enclaves agree & high-value tasks; defense in depth across NVIDIA CC $+$ Intel TDX $+$ AMD SEV-SNP \\
+T2 & single-vendor CC-TEE (type 1) \emph{or} optimistic-Freivalds (type 3) & one TEE vendor, \emph{or} one honest challenger $+$ a bond & the workhorse tier; software-only Freivalds is the egalitarian default \\
+T3 & redundancy $+$ plurality $+$ slash & honest plurality among bonded operators & liveness-first; CPU-only providers; the weakest proof, fastest path \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The matrix is read top-down by trust and bottom-up by accessibility. T0 (zkML)
+assumes nothing beyond the soundness of the proof system but is limited to small
+models by proving cost. T1 ($M$-of-$N$ heterogeneous confidential compute) tolerates
+the compromise of any single TEE vendor by requiring agreement across enclaves from
+\emph{different} hardware roots---NVIDIA confidential computing, Intel
+TDX~\cite{inteltdx}, AMD SEV-SNP~\cite{amdsevsnp}---so that a break of one vendor's
+attestation does not forge a proof. T2 is the workhorse: a single-vendor TEE for
+those who have the hardware, \emph{or} the optimistic-Freivalds path of this paper for
+those who do not, which assumes only that at least one honest party will challenge a
+fraud within the window and that the prover's bond exceeds the gain from cheating. T3
+falls back to the redundancy-and-plurality settlement of
+Section~\ref{sec:guess-to-mint}, retained only where liveness dominates and the value
+at stake is low enough that honest-plurality is acceptable---and, crucially,
+\emph{even T3 can now require a sampled execution proof} from the plurality operators,
+closing Proposition~\ref{prop:gap} at that tier too.
+
+\subsection{The profile gate: one place}
+\label{sec:profile-gate}
+
+The mapping from tier to required proof is a single function in a single contract,
+the on-chain analogue of the \texttt{RefuseUnderStrictPQ} gate used for post-quantum
+policy. It exposes one read,
+\begin{equation}
+\mathsf{requiredProofType}(\mathsf{tier}) \;\to\; \mathsf{proofType},
+\end{equation}
+returning $0$ (permissive) for any tier governance has not explicitly opted in, and
+otherwise the mandatory $\mathsf{proofType}$. The settlement path consults this single
+oracle and enforces the invariant directly:
+
+\begin{quote}\itshape
+No valid compute proof of the required type $\Rightarrow$ no mint, no settlement.
+\end{quote}
+
+This is the constructive answer to Section~\ref{sec:guess-to-mint}: the verifier's
+three-step gate---(1) the proof's $\mathsf{reportData}$ equals the task binding,
+(2) the runtime is governance-accepted, (3) the registered backend attests---runs
+\emph{before} any reward is paid, and fails closed at every step. Reward is bound to
+proof, not to signature and not to plurality. Because the policy lives in one place,
+there is exactly one way to ask ``what does this tier require?'', and changing a
+tier's requirement is a single governed write rather than a scattered edit.
+
+\subsection{Migration without rebinding}
+
+The tiers are not static. The decisive structural property of this design is that
+\emph{the binding does not depend on the proof system}: $\mathsf{reportData}$
+(Section~\ref{sec:binding}) commits the task, model, input, output, and runtime, and
+says nothing about how that commitment is believed. Consequently, as zkML proving cost
+falls and larger models become trustlessly provable, tasks migrate from T2/T3 up to
+T0 by a governance change to $\mathsf{requiredProofType}$ alone---\emph{zero change to
+the binding, zero change to the receipts, zero change to the callers}. The same holds
+in reverse: a deployment that gains confidential-compute hardware can move tasks from
+software-only T2 to TEE-backed T1 without touching the proof artifacts that earlier
+tasks emitted. The proof backends are orthogonal slots behind a stable binding; the
+menu evolves, the interface does not. This is the property that lets a permissionless
+network start egalitarian (software-only Freivalds for everyone) and strengthen
+task-by-task as trustless proving matures, without ever stranding the proofs it has
+already minted against.

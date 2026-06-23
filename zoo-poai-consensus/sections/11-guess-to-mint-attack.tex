@@ -1,0 +1,133 @@
+\section{The Motivating Attack: Minting for a Guess}
+\label{sec:guess-to-mint}
+
+The protocol of Sections~\ref{sec:protocol}--\ref{sec:verification} pays workers
+for AI computation. This section makes precise a gap that any such protocol must
+close before its rewards mean anything: \emph{a signature proves authorship, a
+plurality proves agreement, and neither proves computation.} We state the gap as
+a concrete attack against a deployed settlement engine, because it is the reason
+the execution-level proofs of Sections~\ref{sec:four-proofs}--\ref{sec:tiers}
+exist.
+
+\subsection{The settlement engine, as deployed}
+
+The Lux A-Chain (\texttt{aivm}) settles AI tasks with a commit--reveal quorum.
+For a task $t$ naming a model specification $\mathsf{modelSpec}$ and a prompt,
+each selected operator $o$ runs (nominally) the model, obtains an output, and
+publishes a commitment
+\begin{equation}
+\label{eq:aivm-commit}
+c_o \;=\; \mathsf{keccak}\bigl(t \,\|\, \mathsf{modelSpecHash} \,\|\,
+   \mathsf{promptHash} \,\|\, \mathsf{outputHash} \,\|\,
+   \mathsf{embeddingHash} \,\|\, o \,\|\, \mathsf{nonce}\bigr),
+\end{equation}
+then later reveals the preimage. Reveal verification recomputes $c_o$ from the
+revealed fields and the caller's address and checks equality; a mismatch is
+rejected. Settlement tallies the revealed $\mathsf{outputHash}$ values, takes the
+\emph{plurality} group (the statistical mode), and---if that group's size meets a
+threshold $\theta$---declares its hash canonical and pays \texttt{rewardPerOperator}
+to every operator in it from escrow, slashing those who withheld a reveal.
+
+Two properties of this design are worth quoting from the implementation itself,
+because they are stated there without euphemism. The settlement substrate's
+engine documentation records that
+\begin{quote}\itshape
+``\ldots the settlement \textsc{result}---did $\ge$ threshold staked operators
+independently submit the same \texttt{output\_hash} under the same
+\textsc{ModelSpec}---is what A-Chain consensus agrees on; validators never run the
+model.''
+\end{quote}
+and the address binding in~\eqref{eq:aivm-commit} is documented as
+\begin{quote}\itshape
+``the anti-copy / anti-front-run control: a peer who observes operator A's commit
+cannot replay it as their own \ldots.''
+\end{quote}
+The first sentence is the safety premise of the entire mechanism; the second names
+exactly what the commitment proves. We take both at face value.
+
+\subsection{What is---and is not---proven}
+
+The commitment~\eqref{eq:aivm-commit} binds an output hash to an \emph{author}
+(the address $o$ is inside the keccak preimage and is re-checked on reveal) and,
+because $\mathsf{nonce}$ and $o$ are mixed in, resists copying and front-running.
+The plurality rule binds the canonical answer to \emph{agreement} (how many
+distinct authors published the same hash). Neither operation references the model
+weights, the prompt tokens beyond their hash, or any artifact of the forward pass.
+We isolate the consequence.
+
+\begin{proposition}[Computation is unconstrained by authorship and agreement]
+\label{prop:gap}
+Let $\Pi$ be a settlement engine whose verdict is a function only of
+(i)~address-bound commitments of the form~\eqref{eq:aivm-commit} and
+(ii)~the multiset of revealed output hashes via a plurality rule with threshold
+$\theta$. Then for any prompt and any model specification, a coalition of
+$\theta$ operators that never evaluates the model can cause $\Pi$ to settle---and
+to pay each coalition member---on an output hash $h^\star$ of the coalition's
+choosing, provided $h^\star$ is the plurality among revealed hashes.
+\end{proposition}
+
+\begin{proof}
+Each coalition member $o_i$ ($1 \le i \le \theta$) chooses the same target hash
+$h^\star$, samples a fresh $\mathsf{nonce}_i$, and computes
+$c_{o_i}$ by~\eqref{eq:aivm-commit} with $\mathsf{outputHash} := h^\star$ and its
+own address $o_i$. Each $c_{o_i}$ is a valid, distinct, non-replayable commitment:
+it is well-formed (a keccak image), it is bound to the correct author (so reveal
+verification's recompute-and-compare succeeds), and it differs from every other
+member's commitment (distinct addresses and nonces), so the anti-copy control
+raises no objection. On reveal, all $\theta$ members publish $h^\star$; their
+group has size $\theta \ge \theta$ and, by hypothesis, is the plurality. $\Pi$
+declares $h^\star$ canonical and pays each member. No member evaluated the model;
+$h^\star$ was never required to be the model's output on the prompt. \qed
+\end{proof}
+
+Proposition~\ref{prop:gap} is not exotic. In the degenerate but common case of a
+\emph{decision} task---a yes/no classification, a moderation verdict, an
+``approve/reject'' agentic action---the output space is one bit, so $h^\star$ is
+one of two hashes. The cost-minimizing strategy is then explicit and requires
+\emph{no model at all}:
+
+\begin{corollary}[The one-bit guess]
+\label{cor:onebit}
+For a binary-output task with prior $\Pr[\text{answer}=1]=q\ge\tfrac12$, the
+strategy ``commit and reveal the hash of the modal answer $1$, never run the
+model'' settles correctly with probability $q$ at zero inference cost, and---when
+a coalition of size $\theta$ adopts it---settles \emph{and mints} with probability
+$1$ regardless of the true answer.
+\end{corollary}
+
+The corollary is the headline: under authorship-plus-agreement, the network can be
+made to mint for a one-bit guess. A signature scheme cannot fix this, because the
+defect is not forgery---every signature and every commitment in the attack is
+genuine. The missing predicate is \emph{``this output is the result of evaluating
+the named model on the named input,''} and that predicate is exactly what an
+execution-level proof supplies.
+
+\subsection{Why the existing fallbacks do not close it}
+
+Three mechanisms in the deployed stack might be hoped to help; none does, for a
+structural reason worth stating.
+
+\begin{itemize}[leftmargin=1.4em]
+\item \textbf{Re-execution by validators} is the natural fix, and the A-Chain
+documentation contemplates an optional ``$M$-of-$N$ redundant'' mode in which
+validators re-run inference. But this is precisely what the deployed engine
+\emph{does not} do (``validators never run the model''), and naive re-execution
+costs $M\times$ the compute per task, which is why it was not made the default.
+Section~\ref{sec:freivalds} replaces $O(n^3)$ re-execution with an $O(n^2)$
+\emph{check}, making the fix affordable.
+\item \textbf{TEE attestation} (the path of Section~\ref{sec:verification}) does
+bind output to enclave execution, and closes the gap \emph{when present}. But it
+requires confidential-compute hardware, excludes CPU-only and consumer-GPU
+providers, and reduces the trust base to a vendor's remote-attestation root. It is
+a strong path, not an egalitarian one (Section~\ref{sec:tiers}).
+\item \textbf{A GPU ``proof'' kernel} exists in the A-Chain backend, but it is a
+TEE-attestation envelope check---it verifies a signature over a hardware
+measurement---and it is never invoked by the settlement or mint path. It is, by
+construction, subject to Proposition~\ref{prop:gap}: it proves authorship of an
+attestation, not execution of a model.
+\end{itemize}
+
+The remainder of this paper builds the missing predicate as a \emph{software-only}
+artifact---no enclave, no special hardware---that is a side effect of the genuine
+computation, that cannot be produced without performing the matmuls, and that any
+participant can both emit and check against a network-shared difficulty.

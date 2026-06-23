@@ -1,0 +1,175 @@
+\section{The Binding: One Commitment for Four Proofs}
+\label{sec:binding}
+
+Before specifying \emph{how} a worker proves it ran a model
+(Sections~\ref{sec:four-proofs}--\ref{sec:freivalds}), we fix \emph{what} the
+proof is about. The binding is a single $32$-byte value, $\mathsf{reportData}$,
+that names the task, the measured model, the input, the output, and the runtime
+under which the computation must have occurred. Every proof system---TEE,
+optimistic-Freivalds, zkML, or $M$-of-$N$---attests to the same
+$\mathsf{reportData}$; the proof system is a backend, and $\mathsf{reportData}$ is
+the join key. This is the decomplecting move: \emph{what was computed} (the
+binding) is separated from \emph{how we believe it} (the backend), so the two vary
+independently.
+
+\subsection{Domain-separated two-stage construction}
+
+The binding is built in two keccak stages with disjoint domain tags, mirroring the
+deployed \texttt{ComputeProofLib} library. Both tags are raw UTF-8 byte strings
+used as keccak prefixes (no length framing), and both are versioned:
+\begin{align}
+\mathsf{DOMAIN\_CHALLENGE} &= \texttt{"lux/aivm/compute-challenge/v1"}, \\
+\mathsf{DOMAIN\_REPORT}    &= \texttt{"lux/aivm/compute-report/v1"}.
+\end{align}
+The \emph{challenge} commits to everything fixed \emph{before} the worker runs:
+\begin{equation}
+\label{eq:challenge}
+\mathsf{ch} \;=\; \mathsf{keccak}\Bigl(
+  \mathsf{DOMAIN\_CHALLENGE} \,\|\,
+  \mathsf{taskId} \,\|\,
+  \mathsf{intentID} \,\|\,
+  \mathsf{modelSpecHash} \,\|\,
+  \mathsf{inputHash} \,\|\,
+  \mathsf{openBlockHash} \,\|\,
+  \mathsf{operator}
+\Bigr),
+\end{equation}
+and the \emph{report} commits the challenge together with the produced output and
+the runtime under which it was produced:
+\begin{equation}
+\label{eq:report}
+\mathsf{reportData} \;=\; \mathsf{keccak}\Bigl(
+  \mathsf{DOMAIN\_REPORT} \,\|\,
+  \mathsf{ch} \,\|\,
+  \mathsf{workloadType} \,\|\,
+  \mathsf{modelSpecHash} \,\|\,
+  \mathsf{inputHash} \,\|\,
+  \mathsf{outputHash} \,\|\,
+  \mathsf{runtimeMeasurement}
+\Bigr).
+\end{equation}
+The wire encoding is byte-pinned so that the Solidity precompile, the Go
+attestation precompile, and the Rust engine produce identical digests:
+$\mathsf{taskId}$ is a $32$-byte big-endian integer; $\mathsf{intentID}$,
+$\mathsf{modelSpecHash}$, $\mathsf{inputHash}$, $\mathsf{openBlockHash}$,
+$\mathsf{outputHash}$, and $\mathsf{runtimeMeasurement}$ are $32$-byte words; and
+$\mathsf{operator}$ is a $20$-byte address, \emph{not} left-padded. The deployed
+library realizes~\eqref{eq:challenge}--\eqref{eq:report} verbatim over
+\texttt{abi.encodePacked}; this paper adds the single field $\mathsf{workloadType}$
+to~\eqref{eq:report} (Section~\ref{sec:four-proofs}) so that one binding serves all
+four proofs without overloading any other field.
+
+\subsection{The fields, and what each defends}
+
+Each field in~\eqref{eq:challenge}--\eqref{eq:report} neutralizes a specific cheat.
+
+\begin{description}[leftmargin=0pt,style=nextline]
+\item[$\mathsf{modelSpecHash}$ --- a \emph{measured} weights Merkle root, not a
+label.] This is the keccak Merkle root over the loaded, quantized model bytes
+(Section~\ref{sec:freivalds}), \emph{computed at load time from the weights the
+worker actually holds in memory}, not a human-readable model name. Binding the
+measured root defeats \emph{cheap-model substitution}: a worker cannot answer with
+a $1$B model while claiming the fee schedule of a $70$B model, because the proof
+backend re-derives activations against the committed root and a different model
+yields a different root and different activations.
+\item[$\mathsf{inputHash}$.] Commits the exact prompt/embedding input. A worker
+cannot answer an easier question than the one asked.
+\item[$\mathsf{outputHash}$.] Commits the produced output (token ids for
+inference, the embedding vector for embedding, the LoRA-delta root for training).
+This is what the proof must show is the genuine result.
+\item[$\mathsf{openBlockHash}$ --- the unpredictability beacon.] The hash of a
+recent block that is \emph{not known when the task is posted}. Because $\mathsf{ch}$
+mixes in $\mathsf{openBlockHash}$, the challenge---and hence the random vector the
+Freivalds check derives from it (Section~\ref{sec:freivalds})---cannot be predicted
+or pre-baked. This is the anti-replay and anti-precomputation root.
+\item[$\mathsf{operator}$ --- per-operator domain.] The provider's address.
+Because each operator's $\mathsf{ch}$ and $\mathsf{reportData}$ are distinct, a
+proof produced by operator $A$ does not verify for operator $B$; honest work cannot
+be copied and re-sold under another identity (the same anti-copy property the
+A-Chain commitment of Section~\ref{sec:guess-to-mint} sought, now extended to the
+\emph{proof} rather than only the output).
+\item[$\mathsf{runtimeMeasurement}$ --- the determinism pin.] A digest of the
+runtime and sampler configuration under which the output is reproducible: the
+kernel set, tokenizer, quantization mode, temperature, and seed
+(Section~\ref{sec:freivalds}). Pinning it makes ``re-derive and compare'' a
+well-defined operation across heterogeneous hardware.
+\end{description}
+
+\subsection{Security of the binding}
+
+We model keccak as a random oracle $\mathcal{H}$ and quantify the two guarantees
+the construction must provide: a forged report cannot be replayed onto a different
+task, and it cannot be silently re-pointed to a different model or input. Both
+reduce to collision/preimage resistance, but the domain separation and the beacon
+make the reductions tight and the attack windows closed.
+
+\begin{lemma}[Anti-substitution]
+\label{lem:anti-sub}
+Model $\mathcal{H}$ as a random oracle. If two reports share a $\mathsf{reportData}$
+value but differ in any of $\mathsf{modelSpecHash}$, $\mathsf{inputHash}$,
+$\mathsf{outputHash}$, $\mathsf{workloadType}$, or (through $\mathsf{ch}$)
+$\mathsf{taskId}$, $\mathsf{intentID}$, $\mathsf{openBlockHash}$, or
+$\mathsf{operator}$, then the adversary has computed a collision of $\mathcal{H}$.
+After $Q$ oracle queries the probability of producing any such pair is at most
+$\binom{Q}{2} 2^{-256} \le Q^2 2^{-257}$.
+\end{lemma}
+
+\begin{proof}
+$\mathsf{reportData} = \mathcal{H}(x)$ where $x$ is the encoding
+of~\eqref{eq:report}, which contains $\mathsf{ch} = \mathcal{H}(y)$ with $y$ the
+encoding of~\eqref{eq:challenge}. The packed encoding is injective on the listed
+fields: every field has a fixed byte length ($\mathsf{operator}$ is $20$ bytes, all
+other components are $32$ bytes, $\mathsf{workloadType}$ is a fixed-width tag) and
+the domain prefixes are constants of fixed length, so distinct field tuples yield
+distinct byte strings $x$ (resp.\ $y$). Two reports with equal $\mathsf{reportData}$
+and unequal $x$ are a direct collision of $\mathcal{H}$; if $x$ is equal but the
+challenge inputs differ, then $\mathsf{ch}$ collided, i.e.\ a collision of
+$\mathcal{H}$ on $y$. A random oracle answers each fresh query with a uniform
+$256$-bit string, so any fixed pair of distinct inputs collides with probability
+$2^{-256}$; a union bound over the $\binom{Q}{2}$ query pairs gives the stated
+bound. \qed
+\end{proof}
+
+The disjoint domain tags do real work in Lemma~\ref{lem:anti-sub}: without them a
+$\mathsf{challenge}$ digest and a $\mathsf{reportData}$ digest could in principle be
+made to coincide and be cross-used (a type-confusion between the two stages).
+Prefixing each stage with its own constant forces the two oracle ``slices'' apart,
+so a challenge can never be mistaken for a report and vice versa. The same
+construction generalizes to any future proof family by adding a new
+$\mathsf{workloadType}$ tag rather than a new field, keeping the binding stable.
+
+\begin{lemma}[Anti-replay / freshness]
+\label{lem:anti-replay}
+Suppose $\mathsf{openBlockHash}$ is the hash of a block whose contents are
+unpredictable until height $H_{\mathrm{open}}$, and that a task posted at height
+$H_{\mathrm{post}} < H_{\mathrm{open}}$ fixes $\mathsf{openBlockHash} :=
+\mathsf{blockhash}(H_{\mathrm{open}})$. Then any $\mathsf{reportData}$, and any
+random challenge vector derived from it, that an adversary commits to before height
+$H_{\mathrm{open}}$ is independent of the value that will be required, except with
+the probability that the adversary predicts $\mathsf{blockhash}(H_{\mathrm{open}})$.
+Under the random-oracle model for the block-hash beacon this prediction probability
+is $2^{-256}$ per guess.
+\end{lemma}
+
+\begin{proof}
+$\mathsf{ch}$ is a function of $\mathsf{openBlockHash}$ through $\mathcal{H}$
+(Eq.~\ref{eq:challenge}), and $\mathsf{reportData}$ is a function of $\mathsf{ch}$
+through $\mathcal{H}$ (Eq.~\ref{eq:report}); the Freivalds vector is in turn derived
+from $\mathsf{ch}$ (Section~\ref{sec:freivalds}). A value committed before
+$H_{\mathrm{open}}$ is a function of information available before
+$H_{\mathrm{open}}$, which by hypothesis is independent of
+$\mathsf{blockhash}(H_{\mathrm{open}})$. By the random-oracle property of the beacon,
+the only way a pre-$H_{\mathrm{open}}$ commitment can equal the post-$H_{\mathrm{open}}$
+requirement is if it embeds a correct guess of the unpredictable beacon output, an
+event of probability $2^{-256}$ per attempt. \qed
+\end{proof}
+
+Lemma~\ref{lem:anti-replay} is what prevents a prover from \emph{pre-baking} a
+proof: it cannot precompute activations or a Freivalds response for a challenge it
+does not yet know, and it cannot replay a stale proof, because the beacon ties the
+challenge to a block that did not exist when a stale proof was made. Together with
+Lemma~\ref{lem:anti-sub} and the per-operator field, the binding guarantees that a
+valid proof is \emph{about this task, this model, this input, this operator, and
+this freshly-sampled challenge}---the necessary frame within which
+Section~\ref{sec:freivalds}'s soundness theorem then guarantees the computation
+itself was performed.

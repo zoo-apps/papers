@@ -1,0 +1,175 @@
+\section{One Primitive, Four Proofs}
+\label{sec:four-proofs}
+
+We now specify the work that the binding of Section~\ref{sec:binding} attests to.
+There are four AI workloads a node can be paid for---embedding, inference,
+training, and contribution---and we make a deliberate claim of \emph{simplicity}:
+they are not four mechanisms but one. Each is the same scheme---\emph{commit the
+computation trace, then spot-check the matmuls under a determinism contract}---with
+the binding's $\mathsf{workloadType}$ field selecting which trace is committed and
+what the output hash ranges over. We tag the four
+\begin{equation}
+\mathsf{workloadType} \in \{\,\mathsf{EMBED},\ \mathsf{INFER},\ \mathsf{TRAIN},\ \mathsf{CONTRIBUTE}\,\}
+\end{equation}
+and name the corresponding proofs \PoE{} (Proof-of-Embedding), \PoI{}
+(Proof-of-Inference), \PoT{} (Proof-of-Training), and \PoC{}
+(Proof-of-Contribution). The unifying observation is that the dominant cost of
+every modern neural workload is dense matrix multiplication, including the backward
+pass; so a single primitive that verifies matrix products
+(Section~\ref{sec:freivalds}) covers the expensive part of all four, and the cheap
+remainder is committed and recomputed deterministically.
+
+\begin{definition}[Compute-proof primitive]
+\label{def:primitive}
+Fix the binding $\mathsf{reportData}$ of Section~\ref{sec:binding}. A
+\emph{compute-proof} for a workload is the tuple
+$\bigl(\mathsf{modelWeightsRoot},\ \mathsf{activationTraceRoot},\ \pi\bigr)$ where
+$\mathsf{modelWeightsRoot} = \mathsf{modelSpecHash}$ is the measured weights root,
+$\mathsf{activationTraceRoot}$ is the root of the streamed trace of all intermediate
+tensors produced during the computation (Section~\ref{sec:freivalds}), and $\pi$ is
+the backend witness (a TEE quote, a zk proof, or---in the software-only
+case---nothing beyond the commitments, the verification being an interactive or
+on-challenge re-derivation). A verifier accepts iff
+(i)~$\mathsf{reportData}$ matches the task binding,
+(ii)~$\mathsf{modelWeightsRoot}$ is a governance-accepted model spec, and
+(iii)~the backend attests that, under the pinned runtime, evaluating the model whose
+weights hash to $\mathsf{modelWeightsRoot}$ on the input whose hash is
+$\mathsf{inputHash}$ yields the trace committed by $\mathsf{activationTraceRoot}$ and
+the output committed by $\mathsf{outputHash}$.
+\end{definition}
+
+\subsection{\PoE{}: Proof-of-Embedding}
+
+An embedding is a forward pass that ends in a pooled hidden vector rather than a
+decoded token. The prover runs the encoder, streams every intermediate tensor into
+the activation trace, and sets
+\begin{equation}
+\mathsf{outputHash} \;=\; \mathsf{keccak}\bigl(\mathsf{quantize}(v)\bigr),
+\end{equation}
+where $v$ is the final embedding vector in its canonical fixed-point encoding. The
+proof is identical in structure to inference: the forward pass is a sequence of
+matrix products interleaved with normalization and activation; the matmuls are
+Freivalds-checked, the rest is recomputed. \PoE{} is the cheapest of the four (no
+autoregressive loop) and is the workload behind retrieval, clustering, and the
+held-out evaluation used by \PoC{} below.
+
+\subsection{\PoI{}: Proof-of-Inference}
+
+Inference is autoregressive decoding. For a prompt of $n$ tokens generating $m$
+output tokens, the prover performs $n+m$ forward passes (with key/value caching),
+streams the activation trace across all of them, and sets
+\begin{equation}
+\mathsf{outputHash} \;=\; \mathsf{keccak}\bigl(\text{id}_1 \,\|\, \text{id}_2 \,\|\, \cdots \,\|\, \text{id}_m\bigr),
+\end{equation}
+the keccak of the produced token-id sequence. Under the determinism contract
+(temperature $0$, fixed tie-break, pinned kernels and tokenizer;
+Section~\ref{sec:freivalds}), the decode is a deterministic function of the prompt
+and the model, so a verifier re-deriving any sampled step obtains the identical
+token. The per-token logits are the output of the final matmul of each pass and are
+thus covered by the same Freivalds check as every other layer; the argmax that
+selects the token is an element-wise comparison the verifier recomputes from the
+committed logits. \PoI{} is the proof that makes the receipt of
+Section~\ref{sec:guess-to-mint}'s engine mean ``this output is the model's output''
+rather than merely ``$\theta$ operators agreed on this output.''
+
+\subsection{\PoT{}: Proof-of-Training}
+
+Training adds a backward pass and an optimizer step to the forward pass, and the
+key structural fact is that \emph{backpropagation is also matrix multiplication}.
+For a linear layer with pre-activation $z = W a$, the gradients are
+\begin{equation}
+\label{eq:backprop}
+\frac{\partial \mathcal{L}}{\partial W} \;=\; \frac{\partial \mathcal{L}}{\partial z}\, a^{\!\top},
+\qquad
+\frac{\partial \mathcal{L}}{\partial a} \;=\; W^{\!\top} \frac{\partial \mathcal{L}}{\partial z},
+\end{equation}
+both of which are dense matrix products of the same shape class as the forward
+matmul. Therefore the single Freivalds primitive of Section~\ref{sec:freivalds}
+covers the gradients exactly as it covers the forward activations: the prover
+streams the forward activations, the upstream gradients
+$\partial\mathcal{L}/\partial z$, and the weight gradients
+$\partial\mathcal{L}/\partial W$ into the trace, and the verifier spot-checks
+both~\eqref{eq:backprop} products. The optimizer step (for AdamW: bias-corrected
+first/second moments and an element-wise update) is element-wise and cheap, so it is
+committed and deterministically recomputed rather than Freivalds-checked. The output
+is the produced weight delta:
+\begin{equation}
+\mathsf{outputHash} \;=\; \mathsf{root}_{\mathrm{BF16}}\bigl(\Delta W\bigr),
+\end{equation}
+the gym's canonical BF16 LoRA-delta root---a backend-independent serialization
+(\texttt{u64} header length, JSON header of per-tensor name/shape/offsets, then BF16
+body) whose digest is byte-identical across MLX, CUDA, ROCm, MPS, and CPU. Because
+the serialization is canonical, two honest provers training the same step on
+different hardware commit the same root, and a verifier on any backend can check it.
+
+\subsection{\PoC{}: Proof-of-Contribution}
+\label{sec:poc}
+
+\PoC{} is the fourth proof and the privacy-preserving one. It is the proof a node
+earns for \emph{improving a shared model with private data}: it is \PoT{} that the
+delta was trained, plus a \emph{Proof-of-Improvement} that the delta is useful, plus
+a privacy guarantee that the raw training data never left the contributor. It is the
+gym's DeltaSoup---federated LoRA aggregation with Byzantine-robust trimmed means and
+contributor reputation---made verifiable. We define it as a conjunction.
+
+\begin{definition}[Proof-of-Contribution]
+\label{def:poc}
+A \PoC{} for a base model $M$ and an accepted held-out evaluation set $E$ (named by
+a committed hash $\mathsf{evalHash}$, fixed by governance and beacon-bound so the
+contributor cannot choose it adversarially) is the triple $(\sigma_{\PoT{}},
+\sigma_{\mathrm{impr}}, \sigma_{\mathrm{priv}})$ where:
+\begin{enumerate}[leftmargin=1.6em]
+\item \textbf{$\sigma_{\PoT{}}$ (you did the work).} A \PoT{} proof
+(Section~above) that $\Delta W$ was produced by the claimed training computation,
+with $\mathsf{outputHash} = \mathsf{root}_{\mathrm{BF16}}(\Delta W)$.
+\item \textbf{$\sigma_{\mathrm{impr}}$ (it is useful).} A pair of \PoE{}/\PoI{}
+proofs evaluating $M$ and $M \oplus \Delta W$ on $E$, showing that the delta
+\emph{lowers loss} (or raises a benchmark) by at least a governance margin $\delta$:
+$\mathcal{L}_E(M \oplus \Delta W) \le \mathcal{L}_E(M) - \delta$. Both evaluations
+are themselves execution-proven on the same committed $E$, so the improvement claim
+is not self-reported---it is the difference of two verified forward passes.
+\item \textbf{$\sigma_{\mathrm{priv}}$ (the data stayed private).} A commitment to
+the training-data policy that reveals only that the data satisfied policy, not the
+data itself: the raw data never leaves the contributor; it is committed by hash (and
+optionally DP-noised with a committed noise schedule), and what is published is the
+delta plus a proof that the gradient was computed over data consistent with the
+committed policy. The contributor shares \emph{useful delta weights}, never the
+corpus.
+\end{enumerate}
+A verifier accepts the contribution iff all three hold and the binding's
+$\mathsf{workloadType} = \mathsf{CONTRIBUTE}$.
+\end{definition}
+
+\PoC{} is the ``share data anonymously, fine-tune privately, publish only the useful
+delta'' path of AI consensus, and it is where the protocol's incentives point at the
+thing the world actually wants: not raw compute cycles, but \emph{measured model
+improvement}. The improvement margin $\delta$ is the analogue, for training, of the
+correctness check for inference---it is what makes the work \emph{useful} rather than
+merely \emph{expended}. A contributor who submits a delta that does not improve $E$
+fails $\sigma_{\mathrm{impr}}$ and earns nothing, exactly as a miner who submits a
+non-improving guess fails Corollary~\ref{cor:onebit}'s implicit verification.
+
+\begin{remark}[Privacy is orthogonal to verifiability]
+The privacy guarantee $\sigma_{\mathrm{priv}}$ and the execution guarantees
+$\sigma_{\PoT{}}, \sigma_{\mathrm{impr}}$ are independent. The execution proofs show
+the delta is the result of \emph{a} genuine training computation on data hashing to
+the committed value; the privacy mechanism ensures that value reveals nothing about
+the data. One can strengthen $\sigma_{\mathrm{priv}}$ (e.g.\ to a zero-knowledge
+proof that the committed data satisfied a content policy) without touching the
+Freivalds machinery, and vice versa. This is the separation-of-concerns that lets a
+deployment dial privacy and verification strength independently
+(Section~\ref{sec:ownership}).
+\end{remark}
+
+\subsection{Why four proofs and not four mechanisms}
+
+The payoff of Definition~\ref{def:primitive} is that the protocol's verification
+surface is \emph{one} primitive (Freivalds-checked matmuls plus deterministic
+recomputation of the cheap remainder) and \emph{one} binding
+(Section~\ref{sec:binding}), regardless of which workload a node sells. Adding a
+fifth workload---say, a diffusion sampling step, or a tool-augmented agentic
+trajectory---requires only a new $\mathsf{workloadType}$ tag and a specification of
+what the trace and output hash range over; it requires no new verifier and no change
+to the binding. This is the orthogonality discipline applied to proofs: each
+workload occupies its own tag, each is independently complete, and none is bolted
+onto another.

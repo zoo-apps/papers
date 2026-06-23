@@ -1,0 +1,86 @@
+\section{Ownership: Data, Models, and Weights as User-Owned Assets}
+\label{sec:ownership}
+
+The execution proofs make a stronger claim possible than ``the network computed
+correctly.'' They make \emph{sovereignty} auditable: a user can own their data, own
+the inference performed on it, and own the model weights they improve, and can choose
+\emph{per request} how much trust to place in whoever runs the compute---without the
+choice ever weakening the guarantee that the work was genuine. Trust becomes a UX
+dial, not a security compromise.
+
+\subsection{The trust spectrum}
+
+For any request, a user selects one of three execution modes, ordered by decreasing
+sovereignty and increasing convenience. Every mode emits the same execution proofs of
+Sections~\ref{sec:four-proofs}--\ref{sec:freivalds}, so every mode is auditable; the
+modes differ only in \emph{who holds the data in the clear} and \emph{who the user
+must trust for liveness}.
+
+\begin{description}[leftmargin=0pt,style=nextline]
+\item[(1) User-operated node --- maximal sovereignty.] The user runs the inference on
+their own hardware. The data never leaves the device; the model and weights are local;
+the proof is emitted for the user's own records or for third parties who later wish to
+verify a result the user publishes. Trust in any operator is zero because there is no
+operator. This is the floor of the spectrum and the reference against which the others
+are measured.
+\item[(2) DAO trustless nodes --- verify, don't trust.] The user sends work to
+permissionless DAO operators, but under confidential compute (T1/T2) so the operator
+is \emph{plaintext-blind}: it processes ciphertext inside an enclave and never sees the
+data in the clear, while the execution proof (\PoI{}/\PoT{}) plus the slashing bond
+makes a wrong or fabricated result detectable and punishable. The user trusts no
+particular operator's honesty---only the proof system and, for the TEE tiers, the
+hardware root. This is the ``verify, don't trust'' mode: sovereignty over correctness
+and confidentiality without running the hardware oneself.
+\item[(3) Selected trusted operators --- convenience.] The user picks specific
+operators by reputation (via the identity-and-reputation layer), accepting a
+centralized-feeling, faster, cheaper path. Even here the proofs remain emittable, so
+the user retains an audit trail: a trusted operator that misbehaves can be caught
+after the fact by anyone who checks the proof, and loses reputation and future
+routing. Trust is placed deliberately and remains accountable.
+\end{description}
+
+The three modes are points on a continuum, not separate products, because they share
+the binding and the proof primitive. A user can move a workload from mode (3) to
+mode (2) to mode (1) as their trust requirements rise, with no change to the artifacts
+the workload produces.
+
+\subsection{Data is never plaintext at rest}
+
+In modes (2) and (3) the data is encrypted under keys held in the user's key
+management, committed on-chain only by hash, and---in the confidential-compute
+tiers---processed as ciphertext inside the enclave. The execution proof binds to
+$\mathsf{inputHash}$ (Section~\ref{sec:binding}), so the proof certifies that the
+\emph{committed} input was processed, while revealing nothing about the input itself.
+This is what makes \PoC{}'s privacy clause (Definition~\ref{def:poc}) more than a
+promise: the contributor proves the gradient was computed over data consistent with
+the committed policy, and shares only the resulting delta, so the corpus stays private
+while the contribution stays verifiable.
+
+\subsection{Weights are a portable, user-owned asset}
+
+A model improvement---the $\Delta W$ of \PoT{}/\PoC{}---is serialized in the gym's
+canonical backend-independent BF16 format and committed by its root
+(Section~\ref{sec:four-proofs}). Because the serialization is canonical and
+backend-independent, a delta trained on one accelerator is byte-portable to any other,
+and its provenance (which base model, which data policy, what improvement margin) is
+attested by the \PoC{} it was minted with. A user's weights are therefore an on-chain
+asset they own and can move, sell, or compose---with royalties flowing to the
+contributors whose proven improvements it incorporates---rather than an artifact
+locked inside a single provider's stack. The proof framework is what gives the asset
+its value: a delta is worth more when it carries a verifiable proof that it was
+genuinely trained and genuinely improves the model, than when it is merely asserted to.
+
+\subsection{Trust as a dial, security as a floor}
+
+The synthesis is that the execution proofs decouple \emph{trust} from \emph{security}.
+A user dials trust up the spectrum---from running everything themselves, to trusting a
+proof system, to trusting a named operator---according to their convenience and
+threat model, and the proof framework holds the security floor constant underneath:
+in every mode, a result that claims to be the model's output on the user's input
+either is, or is caught. This is the difference between the deployed settlement
+engine, where ``trusting the operators'' meant accepting unverified guesses
+(Section~\ref{sec:guess-to-mint}), and a proof-backed network, where trusting an
+operator is a choice about \emph{speed and cost}, never about \emph{correctness}. The
+user owns the data, owns the inference, and owns the weights; the protocol's job is
+only to make all three auditable, at whatever point on the trust spectrum the user
+selects.

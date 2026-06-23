@@ -1,0 +1,114 @@
+\section{The Bitcoin Correspondence: Shared, Software-Only Difficulty}
+\label{sec:difficulty}
+
+The companion Thinking-Chains framing establishes that Proof-of-AI is the ``AI
+Bitcoin'': it keeps Nakamoto consensus's trustless, permissionless issuance through
+verifiable work, but replaces useless hashing with useful cognition, and replaces
+difficulty with a heterogeneous-compute market. This section completes that
+correspondence at the level this paper is about---\emph{verification}---and
+reconciles two notions of ``difficulty'' that the AI setting forces apart.
+
+\subsection{The execution proof is the recomputable hash}
+
+In Bitcoin, the load-bearing line of the whole design is that \emph{any node
+re-hashes the header and checks the claimed solution in $O(1)$}: a stranger can
+verify the work without trusting the worker and without redoing it. Sections
+\ref{sec:binding}--\ref{sec:freivalds} supply the exact cognitive analogue. The
+activation-trace commitment is the value everyone can recompute; the Freivalds check
+is the cheap verification; and Theorem~\ref{thm:soundness} is the guarantee that the
+value \emph{cannot be produced without doing the work}. The difference is that
+Bitcoin's recomputable value is the output of useless hashing, whereas ours is the
+side effect of an answer a paying agent demanded. Table~\ref{tab:bitcoin-verify}
+extends the mechanism-for-mechanism correspondence to the verification layer.
+
+\begin{table}[t]
+\centering
+\caption{Bitcoin and Proof-of-AI at the verification layer. The execution proof of
+this paper is the cognitive counterpart of the recomputable hash, but
+software-only and over useful work.}
+\label{tab:bitcoin-verify}
+\small
+\begin{tabular}{@{}p{3.2cm}p{4.3cm}p{5.3cm}@{}}
+\toprule
+ & Bitcoin (PoW) & Proof-of-AI (this paper) \\
+\midrule
+The recomputable value & the block-header SHA-256d & the activation-trace MMR root + output hash \\
+What it proves & $\sim 2^{d}$ hashes were tried & the genuine matmuls were performed (Thm.~\ref{thm:soundness}) \\
+Verifier cost & $O(1)$: one hash & $O(n^2)$ Freivalds, or $O(\log L)$ bisection to certainty \\
+Hardware to verify & any CPU & any CPU (Cor.~\ref{cor:software-only}) \\
+Hardware to \emph{produce} & ASIC (centralizing) & any AI accelerator \emph{or} CPU; no TEE required \\
+Unforgeability root & preimage resistance of SHA-256 & Freivalds soundness $+$ keccak collision resistance \\
+Freshness / anti-replay & previous block hash in header & $\mathsf{openBlockHash}$ beacon in the challenge (Lem.~\ref{lem:anti-replay}) \\
+Product of the work & none (discarded) & the answer / embedding / improved weights \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Two difficulties: price and verification}
+
+Bitcoin has \emph{one} difficulty because it prices and verifies \emph{one}
+homogeneous resource (SHA-256 hashpower): the same scalar tunes how hard it is to
+\emph{find} a block and is implicit in how the network \emph{checks} it. Intelligence
+is not homogeneous---it is produced on GPUs, CPUs, unified-memory Apple silicon, and
+accelerators differing by orders of magnitude in memory, bandwidth, and
+throughput---so Proof-of-AI must split the single scalar into two orthogonal
+quantities, and keep both.
+
+\begin{description}[leftmargin=0pt,style=nextline]
+\item[Difficulty-as-price (the HMM).] The cost of a thought is set by the Hamiltonian
+Market Maker, a physics-based AMM over a heterogeneous-compute reserve manifold
+(GPU-hours, VRAM, CPU, bandwidth, storage) that places each task on the cheapest
+capable hardware and quotes a continuous, capital-efficient price. This is the
+generalization of Bitcoin's difficulty adjustment to a market: as compute joins, the
+price of cognition falls and re-stabilizes, exactly as Bitcoin's difficulty rises to
+hold block time as hashpower joins. The HMM answers \emph{how much should this work
+cost?}
+\item[Difficulty-as-soundness-bar (this paper).] The strength of the verification is
+set by the network-shared soundness parameters: the field size $p$, the number of
+Freivalds vectors $k_{\mathrm{rep}}$ and sampled layers $s$
+(Theorem~\ref{thm:soundness}), and the bond a prover escrows
+(Section~\ref{sec:tiers}). These are uniform across all provers---a CPU validator and
+a GPU farm face the same bar---and adjustable like Bitcoin's difficulty: as the value
+at stake or the adversary's resources grow, the network raises $k_{\mathrm{rep}}$,
+$s$, or the bond. The soundness bar answers \emph{how sure must we be the work was
+done?}
+\end{description}
+
+The two are genuinely orthogonal: pricing concerns \emph{which heterogeneous
+resource} clears the demand and at what rate; verification concerns \emph{whether the
+claimed computation occurred}, and is hardware-agnostic by
+Corollary~\ref{cor:software-only}. Conflating them is the error the deployed
+settlement engine of Section~\ref{sec:guess-to-mint} makes implicitly---it prices
+and pays for agreement while verifying nothing about computation. Keeping them
+separate is what lets the protocol \emph{price} work across the messy real world of
+heterogeneous compute while \emph{verifying} it with a single, uniform, software-only
+bar.
+
+\begin{principle}[Pricing $\perp$ verification]
+\label{prin:price-verify}
+The HMM prices the work; the execution proof verifies it. The two difficulties are
+independent dials: the market sets what cognition costs across heterogeneous
+hardware, and the soundness bar sets how certain the network is that the cognition
+occurred. Bitcoin needed only one dial because its work was homogeneous and useless;
+Proof-of-AI needs both because its work is heterogeneous and useful.
+\end{principle}
+
+\subsection{Software-only difficulty is egalitarian difficulty}
+
+Bitcoin's difficulty, though uniform as a number, is \emph{not} egalitarian in
+practice: producing the work economically requires ASICs, which centralizes mining
+among those who can fabricate or buy them. Proof-of-AI's soundness bar is uniform
+\emph{and} egalitarian, because the work it gates can be both produced and verified
+in software. By Corollary~\ref{cor:software-only}, a CPU-only participant can verify
+any proof and---on the optimistic-Freivalds and redundancy tiers
+(Section~\ref{sec:tiers})---can also \emph{produce} proofs for models it can run,
+challenge proofs it suspects, and earn by catching fraud. There is no hardware
+gate on participation in verification, and no enclave-vendor gate on participation in
+proving. The ``hash everyone can recompute'' becomes, here, a computation everyone
+can both perform at their scale and check at CPU cost---which is the property Bitcoin
+aspired to and ASIC economics eroded.
+
+What the network mines, in the end, is useful cognition; what it hashes to is a
+shared, recomputable commitment; and what it adjusts as compute joins is two dials
+instead of one---price, by the HMM, and certainty, by the soundness bar of
+Theorem~\ref{thm:soundness}.
