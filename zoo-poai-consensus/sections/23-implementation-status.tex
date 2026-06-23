@@ -75,6 +75,50 @@ bf16/f16 router kernel. Off by default---normal inference keeps the fast path---
 turned on for proof-bearing runs, and it is the routing analog of the lowest-id argmax
 tie-break.
 
+Each prerequisite is pinned by its own passing unit test
+(\texttt{test\_argmax\_tie\_breaks\_to\_lowest\_id} in \texttt{sampler.rs},
+\texttt{test\_deterministic\_moe\_routing\_tie\_break\_lowest\_expert} in \texttt{ops.rs}),
+so the verifier core and the determinism contract it relies on are \textbf{8/8 passing}
+together.
+
+\subsection{Released and consumed on-chain}
+
+The built-and-tested core is not confined to a feature branch: it is merged to the default
+branch and tagged under public semantic versioning, and the chain-side verifier the
+settlement layer consumes is published as a separate, canonical primitive.
+
+\begin{itemize}[leftmargin=1.4em]
+\item \textbf{Canonical verifier (\texttt{luxfi/crypto/poi}, \texttt{v1.19.23}).} The
+verifier the chain consumes is a dependency-light Go package living beside the canonical
+\texttt{Keccak256}: \texttt{Verify}/\texttt{VerifyMulti} over $\mathbb{F}_p$ ($p=2^{61}-1$)
+on the exact integer accumulator, with keccak \texttt{DeriveChallenges}. The engine's
+\texttt{poi.rs} is the prover-side mirror; the two must agree byte-for-byte.
+\item \textbf{Prover-side engine (\texttt{hanzoai/engine}, \texttt{v1.2.5}).} The
+\texttt{poi.rs} core and the two determinism prerequisites above, on the engine's released
+line.
+\item \textbf{On-chain enforcement (\texttt{luxdao/contracts}, \texttt{v2.1.0}).} The
+settlement contracts gate every AI-work mint on a valid compute proof at the tier's
+required proof type (\emph{no valid proof, no mint, no settle}): the \texttt{reportData}
+binding library, the tier$\to$proof-type profile, the optimistic and confidential-compute
+evidence backends, and an attestation-root registry. The two verified-cognition mint paths
+(attested A-chain receipts and on-chain thinking-validator consensus) share one capped
+coin under a joint halving, so adding a mint path never inflates past the cap.
+\textbf{230/230} contract tests pass.
+\item \textbf{Node binaries.} The prover-side core ships in the Rust inference
+engine (\texttt{hanzo-engine} v1.2.5) and is inherited by the Hanzo node
+(\texttt{hanzod}, which embeds the engine as a path dependency); the chain-side
+verifier reaches the Go nodes (\texttt{luxd}, \texttt{zood}) through the
+\texttt{luxfi/crypto/poi} dependency (v1.19.23), and EVM-level enforcement is
+node-agnostic. What is \emph{not} yet wired into any node's forward path is the
+emission of the activation-trace transcript---the next increment below.
+\end{itemize}
+
+What this establishes jointly with the core suite: the soundness primitive is correct in
+isolation \emph{and} the economic gate that consumes it---reject any payout whose claimed
+work carries no admissible proof---is implemented and tested at the contract layer. What it
+does \emph{not} yet establish is end-to-end emission from a running model, which the next
+subsection scopes.
+
 \subsection{Designed, not yet built}
 
 The following are specified in this paper and are the honest remaining work; none is
