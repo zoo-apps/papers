@@ -19,6 +19,7 @@
 \input{shared/lstlang}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{enumitem}
 % geometry loaded by zoocover
 
 % Theorem environments
@@ -28,12 +29,20 @@
 \newtheorem{corollary}[theorem]{Corollary}
 \newtheorem{definition}{Definition}[section]
 \newtheorem{example}{Example}[section]
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+\theoremstyle{plain}
 
 % Custom commands
 \newcommand{\Zoo}{\textsc{Zoo}}
 \newcommand{\PoAI}{\textsc{PoAI}}
 \newcommand{\LLM}{\textsc{llm}}
 \newcommand{\TEE}{\textsc{tee}}
+\newcommand{\PoE}{\textsc{PoE}}
+\newcommand{\PoI}{\textsc{PoI}}
+\newcommand{\PoT}{\textsc{PoT}}
+\newcommand{\PoC}{\textsc{PoC}}
+\newtheorem{principle}{Principle}[section]
 
 % Hyperref setup
 \hypersetup{
@@ -58,9 +67,35 @@ Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
 \zoocoverpage
 
 \begin{abstract}
-We introduce \textbf{Proof of AI} (\PoAI{}), a novel consensus mechanism designed for networks where participants contribute AI compute rather than hash power or stake. Unlike Proof of Work which wastes energy on cryptographic puzzles, or Proof of Stake which concentrates power among token holders, \PoAI{} rewards nodes for performing \emph{useful} AI computation: inference, training, and experience extraction. Our protocol combines three components: (1) \textbf{Compute Verification} using Trusted Execution Environments (\TEE{}s) to attest that claimed work was performed, (2) \textbf{Quality Scoring} via multi-party evaluation to assess the value of contributed compute, and (3) \textbf{Attestation Aggregation} using BLS signatures for efficient on-chain verification. We prove that \PoAI{} achieves Byzantine fault tolerance under standard assumptions while incentivizing economically rational behavior. Experimental evaluation on a 100-node testnet demonstrates 847 TPS throughput with 2.3-second finality, while rewarding nodes proportional to their AI contribution quality.
+We introduce \textbf{Proof of AI} (\PoAI{}), a consensus mechanism for networks where
+participants contribute AI compute rather than hash power or stake. Bitcoin's hash is
+\emph{useless} work with $O(1)$ verification; \PoAI{} replaces it with \emph{useful}
+work---genuine AI execution---plus a proof that is a \emph{side effect} of that
+execution and cheaply checkable, requiring \emph{software only}: no trusted execution
+environment and no GPU attestation. The recomputable ``hash everyone can check''
+becomes an activation-trace commitment that cannot be produced without performing the
+genuine matrix multiplications. We give one primitive realizing four
+execution-level proofs over a workload tag---Proof-of-Embedding, Proof-of-Inference,
+Proof-of-Training, and a privacy-preserving Proof-of-Contribution---by committing the
+computation trace and spot-checking its matmuls with Freivalds' algorithm over the
+int8 path's exact integer accumulator, which yields a bit-exact check with soundness
+error $1/p \approx 2^{-61}$ per vector ($2^{-122}$ at $k{=}2$) and \emph{zero} false
+rejections. We bind every proof to its task with a domain-separated,
+beacon-fresh, measured-model commitment, and prove anti-substitution and anti-replay
+for it. We position the scheme as Bitcoin's shared, software-only difficulty---the
+Hamiltonian Market Maker \emph{prices} heterogeneous compute while the execution proof
+\emph{verifies} it, two orthogonal dials---and give a single profile gate mapping tiers
+(zkML, $M$-of-$N$ confidential compute, optimistic-Freivalds, redundancy) to required
+proof strength, so that ``no valid compute proof'' means ``no mint.'' We motivate the
+construction with a concrete attack on a deployed settlement engine that today mints
+for a one-bit guess, because a signature proves authorship and a plurality proves
+agreement, but neither proves computation. We retain \TEE{} attestation, multi-party
+quality scoring, and BLS aggregation as the strong and pricing layers; the execution
+proofs are what bind reward to genuine work.
 
-\textbf{Keywords}: consensus mechanism, proof of useful work, AI compute verification, trusted execution environments
+\textbf{Keywords}: consensus, proof of useful work, AI compute verification, Freivalds'
+algorithm, optimistic verification, trusted execution environments, verifiable machine
+learning
 \end{abstract}
 
 \input{sections/01-introduction}
@@ -70,6 +105,19 @@ We introduce \textbf{Proof of AI} (\PoAI{}), a novel consensus mechanism designe
 \input{sections/05-quality-scoring}
 \input{sections/06-security-analysis}
 \input{sections/07-experimental-evaluation}
+% ── Execution-level proofs: the software-only, Bitcoin-style provable-AI scheme ──
+\input{sections/11-guess-to-mint-attack}
+\input{sections/15-binding-scheme}
+\input{sections/16-four-proofs}
+\input{sections/17-freivalds-hash}
+\input{sections/18-shared-difficulty}
+\input{sections/19-tier-matrix}
+\input{sections/20-ownership}
+% ── Full modern-LLM coverage: fp-vs-quantized tiering, the zen zoo, build status ──
+\input{sections/21-modern-llm-coverage}
+\input{sections/22-architecture-families}
+\input{sections/23-implementation-status}
+% ── Original material ──
 \input{sections/08-related-work}
 \input{sections/09-future-work}
 \input{sections/10-conclusion}

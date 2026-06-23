@@ -1,0 +1,259 @@
+\section{Coverage of the Model Zoo: Two Extensions Suffice}
+\label{sec:families}
+
+Section~\ref{sec:four-proofs} establishes that the base primitive---Freivalds-checked
+matmuls plus deterministic recomputation of the cheap remainder---covers any workload
+whose dominant cost is dense matrix multiplication. Modern model families, however, are
+not all plain stacks of GEMMs: some route tokens to a sparse subset of experts, some
+replace attention with a linear recurrence or state-space scan, some consume pixels or
+audio, and some denoise a latent over many steps. This section surveys the architecture
+families actually shipped in the \Zoo{} model zoo and maps each to what the proof needs.
+The payoff is a structural claim that makes ``support the entire zoo'' tractable:
+\emph{beyond the base matmul check, there are exactly two new core techniques}---a
+\emph{routing proof} and a \emph{sequential-chaining proof}---plus per-modality input and
+output commitments with deterministic pre- and post-processing. No third core technique
+is required.
+
+We are scholarly about status. The base Freivalds verifier over the exact integer
+accumulator is \emph{implemented and unit-tested} (Section~\ref{sec:impl-status}); the
+two determinism prerequisites the harder families lean on---the lowest-token-id argmax
+tie-break and the canonical backend-independent MoE top-$k$---are \emph{also implemented
+and tested in the engine}. The activation-trace commitment, the forward-pass
+integration, the routing proof, and the sequential-chaining proof are \emph{designed
+here, not yet built}; we label each obligation accordingly.
+
+\subsection{Dense transformer (base case)}
+
+The dense decoder/encoder---\texttt{zen-nano} and the dense tiers of the family---is the
+case the base primitive covers directly. Every layer is a sequence of GEMMs (the
+attention $Q,K,V$ projections, the score--value product, the output projection, and the
+two MLP matmuls) interleaved with normalization and an activation. The matmuls are
+Freivalds-checked (Theorem~\ref{thm:soundness}); the elementwise remainder is committed
+and recomputed (Section~\ref{sec:freivalds}). \textbf{Need:} base primitive only.
+\textbf{Status:} verifier core built and tested; trace commitment + forward hooks
+designed.
+
+\subsection{Mixture-of-Experts: the routing proof}
+\label{sec:moe-proof}
+
+MoE models~\cite{shazeer2017moe}---\texttt{zen4-max} ($35$B-A3B), \texttt{zen-coder-flash}
+(GLM-style MoE), \texttt{zen-max} (DeepseekV3/Kimi-style, $384$ experts, $8$ active)---add a
+router that, per token, scores the experts and dispatches the token to its top-$k$. The expert FFNs
+are still GEMMs (base primitive covers them once the right experts are known), but the
+\emph{routing} introduces two new obligations.
+
+\paragraph{Routing determinism (built).} A different selected expert is a different
+sub-network, so if a prover and a re-deriving verifier disagree on the top-$k$ they
+compute different outputs and an honest run false-rejects. The engine therefore exposes
+a process-wide proof-deterministic routing mode (\texttt{set\_moe\_proof\_deterministic};
+Section~\ref{sec:impl-status}) whose top-$k$ uses a \emph{canonical, backend-independent
+tie-break}---order each row by (score descending, expert-index ascending) under an f32
+total order---so every machine selects the identical experts. This is the routing analog
+of the lowest-id argmax tie-break, and it is implemented and tested.
+
+\paragraph{Routing proof (designed).} Determinism makes the selection reproducible;
+soundness additionally requires that the prover \emph{committed} to the router's behavior
+so a verifier can recheck it. The routing proof commits, per routed token, (i) the router
+logits (themselves a matmul output, hence Freivalds-checkable), (ii) the selected expert
+indices, and (iii) which tokens activated which experts (the sparse activation pattern).
+A verifier challenging a token recomputes the top-$k$ from the committed (and
+Freivalds-verified) router logits under the canonical tie-break and checks it against the
+committed indices; it then checks that the committed expert-FFN matmuls used exactly
+those experts on exactly those tokens. The discrepancy a cheater would introduce---routing
+to a cheaper expert, or skipping the dispatch---is caught either at the top-$k$ recheck
+(wrong indices) or at the expert-matmul Freivalds check (wrong sub-network). \textbf{Need:}
+routing determinism (built) $+$ routing proof: commit router logits, selected indices,
+sparse activation pattern (designed). \textbf{This is the first of the two new core
+techniques.}
+
+\subsection{Linear / gated-recurrent / state-space: the sequential-chaining proof}
+\label{sec:ssm-proof}
+
+The single most important new technique is for the families whose sequence mixer is
+\emph{not} a single batched matmul. The \Zoo{} zoo ships several:
+\texttt{zen4-nano/micro/mini/pro} use a gated-DeltaNet~\cite{yang2024deltanet}
+linear-attention recurrence; \texttt{zen4-thunder/storm} use a lightning-attention linear
+recurrence; Mamba/SSM-style backbones~\cite{gu2023mamba} use a selective state-space scan. In all of these, the layer carries a
+\emph{recurrent state} $S_t$ updated step by step:
+\begin{equation}
+\label{eq:recurrence}
+S_t \;=\; \Phi_t\, S_{t-1} \;+\; \Psi_t,
+\qquad
+o_t \;=\; \Omega_t\, S_t,
+\end{equation}
+where $\Phi_t,\Psi_t,\Omega_t$ are (input-dependent) linear maps. Each \emph{step}
+of~\eqref{eq:recurrence} is matmuls and so is Freivalds-checkable in isolation. The new
+difficulty is the \emph{chain}: a prover could compute each step honestly in isolation yet
+splice in a fabricated $S_{t-1}$ at the boundary, so that step $t$ is internally
+consistent but uses a state that was never produced by step $t-1$. Per-step Freivalds
+alone does not catch a broken seam, because each step's check sees only its own operands.
+
+\paragraph{The chaining technique (designed).} Bind \emph{consecutive states} in the
+commitment. The prover commits each recurrent state $S_t$ into the activation trace and,
+crucially, commits the \emph{transition} so that step $t$'s committed input state is
+constrained to equal step $t-1$'s committed output state. Concretely, the trace orders
+the states $S_0, S_1, \ldots, S_T$ and the per-step Freivalds check at step $t$ takes its
+input state from the committed $S_{t-1}$ leaf (not a freshly supplied one); a verifier
+that challenges step $t$ checks both that $S_t = \Phi_t S_{t-1} + \Psi_t$ (the step's
+matmuls, Freivalds) \emph{and} that the $S_{t-1}$ it used is the same leaf the trace
+commits as step $t-1$'s output. The seam is thus pinned by the commitment, and a spliced
+state is detected as a mismatch between the leaf step $t$ consumed and the leaf step
+$t-1$ produced. \textbf{Need:} per-step Freivalds $+$ binding consecutive recurrent states
+in the commitment (designed). \textbf{This is the second of the two new core techniques.}
+
+\subsection{Multimodal vision (ViT tower)}
+\label{sec:vision}
+
+The vision-language models---\texttt{zen-vl}, \texttt{zen-omni} (vision path),
+\texttt{zen-designer} (Qwen3-VL family)---prepend a vision tower to the language model. The
+tower is a Vision Transformer: the patch embedding is a convolution, which is an
+\emph{im2col}-then-GEMM, and every subsequent block is the dense-transformer case. So the
+tower's heavy arithmetic is \emph{already covered} by the base Freivalds primitive once the
+convolution is expressed as im2col$\to$GEMM. Two modality-specific obligations remain, both
+of the ``commit-and-recompute deterministically'' kind rather than new core techniques:
+
+\begin{enumerate}[leftmargin=1.6em]
+\item \textbf{Preprocessed-pixel commitment.} The $\mathsf{inputHash}$ must bind the
+\emph{preprocessed} pixel tensor (resized, normalized, patchified), not the original
+image file, so a prover cannot answer an easier image than the one posed. The
+preprocessing (resize, normalize) must be a \emph{deterministic}, pinned operation in
+$\mathsf{runtimeMeasurement}$, exactly as the tokenizer is for text.
+\item \textbf{Patch-embed as im2col$\to$GEMM.} The convolution is committed as its GEMM
+form so the same Freivalds check applies; the im2col rearrangement is an index gather and
+is committed and recomputed.
+\end{enumerate}
+\textbf{Need:} base primitive $+$ deterministic image preprocessing $+$ preprocessed-pixel
+commitment $+$ conv-as-im2col-GEMM (commitment designed; the GEMM check itself is the built
+core). If the model also routes vision tokens through experts (MoE-VL), it additionally
+needs the routing proof of Section~\ref{sec:moe-proof}---no third technique.
+
+\subsection{Audio (conformer / speech)}
+\label{sec:audio}
+
+The audio models---\texttt{zen-tts}, the \texttt{zen-omni} audio path---are conformer/speech
+stacks whose self-attention and feed-forward blocks are again GEMMs (base primitive). The
+modality-specific piece is the \emph{front end}: raw audio is turned into mel-spectrogram
+features by a short-time Fourier transform and a mel filterbank. An FFT is not a matrix
+multiply in the Freivalds sense (it is a fixed, input-independent linear transform), so it
+is handled by \emph{commit-and-recompute}: the feature extraction is deterministic signal
+processing with a pinned window, hop, and filterbank, committed in the trace and recomputed
+by a challenger from the committed input samples. The model's audio output (waveform or
+codec tokens) is committed in $\mathsf{outputHash}$. \textbf{Need:} base primitive $+$
+deterministic FFT$\to$mel feature extraction (commit-and-recompute) $+$ input-sample and
+audio-output commitments. No new core technique---the FFT is the audio analog of softmax in
+the non-matmul remainder (Section~\ref{sec:freivalds}).
+
+\subsection{Diffusion / Transfusion: chaining again}
+\label{sec:diffusion}
+
+The generative families---\texttt{zen5}'s 3D/video and \texttt{zen-designer}'s image
+generation, built on a Transfusion-style~\cite{zhou2024transfusion}
+autoregressive-plus-diffusion design---denoise a latent over many steps. Each denoising step is a forward pass through a transformer or
+U-Net, i.e.\ matmuls, so a \emph{single} step is the base case. The multi-step loop poses
+the same seam problem as the recurrent family: the latent $z_t$ at step $t$ must be the one
+that step $t-1$ actually produced, and a prover could splice. The resolution is the
+\emph{same} sequential-chaining primitive of Section~\ref{sec:ssm-proof}: commit each
+intermediate latent $z_0, \ldots, z_T$, pin step $t$'s input latent to step $t-1$'s
+committed output latent, and Freivalds-check each step. Two diffusion-specific determinism
+clauses join $\mathsf{runtimeMeasurement}$: the \emph{noise schedule} and the
+\emph{sampler/seed} must be pinned, so that the (otherwise stochastic) trajectory is a
+deterministic function of the prompt and the committed seed---the diffusion analog of
+temperature-$0$ decoding. \textbf{Need:} per-step Freivalds $+$ deterministic
+noise-schedule/sampler/seed $+$ multi-step latent chaining---and the chaining is
+\emph{literally} the recurrent-family technique reused, which is the point.
+
+\subsection{The unifying claim}
+\label{sec:unifying}
+
+Table~\ref{tab:families} summarizes the survey. Read down the ``new core technique''
+column: it takes only two distinct values. Mixture-of-experts (including its multimodal
+variants) needs the \emph{routing proof}; the linear-recurrent/SSM family \emph{and}
+diffusion's multi-step loop both need the \emph{sequential-chaining proof}; everything
+else is the base matmul primitive plus per-modality input/output commitment and
+deterministic pre/post-processing. That the recurrent backbones and the diffusion sampler
+collapse onto the \emph{same} chaining primitive---despite looking unrelated---is what
+caps the technique count at two and makes whole-zoo coverage a finite, enumerable
+engineering task rather than an open-ended one.
+
+\begin{table}[t]
+\centering
+\caption{The \Zoo{} model zoo mapped to proof obligations. Beyond base
+Freivalds-on-matmuls there are exactly two new core techniques (routing proof,
+sequential-chaining proof); the rest is per-modality commitment and deterministic
+pre/post-processing. ``Built'' = implemented and tested in the engine; ``designed'' =
+specified here, not yet built.}
+\label{tab:families}
+\scriptsize
+\begin{tabular}{@{}p{2.6cm}p{2.9cm}p{3.0cm}p{3.1cm}@{}}
+\toprule
+Family (zoo models) & Heavy arithmetic & New core technique & Modality / determinism add-ons \\
+\midrule
+Dense transformer\newline(\texttt{zen-nano}, dense tiers)
+  & GEMMs (base)
+  & none
+  & --- \\[3pt]
+MoE\newline(\texttt{zen4-max}, \texttt{zen-coder-flash}, \texttt{zen-max})
+  & expert-FFN GEMMs
+  & \textbf{routing proof} (designed); routing determinism \emph{built}
+  & commit router logits, expert indices, sparse pattern \\[3pt]
+Linear / gated-recurrent / SSM\newline(\texttt{zen4-nano/micro/mini/pro}, \texttt{zen4-thunder/storm})
+  & per-step GEMMs
+  & \textbf{sequential chaining} (designed)
+  & bind consecutive states $S_{t-1}\!\to\!S_t$ \\[3pt]
+Multimodal ViT\newline(\texttt{zen-vl}, \texttt{zen-omni}, \texttt{zen-designer})
+  & tower GEMMs; conv as im2col$\to$GEMM
+  & none (MoE-VL: routing proof)
+  & deterministic image preprocessing; preprocessed-pixel commit \\[3pt]
+Audio / speech\newline(\texttt{zen-tts}, \texttt{zen-omni} audio)
+  & conformer GEMMs
+  & none
+  & deterministic FFT$\to$mel (commit-and-recompute); audio I/O commit \\[3pt]
+Diffusion / Transfusion\newline(\texttt{zen5} 3D/video, \texttt{zen-designer} image-gen)
+  & per-step GEMMs
+  & \textbf{sequential chaining} (designed, \emph{reused})
+  & pinned noise schedule, sampler, seed; latent chaining \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{theorem}[Two-extension coverage of the zoo]
+\label{thm:two-extensions}
+Let the verification surface consist of (i) the base primitive (Freivalds-checked
+matmuls plus deterministic commit-and-recompute of elementwise/transform ops), (ii) the
+routing proof of Section~\ref{sec:moe-proof}, and (iii) the sequential-chaining proof of
+Section~\ref{sec:ssm-proof}, each composed with the per-modality input/output commitments
+and the determinism contract. Then every architecture family shipped in the \Zoo{} zoo---
+dense, MoE, linear-recurrent/SSM, multimodal vision, audio, and diffusion/Transfusion---is
+covered: its heavy arithmetic reduces to matmuls verified by (i), its sparse routing (if
+any) by (ii), and its inter-step state or latent seam (if any) by (iii). No additional
+core verification technique is required.
+\end{theorem}
+
+\begin{proof}[Argument]
+By the per-family analyses above, composed with the orthogonality of
+Section~\ref{sec:four-proofs}. Each family's dominant cost is dense matmul (the attention
+projections and MLPs of a transformer block, the expert FFNs of an MoE, the per-step maps
+of a recurrence~\eqref{eq:recurrence}, the per-step denoiser of a diffusion loop, the ViT
+tower including the im2col-expressed convolution, and the conformer blocks), all covered
+by~(i). The two structural departures from a plain GEMM stack are sparse expert routing and
+an inter-step state/latent dependency. Routing is covered by~(ii): the router logits are a
+matmul output checked by~(i), the canonical top-$k$ is recomputed and checked against the
+committed indices, and the expert matmuls are checked by~(i) against exactly the committed
+experts. The inter-step seam---identical in form for the recurrent state $S_t$ and the
+diffusion latent $z_t$---is covered by~(iii): consecutive states are bound in the
+commitment so step $t$'s consumed leaf must equal step $t-1$'s produced leaf, and each step
+is checked by~(i). The remaining per-modality operations (tokenization, image
+preprocessing, FFT/mel feature extraction, noise scheduling) are deterministic, pinned, and
+input-independent or elementwise, hence committed and recomputed under the determinism
+contract with zero false rejection, and the per-modality $\mathsf{inputHash}/
+\mathsf{outputHash}$ bind the boundary data. As every family decomposes into these three
+cases plus pinned pre/post-processing, the three techniques suffice. \qed
+\end{proof}
+
+The decomplecting discipline of Section~\ref{sec:four-proofs} extends cleanly here. The
+routing proof is its own slot, orthogonal to the base primitive and to chaining; the
+chaining proof is its own slot, shared by two families that happen to need the same seam
+guarantee. Adding a future architecture means asking only ``does it route?'' and ``does it
+carry inter-step state?''---two yes/no questions selecting from a fixed set of three
+techniques---rather than designing a new verifier. That is the sense in which whole-zoo
+coverage is \emph{simple} and not merely \emph{possible}.

@@ -35,5 +35,28 @@ This paper makes the following contributions:
     \item \textbf{Security Analysis}: Proofs of Byzantine fault tolerance and incentive compatibility (Section~\ref{sec:security})
 
     \item \textbf{Evaluation}: Experimental results demonstrating scalability and efficiency (Section~\ref{sec:evaluation})
+
+    \item \textbf{Execution-level proofs (software-only)}: We close the gap that
+    signature-plus-plurality leaves open---paying for a guess rather than for
+    computation (Section~\ref{sec:guess-to-mint})---with one primitive yielding four
+    proofs (Section~\ref{sec:four-proofs}), a software-only Freivalds verifier with a
+    soundness theorem (Section~\ref{sec:freivalds}), a domain-separated task binding
+    with anti-replay and anti-substitution lemmas (Section~\ref{sec:binding}), the
+    Bitcoin shared-difficulty correspondence (Section~\ref{sec:difficulty}), a
+    single-gate tier matrix (Section~\ref{sec:tiers}), and a user-sovereignty trust
+    spectrum (Section~\ref{sec:ownership}).
+
+    \item \textbf{Full modern-LLM coverage}: We show that ``support every modern LLM''
+    is achieved by \emph{tiering} verification to the arithmetic---never by a
+    floating-point Freivalds, which is unsound (a tolerance corridor) and unusable
+    (cross-hardware false-reject) at once---and that floating-point GEMMs become
+    bit-exact by pinning the reduction order (Section~\ref{sec:fp-coverage}). We map the
+    \Zoo{} model zoo (dense, mixture-of-experts, linear-recurrent/state-space,
+    multimodal vision, audio, and diffusion) to proof obligations and prove that beyond
+    base matmul checking exactly \emph{two} new core techniques suffice---a routing proof
+    and a sequential-chaining proof (Section~\ref{sec:families}). We report the build
+    status honestly: the Freivalds verifier core and the two determinism prerequisites
+    are implemented and unit-tested in the engine, while the commitment layer and the
+    two extensions are designed (Section~\ref{sec:impl-status}).
 \end{enumerate}
 

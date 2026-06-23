@@ -1,0 +1,248 @@
+\section{The Software-Only Execution Proof}
+\label{sec:freivalds}
+
+This section constructs the artifact that plays, for Proof-of-AI, the role the hash
+plays for Bitcoin: a value that is a \emph{side effect} of the genuine computation,
+that is \emph{cheap to verify} relative to producing it, and that \emph{cannot be
+produced without performing the work}---but where the work is real AI inference and
+the verification requires \emph{only software}: a model file and a CPU, no trusted
+execution environment, no GPU attestation. The construction has three parts: a
+commitment to the computation trace (so there is something to check against), a
+probabilistic verifier for the matrix products (Freivalds' algorithm, made
+bit-exact by the integer quantization path), and a determinism contract (so that
+``re-derive and compare'' is well-defined across heterogeneous hardware). We then
+prove soundness.
+
+\subsection{The activation-trace commitment}
+\label{sec:mmr}
+
+A forward (or backward) pass produces a sequence of intermediate tensors
+$T_1, T_2, \ldots, T_L$: the output of each matmul, each normalization, each
+activation, each attention block. The prover commits to this sequence as it streams,
+using a Merkle Mountain Range (MMR) over the per-tensor digests
+$d_i = \mathsf{keccak}(\mathsf{enc}(T_i))$, where $\mathsf{enc}$ is the canonical
+fixed-point encoding of the tensor. An MMR is appended in $O(\log i)$ work per leaf
+and maintains a frontier of $O(\log L)$ peak digests; for the layer counts of
+current models the frontier is a few hundred bytes (on the order of $768$ bytes for
+$L$ up to $\sim 2^{24}$), so the trace commitment is streamable in constant memory
+and the prover never has to retain the full trace. The committed root is the
+$\mathsf{activationTraceRoot}$ of Definition~\ref{def:primitive}; the
+$\mathsf{modelWeightsRoot}$ is the analogous keccak Merkle root computed once, at
+load time, over the quantized weight blocks the prover holds.
+
+We emphasize a fact about the present implementation, in the interest of stating
+only what is true: the engine today emits logits without an activation-trace
+commitment; the MMR of this subsection is the proposed proof-bearing addition, and
+its natural integration point is the synchronous inference precompile already
+present in the execution client. The commitment is cheap by design precisely so that
+adding it does not change the asymptotic cost of inference.
+
+\subsection{Freivalds verification over an exact integer accumulator}
+
+The dominant operation in every layer is a matrix product $C = A B$ with
+$A \in \mathbb{Z}^{m\times k}$, $B \in \mathbb{Z}^{k\times n}$. Re-executing it costs
+$O(mnk)$. Freivalds' algorithm~\cite{freivalds1979} verifies a claimed $C$ with one
+matrix--vector product on each side: sample $r \in \mathbb{F}_p^{\,n}$ and accept iff
+\begin{equation}
+\label{eq:freivalds}
+A\,(B\,r) \;=\; C\,r \pmod p,
+\end{equation}
+which costs $O(mn + nk) = O(n^2)$ field operations---asymptotically cheaper than the
+$O(n^3)$ product and far cheaper than re-running the layer. The random vector $r$ is
+derived from the challenge, $r = \mathsf{PRG}(\mathsf{ch} \,\|\, \ell)$ for layer
+index $\ell$, so by Lemma~\ref{lem:anti-replay} it is unpredictable until the beacon
+block and cannot be pre-baked.
+
+The decisive enabling fact is that the proof-bearing inference mode runs on an
+\emph{exact integer} matmul. In the int8 quantization path, weights and activations
+are stored as signed $8$-bit blocks and the per-block dot product accumulates in a
+$32$-bit integer with \emph{no intermediate rounding}; the floating-point scale is
+applied only \emph{after} the integer accumulation closes. Concretely, for a $32$-lane
+block the kernel computes $\sum_j x_j y_j$ with $x_j, y_j \in [-128, 127]$, so each
+product is at most $127^2 = 16129$ and a block sum is at most $516128$, comfortably
+inside the $\mathbb{Z}_{2^{31}}$ range---hence the accumulation is provably exact. The
+same exact-integer dot is realized in portable scalar code and in hardware
+integer-dot instructions (NEON \texttt{vdotq\_s32}, AVX2 \texttt{madd}, WASM
+\texttt{i32x4\_dot}), all accumulating in $32$-bit integer lanes before any
+conversion to float. Because the accumulator is exact integers, the products live in
+$\mathbb{Z}$, and we may run the Freivalds check~\eqref{eq:freivalds} over a prime
+field $\mathbb{F}_p$ with $p = 2^{61}-1$ (a Mersenne prime, so reduction is a shift
+and add) large enough that no honest matmul ever wraps. The consequence is that the
+check has \emph{zero false rejections}: an honest prover passes with probability
+exactly $1$, because integer equality implies equality mod $p$.
+
+\begin{remark}[Why the proof-bearing mode is quantized, not fp16]
+Floating-point matrix multiplication is \emph{not} associative and \emph{not}
+reproducible across hardware: the same $A B$ computed with fp16 accumulation on two
+GPUs, or on a GPU versus a CPU, can differ in the low bits due to differing reduction
+orders, fused-multiply-add availability, and rounding. A Freivalds check over fp16
+would therefore suffer false rejections on honest cross-hardware re-derivation, which
+is fatal for a permissionless verifier. The integer path removes this: i8$\times$i8
+$\to$ i32 accumulation is associative and bit-identical on every architecture, so the
+proof-bearing mode is the quantized mode by necessity, not by preference. This is the
+software-only analogue of fixing a single hash function: a single, exactly
+reproducible arithmetic.
+\end{remark}
+
+\subsection{The non-matmul remainder}
+
+Softmax, RMS/layer normalization, GELU/SiLU activations, and the attention softmax
+are not matrix products and so are not Freivalds-checked. They are handled by
+\emph{commit-and-recompute}: each is committed in the trace (Section~\ref{sec:mmr}),
+and a verifier challenging a step recomputes that op deterministically from the
+committed inputs (which are themselves Freivalds-checked matmul outputs) and compares
+to the committed result. These ops are $O(n^2)$ or cheaper and depend
+element-wise on their inputs, so recomputing a challenged one is inexpensive. Under
+the determinism contract below they are bit-reproducible, so the comparison has, like
+Freivalds, zero false rejections.
+
+\subsection{The determinism contract}
+\label{sec:determinism}
+
+``Re-derive and compare'' presupposes that two honest evaluations of the same model
+on the same input produce \emph{byte-identical} traces. This is a property of the
+runtime, not of the mathematics, and we make it an explicit, software-only contract,
+digested into $\mathsf{runtimeMeasurement}$ (Section~\ref{sec:binding}) and gated by
+governance. The contract has five clauses.
+
+\begin{enumerate}[leftmargin=1.6em]
+\item \textbf{Integer matmul.} Proof-bearing inference uses the int8 (or lower) path
+with exact i32 accumulation. This is what makes the matmul bit-exact cross-hardware
+(the remark above) and what makes Freivalds bit-exact.
+\item \textbf{Temperature-0 argmax decoding.} Sampling is greedy: the next token is
+$\arg\max$ over the logits, with no stochastic sampling on the proof-bearing path.
+\item \textbf{A fixed, specified tie-break.} When two logits are exactly equal, the
+contract fixes which token wins---\emph{the lowest token id}---so that argmax is a
+total function with no implementation freedom. (We note that the current engine's
+\texttt{max\_by} returns the \emph{highest} equal index; the contract therefore
+specifies the rule normatively and requires the engine's tie-break to be pinned to
+it. Exact ties are vanishingly rare in practice but must be specified for
+reproducibility, exactly as a hash must be specified to the bit.)
+\item \textbf{Pinned kernels and tokenizer.} The kernel set and tokenizer are fixed
+and their identifiers are part of $\mathsf{runtimeMeasurement}$, so two provers run
+literally the same code paths.
+\item \textbf{A committed seed.} Any residual stochasticity (e.g.\ dropout, disabled
+on the inference path) is driven by a committed seed; on the greedy path no RNG is
+consulted, so the seed is inert and the decode is a deterministic function of the
+prompt and the weights.
+\end{enumerate}
+
+The contract is entirely software: every clause is a configuration of the inference
+runtime, checkable by reading the model file and the runtime identifiers. No clause
+requires special hardware. This is the precise sense in which the execution proof is
+``software-only'': both producing it and challenging it need only the model and a
+CPU.
+
+\subsection{Soundness}
+
+We can now state and prove the central guarantee: a prover who did not perform the
+genuine matmuls cannot answer a beacon-derived Freivalds challenge except with
+negligible probability.
+
+\begin{theorem}[Freivalds soundness for one layer]
+\label{thm:freivalds-one}
+Let $A \in \mathbb{Z}^{m \times k}$, $B \in \mathbb{Z}^{k \times n}$ be the true
+operands of a layer (the committed weights and the committed input activations), and
+let $\hat C$ be the prover's claimed output, committed in the activation trace. Let
+$r \in \mathbb{F}_p^{\,n}$ be sampled uniformly via $\mathsf{PRG}(\mathsf{ch}\,\|\,\ell)$,
+modeled as uniform and independent of $\hat C$ by Lemma~\ref{lem:anti-replay}. If
+$\hat C \neq AB$ as integer matrices and $p$ exceeds the magnitude of every honest
+entry of $AB$, then
+\begin{equation}
+\Pr_r\bigl[\,\hat C\, r \equiv A(Br) \pmod p\,\bigr] \;\le\; \frac{1}{p}.
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Work over $\mathbb{F}_p$; reduce all integer entries mod $p$. Let
+$D = \hat C - AB \pmod p$. Because $p$ exceeds the magnitude of the honest product's
+entries, $\hat C \ne AB$ over $\mathbb{Z}$ implies $D \ne 0$ over $\mathbb{F}_p$
+(a genuine discrepancy cannot be an artifact of modular wraparound). The check
+$\hat C r = A(Br) = (AB)r$ holds iff $D r = 0$. Since $D \ne 0$, it has some nonzero
+row $D_i$, and $D r = 0$ requires $\langle D_i, r\rangle = 0$. Fix any coordinate $j$
+with $D_{ij} \ne 0$. Conditioning on all coordinates of $r$ except $r_j$, the
+equation $\langle D_i, r\rangle = 0$ determines $r_j$ uniquely as
+$r_j = -D_{ij}^{-1}\sum_{j'\ne j} D_{ij'} r_{j'}$ (the inverse exists since
+$\mathbb{F}_p$ is a field and $D_{ij}\ne 0$). As $r_j$ is uniform over the $p$ field
+elements and independent of the others, it hits that single value with probability
+$1/p$. Hence $\Pr[Dr=0] \le \Pr[\langle D_i, r\rangle = 0] = 1/p$. \qed
+\end{proof}
+
+Two amplifications make the soundness error cryptographically negligible. First,
+using $k_{\mathrm{rep}}$ independent random vectors per layer multiplies the per-layer
+error to $p^{-k_{\mathrm{rep}}}$ (equivalently, sampling $r$ from a larger space).
+Second, the verifier checks a random subset of layers; a prover who cheats on even a
+single layer must survive that layer's check.
+
+\begin{theorem}[Soundness of the execution proof]
+\label{thm:soundness}
+Consider a forward (or backward) pass of $L$ matmul layers committed in the
+activation trace, verified with $p = 2^{61}-1$, $k_{\mathrm{rep}}$ Freivalds vectors
+per checked layer, and a uniformly random choice of layers to check. Suppose a
+prover commits an $\mathsf{activationTraceRoot}$ and $\mathsf{outputHash}$ that are
+\emph{not} the genuine result of evaluating the committed model on the committed
+input under the determinism contract. Then:
+\begin{enumerate}[leftmargin=1.6em]
+\item \textup{(Dense cheat.)} If the prover's committed trace differs from the
+genuine trace in the matmul output of \emph{every} checked layer, it passes all
+checks with probability at most $p^{-k_{\mathrm{rep}}} \le 2^{-61 k_{\mathrm{rep}}}$;
+for $k_{\mathrm{rep}}=2$ this is at most $2^{-122}$.
+\item \textup{(Sparse cheat.)} If the prover cheats on only a $\rho$-fraction of
+layers and the verifier checks $s$ layers uniformly at random, the cheat escapes all
+checks only if no cheated layer is sampled, which (for cheats confined to few layers)
+has probability $(1-\rho)^s$; conditioned on a cheated layer being sampled it is
+caught except with probability $p^{-k_{\mathrm{rep}}}$.
+\item \textup{(Determinism binding.)} A committed output hash inconsistent with the
+committed (and checked) final-layer logits is detected with certainty, because the
+argmax/tie-break of Section~\ref{sec:determinism} is recomputed from the
+Freivalds-verified logits.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+Each part composes Theorem~\ref{thm:freivalds-one} with independence. For (1), the
+$k_{\mathrm{rep}}$ vectors on a checked discrepant layer are independent, so by
+Theorem~\ref{thm:freivalds-one} the layer passes with probability
+$\le (1/p)^{k_{\mathrm{rep}}}$; a dense cheat is discrepant on every checked layer, so
+the prover must win at least one such layer's check, bounded by
+$p^{-k_{\mathrm{rep}}}$. For (2), the verifier's $s$ sampled layers miss the cheated
+fraction with probability $(1-\rho)^s$ (sampling without replacement only lowers
+this); if any cheated layer is sampled, part~(1)'s bound applies to it. For (3), the
+final-layer pre-activation logits are a matmul output and are Freivalds-checked; the
+verifier recomputes the argmax under the pinned tie-break and compares to the
+committed token. Since both are deterministic functions of the verified logits, any
+inconsistency is detected with probability $1$. \qed
+\end{proof}
+
+\subsection{From ``probably'' to ``certainly'': interactive bisection}
+
+The sparse-cheat term $(1-\rho)^s$ in Theorem~\ref{thm:soundness} shrinks with more
+sampled layers but does not reach zero by spot-checking alone: a cheat confined to a
+single layer is missed with probability $(1-1/L)^s$. To convert this into
+\emph{certainty} at logarithmic cost we add an interactive bisection in the style of
+optimistic rollups~\cite{arbitrum,gensynverde}. The prover and a challenger disagree
+on the final output; they recursively bisect the trace---each round the prover
+commits the midpoint activation, and the parties recurse into the half where they
+disagree---until they isolate a \emph{single} matmul whose inputs both agree on but
+whose output they dispute. That one matmul is then either Freivalds-checked or
+re-executed on-chain (it is a single layer, hence cheap), and the dispute is resolved
+deterministically: exactly one party is shown wrong. The number of rounds is
+$O(\log L)$, so the on-chain footprint is logarithmic in the trace length, and the
+guarantee is upgraded from ``caught with overwhelming probability'' to ``caught with
+certainty, after $O(\log L)$ interaction.''
+
+\begin{corollary}[Software-only verifiability]
+\label{cor:software-only}
+Producing the execution proof requires the model and the prover's compute; checking
+it---whether by spot-check (Theorem~\ref{thm:soundness}) or by bisection to
+certainty---requires only the model file, a CPU to compute $\mathsf{PRG}$, the
+$O(n^2)$ Freivalds matrix--vector products, and keccak for the trace. No trusted
+execution environment, GPU attestation, or special hardware is needed by either
+party.
+\end{corollary}
+
+Corollary~\ref{cor:software-only} is the property that makes the scheme egalitarian:
+a CPU-only validator can challenge a GPU prover, and any user can both generate and
+verify a proof against the same network-shared difficulty (the soundness parameters
+$p$, $k_{\mathrm{rep}}$, $s$, and the bond). This is the contrast with Bitcoin's
+ASIC-mediated work, drawn out in Section~\ref{sec:difficulty}.

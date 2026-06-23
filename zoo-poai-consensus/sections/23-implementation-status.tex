@@ -1,0 +1,118 @@
+\section{Implementation Status}
+\label{sec:impl-status}
+
+We state plainly what is built and tested versus what is designed, so the paper's claims
+can be checked against code. The Freivalds verifier core and the two determinism
+prerequisites it depends on are \emph{implemented and unit-tested} in the inference
+engine; the commitment layer, the forward-pass integration, and the two architecture
+extensions of Section~\ref{sec:families} are \emph{designed in this paper, not yet built}.
+
+\subsection{Built and tested: the Freivalds core}
+
+The matmul verifier of Section~\ref{sec:freivalds} is implemented as a backend-agnostic,
+dependency-free module (\texttt{hanzo-engine/src/poi.rs}). It realizes the construction
+exactly as specified: arithmetic over the Mersenne field $\mathbb{F}_p$ with
+$p = 2^{61}-1$, run on the engine's \emph{exact integer accumulator} (the
+i8$\times$i8$\to$i32 quantized path), with the Freivalds identity $A(Br) = Cr$ evaluated
+by left/right matrix--vector products and deterministic challenge derivation. Being
+dependency-free of the forward pass, its soundness is unit-testable in isolation. The
+suite is \textbf{6/6 passing}, and each test pins a claim from
+Section~\ref{sec:freivalds}:
+
+\begin{itemize}[leftmargin=1.4em]
+\item \texttt{test\_honest\_matmul\_passes} --- an honest $C = AB$ passes every challenge
+vector (zero false rejection; the exact-integer guarantee).
+\item \texttt{test\_tampered\_output\_is\_caught} --- flipping a single output entry
+($50 \to 51$) is caught (Theorem~\ref{thm:freivalds-one} soundness).
+\item \texttt{test\_larger\_random\_matmul\_catches\_sparse\_cheat} --- in a
+$16\times24 \cdot 24\times16$ product, a single buried off-by-one in one deep entry is
+caught; this is the \emph{sparse-cheat} case that motivates challenging every layer
+(Theorem~\ref{thm:soundness}, part~2).
+\item \texttt{test\_negative\_entries\_field\_reduction} --- signed int8
+weights/activations reduce correctly into $[0,p)$ (Euclidean remainder), and a tampered
+negative-entry product is caught.
+\item \texttt{test\_challenge\_derivation\_deterministic} --- prover and verifier derive
+the \emph{identical} challenge from the same beacon seed, and different seeds give
+different challenges (the reproducibility half of anti-replay,
+Lemma~\ref{lem:anti-replay}).
+\item \texttt{test\_wrong\_dims\_rejected} --- a shape mismatch fails \emph{closed} rather
+than reading out of bounds (the fail-closed discipline of Section~\ref{sec:tiers}).
+\end{itemize}
+
+The production challenge derivation is keccak over the on-chain beacon (to match the
+chain's wire spec); the module's in-test expansion is a \texttt{splitmix64} stream with
+\emph{identical} soundness---what the soundness needs is that $r$ is fixed and
+reproducible by both sides and unpredictable before commitment, which the beacon supplies
+in production and the deterministic stream supplies for the isolated test.
+
+\subsection{Built and tested: the two determinism prerequisites}
+
+The exact-integer Freivalds check is bit-exact only if the surrounding decode is
+reproducible; Section~\ref{sec:freivalds}'s determinism contract names the two places a
+naive runtime injects nondeterminism, and both are now closed in the engine.
+
+\paragraph{Lowest-token-id argmax tie-break (\texttt{hanzo-engine/src/sampler.rs}).}
+Greedy decoding selects $\arg\max$ over the logits; on exactly-equal logits the winner
+must be pinned or two honest nodes diverge. The engine's \texttt{argmax\_f32} now breaks
+ties to the \emph{lowest} index (smallest token id) via a strict ``$>$'' scan that only
+advances on a strictly greater value. This corrects Rust's \texttt{Iterator::max\_by},
+which returns the \emph{last} maximal element (the highest id)---the opposite of what
+reproducible consensus needs. This realizes clause~3 of the determinism contract
+normatively in code.
+
+\paragraph{Canonical MoE routing top-$k$ (\texttt{hanzo-engine/src/ops.rs}).}
+\sloppy For MoE
+models a different selected expert is a different sub-network, so prover and verifier
+must select identical experts (Section~\ref{sec:moe-proof}). The engine adds a
+process-wide proof-deterministic routing mode---\texttt{set\_moe\_\allowbreak proof\_\allowbreak
+deterministic} / \texttt{moe\_\allowbreak proof\_\allowbreak deterministic}---which, when
+enabled, forces a single canonical CPU path: \texttt{moe\_\allowbreak router\_\allowbreak topk}
+computes F32 scores and selects the top-$k$ by a \emph{canonical, backend-independent}
+tie-break (order each row by score descending then expert-index ascending, under an f32 total
+order; \texttt{deterministic\_\allowbreak topk\_\allowbreak indices}),
+rather than candle's unspecified \texttt{.topk()} tie-break or the separate CUDA
+bf16/f16 router kernel. Off by default---normal inference keeps the fast path---it is
+turned on for proof-bearing runs, and it is the routing analog of the lowest-id argmax
+tie-break.
+
+\subsection{Designed, not yet built}
+
+The following are specified in this paper and are the honest remaining work; none is
+implemented at the time of writing.
+
+\begin{enumerate}[leftmargin=1.6em]
+\item \textbf{The activation-trace commitment (MMR).} The keccak Merkle Mountain Range
+over per-tensor digests (Section~\ref{sec:freivalds}) is designed; the engine today emits
+logits without it. Its natural integration point is the synchronous inference precompile
+already present in the execution client.
+\item \textbf{Forward-pass integration.} The per-layer commit hooks that feed
+$(A,B,C)$ operands into the verifier under challenge, and the streaming of the trace
+during a real forward/backward pass, are designed; the \texttt{poi.rs} core is
+deliberately decoupled from the forward pass so that the verifier could be tested before
+the integration exists.
+\item \textbf{The routing proof.} Routing \emph{determinism} is built (above); the routing
+\emph{proof}---committing router logits, selected expert indices, and the sparse
+activation pattern, and rechecking the top-$k$ at a challenged token
+(Section~\ref{sec:moe-proof})---is designed.
+\item \textbf{The sequential-chaining proof.} Binding consecutive recurrent states (and,
+identically, consecutive diffusion latents) in the commitment
+(Sections~\ref{sec:ssm-proof}, \ref{sec:diffusion}) is designed.
+\item \textbf{RepOps (pinned reduction tree).} The deterministic-floating-point mode for
+the fp16/bf16/fp8 tier (Section~\ref{sec:repops}) is designed; the quantized path is what
+is built and is what the \Zoo{} zoo ships.
+\end{enumerate}
+
+\begin{remark}[What the tested core does and does not establish]
+The 6/6 \texttt{poi.rs} suite establishes that the \emph{mathematical heart}---``you
+cannot claim the matmul without doing it''---is implemented correctly over the exact
+integer accumulator, including the sparse-cheat case, the signed-entry case, and the
+fail-closed shape contract. It does \emph{not} by itself establish end-to-end inference
+verification: that additionally requires the trace commitment and the forward-pass
+integration above. We separate the two deliberately, in keeping with the decomplecting
+discipline of the rest of the paper: the verifier is a value (a pure function of
+operands and a challenge) that can be proven correct independently of \emph{where} the
+operands come from, and the integration is a distinct concern that supplies those
+operands. The determinism prerequisites being built and tested is what makes the
+``re-derive and compare'' premise (Section~\ref{sec:determinism}) actual rather than
+aspirational for the greedy and MoE-routing cases.
+\end{remark}

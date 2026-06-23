@@ -1,0 +1,199 @@
+\section{Full Modern-LLM Coverage: Tiering, Not Floating-Point Freivalds}
+\label{sec:fp-coverage}
+
+The execution proof of Section~\ref{sec:freivalds} is exact because it runs over the
+int8 path's integer accumulator. A natural objection is that ``real'' frontier models
+run in floating point (fp16, bf16, fp8), so an exact-integer verifier covers only the
+quantized deployment and not the full precision a model was trained in. This section
+answers the objection rigorously, and the answer is the crux of the design: we do
+\emph{not} force Freivalds onto floating point, because naive floating-point Freivalds
+is simultaneously \emph{unsound} and \emph{unusable}. Instead, coverage of the full
+model space is achieved by \emph{tiering} the verification mode to the arithmetic, so
+that every model has a proof-bearing mode while no mode pays a soundness or liveness
+penalty it cannot survive. The quantized, exact, software-only mode is then not a
+limitation but a \emph{feature}---and it is the mode the entire \Zoo{} model zoo ships
+in (Section~\ref{sec:families}).
+
+\subsection{Why naive floating-point Freivalds fails twice}
+\label{sec:fp-fails}
+
+Floating-point matrix multiplication breaks the Freivalds check in two independent
+ways, one fatal to \emph{liveness} and one fatal to \emph{soundness}. Both stem from
+the same root cause: an fp GEMM is not a function of its operands alone.
+
+\paragraph{(a) Non-determinism $\Rightarrow$ false-reject (liveness break).}
+Floating-point addition is not associative: $(a+b)+c \ne a+(b+c)$ in general under
+IEEE-754 rounding. A GEMM accumulates $k$ products into each output entry, and the
+\emph{order} of that accumulation is chosen by the kernel---tiling, the number of
+threads in a reduction, whether a fused multiply--add (FMA) is emitted, the
+warp/wavefront width, and the vendor's library version all permute it. Two honest
+evaluations of the same $A,B$ in fp16 on two different GPUs, or on a GPU versus a CPU,
+therefore yield outputs $C$ and $C'$ with $C \ne C'$ in the low mantissa bits. A
+Freivalds check demands the equality $C r = A(Br)$ over the \emph{produced} $C$; with
+$C \ne C'$, an honest re-deriving verifier on different hardware computes $A(B'r) \ne
+C r$ and \emph{rejects honest work}. In a permissionless network where a CPU validator
+must be able to challenge a GPU prover (Corollary~\ref{cor:software-only}), this
+false-reject is not a tail event---it is the \emph{common} case, because heterogeneous
+hardware is the premise. A verification rule that rejects honest provers is a liveness
+failure regardless of its soundness.
+
+\paragraph{(b) Tolerance bands $\Rightarrow$ a perturbation corridor (soundness break).}
+The naive ``fix'' for (a) is to accept when $\lVert C r - A(Br)\rVert_\infty < \epsilon$
+for some tolerance $\epsilon$ absorbing cross-hardware rounding. This trades the
+liveness failure for a soundness failure. The acceptance region is no longer the point
+$\{C = AB\}$ but a \emph{band} of radius $\epsilon$ around it, and a cheating prover may
+roam anywhere inside that band. Concretely, an adversary who wishes to claim a
+fabricated output $\hat C$ chooses any $\hat C$ with $\lVert (\hat C - AB) r \rVert_\infty
+< \epsilon$; the Freivalds projection $r$ collapses the $m\times n$ discrepancy matrix
+$D = \hat C - AB$ to the $m$-vector $Dr$, so the adversary needs only $Dr$ small, not
+$D$ small---an under-determined constraint with a large solution space. The corridor is
+\emph{exploitable}: it lets a prover skip or approximate work (e.g.\ run a smaller
+model, a lower-rank approximation, or a truncated accumulation) and land inside
+$\epsilon$, harvesting the fee while the band hides the cheat. Worse, the corridor must
+be \emph{widened} to cover legitimate cross-hardware drift, and every widening enlarges
+the cheating manifold. There is no setting of $\epsilon$ that admits all honest
+cross-hardware runs (requires $\epsilon$ large) while excluding all profitable cheats
+(requires $\epsilon$ small): the two requirements pull in opposite directions, exactly
+as in the analogous attack on tolerance-based optimistic ML verifiers. We formalize
+this dilemma in the companion proofs document (the floating-point soundness/liveness
+no-go).
+
+\begin{remark}[The integer path is not a downgrade---it removes both failures at once]
+The integer accumulator (Section~\ref{sec:freivalds}) makes the matmul a function of
+its operands alone: i8$\times$i8$\to$i32 accumulation is associative and bit-identical
+on every architecture. This simultaneously kills (a)---two honest provers compute the
+\emph{same} $C$, so $\epsilon = 0$ and there are zero false rejections---and (b)---with
+$\epsilon = 0$ the acceptance region collapses back to the exact point $\{C = AB\}$ and
+the corridor vanishes, restoring the clean $1/p$ soundness of
+Theorem~\ref{thm:freivalds-one}. This is why the proof-bearing mode is quantized by
+\emph{necessity}: exact arithmetic is the only arithmetic for which a software-only,
+cross-hardware, tolerance-free equality check exists.
+\end{remark}
+
+\subsection{The key fact: floating-point values are integers}
+\label{sec:fp-are-integers}
+
+The tiering does not abandon floating-point models; it gives them an exact mode too,
+via a fact that is easy to miss. An IEEE-754~\cite{ieee754} value is \emph{already an integer
+encoding}: a sign bit, an exponent field, and a mantissa field, all integers. For
+fp16/bf16/fp8 the significand is a small integer (an $11$-, $8$-, or $4$-bit mantissa
+plus the implicit leading one), and a product of two such values, \emph{before
+rounding}, is an exact integer times a power of two. The IEEE rounding that follows is
+a \emph{deterministic, total function} of the exact product and the rounding mode---it
+is not a source of nondeterminism. We make this precise.
+
+\begin{proposition}[Floating-point GEMM is exact integer-mantissa arithmetic up to a
+fixed reduction order]
+\label{prop:fp-integer}
+Fix an IEEE-754 format $F$ (e.g.\ bf16) with round-to-nearest-even, and fix a
+\emph{reduction tree} $\tau$: a binary tree on the $k$ index positions specifying the
+exact order in which the $k$ products of a dot product are summed and rounded. Then for
+any operands $A,B$ in $F$, the GEMM output $\mathrm{GEMM}_F^\tau(A,B)$ is a
+deterministic function of $(A,B)$ alone, computable by integer arithmetic on the
+mantissa/exponent fields with an IEEE rounding step at each tree node, and identical on
+every machine that honors $F$ and $\tau$. The \emph{only} freedom in a floating-point
+GEMM is the choice of $\tau$; once $\tau$ is pinned, the result is bit-exact and
+hardware-independent.
+\end{proposition}
+
+\begin{proof}[Argument]
+Each product $a_i b_j$ of two $F$-values has a significand that is the integer product
+of the two integer significands and an exponent that is the integer sum of the two
+exponents; this is exact in $\mathbb{Z}$ (no rounding) because integer multiplication
+is exact. A tree node combines two already-computed partial sums $u,v$ (each an
+$F$-value, hence an integer significand $\times 2^{e}$): align exponents (an integer
+shift), add significands (an integer add), then apply round-to-nearest-even (a total
+function of the exact integer sum and the format's precision). Every operation is
+integer arithmetic plus a deterministic rounding decision, so the node output is a
+deterministic function of $(u,v)$. By induction over $\tau$, $\mathrm{GEMM}_F^\tau(A,B)$
+is a deterministic function of $(A,B,\tau)$. The associativity counterexample of
+Section~\ref{sec:fp-fails} is precisely a disagreement in $\tau$ between two kernels;
+fixing $\tau$ removes it. \qed
+\end{proof}
+
+Proposition~\ref{prop:fp-integer} isolates the entire problem to one degree of freedom:
+\emph{accumulation order}. It says nothing about precision loss---an fp16 GEMM still
+rounds, and rounding still discards low bits---but it says the rounding is
+\emph{reproducible}: every honest prover that uses the pinned tree $\tau$ produces the
+same rounded bits. This is the hook on which an exact floating-point Freivalds hangs.
+
+\subsection{RepOps: pinning the reduction tree makes floating-point bit-exact}
+\label{sec:repops}
+
+The deterministic-floating-point (``RepOps'', for \emph{reproducible operators})
+verification mode for the fp16/bf16/fp8 tier is then: \emph{pin the reduction tree
+$\tau$ as part of $\mathsf{runtimeMeasurement}$} (Section~\ref{sec:binding}), so that
+the floating-point GEMM becomes bit-exact across hardware by
+Proposition~\ref{prop:fp-integer}, and run Freivalds over the resulting exact values.
+Because $\tau$ is fixed, $\epsilon = 0$: there is no cross-hardware drift to absorb
+(failure (a) is gone) and no tolerance band to exploit (failure (b) is gone). The
+Freivalds soundness of Theorem~\ref{thm:freivalds-one} applies verbatim, over the
+exact (rounded, but reproducibly rounded) products---formally, one runs the check over
+$\mathbb{F}_p$ on the integer significand--exponent representation of the pinned-order
+output, with $p$ chosen to bound the dynamic range of the accumulated significands.
+
+The cost is concrete and is the reason RepOps is a \emph{tier}, not the default: pinning
+$\tau$ forfeits the vendor's hand-tuned GEMM kernels, whose speed comes precisely from
+choosing $\tau$ freely (large tiles, many-thread reductions, FMA fusion, mixed
+precision). A reproducible kernel fixes the reduction order and so runs slower than the
+vendor optimum---the standard reproducible-summation trade-off~\cite{repbla}. The deployment therefore
+pays for fp-precision proofs in throughput; whether that is worth it is a per-task
+governance choice (Section~\ref{sec:profile-gate}), not a protocol constant.
+
+\subsection{The coverage tiers, by arithmetic}
+\label{sec:coverage-tiers}
+
+Putting the pieces together, every model has at least one proof-bearing mode, selected
+by its arithmetic and value. Table~\ref{tab:fp-coverage} states the menu. It refines,
+rather than replaces, the trust-tier matrix of Section~\ref{sec:tiers}: that table
+selects a backend by \emph{trust}; this one selects an \emph{exactness regime} by
+arithmetic. The two compose---e.g.\ a bf16 model at high value runs RepOps-Freivalds
+under an $M$-of-$N$ bond, while the same model quantized runs exact-integer Freivalds.
+
+\begin{table}[t]
+\centering
+\caption{Coverage by arithmetic. Every modern-LLM arithmetic has a proof-bearing mode;
+``full modern-LLM support'' is achieved by tiering the verification to the arithmetic,
+not by a single floating-point Freivalds. The quantized row is the egalitarian,
+software-only, hardware-free default and is what the \Zoo{} zoo ships.}
+\label{tab:fp-coverage}
+\small
+\begin{tabular}{@{}p{2.8cm}p{4.5cm}p{4.9cm}@{}}
+\toprule
+Arithmetic & Verification mode & Property \\
+\midrule
+int8 / int4 / GGUF / AWQ / GPTQ / MLX-quant
+  & \textbf{exact-integer Freivalds} (Section~\ref{sec:freivalds})
+  & $\epsilon=0$, software-only, no hardware; soundness $1/p$ per vector
+    ($2^{-122}$ dense); zero false-reject \\[2pt]
+fp16 / bf16 / fp8
+  & \textbf{RepOps-Freivalds} (pinned reduction tree $\tau$;
+    Section~\ref{sec:repops}) \emph{or} TEE/CC attestation (type 1/4)
+  & RepOps: bit-exact via Prop.~\ref{prop:fp-integer}, costs vendor-kernel speed.
+    TEE: hardware attests the fp run, no Freivalds, no $\tau$ pin \\[2pt]
+small models (any arithmetic)
+  & \textbf{zkML} (type 2; Section~\ref{sec:tiers})
+  & trustless succinct verification; bounded by proving cost to small models \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The structure of Table~\ref{tab:fp-coverage} is the whole argument: full coverage is a
+\emph{disjunction of exact modes}, not a single mode stretched past where it is sound.
+A model that ships quantized (the common deployment, and the entire \Zoo{} zoo) gets
+the strongest of the three properties for free---exact, software-only, hardware-free,
+tolerance-free. A model that must be served in full floating-point precision still has
+a proof: pay the RepOps throughput tax for a software-only exact check, or attest in a
+TEE for full-speed kernels at the cost of a hardware-trust assumption. No model is left
+without a proof-bearing mode, and no mode is asked to bear a soundness or liveness load
+it cannot carry.
+
+\begin{principle}[Exactness is tiered to arithmetic]
+\label{prin:exactness-tiered}
+There is exactly one way to make a software-only, cross-hardware, tolerance-free
+matmul check: exact arithmetic. Quantized models supply it natively (integer
+accumulation); floating-point models supply it by pinning the reduction tree (RepOps)
+at a throughput cost, or sidestep it via hardware attestation. ``Support every modern
+LLM'' is therefore a routing decision over exact regimes---never a single floating-point
+Freivalds, which is unsound (corridor) and unusable (false-reject) at once.
+\end{principle}
