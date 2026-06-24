@@ -1,14 +1,37 @@
 \section{Conclusion}
 
+Proof of AI replaces wasteful hash puzzles with a proof that genuine AI computation was
+performed---an activation-trace commitment that cannot be produced without doing the
+matrix multiplications, checked by Freivalds' algorithm over an exact integer accumulator,
+software-only, with no trusted execution environment required to verify. The soundness is
+information-theoretic and therefore post-quantum: a fabricated matmul is caught except with
+probability $\le 2^{-122}$ at two challenge vectors, and an honest prover is never
+false-rejected, because the check runs over a bit-exact integer reduction.
 
-Proof of AI establishes a new paradigm for blockchain consensus: securing the network through useful AI computation rather than wasteful hash puzzles. By combining \TEE{} attestation for verification, multi-party evaluation for quality scoring, and BLS aggregation for efficiency, \PoAI{} achieves:
+This paper's contribution is not only the primitive but the \emph{built and tested system}
+around it. The verifier emits from a real proof-bearing forward (\texttt{ProvableLinear})
+and composes across a typed graph (\texttt{GraphTrace}) that binds attention, mixture-of-experts,
+and---with one transpose op---a training step, establishing the canon that inference,
+embedding, and training are graphs verified by one proof system, not three. The Go verifier
+the chain consumes is byte-identical to the prover; the on-chain enforcement runs Freivalds
+and the Merkle fold in pure Solidity, slashes a bond only on a verified fraud, and fails
+closed so a forged receipt root alone cannot mint. Across three languages the suite is
+$38$ Rust, $23$ Go, and $87$ Solidity tests passing, with a cross-language golden vector
+that breaks if either side's commitment drifts.
 
-\begin{itemize}
-    \item 847 TPS with 2.3s finality
-    \item 98\% of compute devoted to useful AI work
-    \item Byzantine fault tolerance under standard assumptions
-    \item Incentive-compatible reward distribution
-\end{itemize}
+The execution proof is the substrate a \Zoo{} Layer-3 settles. \Beluga{} and its peers
+register in an on-chain directory (\texttt{L3Registry}) and roll proven work up through an
+ML-DSA validator-quorum root relay (post-quantum, leaderless) to a capped, halving,
+fair-mined coin reconciled once network-wide---so a decentralized-science result is a
+re-checkable transcript, not an assertion. The economic dial that prices heterogeneous
+compute and the verification dial that proves it was performed stay orthogonal: the price
+of a unit of work and the proof that the work happened are two knobs, not one.
 
-\PoAI{} forms the economic foundation for the Zoo Network, enabling decentralized AI training and inference with cryptographic guarantees.
-
+What remains honestly designed is a named, smaller residual: the RepOps pinned-reduction
+floating-point tier (the quantized integer tier is what ships and is what the tested floor
+covers), and emission of the architecture families---state-space and diffusion
+chaining, and the long tail of the model zoo---that the test suite does not yet exercise. No
+third core verification technique is required; the remaining work is breadth of integration
+over a settled mathematical core. \PoAI{} is the economic foundation for the \Zoo{} Network:
+decentralized AI training and inference whose ledger records re-checkable computations, the
+property that distinguishes science from testimony.

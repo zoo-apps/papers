@@ -35,7 +35,15 @@ Workers cannot claim rewards without performing computation.
 \end{theorem}
 
 \begin{proof}
-\TEE{} attestation binds output to enclave execution. Probabilistic re-execution catches cheaters with high probability. Slashing exceeds expected gain from cheating.
+\TEE{} attestation binds output to enclave execution, and the software-only execution proof
+binds reward to genuine work with no hardware-trust assumption: a worker that claims an
+output it did not compute commits an activation-trace whose matmul is caught by the
+Freivalds challenge except with probability $\le 2^{-122}$ (Section~\ref{sec:freivalds};
+built and tested, Section~\ref{sec:impl-status}), and the on-chain mint gate fails closed
+without a valid proof (\texttt{AICoinMiner}, Section~\ref{sec:l3-settlement}). Probabilistic
+challenge catches cheaters with high probability and slashing the bond exceeds the expected
+gain. The execution proof is what makes this hold for an untrusted, hardware-free prover,
+not only inside a trusted enclave.
 \end{proof}
 
 \subsection{Sybil Resistance}

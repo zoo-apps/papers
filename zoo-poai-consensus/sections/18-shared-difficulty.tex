@@ -8,32 +8,37 @@ difficulty with a heterogeneous-compute market. This section completes that
 correspondence at the level this paper is about---\emph{verification}---and
 reconciles two notions of ``difficulty'' that the AI setting forces apart.
 
-\subsection{The execution proof is the recomputable hash}
+\subsection{The execution proof is the recomputable hash (intended correspondence)}
 
 In Bitcoin, the load-bearing line of the whole design is that \emph{any node
 re-hashes the header and checks the claimed solution in $O(1)$}: a stranger can
 verify the work without trusting the worker and without redoing it. Sections
-\ref{sec:binding}--\ref{sec:freivalds} supply the exact cognitive analogue. The
-activation-trace commitment is the value everyone can recompute; the Freivalds check
+\ref{sec:binding}--\ref{sec:freivalds} \emph{specify} the cognitive analogue. The
+activation-trace commitment is \emph{designed to be} the value everyone can recompute;
+the Freivalds check
 is the cheap verification; and Theorem~\ref{thm:soundness} is the guarantee that the
 value \emph{cannot be produced without doing the work}. The difference is that
 Bitcoin's recomputable value is the output of useless hashing, whereas ours is the
 side effect of an answer a paying agent demanded. Table~\ref{tab:bitcoin-verify}
-extends the mechanism-for-mechanism correspondence to the verification layer.
+draws the mechanism-for-mechanism correspondence at the verification layer; its
+right column is the design Sections~\ref{sec:binding}--\ref{sec:freivalds} specify, of
+which only the Freivalds-check row is implemented today (the recomputable value is not
+yet emitted; Section~\ref{sec:status-summary}).
 
 \begin{table}[t]
 \centering
 \caption{Bitcoin and Proof-of-AI at the verification layer. The execution proof of
-this paper is the cognitive counterpart of the recomputable hash, but
-software-only and over useful work.}
+this paper is the \emph{designed} cognitive counterpart of the recomputable hash,
+software-only and over useful work; the Proof-of-AI column is the specification, not a
+deployed system (only the Freivalds verifier row is built today).}
 \label{tab:bitcoin-verify}
 \small
 \begin{tabular}{@{}p{3.2cm}p{4.3cm}p{5.3cm}@{}}
 \toprule
  & Bitcoin (PoW) & Proof-of-AI (this paper) \\
 \midrule
-The recomputable value & the block-header SHA-256d & the activation-trace MMR root + output hash \\
-What it proves & $\sim 2^{d}$ hashes were tried & the genuine matmuls were performed (Thm.~\ref{thm:soundness}) \\
+The recomputable value & the block-header SHA-256d & the activation-trace Merkle root + output hash \emph{(emitted by} \texttt{ProvableLinear}/\texttt{GraphTrace}\emph{)} \\
+What it proves & $\sim 2^{d}$ hashes were tried & the genuine matmuls were performed (Thm.~\ref{thm:soundness}; emitted and verified end to end) \\
 Verifier cost & $O(1)$: one hash & $O(n^2)$ Freivalds, or $O(\log L)$ bisection to certainty \\
 Hardware to verify & any CPU & any CPU (Cor.~\ref{cor:software-only}) \\
 Hardware to \emph{produce} & ASIC (centralizing) & any AI accelerator \emph{or} CPU; no TEE required \\
@@ -97,16 +102,20 @@ Proof-of-AI needs both because its work is heterogeneous and useful.
 
 Bitcoin's difficulty, though uniform as a number, is \emph{not} egalitarian in
 practice: producing the work economically requires ASICs, which centralizes mining
-among those who can fabricate or buy them. Proof-of-AI's soundness bar is uniform
-\emph{and} egalitarian, because the work it gates can be both produced and verified
-in software. By Corollary~\ref{cor:software-only}, a CPU-only participant can verify
+among those who can fabricate or buy them. Proof-of-AI's soundness bar is \emph{designed
+to be} uniform \emph{and} egalitarian, because the work it gates can be both produced and
+verified in software. By Corollary~\ref{cor:software-only}, a CPU-only participant
+\emph{would} verify
 any proof and---on the optimistic-Freivalds and redundancy tiers
-(Section~\ref{sec:tiers})---can also \emph{produce} proofs for models it can run,
-challenge proofs it suspects, and earn by catching fraud. There is no hardware
-gate on participation in verification, and no enclave-vendor gate on participation in
-proving. The ``hash everyone can recompute'' becomes, here, a computation everyone
-can both perform at their scale and check at CPU cost---which is the property Bitcoin
-aspired to and ASIC economics eroded.
+(Section~\ref{sec:tiers})---also \emph{produce} proofs for models it can run,
+challenge proofs it suspects, and earn by catching fraud. This egalitarian property is
+contingent on two unbuilt pieces: the trace emission, and a permissionless off-chain
+challenger/re-executor that opens a suspect transcript and disputes it. \emph{Neither
+exists today}, so the ``earn by catching fraud'' incentive---and with it the economic
+argument that a liar always has skin in the game---is a property of the designed system,
+not the current one. Once both are built, the ``hash everyone can recompute'' becomes a
+computation everyone can both perform at their scale and check at CPU cost---the property
+Bitcoin aspired to and ASIC economics eroded.
 
 What the network mines, in the end, is useful cognition; what it hashes to is a
 shared, recomputable commitment; and what it adjusts as compute joins is two dials

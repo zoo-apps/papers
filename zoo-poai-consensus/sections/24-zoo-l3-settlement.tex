@@ -1,0 +1,162 @@
+\section{Settlement to a Zoo Layer-3, and the Decentralized-Science Substrate}
+\label{sec:l3-settlement}
+
+The execution proof of Sections~\ref{sec:freivalds}--\ref{sec:families} is a primitive: it
+makes one AI computation re-checkable. This section places that primitive in the layered
+architecture that \emph{uses} it. \Zoo{} Labs Foundation is the Layer-3 application and
+research layer---decentralized AI (DeAI) and decentralized science (DeSci), governed
+through \texttt{zips.zoo.ngo}---and it does not re-derive the proof system; it
+\emph{consumes} the one canonical implementation. We describe (i) the layering and the
+single canonical contract surface, (ii) the on-chain directory by which a \Zoo{} L3 is
+discovered and endorsed, (iii) how PoAI-verified work settles down from the L3 to the
+\Zoo{} L2 and the \Lux{} L1 without a trusted relay, and (iv) why this makes proven
+inference, embedding, and training the reproducibility substrate that decentralized science
+needs. Every mechanism below is a contract or module we cite by path; this section adds no
+new cryptography, only the composition.
+
+\subsection{The layering and the one canonical surface}
+
+The stack is four layers, each a value the one above settles into:
+\[
+\underbrace{\Lux{}\ \text{(L1)}}_{\text{consensus, settlement}}
+\;\longleftarrow\;
+\underbrace{\Zoo{}\ \text{(L2)}}_{\text{app hub, the \Zoo{} EVM}}
+\;\longleftarrow\;
+\underbrace{\Beluga{}\ \text{(L3)}}_{\text{AI model economics}}
+\;\longleftarrow\;
+\underbrace{\text{models}}_{\text{the provers}} .
+\]
+The Proof-of-AI contracts are not forked per layer. There is exactly one canonical
+implementation---the \Lux{} standard library's thinking-chain contracts
+(\texttt{luxfi/standard}, \texttt{contracts/ai/thinking/}, licensed BSD-3-Eco)---and an L3
+consumes it as a dependency rather than copying it, the same discipline by which the Go
+verifier (\texttt{luxfi/crypto/poi}), the Rust prover (\texttt{hanzo-engine}), and the
+Solidity witness (\texttt{ComputeWitnessLib.sol}) are three views of one byte-exact wire
+spec. ``One and only one way'' is the property that lets a proof emitted on an L3 verify,
+unchanged, when it settles on the L2 and finalizes on the L1: the leaf serialization, the
+keccak Merkle fold, the field $\mathbb{F}_p$ with $p=2^{61}-1$, and the
+$\mathrm{BE}_{32}(j)\,\|\,\mathrm{BE}_{64}(i)$ challenge derivation are identical at every
+layer (Section~\ref{sec:freivalds}; \cite{poiemission}).
+
+\subsection{The on-chain L3 directory}
+
+A community that launches a Thinking-Chain L3 registers it in a hub directory deployed on
+the \Zoo{} L2: \texttt{L3Registry.sol}. The registry is a pure directory by deliberate
+design---it ``holds no L3 state and never reaches into an L3's governance''---storing for
+each L3 the pointer that makes it findable: its name, its EVM \texttt{chainId}, the
+addresses of its \texttt{ThinkingGovernor} and \texttt{ThinkingChainObservatory}, the
+registrar, an off-chain metadata URI, and an endorsement flag. Two access tiers keep the
+directory open while curating the ``official'' set: \emph{registration is permissionless}
+(anyone may list an L3, keyed one-record-per-\texttt{chainId} by
+$\mathsf{idOf}(\texttt{chainId})=\keccak(\texttt{``zoo/l3''}\,\|\,\texttt{chainId})$), and
+\emph{endorsement is gated to the \Zoo{} meta-DAO} (the registry owner, \texttt{zooDAO}).
+Because registration is permissionless and one-per-\texttt{chainId}, a front-runner could
+squat a legitimate L3's \texttt{chainId}; the DAO-gated \texttt{reassign} closes this---it
+overwrites a squatted record to the correct governor/observatory and resets endorsement to
+\texttt{false} so a reassignment never silently inherits a prior endorsement. The
+$8/8$-passing test suite (\texttt{L3Registry.t.sol}) pins these invariants: permissionless
+register, one-per-chain, DAO-only endorse/reassign, and the squat-recovery path.
+
+This is the \Zoo{} flavor of decentralization stated precisely. The L3 chain itself is not
+created by the registry; it is created on the \Lux{} P-Chain
+(\texttt{lux chain create --type=l3}) and runs its own sovereign thinking-governance stack
+(\texttt{ThinkingGovernor}, \texttt{ProofOfThoughtRegistry},
+\texttt{ThinkingChainObservatory}, \texttt{ThinkingReputation}) on its own ledger. The
+registry only records and, if the DAO chooses, endorses---so the directory is a public good
+and the curation is a separate, gated concern (orthogonality, again).
+
+\subsection{Settling PoAI-verified work down the stack, trustlessly}
+
+The substantive question is how work proven on an L3 becomes spendable value on the L1
+without re-introducing a trusted bridge. Three contracts compose to answer it; each was
+read and tested for this paper.
+
+\paragraph{The mint gate, fail-closed.} On the settlement EVM, \texttt{AICoinMiner.mine}
+turns one verified inference receipt into a fair-launch \texttt{AICoin} subsidy. It is the
+gate the rest of the paper's soundness flows through, and it fails closed: a completed
+receipt must (1) be the correct fixed-width shape carrying a non-zero output, (2) prove
+inclusion under a root the chain has accepted (\texttt{AIReceiptRoots}), \emph{and} (3) pass
+a \texttt{ComputeProof} whose \texttt{reportData} reproduces the receipt's own
+measured-model/prompt/output binding under a governance-accepted runtime---and ``no verifier
+wired $\Rightarrow$ revert (\texttt{ProofGateUnavailable})''. A forged receipt root alone no
+longer mints (the audit's C3 hole), because the compute proof binding real
+$(\text{model}, \text{prompt}, \text{output})$ is mandatory. The subsidy is minted to the
+receipt's \emph{bound requester} (read from the attestation), never to the submitter, so a
+relayer cannot redirect rewards; and the amount is clamped to the vested halving allowance,
+so settlement never inflates past the schedule. The $12/12$ \texttt{AICoinMiner.t.sol} and
+$19/19$ \texttt{ComputeProofEnforcement.t.sol} suites exercise exactly these gates.
+
+\paragraph{The trustless post-quantum relay.} The receipt root that
+\texttt{AICoinMiner} requires SHOULD, on \Lux{}, come from the A$\to$C atomic boundary (the
+\texttt{aivmbridge} precompile); a foreign or downstream EVM sources it through
+\texttt{AChainRootOracle.sol}. Crucially this replaces a trusted single relayer with a
+\emph{verified validator quorum}: a quorum of A-Chain validators signs $(\text{root},
+\text{height})$ with \textbf{ML-DSA} (the post-quantum scheme \texttt{luxfi/warp} carries as
+an \texttt{MLDSACertSet}), anyone may relay the signed root (permissionless, a public good),
+and the oracle verifies the quorum on-chain via the ML-DSA precompile. ``Forging an accepted
+root requires breaking ML-DSA (post-quantum hard) \emph{or} corrupting $\ge$ threshold of
+the validator set---the nation-state-resistant bar.'' Settlement is therefore as
+post-quantum as the proof it carries: Freivalds soundness is information-theoretic (it holds
+against an unbounded, hence quantum, adversary; Section~\ref{sec:freivalds}), the
+commitments are keccak (PQ-secure up to Grover), and now the cross-layer root relay is
+ML-DSA. No layer of the settlement path rests on a classical-only assumption.
+
+\paragraph{Global no-double-mint.} Because the same proven computation could be presented on
+more than one chain, settlement reconciles through \texttt{AIComputeRegistry}: a miner
+claims a chain-independent computation key
+$\keccak(\text{modelSpec}, \text{promptHash}, \text{outputHash})$ before minting, and a
+second claim for the same triple---on \emph{any} \Lux{} chain---reverts. One unit of proven
+work mints once, network-wide; the registry is wired set-once into the miner so the
+guarantee cannot later be rugged ($6/6$, \texttt{AIComputeRegistry.t.sol}). Together with
+the miner bond/slash registry (\texttt{MinerStakeRegistry.sol}, $8/8$: a miner bonds capital
+in proportion to declared capacity, and the fraud-proof verifier slashes it on a proven
+discrepancy with a cooldown that is the fraud window), the settlement path has skin in the
+game at the bottom and a proof gate at the top.
+
+\paragraph{The settlement chain, in one line.} A model on the L3 emits a transcript
+(Section~\ref{sec:freivalds}); a challenger can open and Freivalds-check any matmul, on-chain
+if disputed (\texttt{ComputeWitnessLib} / \texttt{OptimisticEvidence}); the L3's verified
+receipts roll up under an A-Chain root; that root crosses to the settlement EVM through an
+ML-DSA validator quorum (\texttt{AChainRootOracle}); and \texttt{AICoinMiner} mints---once,
+to the bound requester, clamped to the halving allowance, and only against a valid compute
+proof. The \Zoo{} L3 is discoverable and (optionally) endorsed through
+\texttt{L3Registry}, so \texttt{zoo.vote} and the meta-DAO can see and govern the whole set
+from one place.
+
+\subsection{Why this is the substrate decentralized science needs}
+
+Decentralized science fails on the same rock as decentralized compute: a result that cannot
+be independently re-derived is a claim, not a finding. The execution proof converts the
+three operations DeSci runs on AI---inference, embedding, and training---into re-derivable
+objects, because all three are computation \emph{graphs} and the proof binds graphs, not a
+special case per task (Section~\ref{sec:four-proofs}). Concretely:
+
+\begin{itemize}[leftmargin=1.4em]
+\item \textbf{A proven inference} (a model's prediction on a scientific input) is a
+\texttt{GraphTrace} whose root a reviewer opens to Freivalds-check the heavy matmuls and
+recompute the deterministic glue---so a published prediction carries a transcript root, and
+``the model said $X$'' is checkable rather than trusted.
+\item \textbf{A proven embedding} (a representation submitted to a shared scientific index)
+is the same forward graph; its provenance is the input commitment, which is exactly the
+data-sharing-orthogonal binding of Section~\ref{sec:binding}---the proof says \emph{this
+representation came from this input under this model}, independent of who may read the input.
+\item \textbf{A proven training step} is a longer graph of the \emph{same} ops plus a
+transpose: forward $Y=X\cdot W$, backward $dW=X^\top\,dY$ and $dX=dY\cdot W^\top$, update
+$W'=W-\eta\,dW$, every matmul Freivalds-checked and a fabricated gradient caught exactly as a
+faked inference output is (\texttt{poi\_graph.rs}, \texttt{test\_training\_step\_is\_just\_a\_graph}).
+A federated or bounty-funded training contribution is therefore auditable: a contributor who
+claims a gradient it did not compute is slashable on the same gate as a lying inference
+provider.
+\end{itemize}
+
+This is what \Beluga{} prices. Its L3 economy pays participants to train models, curate
+datasets, host inference, and evaluate outputs, all denominated in the \BLG{} gas token; the
+execution proof is what makes each paid action \emph{verifiable} rather than merely
+attested. The economic dial (the Hamiltonian Market Maker that prices heterogeneous compute)
+and the verification dial (the execution proof) stay orthogonal---the price of a unit of
+compute and the proof that the unit was performed are two knobs, not one
+(Section~\ref{sec:difficulty})---and the registry, the relay, and the mint gate are the
+plumbing that carries a verified \BLG{}-priced contribution down to a capped, halving,
+fair-mined L1 coin. The result is a decentralized-science network whose ledger is not a
+record of assertions but a record of \emph{re-checkable computations}: the property that
+distinguishes science from testimony, made native to the chain.

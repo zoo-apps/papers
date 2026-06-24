@@ -8,11 +8,28 @@ quantized deployment and not the full precision a model was trained in. This sec
 answers the objection rigorously, and the answer is the crux of the design: we do
 \emph{not} force Freivalds onto floating point, because naive floating-point Freivalds
 is simultaneously \emph{unsound} and \emph{unusable}. Instead, coverage of the full
-model space is achieved by \emph{tiering} the verification mode to the arithmetic, so
+model space is \emph{designed to be} achieved by \emph{tiering} the verification mode to
+the arithmetic, so
 that every model has a proof-bearing mode while no mode pays a soundness or liveness
 penalty it cannot survive. The quantized, exact, software-only mode is then not a
-limitation but a \emph{feature}---and it is the mode the entire \Zoo{} model zoo ships
-in (Section~\ref{sec:families}).
+limitation but a \emph{feature}.
+
+\paragraph{Two status caveats, stated before the argument.} (i) The exact-integer mode
+this section relies on requires a whole-$K$ integer accumulator. This is \emph{built and is
+the proof path}: \texttt{poi.rs::exact\_matmul} is a whole-$K$ $i64$ reduction with no
+cross-block float rescale, and \texttt{ProvableLinear} runs its matmuls there. The
+distinction is that the engine's \emph{fast} kernel (\texttt{f8q8}) accumulates across
+blocks in \texttt{f32}---non-associative and cross-hardware non-reproducible
+(Remark~\ref{rem:wholek})---so it is used for ordinary inference, while a proof-bearing
+inference pays the exact accumulator's throughput cost to get the ``$\epsilon=0$, zero
+false-reject'' property. Running exact Freivalds over the \texttt{f8q8} fast path would
+false-reject honest provers; running it over \texttt{exact\_matmul} does not, which is why
+the proof path is the integer path. (ii) The quantized models are the arithmetic the zoo
+\emph{deploys in}, and the families the test suite exercises (dense/SwiGLU, attention with
+integer softmax, MoE, training) now \emph{emit a proof transcript}---so provable-today
+coverage is nonempty, not $0\%$. What remains \emph{designed} is the breadth: the
+floating-point (RepOps) tier and the architecture families not yet wired to emit
+(Section~\ref{sec:status-summary}).
 
 \subsection{Why naive floating-point Freivalds fails twice}
 \label{sec:fp-fails}
@@ -152,10 +169,15 @@ under an $M$-of-$N$ bond, while the same model quantized runs exact-integer Frei
 
 \begin{table}[t]
 \centering
-\caption{Coverage by arithmetic. Every modern-LLM arithmetic has a proof-bearing mode;
-``full modern-LLM support'' is achieved by tiering the verification to the arithmetic,
-not by a single floating-point Freivalds. The quantized row is the egalitarian,
-software-only, hardware-free default and is what the \Zoo{} zoo ships.}
+\caption{Coverage by arithmetic. Every modern-LLM arithmetic is given a proof-bearing mode
+by tiering the verification to the arithmetic, not by a single floating-point Freivalds.
+The quantized row is the egalitarian, software-only, hardware-free default and is
+\emph{built and tested end to end}: it runs the whole-$K$ exact-integer accumulator
+(\texttt{exact\_matmul}) that gives the $\epsilon=0$, zero-false-reject property, emits a
+transcript (\texttt{ProvableLinear}/\texttt{GraphTrace}), and verifies on-chain
+(\texttt{ComputeWitnessLib}). The floating-point (RepOps) row is \emph{designed} (proven
+sound in~\cite{poisoundness}), awaiting the pinned-reduction kernel; the \TEE{} row is the
+hardware-trust fallback (Section~\ref{sec:status-summary}).}
 \label{tab:fp-coverage}
 \small
 \begin{tabular}{@{}p{2.8cm}p{4.5cm}p{4.9cm}@{}}
@@ -165,7 +187,9 @@ Arithmetic & Verification mode & Property \\
 int8 / int4 / GGUF / AWQ / GPTQ / MLX-quant
   & \textbf{exact-integer Freivalds} (Section~\ref{sec:freivalds})
   & $\epsilon=0$, software-only, no hardware; soundness $1/p$ per vector
-    ($2^{-122}$ dense); zero false-reject \\[2pt]
+    ($2^{-122}$ dense); zero false-reject---\emph{for a pinned whole-$K$-i32 kernel
+    (Rem.~\ref{rem:wholek}), to be built; \emph{not} the shipping block-\texttt{f32}
+    kernel} \\[2pt]
 fp16 / bf16 / fp8
   & \textbf{RepOps-Freivalds} (pinned reduction tree $\tau$;
     Section~\ref{sec:repops}) \emph{or} TEE/CC attestation (type 1/4)
@@ -180,9 +204,10 @@ small models (any arithmetic)
 
 The structure of Table~\ref{tab:fp-coverage} is the whole argument: full coverage is a
 \emph{disjunction of exact modes}, not a single mode stretched past where it is sound.
-A model that ships quantized (the common deployment, and the entire \Zoo{} zoo) gets
-the strongest of the three properties for free---exact, software-only, hardware-free,
-tolerance-free. A model that must be served in full floating-point precision still has
+A model that ships quantized (the common deployment, and the entire \Zoo{} zoo) is
+\emph{designed to} get
+the strongest of the three properties---exact, software-only, hardware-free,
+tolerance-free---once the whole-$K$-i32 kernel and the trace emission are built. A model that must be served in full floating-point precision still has
 a proof: pay the RepOps throughput tax for a software-only exact check, or attest in a
 TEE for full-speed kernels at the cost of a hardware-trust assumption. No model is left
 without a proof-bearing mode, and no mode is asked to bear a soundness or liveness load

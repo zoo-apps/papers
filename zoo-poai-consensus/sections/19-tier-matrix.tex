@@ -31,8 +31,19 @@ commits $(\mathsf{reportData}, \mathsf{activationTraceRoot}, \mathsf{modelWeight
 within a challenge window any party may dispute by supplying a Freivalds response (or,
 on dispute, by driving the bisection of Section~\ref{sec:freivalds}); an
 unchallenged commitment finalizes and the bond is reclaimable, while a proven fraud
-slashes the bond to the challenger. The heavy check runs off-chain in the inference
-engine; the chain runs the economic state machine the check's verdict drives.
+slashes the bond to the challenger. The heavy check runs off-chain in the inference engine
+(a watcher re-executes the committed trace and opens any discrepant matmul); the chain runs
+the economic state machine the check's verdict drives, and---when the dispute is
+submitted---re-runs the Freivalds check itself on-chain so the verdict is not a watcher's
+say-so. Both halves are built and tested (Section~\ref{sec:impl-status}): the off-chain
+re-executor and challenger (\texttt{poi\_transcript.rs} in Rust, \texttt{crypto/poi} in Go)
+open a transcript and produce the dispute, and the on-chain state machine
+(\texttt{OptimisticEvidence.sol}, $18/18$) records the bonded commitment, verifies the
+exhibited fraud via \texttt{ComputeWitnessLib.provesFraud}, and slashes only on a verified
+discrepancy. The optimistic backend's economic soundness---a liar is strictly unprofitable
+once watched, an honest prover is never slashable---is therefore a live deterrent: a
+fabricated matmul is provable except with probability $\le 2^{-122}$, and the bond pays the
+challenger that proves it.
 
 \subsection{The tiers}
 
@@ -42,7 +53,11 @@ Tiers map a task's value and trust requirement to a required proof strength.
 \centering
 \caption{Tier $\to$ proof matrix. One profile gate
 (Section~\ref{sec:profile-gate}) maps a tier to its required $\mathsf{proofType}$;
-no valid proof of that type means no mint and no settlement.}
+where a tier is opted in, no valid proof of that type means no mint and no settlement.
+The gate is built but defaults to permissive ($\mathsf{requiredProofType}=0$), and the
+software-only backend (T2/T3) awaits the emission and challenger of
+Section~\ref{sec:impl-status}; the matrix is thus the configured policy surface, live
+enforcement following the build.}
 \label{tab:tiers}
 \small
 \begin{tabular}{@{}p{0.7cm}p{3.3cm}p{4.1cm}p{4.0cm}@{}}
@@ -51,7 +66,7 @@ Tier & Proof system & Trust assumption & Use \\
 \midrule
 T0 & zkML (type 2) & none beyond the SNARK's & tiny models; trustless, on-chain succinct verification \\
 T1 & $M$-of-$N$ heterogeneous CC-TEE (type 4) & no single TEE vendor; $M$ of $N$ enclaves agree & high-value tasks; defense in depth across NVIDIA CC $+$ Intel TDX $+$ AMD SEV-SNP \\
-T2 & single-vendor CC-TEE (type 1) \emph{or} optimistic-Freivalds (type 3) & one TEE vendor, \emph{or} one honest challenger $+$ a bond & the workhorse tier; software-only Freivalds is the egalitarian default \\
+T2 & single-vendor CC-TEE (type 1) \emph{or} optimistic-Freivalds (type 3) & one TEE vendor, \emph{or} one honest challenger $+$ a bond & the workhorse tier; software-only Freivalds is the intended egalitarian default (pending emission $+$ challenger) \\
 T3 & redundancy $+$ plurality $+$ slash & honest plurality among bonded operators & liveness-first; CPU-only providers; the weakest proof, fastest path \\
 \bottomrule
 \end{tabular}
@@ -93,8 +108,13 @@ No valid compute proof of the required type $\Rightarrow$ no mint, no settlement
 This is the constructive answer to Section~\ref{sec:guess-to-mint}: the verifier's
 three-step gate---(1) the proof's $\mathsf{reportData}$ equals the task binding,
 (2) the runtime is governance-accepted, (3) the registered backend attests---runs
-\emph{before} any reward is paid, and fails closed at every step. Reward is bound to
-proof, not to signature and not to plurality. Because the policy lives in one place,
+\emph{before} any reward is paid, and fails closed at every step \emph{on any tier that
+has been opted in}. Where the gate is engaged, reward is bound to
+proof, not to signature and not to plurality; where it is not (the default), settlement
+remains the authorship-plus-agreement rule of Section~\ref{sec:guess-to-mint}, and---until
+the execution backend's emission and challenger are built---the only proof type a gate can
+actually enforce is an attestation envelope, not the activation-trace execution proof.
+Because the policy lives in one place,
 there is exactly one way to ask ``what does this tier require?'', and changing a
 tier's requirement is a single governed write rather than a scattered edit.
 
@@ -110,7 +130,8 @@ the binding, zero change to the receipts, zero change to the callers}. The same 
 in reverse: a deployment that gains confidential-compute hardware can move tasks from
 software-only T2 to TEE-backed T1 without touching the proof artifacts that earlier
 tasks emitted. The proof backends are orthogonal slots behind a stable binding; the
-menu evolves, the interface does not. This is the property that lets a permissionless
-network start egalitarian (software-only Freivalds for everyone) and strengthen
+menu evolves, the interface does not. This is the property \emph{designed} to let a
+permissionless network start egalitarian (software-only Freivalds for everyone, once
+that backend's emission and challenger are built) and strengthen
 task-by-task as trustless proving matures, without ever stranding the proofs it has
 already minted against.

@@ -35,6 +35,9 @@
 
 % Custom commands
 \newcommand{\Zoo}{\textsc{Zoo}}
+\newcommand{\Lux}{\textsc{Lux}}
+\newcommand{\Beluga}{\textsc{Beluga}}
+\newcommand{\BLG}{\textsc{blg}}
 \newcommand{\PoAI}{\textsc{PoAI}}
 \newcommand{\LLM}{\textsc{llm}}
 \newcommand{\TEE}{\textsc{tee}}
@@ -42,6 +45,7 @@
 \newcommand{\PoI}{\textsc{PoI}}
 \newcommand{\PoT}{\textsc{PoT}}
 \newcommand{\PoC}{\textsc{PoC}}
+\newcommand{\keccak}{\mathsf{keccak}}
 \newtheorem{principle}{Principle}[section]
 
 % Hyperref setup
@@ -53,14 +57,16 @@
 }
 
 % Title and authors
-\title{\textbf{Proof of AI: A Consensus Mechanism for Verifiable Compute Contribution}}
+\title{\textbf{Proof of AI: A Consensus Mechanism for Verifiable Compute Contribution}\\
+\large The execution-proof substrate for decentralized AI research, and how a \Zoo{}
+Layer-3 settles it}
 \author{
 Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
-\textit{Hanzo Industries \quad Lux Industries \quad Zoo Labs Foundation}\\
+\textit{Hanzo AI \quad Lux Network \quad Zoo Labs Foundation}\\
 \texttt{research@zoo.ngo}
 }
 
-\date{February 2024}
+\date{June 2026}
 
 \begin{document}
 
@@ -86,19 +92,59 @@ for it. We position the scheme as Bitcoin's shared, software-only difficulty---t
 Hamiltonian Market Maker \emph{prices} heterogeneous compute while the execution proof
 \emph{verifies} it, two orthogonal dials---and give a single profile gate mapping tiers
 (zkML, $M$-of-$N$ confidential compute, optimistic-Freivalds, redundancy) to required
-proof strength, so that ``no valid compute proof'' means ``no mint.'' We motivate the
+proof strength, designed so that once the gate is engaged ``no valid compute proof''
+means ``no mint.'' We motivate the
 construction with a concrete attack on a deployed settlement engine that today mints
 for a one-bit guess, because a signature proves authorship and a plurality proves
 agreement, but neither proves computation. We retain \TEE{} attestation, multi-party
 quality scoring, and BLS aggregation as the strong and pricing layers; the execution
 proofs are what bind reward to genuine work.
 
+\textbf{Status, stated up front.} This paper proves a \emph{primitive}, builds the
+\emph{system} around it, and specifies the \emph{residual} that remains design-only; we
+mark which is which in the abstract rather than burying it, and
+Section~\ref{sec:status-summary} gives the per-component ledger before the construction
+begins. What is \emph{built and tested} is now the whole load-bearing path, not just the
+core: (i) the exact-integer Freivalds matmul verifier and its keccak-Merkle
+activation-trace transcript, a proof-bearing forward (\texttt{ProvableLinear}) whose
+returned value \emph{is} the committed exact-integer result, and a typed full-graph trace
+(\texttt{GraphTrace}) that binds attention, MoE, and---with one transpose op---a training
+step, all in the Rust engine (\texttt{hanzo-engine}: $27$ unit tests $+\,11$ adversarial
+red-team tests, $38/38$ passing); (ii) the canonical Go verifier
+(\texttt{luxfi/crypto/poi}, $23/23$) that the chain consumes, byte-identical to the
+prover under a pinned cross-language challenge vector; and (iii) the on-chain enforcement
+(\texttt{luxfi/standard} thinking contracts: $87/87$ across the eight Proof-of-AI suites),
+where \texttt{ComputeWitnessLib} runs Freivalds and the Merkle fold in pure Solidity,
+\texttt{OptimisticEvidence} pays a bond to a challenger \emph{only} on a verified fraud,
+and the \texttt{AICoinMiner} mint gate \emph{fails closed}: with no compute-verifier wired
+it reverts (\texttt{ProofGateUnavailable}), so a forged receipt root alone no longer mints.
+Two honest properties survive the build: a fabricated matmul is caught except with
+probability $\le 2^{-122}$ at two challenge vectors because Freivalds runs over an exact
+integer accumulator, and an honest prover is \emph{never} slashable. What remains
+\emph{designed, not built} is the genuinely smaller residual: the RepOps pinned-reduction
+floating-point tier (the quantized integer tier is what ships), and emission coverage of
+architecture families beyond those exercised by the test suite (dense/SwiGLU, attention
+with a fixed-point integer softmax, an MoE block, a training step). The honest one-line
+summary: \emph{the soundness primitive is proven, the unfakeable-mining system it enables
+is built and tested end to end, and the named residual is a floating-point tier and wider
+architecture coverage}.
+
+\textbf{The \Zoo{} reading.} \Zoo{} Labs Foundation is the Layer-3 application and research
+layer (decentralized AI and decentralized science, governed through \texttt{zips.zoo.ngo})
+that \emph{consumes} this stack. Section~\ref{sec:l3-settlement} shows how a
+\Zoo{} L3---\Beluga{} and its peers---registers in an on-chain directory
+(\texttt{L3Registry}) and settles PoAI-verified work down to the \Zoo{} L2 and the Lux L1,
+so that proven inference, embedding, and training become the reproducibility substrate for
+decentralized science: a result is not ``trust me, I ran the model'' but a transcript whose
+root anyone can open and re-check.
+
 \textbf{Keywords}: consensus, proof of useful work, AI compute verification, Freivalds'
-algorithm, optimistic verification, trusted execution environments, verifiable machine
-learning
+algorithm, optimistic verification, decentralized science, Layer-3 settlement,
+post-quantum cryptography, verifiable machine learning
 \end{abstract}
 
 \input{sections/01-introduction}
+\input{sections/00-status-summary}
 \input{sections/02-background}
 \input{sections/03-poai}
 \input{sections/04-compute-verification}
@@ -116,6 +162,8 @@ learning
 % ── Full modern-LLM coverage: fp-vs-quantized tiering, the zen zoo, build status ──
 \input{sections/21-modern-llm-coverage}
 \input{sections/22-architecture-families}
+% ── Zoo L3: settlement of PoAI-verified work + DeSci/DeAI reproducibility substrate ──
+\input{sections/24-zoo-l3-settlement}
 \input{sections/23-implementation-status}
 % ── Original material ──
 \input{sections/08-related-work}

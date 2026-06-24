@@ -1,7 +1,8 @@
-\section{The Software-Only Execution Proof}
+\section{The Software-Only Execution Proof (Design)}
 \label{sec:freivalds}
 
-This section constructs the artifact that plays, for Proof-of-AI, the role the hash
+This section constructs the artifact that is \emph{designed} to play, for Proof-of-AI,
+the role the hash
 plays for Bitcoin: a value that is a \emph{side effect} of the genuine computation,
 that is \emph{cheap to verify} relative to producing it, and that \emph{cannot be
 produced without performing the work}---but where the work is real AI inference and
@@ -12,6 +13,19 @@ probabilistic verifier for the matrix products (Freivalds' algorithm, made
 bit-exact by the integer quantization path), and a determinism contract (so that
 ``re-derive and compare'' is well-defined across heterogeneous hardware). We then
 prove soundness.
+
+\paragraph{Status of this section.} The probabilistic verifier (the Freivalds core), the
+determinism contract's two nontrivial clauses, the activation-trace commitment of
+Section~\ref{sec:mmr}, and its emission from a real forward/graph pass are all \emph{built
+and tested} (Section~\ref{sec:impl-status}): a \texttt{ProvableLinear}/\texttt{GraphTrace}
+forward streams the trace, a challenger opens a beacon-selected matmul and Freivalds-checks
+it (\texttt{poi\_transcript.rs}), and the on-chain witness re-checks it in pure Solidity
+(\texttt{ComputeWitnessLib}). The soundness theorems below are therefore both correct as
+mathematics \emph{and} the specification the running code implements; ``cannot be faked''
+is operational for the families the suite exercises. We mark the one place (the
+integer-accumulator remark) where the proof's arithmetic assumption requires the exact
+whole-$K$ $i64$ accumulator (\texttt{exact\_matmul}, the proof path), which is stronger
+than the $f8q8$ fast path used for ordinary, non-proof-bearing inference.
 
 \subsection{The activation-trace commitment}
 \label{sec:mmr}
@@ -77,11 +91,30 @@ reproducible across hardware: the same $A B$ computed with fp16 accumulation on 
 GPUs, or on a GPU versus a CPU, can differ in the low bits due to differing reduction
 orders, fused-multiply-add availability, and rounding. A Freivalds check over fp16
 would therefore suffer false rejections on honest cross-hardware re-derivation, which
-is fatal for a permissionless verifier. The integer path removes this: i8$\times$i8
-$\to$ i32 accumulation is associative and bit-identical on every architecture, so the
-proof-bearing mode is the quantized mode by necessity, not by preference. This is the
-software-only analogue of fixing a single hash function: a single, exactly
-reproducible arithmetic.
+is fatal for a permissionless verifier. The integer path removes this \emph{provided the
+entire length-$K$ dot product accumulates in i32 with no intermediate float}: under that
+condition i8$\times$i8 $\to$ i32 accumulation is associative and bit-identical on every
+architecture, so the proof-bearing mode is the quantized mode by necessity, not by
+preference. This is the software-only analogue of fixing a single hash function: a
+single, exactly reproducible arithmetic.
+\end{remark}
+
+\begin{remark}[The required whole-$K$-i32 kernel is a prerequisite, not the shipping
+kernel]
+\label{rem:wholek}
+The exactness above is a property of a \emph{whole-$K$ i32 accumulator}, and that is a
+kernel the engine does not yet ship. The quantized GEMM in the released engine (the
+\texttt{f8q8} block-quantized path) accumulates each 32-lane block's i8 dot in i32 but
+then \emph{converts the block partial to \texttt{f32}, scales by the block's float
+$d$, and sums across blocks in floating point}---a per-block FMA chain whose reduction
+order is non-associative and not bit-identical across NEON, AVX, and WASM back ends.
+Exact Freivalds over that kernel would therefore \emph{false-reject honest
+cross-hardware provers}, exactly the failure mode (a) of Section~\ref{sec:fp-fails}. The
+$\epsilon = 0$ guarantee of this section consequently holds for a pinned whole-$K$-i32
+reduction (block scales pulled out and the integer accumulation closed over the full
+contraction before any float, a RepOps-style cross-block pin) that is \emph{designed and
+to be built}, not for the current block-float kernel. We state this so the soundness
+claim is not read as a property of code that does not yet have it.
 \end{remark}
 
 \subsection{The non-matmul remainder}
@@ -231,18 +264,24 @@ $O(\log L)$, so the on-chain footprint is logarithmic in the trace length, and t
 guarantee is upgraded from ``caught with overwhelming probability'' to ``caught with
 certainty, after $O(\log L)$ interaction.''
 
-\begin{corollary}[Software-only verifiability]
+\begin{corollary}[Software-only verifiability, by construction]
 \label{cor:software-only}
-Producing the execution proof requires the model and the prover's compute; checking
+In the construction as specified (with the trace emitted and the whole-$K$-i32 kernel of
+Remark~\ref{rem:wholek} in place), producing the execution proof requires the model and
+the prover's compute; checking
 it---whether by spot-check (Theorem~\ref{thm:soundness}) or by bisection to
 certainty---requires only the model file, a CPU to compute $\mathsf{PRG}$, the
 $O(n^2)$ Freivalds matrix--vector products, and keccak for the trace. No trusted
 execution environment, GPU attestation, or special hardware is needed by either
-party.
+party. This is a property of the design; the two prerequisites it names (trace emission,
+pinned whole-$K$ reduction) are the remaining build (Section~\ref{sec:impl-status}).
 \end{corollary}
 
-Corollary~\ref{cor:software-only} is the property that makes the scheme egalitarian:
-a CPU-only validator can challenge a GPU prover, and any user can both generate and
-verify a proof against the same network-shared difficulty (the soundness parameters
-$p$, $k_{\mathrm{rep}}$, $s$, and the bond). This is the contrast with Bitcoin's
-ASIC-mediated work, drawn out in Section~\ref{sec:difficulty}.
+Corollary~\ref{cor:software-only} is the property that makes the scheme egalitarian: a
+CPU-only validator challenges a GPU prover, and any user both generates and verifies a
+proof against the same network-shared difficulty (the soundness parameters $p$,
+$k_{\mathrm{rep}}$, $s$, and the bond). The emission and the off-chain challenger of
+Section~\ref{sec:tiers} are built and tested (\texttt{poi\_transcript.rs}, the Go
+\texttt{crypto/poi} watcher, and the on-chain \texttt{ComputeWitnessLib}), so this is a
+live property for the proof-bearing path, not only an intended one---the contrast with
+Bitcoin's ASIC-mediated work, drawn out in Section~\ref{sec:difficulty}.

@@ -1,12 +1,33 @@
 \section{Ownership: Data, Models, and Weights as User-Owned Assets}
 \label{sec:ownership}
 
-The execution proofs make a stronger claim possible than ``the network computed
-correctly.'' They make \emph{sovereignty} auditable: a user can own their data, own
-the inference performed on it, and own the model weights they improve, and can choose
+\begin{quote}\small\itshape
+Status note. The cryptographic core of this section is now built. The confidentiality
+envelope---a single-shot prompt seal under \textbf{X-Wing} (the hybrid X25519 $+$
+ML-KEM-768 KEM, RFC~9180 HPKE base mode), so the prompt is ciphertext to everyone but the
+chosen operator---is implemented and tested (\texttt{luxfi/crypto/promptseal}, $6$ tests
+passing), and the in-enclave custody binding (a TEE quote that binds the operator's
+confidentiality key to an attested image) is implemented and tested
+(\texttt{luxfi/crypto/attestation}, $9$ tests passing); both are detailed and proven in the
+emission companion~\cite{poiemission}. The proof emission these compose with is also built
+(Section~\ref{sec:impl-status}). What remains forward-looking is the \emph{product} layer
+built on top---data/model/weight marketplaces, the full user-owned-asset NFT surface, and
+the plaintext-blind confidential-compute tier wired into every operator path; modes (2)
+and (3) below describe that intended envelope. Mode (1)---the user runs the model on their
+own hardware---is non-custodial unconditionally. We keep the design framing for the product
+surface and state plainly that the sealing and attestation primitives underneath it are
+deployed.
+\end{quote}
+
+The execution proofs are intended to make a stronger claim possible than ``the network
+computed correctly.'' They are designed to make \emph{sovereignty} auditable: a user
+\emph{would} own their data, own
+the inference performed on it, and own the model weights they improve, and \emph{would}
+choose
 \emph{per request} how much trust to place in whoever runs the compute---without the
-choice ever weakening the guarantee that the work was genuine. Trust becomes a UX
-dial, not a security compromise.
+choice ever weakening the guarantee that the work was genuine. The aim is that trust
+become a UX dial, not a security compromise. With the confidentiality envelope unbuilt,
+that decoupling holds today only in mode (1).
 
 \subsection{The trust spectrum}
 
@@ -23,14 +44,17 @@ the proof is emitted for the user's own records or for third parties who later w
 verify a result the user publishes. Trust in any operator is zero because there is no
 operator. This is the floor of the spectrum and the reference against which the others
 are measured.
-\item[(2) DAO trustless nodes --- verify, don't trust.] The user sends work to
-permissionless DAO operators, but under confidential compute (T1/T2) so the operator
-is \emph{plaintext-blind}: it processes ciphertext inside an enclave and never sees the
-data in the clear, while the execution proof (\PoI{}/\PoT{}) plus the slashing bond
-makes a wrong or fabricated result detectable and punishable. The user trusts no
+\item[(2) DAO trustless nodes --- verify, don't trust \emph{(unbuilt)}.] The user
+\emph{would} send work to
+permissionless DAO operators under confidential compute (T1/T2) so the operator
+\emph{would be} \emph{plaintext-blind}: processing ciphertext inside an enclave and never
+seeing the data in the clear, while the execution proof (\PoI{}/\PoT{}) plus the slashing
+bond would make a wrong or fabricated result detectable and punishable. \emph{As
+deployed today, none of this confidentiality holds}: there is no enclave ciphertext path
+and the operator receives plaintext. In the intended mode the user trusts no
 particular operator's honesty---only the proof system and, for the TEE tiers, the
-hardware root. This is the ``verify, don't trust'' mode: sovereignty over correctness
-and confidentiality without running the hardware oneself.
+hardware root. This is the designed ``verify, don't trust'' mode: sovereignty over
+correctness and confidentiality without running the hardware oneself.
 \item[(3) Selected trusted operators --- convenience.] The user picks specific
 operators by reputation (via the identity-and-reputation layer), accepting a
 centralized-feeling, faster, cheaper path. Even here the proofs remain emittable, so
@@ -44,26 +68,41 @@ the binding and the proof primitive. A user can move a workload from mode (3) to
 mode (2) to mode (1) as their trust requirements rise, with no change to the artifacts
 the workload produces.
 
-\subsection{Data is never plaintext at rest}
+\subsection{Data confidentiality at rest: primitives built, operator integration pending}
 
-In modes (2) and (3) the data is encrypted under keys held in the user's key
-management, committed on-chain only by hash, and---in the confidential-compute
-tiers---processed as ciphertext inside the enclave. The execution proof binds to
-$\mathsf{inputHash}$ (Section~\ref{sec:binding}), so the proof certifies that the
-\emph{committed} input was processed, while revealing nothing about the input itself.
-This is what makes \PoC{}'s privacy clause (Definition~\ref{def:poc}) more than a
-promise: the contributor proves the gradient was computed over data consistent with
-the committed policy, and shares only the resulting delta, so the corpus stays private
-while the contribution stays verifiable.
+The cryptographic primitives are built: in modes (2) and (3) the prompt is sealed under
+X-Wing (X25519 $+$ ML-KEM-768) HPKE to the chosen operator's published key
+(\texttt{crypto/promptseal}, tested), committed on-chain only by hash, and---in the
+confidential-compute tier---decryptable only inside an enclave whose attested image is
+bound to that key (\texttt{crypto/attestation}, tested; \cite{poiemission}). What is
+\emph{not} yet built is the \emph{integration} of these primitives into the production
+inference operator path: the seal/open is not yet wired into every operator's request
+handler, nor the per-operator key-management lifecycle, so in the currently deployed
+operator path the prompt may be held in the clear and the ``never plaintext at rest''
+property is guaranteed only in mode (1) and wherever the sealing path is enabled. The
+soundness binding is independent of this and is real: the execution proof binds to
+$\mathsf{inputHash}$ (Section~\ref{sec:binding}), so a proof certifies that the
+\emph{committed} input was processed while revealing nothing about the input itself. That
+binding is what makes \PoC{}'s privacy clause (Definition~\ref{def:poc}) more than a
+promise: the contributor proves the gradient was computed over data consistent with the
+committed policy (the training-step graph is Freivalds-checked,
+Section~\ref{sec:impl-status}) and shares only the resulting delta, so the corpus stays
+private while the contribution stays verifiable. The confidentiality envelope (X-Wing
+prompt seal $+$ attestation) and the proof emission it relies on are both built and tested
+(\texttt{crypto/promptseal}, \texttt{crypto/attestation}, the engine \texttt{poi\_*}
+modules; Section~\ref{sec:impl-status}); the corpus-scale data-policy product around them
+is the forward-looking part.
 
 \subsection{Weights are a portable, user-owned asset}
 
 A model improvement---the $\Delta W$ of \PoT{}/\PoC{}---is serialized in the gym's
 canonical backend-independent BF16 format and committed by its root
 (Section~\ref{sec:four-proofs}). Because the serialization is canonical and
-backend-independent, a delta trained on one accelerator is byte-portable to any other,
-and its provenance (which base model, which data policy, what improvement margin) is
-attested by the \PoC{} it was minted with. A user's weights are therefore an on-chain
+backend-independent, a delta trained on one accelerator is byte-portable to any other
+\emph{(this part is real---it is the gym's shipping format)}, and its provenance (which
+base model, which data policy, what improvement margin) \emph{would be}
+attested by the \PoC{} it was minted with \emph{(this part depends on the unbuilt proof
+emission)}. The end state is that a user's weights are an on-chain
 asset they own and can move, sell, or compose---with royalties flowing to the
 contributors whose proven improvements it incorporates---rather than an artifact
 locked inside a single provider's stack. The proof framework is what gives the asset
@@ -72,15 +111,19 @@ genuinely trained and genuinely improves the model, than when it is merely asser
 
 \subsection{Trust as a dial, security as a floor}
 
-The synthesis is that the execution proofs decouple \emph{trust} from \emph{security}.
-A user dials trust up the spectrum---from running everything themselves, to trusting a
-proof system, to trusting a named operator---according to their convenience and
-threat model, and the proof framework holds the security floor constant underneath:
+The synthesis the design aims at is that the execution proofs decouple \emph{trust} from
+\emph{security}.
+A user would dial trust up the spectrum---from running everything themselves, to trusting
+a proof system, to trusting a named operator---according to their convenience and
+threat model, and the proof framework would hold the security floor constant underneath:
 in every mode, a result that claims to be the model's output on the user's input
-either is, or is caught. This is the difference between the deployed settlement
-engine, where ``trusting the operators'' meant accepting unverified guesses
+either is, or is caught. This is the intended difference between the deployed settlement
+engine, where ``trusting the operators'' means accepting unverified guesses
 (Section~\ref{sec:guess-to-mint}), and a proof-backed network, where trusting an
-operator is a choice about \emph{speed and cost}, never about \emph{correctness}. The
-user owns the data, owns the inference, and owns the weights; the protocol's job is
+operator would be a choice about \emph{speed and cost}, never about \emph{correctness}.
+\emph{This decoupling is not yet in force}: with neither the proof emission nor the
+confidentiality envelope built, mode (1) (self-hosting) is the only mode that today
+delivers either sovereignty or non-custody. The end state is that the
+user owns the data, the inference, and the weights, and the protocol's job is
 only to make all three auditable, at whatever point on the trust spectrum the user
-selects.
+selects; reaching it is the build of Section~\ref{sec:impl-status}.

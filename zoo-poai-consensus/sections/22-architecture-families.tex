@@ -15,12 +15,28 @@ output commitments with deterministic pre- and post-processing. No third core te
 is required.
 
 We are scholarly about status. The base Freivalds verifier over the exact integer
-accumulator is \emph{implemented and unit-tested} (Section~\ref{sec:impl-status}); the
-two determinism prerequisites the harder families lean on---the lowest-token-id argmax
+accumulator is \emph{implemented and tested} (Section~\ref{sec:impl-status}); the two
+determinism prerequisites the harder families lean on---the lowest-token-id argmax
 tie-break and the canonical backend-independent MoE top-$k$---are \emph{also implemented
-and tested in the engine}. The activation-trace commitment, the forward-pass
-integration, the routing proof, and the sequential-chaining proof are \emph{designed
-here, not yet built}; we label each obligation accordingly.
+and tested in the engine}; the activation-trace commitment, the forward-pass emission, and
+the \emph{routing proof} are now \emph{built and tested} as well (the routing proof is the
+\textsc{TopKRoute}/\textsc{Gather} path of \texttt{poi\_graph.rs}, exercised by a real MoE
+block). What remains \emph{designed here, not yet built} is the \emph{sequential-chaining
+proof} (for state-space and diffusion latents) and the RepOps floating-point tier; we
+label each obligation accordingly.
+
+\paragraph{What ``coverage'' means here, precisely.} The coverage this section establishes
+is a structural claim---every family \emph{reduces} to the base primitive plus at most one
+of two extensions---and its tested floor is now nonempty. The families with a committed,
+verified transcript today are the dense/SwiGLU forward, the attention spine (with a
+deterministic integer softmax), the mixture-of-experts block (routing proof built), and a
+training step: these emit and verify in the engine's test suite. What remains a
+\emph{designed} ceiling rather than a deployed floor is the breadth: the sequential-chaining
+families (recurrent/state-space and diffusion) await the chaining-proof emission, and the
+fp16/bf16/fp8 tier (RepOps, Section~\ref{sec:repops}) awaits the pinned-reduction kernel
+(specified and proven sound in~\cite{poisoundness}, no kernel yet). The theorem below should
+be read as ``these three techniques \emph{suffice} to cover the zoo, two of the three are
+built, and the families in the test suite are covered today.''
 
 \subsection{Dense transformer (base case)}
 
@@ -194,7 +210,7 @@ Dense transformer\newline(\texttt{zen-nano}, dense tiers)
   & --- \\[3pt]
 MoE\newline(\texttt{zen4-max}, \texttt{zen-coder-flash}, \texttt{zen-max})
   & expert-FFN GEMMs
-  & \textbf{routing proof} (designed); routing determinism \emph{built}
+  & \textbf{routing proof} \emph{(built)}; routing determinism \emph{built}
   & commit router logits, expert indices, sparse pattern \\[3pt]
 Linear / gated-recurrent / SSM\newline(\texttt{zen4-nano/micro/mini/pro}, \texttt{zen4-thunder/storm})
   & per-step GEMMs
@@ -216,7 +232,7 @@ Diffusion / Transfusion\newline(\texttt{zen5} 3D/video, \texttt{zen-designer} im
 \end{tabular}
 \end{table}
 
-\begin{theorem}[Two-extension coverage of the zoo]
+\begin{theorem}[Two-extension coverage of the zoo, by reduction]
 \label{thm:two-extensions}
 Let the verification surface consist of (i) the base primitive (Freivalds-checked
 matmuls plus deterministic commit-and-recompute of elementwise/transform ops), (ii) the
@@ -224,9 +240,15 @@ routing proof of Section~\ref{sec:moe-proof}, and (iii) the sequential-chaining 
 Section~\ref{sec:ssm-proof}, each composed with the per-modality input/output commitments
 and the determinism contract. Then every architecture family shipped in the \Zoo{} zoo---
 dense, MoE, linear-recurrent/SSM, multimodal vision, audio, and diffusion/Transfusion---is
-covered: its heavy arithmetic reduces to matmuls verified by (i), its sparse routing (if
+\emph{reducible} to this surface: its heavy arithmetic reduces to matmuls verified by (i),
+its sparse routing (if
 any) by (ii), and its inter-step state or latent seam (if any) by (iii). No additional
-core verification technique is required.
+core verification technique is required. \emph{This is a statement about the design's
+sufficiency; two of the three techniques---the base primitive (i) and the routing proof
+(ii)---are implemented and tested and are wired to emit from real forward/graph passes, so
+the reduction is realized today for the dense, attention, MoE, and training families, while
+the sequential-chaining technique (iii) and the long-tail families remain designed
+(Section~\ref{sec:status-summary}).}
 \end{theorem}
 
 \begin{proof}[Argument]

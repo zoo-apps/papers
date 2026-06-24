@@ -1,0 +1,139 @@
+\section{What Is Built vs.\ What Is Designed}
+\label{sec:status-summary}
+
+A reader should not have to reach the implementation section to learn which of this
+paper's claims are backed by running code and which are specifications awaiting
+implementation. We therefore state the boundary here, before the construction, and
+repeat the discipline at each section that makes an execution-level claim. The full
+per-result ledger is Section~\ref{sec:impl-status}; the two companion
+documents---the soundness companion~\cite{poisoundness} and the
+emission/enforcement companion~\cite{poiemission}---carry the same boundary from the proof
+side and are consistent with this table. This section is that table, surfaced.
+
+\paragraph{The honest one-line summary.} The \emph{soundness primitive} is proven and
+shipped; the end-to-end \emph{execution-proof system} it enables is now built and tested,
+not a roadmap; and the residual is a named, smaller pair (a floating-point tier, and
+emission coverage of architectures beyond the tested families). The matmul verifier that
+catches a fabricated output with probability $\ge 1 - 2^{-122}$ (at two challenge vectors)
+and never false-rejects honest integer work is implemented and unit-tested. The wire that
+the earlier draft of this paper marked ``designed, not built''---a \emph{running} forward
+pass committing a streamed activation-trace transcript that a challenger opens and
+Freivalds-checks against the committed operands---is built: it emits from a real
+quantized forward (\texttt{ProvableLinear}), composes across a whole typed graph
+(\texttt{GraphTrace}, including a training step), is verified on-chain in pure Solidity
+(\texttt{ComputeWitnessLib}), and gates a bond-slashing optimistic state machine
+(\texttt{OptimisticEvidence}). The properties this buys---``a fabricated matmul is
+provable'' and ``an honest prover is never slashable''---are theorems with passing
+adversarial tests behind each, across three languages with byte-identical commitments.
+
+\begin{table}[h]
+\centering
+\caption{Built-vs-designed boundary for the execution-proof scheme. ``Built'' = merged,
+released under semantic versioning, and tested; the test counts are the actual passing
+counts of the suites named in the last column (Rust \texttt{cargo test}, Go
+\texttt{go test}, Solidity \texttt{forge test}). ``Designed'' = specified in this paper,
+not yet implemented. The decisive load-bearing item---emission of the activation-trace
+transcript from a live forward pass---is now in the \emph{first} block, which is why the
+system-level ``cannot be faked'' claim is no longer conditional on an unbuilt wire (only on
+the stated cryptographic assumptions and the determinism contract).}
+\label{tab:status-summary}
+\small
+\begin{tabular}{@{}p{7.4cm}p{2.2cm}p{4.0cm}@{}}
+\toprule
+Component & Status & Evidence / where \\
+\midrule
+Exact-integer Freivalds matmul verifier
+  & \textbf{built}, tested
+  & \texttt{poi.rs} ($7$); \texttt{luxfi/crypto/poi} ($23$) \\
+Activation-trace transcript (keccak Merkle) + challenger (open + Freivalds)
+  & \textbf{built}, tested
+  & \texttt{poi\_transcript.rs} ($8$) \\
+Proof-bearing forward: returned value $=$ committed exact-integer result
+  & \textbf{built}, tested
+  & \texttt{poi\_forward.rs} \texttt{ProvableLinear} ($3$) \\
+Full-graph composition (attention, MoE, training) via typed trace
+  & \textbf{built}, tested
+  & \texttt{poi\_graph.rs} \texttt{GraphTrace} ($9$) \\
+Adversarial red-team battery (each forbidden attack is caught)
+  & \textbf{built}, tested
+  & \texttt{poi\_adversarial.rs} ($11$) \\
+Soundness theorems ($1/p$ one-layer; $2^{-122}$ amplified; zero false-reject; composition)
+  & \textbf{proven}
+  & \S\ref{sec:freivalds}; \cite{poisoundness,poiemission} \\
+Lowest-token-id argmax / canonical MoE top-$k$ (determinism D3)
+  & \textbf{built}, tested
+  & \texttt{sampler.rs}, \texttt{ops.rs}, \texttt{poi\_graph.rs} \\
+On-chain Freivalds + Merkle witness (pure Solidity)
+  & \textbf{built}, tested
+  & \texttt{ComputeWitnessLib.sol} ($5$) \\
+Optimistic commit/challenge/slash gate (bond paid on verified fraud only)
+  & \textbf{built}, tested
+  & \texttt{OptimisticEvidence.sol} ($18$) \\
+Fail-closed mint gate (no compute-verifier $\Rightarrow$ no mint)
+  & \textbf{built}, tested
+  & \texttt{AICoinMiner.sol} ($12$); \texttt{ComputeProofEnforcement} ($19$) \\
+Capped, halving fair-mined coin; global no-double-mint
+  & \textbf{built}, tested
+  & \texttt{AICoin.sol} ($11$); \texttt{AIComputeRegistry} ($6$) \\
+Miner bond/slash registry
+  & \textbf{built}, tested
+  & \texttt{MinerStakeRegistry.sol} ($8$) \\
+\Zoo{} L3 directory + endorsement (settlement registry)
+  & \textbf{built}, tested
+  & \texttt{L3Registry.sol} ($8$); \S\ref{sec:l3-settlement} \\
+\midrule
+RepOps pinned-reduction-tree fp16/bf16/fp8 mode
+  & \textbf{designed}; proven
+  & \S\ref{sec:repops}; \cite{poisoundness} \\
+Emission coverage of architecture families beyond the tested set
+  & \textbf{designed}; proven
+  & \S\ref{sec:families}; \cite{poisoundness} \\
+Sequential-chaining proof for SSM / diffusion latents (the \emph{chaining} obligation)
+  & \textbf{designed}; proven
+  & \S\ref{sec:ssm-proof}, \S\ref{sec:diffusion}; \cite{poisoundness} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Three consequences a reviewer can grep for.} A peer reviewer who reads the
+repositories will find exactly these, and we state them so they are unmistakable:
+
+\begin{enumerate}[leftmargin=1.6em]
+\item \textbf{The verifier now has callers.} The earlier draft's caveat---``the verifier
+has no production callers''---no longer holds. \texttt{crypto/poi}'s \texttt{VerifyMulti}
+and the engine's \texttt{poi.rs} are invoked end to end: \texttt{poi\_transcript.rs} opens a
+beacon-selected matmul of a real \texttt{ProvableLinear}/\texttt{GraphTrace} forward and
+Freivalds-checks it, the Solidity \texttt{ComputeWitnessLib} runs the identical check
+on-chain, and \texttt{OptimisticEvidence.challenge} calls \texttt{provesFraud} to slash a
+bond. The \texttt{AICoinMiner} mint gate \emph{reverts} when no compute-verifier is wired
+(\texttt{ProofGateUnavailable}), so the proofless-mint default the earlier draft flagged is
+closed: out of the box a proof is mandatory, not opt-in.
+\item \textbf{The ``exact, software-only'' claim is about a kernel the engine ships in the
+proof path.} \texttt{ProvableLinear} computes $y=\mathrm{dequant}(\bar x\cdot W^\top)$ on a
+\emph{whole-$K$ exact-$i64$ accumulator} (\texttt{poi.rs::exact\_matmul}), commits exactly
+those operands, and dequantizes the committed $C$---so the returned value \emph{is} the
+committed computation, with no floating-point reduction in the committed trace and zero
+cross-hardware drift (the float-shadow unsoundness the earlier draft warned of is avoided by
+construction). The throughput cost of the exact accumulator is paid only on proof-bearing
+inferences; the fast \texttt{f8q8} path is unchanged for ordinary inference.
+\item \textbf{Provable-today architecture coverage is no longer $0\%$.} The test suite emits
+and verifies a real SwiGLU FFN ($\texttt{gate}\to\texttt{up}\to\texttt{down}$), the
+attention spine ($QK^\top\to$ scale $\to$ deterministic integer softmax $\to\cdot V$), a
+mixture-of-experts block (router $\to$ top-$k$ $\to$ gather $\to$ expert matmuls $\to$
+combine), and a single SGD training step (forward $+$ backward $+$ update) as one typed
+graph---so the families with a committed, verified transcript today are nonempty. What
+remains a \emph{designed} ceiling rather than a deployed floor is the breadth: the
+fp16/bf16/fp8 tier (RepOps) and the architecture families not yet wired to emit (the
+sequential-chaining obligation for state-space and diffusion models, and the long tail of
+the model zoo). ``Full modern-LLM coverage'' names the design's reach; the tested set names
+its present floor, and the floor is no longer empty.
+\end{enumerate}
+
+None of this weakens the mathematics. The Freivalds soundness theorem, the binding's
+anti-replay/anti-substitution lemmas, the floating-point no-go, and the whole-graph
+composition theorem are correct as stated and are the Bitcoin-whitepaper-grade
+contribution of the paper. What the table fixes, relative to the earlier draft, is the
+\emph{tense} of the system claims: we have proven a sound primitive, shipped its core,
+\emph{and built and tested} the emission and on-chain enforcement that turn that primitive
+into an unfakeable settlement gate---leaving a named floating-point tier and wider
+architecture emission as the honest remaining work.

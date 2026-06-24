@@ -19,6 +19,20 @@ pass; so a single primitive that verifies matrix products
 (Section~\ref{sec:freivalds}) covers the expensive part of all four, and the cheap
 remainder is committed and recomputed deterministically.
 
+\paragraph{Status of this section.} The four proofs are \emph{specified} here and the
+machinery they share is \emph{built}: each reduces to the Freivalds primitive plus the
+activation-trace commitment and forward-pass emission, all implemented and tested
+(\texttt{poi.rs}, \texttt{poi\_transcript.rs}, \texttt{poi\_forward.rs},
+\texttt{poi\_graph.rs}; Section~\ref{sec:impl-status}). Proof-of-Inference and
+Proof-of-Embedding emit and verify today (a real SwiGLU forward and an MoE/attention graph
+are exercised by the suite); Proof-of-Training emits and verifies as a longer graph of the
+same ops plus a transpose (\texttt{test\_training\_step\_is\_just\_a\_graph}); the
+privacy-preserving Proof-of-Contribution adds the X-Wing prompt seal and attestation
+binding (\cite{poiemission}). The definitions below say what each proof \emph{is} and what
+it establishes; the operational reading (``this output is certified to be the model's
+output'') holds wherever the emitting forward is wired---which, for the families in the
+test suite, is now.
+
 \begin{definition}[Compute-proof primitive]
 \label{def:primitive}
 Fix the binding $\mathsf{reportData}$ of Section~\ref{sec:binding}. A
@@ -68,9 +82,11 @@ and the model, so a verifier re-deriving any sampled step obtains the identical
 token. The per-token logits are the output of the final matmul of each pass and are
 thus covered by the same Freivalds check as every other layer; the argmax that
 selects the token is an element-wise comparison the verifier recomputes from the
-committed logits. \PoI{} is the proof that makes the receipt of
+committed logits. \PoI{} is the proof \emph{designed} to make the receipt of
 Section~\ref{sec:guess-to-mint}'s engine mean ``this output is the model's output''
-rather than merely ``$\theta$ operators agreed on this output.''
+rather than merely ``$\theta$ operators agreed on this output''---a property it
+delivers once the trace it checks is actually emitted (Section~\ref{sec:impl-status}),
+and not before.
 
 \subsection{\PoT{}: Proof-of-Training}
 

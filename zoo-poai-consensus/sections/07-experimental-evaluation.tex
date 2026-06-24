@@ -2,6 +2,21 @@
 
 \label{sec:evaluation}
 
+\begin{quote}\small\itshape
+Status note. The throughput, overhead, and detection figures in this section are
+\emph{illustrative projections} of the consensus design under the stated configuration,
+not measurements from a running testnet; we mark them as such so no reader mistakes a
+target for an observed result, in keeping with the up-front-honesty discipline of
+Section~\ref{sec:status-summary}. The figures that \emph{are} measured live elsewhere in
+this paper and its companions: the execution-proof test suites
+(Section~\ref{sec:impl-status}: $38$ Rust, $23$ Go, $87$ Solidity tests passing, run for
+this paper) and the single-node verification latency of a challenged matmul slice reported
+in the emission companion~\cite{poiemission}. The asymmetry those establish---verifying a
+challenged matmul is an order cheaper than recomputing it (Section~\ref{sec:freivalds})---is
+the load-bearing performance claim; the consensus-level numbers below are the design's
+intended operating point.
+\end{quote}
+
 \subsection{Testnet Configuration}
 
 \begin{itemize}

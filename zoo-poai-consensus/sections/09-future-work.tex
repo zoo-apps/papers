@@ -1,10 +1,27 @@
 \section{Future Work}
 
+The honest remaining work is the residual named throughout (Sections~\ref{sec:status-summary},
+\ref{sec:impl-status}), plus the orthogonal extensions the attestation and pricing layers
+invite. The execution-proof core, its emission, the cross-chain root relay, and the on-chain
+gate are built; what follows is breadth and the surrounding product surface.
 
 \begin{enumerate}
-    \item \textbf{GPU TEE Integration}: NVIDIA H100 Confidential Computing support
-    \item \textbf{Cross-Chain Verification}: Proving AI work on multiple chains
-    \item \textbf{Hierarchical Consensus}: Specialized subconsensus for AI tasks
-    \item \textbf{Privacy-Preserving Quality Scoring}: Zero-knowledge proofs for evaluation
+    \item \textbf{RepOps floating-point tier}: a pinned-reduction-tree kernel that makes
+    fp16/bf16/fp8 GEMMs bit-exact, extending the proof path beyond the quantized integer
+    tier (designed and proven sound in~\cite{poisoundness}; no kernel yet).
+    \item \textbf{Sequential-chaining emission}: wiring the proven chaining obligation for
+    state-space (recurrent) and diffusion models, the one structural case the
+    forward/transpose graph does not yet cover.
+    \item \textbf{Long-tail architecture emission}: extending transcript emission to the
+    model-zoo families outside the tested set (multimodal towers, audio conformers), each of
+    which already reduces to the existing techniques (Theorem~\ref{thm:two-extensions}).
+    \item \textbf{GPU TEE integration}: NVIDIA H100 / Blackwell confidential-computing
+    quote parsing into the canonical attestation quote, for the hardware-trust tier that
+    complements the software-only proof.
+    \item \textbf{Operator-path confidentiality integration}: wiring the built X-Wing prompt
+    seal and attestation binding (\texttt{crypto/promptseal}, \texttt{crypto/attestation})
+    into every inference operator's request handler and key-management lifecycle.
+    \item \textbf{Privacy-preserving quality scoring}: zero-knowledge proofs for the
+    multi-party evaluation protocol, so a quality score reveals nothing about the evaluator's
+    private rubric.
 \end{enumerate}
-
