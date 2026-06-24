@@ -136,6 +136,6 @@ real forward/graph pass, the off-chain challenger, and the on-chain fail-closed 
 are implemented and tested ($38$ Rust, $23$ Go, $87$ Solidity tests;
 Section~\ref{sec:impl-status}). So the attack above describes the settlement of a system
 that does \emph{not} install the compute-proof gate---which the deployed contracts now
-refuse to be: \texttt{AICoinMiner} reverts with \texttt{ProofGateUnavailable} when no
+refuse to be: \texttt{AIMiner} reverts with \texttt{ProofGateUnavailable} when no
 verifier is wired, so a proofless mint is impossible out of the box. The residual is the
 floating-point tier and wider architecture emission, not the closing of this attack.

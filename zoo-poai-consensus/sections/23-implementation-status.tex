@@ -61,7 +61,7 @@ $(A,B,C)$ plus a Merkle inclusion proof), checks the operands were the committed
 Freivalds-checks $C=A\cdot B$ with $k$ beacon-bound vectors (\texttt{verify\_opening}). The
 Merkle fold (odd levels duplicate the last node; index fold $\mathsf{even}\!\to\!
 \keccak(node\|sib)$, $\mathsf{odd}\!\to\!\keccak(sib\|node)$) is identical to
-\texttt{AICoinMiner.\_verifyMerkle}, so a proof built here verifies on-chain. The suite
+\texttt{AIMiner.\_verifyMerkle}, so a proof built here verifies on-chain. The suite
 proves honest passes verify under every beacon, a fabricated $C$ is caught, a swapped-in
 $C$ fails Merkle inclusion, and the root binds every operand.
 
@@ -140,7 +140,7 @@ verification-throughput scaling test.
 \subsection{Built and tested: on-chain enforcement and the fail-closed mint gate}
 
 The witness is verified in the EVM, not asserted by a watcher. The settlement contracts
-live in \texttt{luxfi/standard} (\texttt{contracts/ai/thinking/}); the eight Proof-of-AI
+live in \texttt{luxfi/standard} (\texttt{contracts/ai/\{governance,mining,token,compute,relay,registry\}/}); the eight Proof-of-AI
 suites total \textbf{87 tests passing} (\texttt{forge test}), distributed as follows.
 
 \begin{itemize}[leftmargin=1.4em]
@@ -160,7 +160,7 @@ on-chain via \texttt{provesFraud} and, only on a verified discrepancy, marks the
 after an un-challenged window. The state machine is one-shot per \texttt{reportData} (a
 slashed liar cannot re-post), a zero bond is rejected (a liar always has skin in the game),
 and effects precede the single pull-of-funds (no reentrancy re-claim).
-\item \textbf{\texttt{AICoinMiner.sol} (12/12).} The mint gate, \emph{fail-closed}:
+\item \textbf{\texttt{AIMiner.sol} (12/12).} The mint gate, \emph{fail-closed}:
 \texttt{mine} requires receipt shape $+$ finality $+$ Merkle inclusion under an accepted
 root $+$ a \texttt{ComputeProof} binding the receipt's own measured model/prompt/output,
 and reverts (\texttt{ProofGateUnavailable}) if no verifier is wired---so a forged root alone
@@ -187,8 +187,8 @@ DAO-gated endorse/reassign, and squat recovery.
 
 The post-quantum cross-layer root relay \texttt{AChainRootOracle.sol} (an ML-DSA validator
 quorum replacing a trusted single relayer; Section~\ref{sec:l3-settlement}) and the
-leaderless operator-quorum governance (\texttt{ThinkingGovernor},
-\texttt{ThinkingParameters}, with \texttt{AIExecute}/\texttt{AIApproval}) are likewise
+leaderless operator-quorum governance (\texttt{AIGovernor},
+\texttt{AIParams}, with \texttt{AIExecute}/\texttt{AIApproval}) are likewise
 deployed in the same standard library and carry their own passing suites; we cite them for
 completeness as the operator-safe, post-quantum surface the settlement path composes with,
 without re-tabulating their tests here.

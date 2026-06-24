@@ -71,7 +71,7 @@ Optimistic commit/challenge/slash gate (bond paid on verified fraud only)
   & \texttt{OptimisticEvidence.sol} ($18$) \\
 Fail-closed mint gate (no compute-verifier $\Rightarrow$ no mint)
   & \textbf{built}, tested
-  & \texttt{AICoinMiner.sol} ($12$); \texttt{ComputeProofEnforcement} ($19$) \\
+  & \texttt{AIMiner.sol} ($12$); \texttt{ComputeProofEnforcement} ($19$) \\
 Capped, halving fair-mined coin; global no-double-mint
   & \textbf{built}, tested
   & \texttt{AICoin.sol} ($11$); \texttt{AIComputeRegistry} ($6$) \\
@@ -105,7 +105,7 @@ and the engine's \texttt{poi.rs} are invoked end to end: \texttt{poi\_transcript
 beacon-selected matmul of a real \texttt{ProvableLinear}/\texttt{GraphTrace} forward and
 Freivalds-checks it, the Solidity \texttt{ComputeWitnessLib} runs the identical check
 on-chain, and \texttt{OptimisticEvidence.challenge} calls \texttt{provesFraud} to slash a
-bond. The \texttt{AICoinMiner} mint gate \emph{reverts} when no compute-verifier is wired
+bond. The \texttt{AIMiner} mint gate \emph{reverts} when no compute-verifier is wired
 (\texttt{ProofGateUnavailable}), so the proofless-mint default the earlier draft flagged is
 closed: out of the box a proof is mandatory, not opt-in.
 \item \textbf{The ``exact, software-only'' claim is about a kernel the engine ships in the

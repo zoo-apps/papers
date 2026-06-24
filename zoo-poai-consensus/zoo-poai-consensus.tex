@@ -113,10 +113,10 @@ step, all in the Rust engine (\texttt{hanzo-engine}: $27$ unit tests $+\,11$ adv
 red-team tests, $38/38$ passing); (ii) the canonical Go verifier
 (\texttt{luxfi/crypto/poi}, $23/23$) that the chain consumes, byte-identical to the
 prover under a pinned cross-language challenge vector; and (iii) the on-chain enforcement
-(\texttt{luxfi/standard} thinking contracts: $87/87$ across the eight Proof-of-AI suites),
+(\texttt{luxfi/standard} Proof-of-AI contracts: $87/87$ across the eight Proof-of-AI suites),
 where \texttt{ComputeWitnessLib} runs Freivalds and the Merkle fold in pure Solidity,
 \texttt{OptimisticEvidence} pays a bond to a challenger \emph{only} on a verified fraud,
-and the \texttt{AICoinMiner} mint gate \emph{fails closed}: with no compute-verifier wired
+and the \texttt{AIMiner} mint gate \emph{fails closed}: with no compute-verifier wired
 it reverts (\texttt{ProofGateUnavailable}), so a forged receipt root alone no longer mints.
 Two honest properties survive the build: a fabricated matmul is caught except with
 probability $\le 2^{-122}$ at two challenge vectors because Freivalds runs over an exact

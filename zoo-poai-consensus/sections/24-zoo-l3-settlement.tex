@@ -27,8 +27,8 @@ The stack is four layers, each a value the one above settles into:
 \underbrace{\text{models}}_{\text{the provers}} .
 \]
 The Proof-of-AI contracts are not forked per layer. There is exactly one canonical
-implementation---the \Lux{} standard library's thinking-chain contracts
-(\texttt{luxfi/standard}, \texttt{contracts/ai/thinking/}, licensed BSD-3-Eco)---and an L3
+implementation---the \Lux{} standard library's Proof-of-AI contracts
+(\texttt{luxfi/standard}, \texttt{contracts/ai/\{governance,mining,token,compute,relay,registry\}/}, licensed BSD-3-Eco)---and an L3
 consumes it as a dependency rather than copying it, the same discipline by which the Go
 verifier (\texttt{luxfi/crypto/poi}), the Rust prover (\texttt{hanzo-engine}), and the
 Solidity witness (\texttt{ComputeWitnessLib.sol}) are three views of one byte-exact wire
@@ -44,7 +44,7 @@ A community that launches a Thinking-Chain L3 registers it in a hub directory de
 the \Zoo{} L2: \texttt{L3Registry.sol}. The registry is a pure directory by deliberate
 design---it ``holds no L3 state and never reaches into an L3's governance''---storing for
 each L3 the pointer that makes it findable: its name, its EVM \texttt{chainId}, the
-addresses of its \texttt{ThinkingGovernor} and \texttt{ThinkingChainObservatory}, the
+addresses of its \texttt{AIGovernor} and \texttt{AIObservatory}, the
 registrar, an off-chain metadata URI, and an endorsement flag. Two access tiers keep the
 directory open while curating the ``official'' set: \emph{registration is permissionless}
 (anyone may list an L3, keyed one-record-per-\texttt{chainId} by
@@ -59,9 +59,9 @@ register, one-per-chain, DAO-only endorse/reassign, and the squat-recovery path.
 
 This is the \Zoo{} flavor of decentralization stated precisely. The L3 chain itself is not
 created by the registry; it is created on the \Lux{} P-Chain
-(\texttt{lux chain create --type=l3}) and runs its own sovereign thinking-governance stack
-(\texttt{ThinkingGovernor}, \texttt{ProofOfThoughtRegistry},
-\texttt{ThinkingChainObservatory}, \texttt{ThinkingReputation}) on its own ledger. The
+(\texttt{lux chain create --type=l3}) and runs its own sovereign AI-governance stack
+(\texttt{AIGovernor}, \texttt{AIThoughtRegistry},
+\texttt{AIObservatory}, \texttt{AIReputation}) on its own ledger. The
 registry only records and, if the DAO chooses, endorses---so the directory is a public good
 and the curation is a separate, gated concern (orthogonality, again).
 
@@ -71,7 +71,7 @@ The substantive question is how work proven on an L3 becomes spendable value on 
 without re-introducing a trusted bridge. Three contracts compose to answer it; each was
 read and tested for this paper.
 
-\paragraph{The mint gate, fail-closed.} On the settlement EVM, \texttt{AICoinMiner.mine}
+\paragraph{The mint gate, fail-closed.} On the settlement EVM, \texttt{AIMiner.mine}
 turns one verified inference receipt into a fair-launch \texttt{AICoin} subsidy. It is the
 gate the rest of the paper's soundness flows through, and it fails closed: a completed
 receipt must (1) be the correct fixed-width shape carrying a non-zero output, (2) prove
@@ -83,11 +83,11 @@ longer mints (the audit's C3 hole), because the compute proof binding real
 $(\text{model}, \text{prompt}, \text{output})$ is mandatory. The subsidy is minted to the
 receipt's \emph{bound requester} (read from the attestation), never to the submitter, so a
 relayer cannot redirect rewards; and the amount is clamped to the vested halving allowance,
-so settlement never inflates past the schedule. The $12/12$ \texttt{AICoinMiner.t.sol} and
+so settlement never inflates past the schedule. The $12/12$ \texttt{AIMiner.t.sol} and
 $19/19$ \texttt{ComputeProofEnforcement.t.sol} suites exercise exactly these gates.
 
 \paragraph{The trustless post-quantum relay.} The receipt root that
-\texttt{AICoinMiner} requires SHOULD, on \Lux{}, come from the A$\to$C atomic boundary (the
+\texttt{AIMiner} requires SHOULD, on \Lux{}, come from the A$\to$C atomic boundary (the
 \texttt{aivmbridge} precompile); a foreign or downstream EVM sources it through
 \texttt{AChainRootOracle.sol}. Crucially this replaces a trusted single relayer with a
 \emph{verified validator quorum}: a quorum of A-Chain validators signs $(\text{root},
@@ -117,7 +117,7 @@ game at the bottom and a proof gate at the top.
 (Section~\ref{sec:freivalds}); a challenger can open and Freivalds-check any matmul, on-chain
 if disputed (\texttt{ComputeWitnessLib} / \texttt{OptimisticEvidence}); the L3's verified
 receipts roll up under an A-Chain root; that root crosses to the settlement EVM through an
-ML-DSA validator quorum (\texttt{AChainRootOracle}); and \texttt{AICoinMiner} mints---once,
+ML-DSA validator quorum (\texttt{AChainRootOracle}); and \texttt{AIMiner} mints---once,
 to the bound requester, clamped to the halving allowance, and only against a valid compute
 proof. The \Zoo{} L3 is discoverable and (optionally) endorsed through
 \texttt{L3Registry}, so \texttt{zoo.vote} and the meta-DAO can see and govern the whole set
