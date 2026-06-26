@@ -1,0 +1,257 @@
+\section{The Formal Core: Receipt Soundness}
+\label{sec:receipt-soundness}
+
+The preceding sections build the execution proof (Sections~\ref{sec:freivalds},
+\ref{sec:four-proofs}) and its binding (Section~\ref{sec:binding}). This
+section states what \PoAI{} \emph{formally guarantees}, as a theorem over a single
+universal object, and---equally important---draws the line at what it does
+\emph{not} claim. The discipline is deliberate: \PoAI{} proves \emph{objective
+lifecycle properties}, never semantic ones.
+
+\subsection{What \PoAI{} proves, and what it refuses to claim}
+\label{sec:rs-scope}
+
+\PoAI{} proves exactly five properties of an AI contribution:
+
+\begin{enumerate}[leftmargin=2em,itemsep=1pt]
+  \item \textbf{Identity} --- which model/artifact lineage and which engine produced the work.
+  \item \textbf{Execution} --- that the committed computation actually ran (not a cheaper substitute).
+  \item \textbf{Provenance} --- the input, output, and lineage the work is bound to.
+  \item \textbf{Accounting} --- that the work is metered and counted exactly once.
+  \item \textbf{Settlement} --- that payment, mint, and governance are bound to the proof.
+\end{enumerate}
+
+\PoAI{} does \emph{not} prove that an answer is true, that a model is aligned, that
+a dataset is morally good, or that an output is useful. Those are semantic judgments
+about human intent; as the verification literature establishes, every such verifier
+is a proxy for intent that degrades as the generator's capability grows
+\cite{verificationhorizon}, and no fixed reward function for them stays sound.
+\PoAI{} sidesteps that impossibility by anchoring economics to the one signal that
+does \emph{not} decay---\emph{did the claimed work happen}---which is checkable to the
+bit (Section~\ref{sec:freivalds}). The semantic remainder is pushed to an
+adaptive, governed, reputation-weighted market (the quorum tier and
+\texttt{AIReputation}); \PoAI{} makes no theorem about it.
+
+\begin{principle}[Objective, not semantic]
+\PoAI{} proves that claimed AI work was \emph{performed under committed artifacts},
+and that payment, mint, and governance are \emph{bound to that proof}. It proves
+nothing about the meaning, correctness, or value of the result.
+\end{principle}
+
+\subsection{The universal object}
+\label{sec:rs-receipt}
+
+Every AI contribution---inference, embedding, training, fine-tuning, quantization,
+storage, streaming, evaluation, data---settles through one object,
+\texttt{AIReceipt}. A receipt $R$ carries the job id, job type, requester,
+contributor, the model/engine/runtime roots, the input and output commitments, the
+witness root, the proof tier, the metering, and the license/attribution commitments.
+Its canonical commitment is the two-step keccak chain of
+Section~\ref{sec:binding}: a per-job-type envelope folds the type's extra
+fields into $\mathit{promptHash}$, $\mathit{outputHash}$, and
+$\mathit{runtimeMeasurement}$ \emph{before} the unchanged \texttt{ComputeProofLib}
+chain runs, so that for \textsc{inference} the binding reduces \emph{byte-for-byte}
+to the value the live miner already consumes, and every job type domain-separates so
+two receipts of different types can never collide:
+\[
+\mathit{reportData} \;=\; \keccak\!\big(\textsf{DOMAIN}\;\|\;\mathit{challenge}\;\|\;
+  \mathit{modelSpecHash}\;\|\;\mathit{promptHash}\;\|\;\mathit{outputHash}\;\|\;
+  \mathit{runtimeMeasurement}\big),
+\]
+with $\mathit{receiptId} = \keccak(\textsf{DOMAIN\_RECEIPT}\,\|\,\mathit{reportData}\,\|\,
+\langle\text{the full economic commitment}\rangle)$. The value path joins on
+$\mathit{reportData}$; the audit log emits $\mathit{receiptId}$.
+
+\subsection{The contract surface}
+\label{sec:rs-contracts}
+
+The object is realized by a small, orthogonal contract set (one concern each):
+
+\begin{center}\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+\texttt{AIJob}     & request $+$ escrow \\
+\texttt{AIReceipt} & the canonical commitment (binding library + universal struct) \\
+\texttt{AIProof}   & read-only proof-route verification (the finalization gate) \\
+\texttt{AISettle}  & pays / mints / slashes; the sole consequence authority \\
+\texttt{AIModel}   & model lineage and roots (verifiable, non-equivocating) \\
+\texttt{AIEngine}  & approved engine/runtime roots \\
+\texttt{AIData}    & licenses, attribution DAG, royalties, public-goods pool \\
+\texttt{AIStore}   & artifact availability / delivery proofs \\
+\texttt{AICompute} & global no-double-mint accounting \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The dataflow is one way:
+\[
+\texttt{AIJob}\rightarrow\texttt{AIReceipt}\rightarrow\texttt{AIProof}
+\rightarrow\texttt{AISettle}\rightarrow\texttt{AICompute},
+\quad\text{with }\;
+\texttt{AIData}/\texttt{AIModel}/\texttt{AIEngine}/\texttt{AIStore}\;\text{consulted at the seam.}
+\]
+
+\subsection{Proof tiers and the finalization gate}
+\label{sec:rs-tiers}
+
+Verification is tiered (Section~\ref{sec:tiers}), strongest-binding last:
+\[
+\textsf{L0 signed}\;<\;\textsf{L1 stake+challenge}\;<\;\textsf{L2 quorum}\;<\;
+\textsf{L3 sampled execution witness (Freivalds)}\;<\;\textsf{L4 \TEE{} quote}\;<\;
+\textsf{L5 zk}.
+\]
+Each job type carries a governance-set floor, and \texttt{AIProof} additionally binds
+the proof \emph{system} to the job's \emph{work type} (a level gate alone is
+insufficient---a storage receipt must not settle through the inference matmul
+backend). Finalization requires, for the job type $\tau$ of receipt $R$,
+\[
+\textsf{ProofType}(R)\in\textsf{AllowedProofTypes}(\tau)\;\wedge\;
+\textsf{ProofLevel}(R)\ge\textsf{MinProofLevel}(\tau),
+\]
+and the routed backend's witness must verify. No verification, no finalization; an
+unwired or disabled backend \emph{fails closed}.
+
+\subsection{Provable job classes}
+\label{sec:rs-jobclasses}
+
+Each class has its own verifier; all settle through the one receipt. The verifier
+proves the \emph{objective} statement, never a semantic one:
+
+\begin{center}\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Class} & \textbf{Proves} \\
+\midrule
+Inference     & model $M$ ran on input $X$ and committed output $Y$ \\
+Embedding     & embedding model $E$ ran on $X$ and committed vector $V$ \\
+Training      & dataset $D$, recipe $\rho$, base $B$ produced checkpoint $C$ under a committed transcript \\
+Fine-tuning   & base $B$ $+$ adapter/delta $A$ $+$ data $D$ produced $M'$ \\
+Quantization  & model $M$ transformed into quant artifact $Q$ under a committed quant recipe \\
+Storage       & artifact $A$ was retrievable over time \\
+Streaming     & pieces $P$ were delivered to receivers \\
+Evaluation    & benchmark $\beta$ and scorer $S$ produced result $\Sigma$ \\
+Data          & data commitment $D$ exists, is licensed, deduped, attributable, and accepted \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Invariants}
+\label{sec:rs-invariants}
+
+The following hold for every finalized receipt. Each is enforced on-chain; the
+status column marks whether it is established \emph{by construction} (C), pinned by
+the test suite (T), or---for the governance-consumption and storage/stream
+availability wiring---staged at the integration seam (S).
+
+\begin{center}\small
+\begin{tabular}{@{}llc@{}}
+\toprule
+& \textbf{Invariant} & \textbf{Status} \\
+\midrule
+I1  & No receipt, no payment.                                   & C,T \\
+I2  & No receipt, no mint.                                       & C,T \\
+I3  & No receipt, no governance execution.                      & C,S \\
+I4  & One job cannot settle twice.                              & C,T \\
+I5  & One receipt cannot mint twice.                            & C,T \\
+I6  & Receipt cannot change model after submission.            & C,T \\
+I7  & Receipt cannot change input after submission.            & C,T \\
+I8  & Receipt cannot change output after submission.           & C,T \\
+I9  & Receipt cannot be replayed across chainId/domain.        & C,T \\
+I10 & Proof backend cannot alter the receipt binding.          & C,T \\
+I11 & Backend verifies the witness only.                       & C,T \\
+I12 & \texttt{AISettle} cannot bypass \texttt{AIProof}.        & C,T \\
+I13 & \texttt{AIGovern}/\texttt{AIExecute} consume only finalized receipts. & C,S \\
+I14 & Royalties cannot exceed $100\%$.                          & C,T \\
+I15 & Storage/stream rewards require an availability/delivery proof. & C,T \\
+I16 & Training/fine-tune lineage binds base model, data, recipe, checkpoint. & C,T \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+I4--I8 follow from the commitment: $\mathit{receiptId}$ binds the job id, model,
+input, output, contributor, and tier, so any change yields a different receipt that
+cannot settle against the opened job. I5 and I9 are the one-shot
+$\mathit{consumed}[\,\cdot\,]$ flag (keyed per job type) and the chain-independent
+\texttt{AICompute} claim key. I10--I12 are the read-only verifier seam: the gate
+pre-enforces $\mathit{reportData}\!=\!\mathit{expected}$ and routes only the witness
+to the backend, and \texttt{AISettle}'s sole mint/pay path is gated on
+\texttt{AIProof}. I14 is the $\Sigma\,\mathit{bps}\!=\!10{,}000$ split with a
+slice-capped royalty reservation. I15/I16 are the proof-system gate of
+Section~\ref{sec:rs-tiers} (a storage receipt admits only the retrievability
+backend) and the domain-separated training fold bound to the lineage registry.
+
+\subsection{Soundness theorems}
+\label{sec:rs-theorems}
+
+\begin{theorem}[Receipt Soundness]
+\label{thm:receipt-soundness}
+For any finalized \texttt{AIReceipt} $R$, assuming the selected proof backend is
+sound, $R$ is a unique, non-replayable, non-malleable commitment to an AI
+contribution that binds to exactly one job, exactly one model/artifact lineage,
+exactly one input commitment, exactly one output commitment, exactly one proof
+tier, and exactly one contributor; whose required proof verified \emph{before}
+economic settlement; and from which at most one payment and at most one mint can
+issue. $R$ cannot be replayed, substituted, double-paid, or double-mined.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Finalization requires \texttt{AIProof.validate} (the proof-system gate of
+Section~\ref{sec:rs-tiers} plus the routed backend) and, for the pessimistic tiers,
+$\mathit{finalized}(\mathit{reportData})$. Uniqueness and non-malleability:
+$\mathit{receiptId}$ is the keccak commitment to all of $\{$job, model, input,
+output, contributor, tier$\}$ (I6--I8), so a substitution is a distinct receipt that
+fails the job-match check; collision resistance of keccak gives uniqueness. Cross-
+domain non-replay: $\mathit{reportData}$ binds $\mathit{networkID}$ and
+$\mathit{chainID}$ (I9). At-most-once settlement: the $\mathit{consumed}$ one-shot
+and the \texttt{AICompute} claim (I4, I5) are set inside the same state snapshot as
+the mint, so a revert un-sets them and a second attempt reverts. The backend cannot
+forge the binding (I10, I11): the verifier pre-enforces equality and passes only the
+witness; soundness of $R$ therefore reduces to soundness of the selected backend,
+which is the hypothesis. \texttt{AISettle} has no mint or pay path that is not gated
+on \texttt{AIProof} (I12).
+\end{proof}
+
+\begin{corollary}[Inference Soundness]
+A finalized inference receipt binds model, engine, input, output, and a verified
+proof; its $\mathit{reportData}$ equals \texttt{ComputeProofLib.expectedReportData}
+byte-for-byte, so it is indistinguishable from a value the live miner accepts.
+\end{corollary}
+
+\begin{corollary}[Training-Lineage Soundness]
+A finalized training (resp.\ fine-tune) receipt binds base model, dataset, recipe,
+transcript, and checkpoint (resp.\ adapter/delta): the $\textsc{train}$ fold commits
+the dataset and lineage roots, and the L3 transcript verifier re-derives a
+beacon-sampled SGD step over the int8 accumulator, so a fabricated checkpoint is
+caught except with the per-step Freivalds error.
+\end{corollary}
+
+\begin{corollary}[Accounting Soundness]
+A finalized receipt produces at most one payment and at most one mint, across all
+mechanisms and all chains: the per-type $\mathit{consumed}$ one-shot, the chain-
+independent \texttt{AICompute} claim, and the shared halving cap make a second issue
+revert.
+\end{corollary}
+
+\begin{corollary}[Governance Safety]
+No \PoAI{}-governed action executes from an unfinalized or invalid receipt:
+\texttt{AIGovern}/\texttt{AIExecute} consume only a finalized $\mathit{reportData}$
+(I3, I13), which by Theorem~\ref{thm:receipt-soundness} carries a verified proof.
+\end{corollary}
+
+\subsection{The honest boundary}
+\label{sec:rs-boundary}
+
+Stated plainly, so the guarantee is defensible:
+
+\begin{quote}\itshape
+\PoAI{} does not prove an answer is true. It does not prove a model is aligned. It
+does not prove a dataset is morally good. \PoAI{} proves that claimed AI work
+happened under committed artifacts, and that payment, mint, and governance are bound
+to that proof.
+\end{quote}
+
+\begin{remark}[The one-line truth]
+\PoAI{} is not proof that AI is right. \PoAI{} is proof that AI work was
+\emph{performed, bound, attributed, verified, and fairly settled}.
+\end{remark}
