@@ -127,15 +127,13 @@ construction, subject to Proposition~\ref{prop:gap}: it proves authorship of an
 attestation, not execution of a model.
 \end{itemize}
 
-The remainder of this paper \emph{constructs, proves sound, and builds} the missing
-predicate as a \emph{software-only} artifact---no enclave, no special hardware---that is a
-side effect of the genuine computation, that cannot be produced without performing the
-matmuls, and that any participant can both emit and check against a network-shared
-difficulty. The predicate is no longer only on paper: the verifier, its emission from a
-real forward/graph pass, the off-chain challenger, and the on-chain fail-closed mint gate
-are implemented and tested ($38$ Rust, $23$ Go, $87$ Solidity tests;
-Section~\ref{sec:impl-status}). So the attack above describes the settlement of a system
-that does \emph{not} install the compute-proof gate---which the deployed contracts now
-refuse to be: \texttt{AIMiner} reverts with \texttt{ProofGateUnavailable} when no
-verifier is wired, so a proofless mint is impossible out of the box. The residual is the
-floating-point tier and wider architecture emission, not the closing of this attack.
+The remainder constructs and proves the missing predicate as a \emph{software-only}
+artifact---no enclave, no special hardware---that is emitted alongside genuine computation
+and checked against a network-shared challenge. Reference implementations exercise its
+verifier, graph emission, challenger, and a fail-closed EVM gate
+(Section~\ref{sec:impl-status}); in that fixture, \texttt{AIMiner} reverts with
+\texttt{ProofGateUnavailable} when no verifier is wired. This closes the one-bit-guess bug
+in the reference path, not yet in live consensus. Production still requires normal
+model-path emission, availability and graph coverage, and A-Chain admission, finality,
+metering, nullifier, and issuance wiring. Those are load-bearing integration obligations,
+not a cosmetic residual.

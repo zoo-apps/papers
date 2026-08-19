@@ -14,18 +14,14 @@ bit-exact by the integer quantization path), and a determinism contract (so that
 ``re-derive and compare'' is well-defined across heterogeneous hardware). We then
 prove soundness.
 
-\paragraph{Status of this section.} The probabilistic verifier (the Freivalds core), the
-determinism contract's two nontrivial clauses, the activation-trace commitment of
-Section~\ref{sec:mmr}, and its emission from a real forward/graph pass are all \emph{built
-and tested} (Section~\ref{sec:impl-status}): a \texttt{ProvableLinear}/\texttt{GraphTrace}
-forward streams the trace, a challenger opens a beacon-selected matmul and Freivalds-checks
-it (\texttt{poi\_transcript.rs}), and the on-chain witness re-checks it in pure Solidity
-(\texttt{ComputeWitnessLib}). The soundness theorems below are therefore both correct as
-mathematics \emph{and} the specification the running code implements; ``cannot be faked''
-is operational for the families the suite exercises. We mark the one place (the
-integer-accumulator remark) where the proof's arithmetic assumption requires the exact
-whole-$K$ $i64$ accumulator (\texttt{exact\_matmul}, the proof path), which is stronger
-than the $f8q8$ fast path used for ordinary, non-proof-bearing inference.
+\paragraph{Status of this section.} The Freivalds core, canonical matrix encoding,
+Merkle transcript fixtures, typed \texttt{GraphTrace}, and cross-language challenge
+vectors are built and tested (Section~\ref{sec:impl-status}). They exercise the dense,
+attention, MoE, and training-step fixtures named there. The normal production model path
+does not yet emit this complete transcript, and the released $f8q8$ fast kernel is not the
+exact whole-$K$ accumulator the theorem requires. Thus the theorem specifies the
+proof-bearing profile and is implemented by its fixtures; it is not a claim that every
+ordinary Hanzo inference is already mineable.
 
 \subsection{The activation-trace commitment}
 \label{sec:mmr}
@@ -151,9 +147,11 @@ total function with no implementation freedom. (We note that the current engine'
 specifies the rule normatively and requires the engine's tie-break to be pinned to
 it. Exact ties are vanishingly rare in practice but must be specified for
 reproducibility, exactly as a hash must be specified to the bit.)
-\item \textbf{Pinned kernels and tokenizer.} The kernel set and tokenizer are fixed
-and their identifiers are part of $\mathsf{runtimeMeasurement}$, so two provers run
-literally the same code paths.
+\item \textbf{Versioned kernel profile and tokenizer.} The admitted operations,
+layouts, integer widths, accumulator and overflow rules, reduction order, fixed-point
+scales, rounding, and tokenizer are fixed by a profile identifier in
+$\mathsf{runtimeMeasurement}$. Implementations may use different CPU or GPU code paths,
+but must emit identical profile bytes.
 \item \textbf{A committed seed.} Any residual stochasticity (e.g.\ dropout, disabled
 on the inference path) is driven by a committed seed; on the greedy path no RNG is
 consulted, so the seed is inert and the decode is a deterministic function of the
@@ -165,6 +163,21 @@ runtime, checkable by reading the model file and the runtime identifiers. No cla
 requires special hardware. This is the precise sense in which the execution proof is
 ``software-only'': both producing it and challenging it need only the model and a
 CPU.
+
+\subsection{The canonical transcript}
+
+The activation root alone is not the complete settlement object. A canonical transcript
+header binds the A-Chain job and policy epoch, kernel-profile version, model, runtime,
+input root, declared graph, output root, metering summary, provider, destination, and
+nonce. Its ordered body binds each typed operation to its input and output commitments.
+The content-addressed root of that serialization is committed before the public challenge
+is known. A-Chain challenges and finalizes that object; after finality, Z-Chain proves the
+corresponding receipt transition through P3Q.
+
+CPU/GPU parity is only release conformance for this profile. Golden vectors must match
+kernel outputs, leaves, transcript roots, challenge derivation, and openings byte for byte.
+A divergent backend is excluded; consensus never introduces a floating-point tolerance
+band to accommodate it.
 
 \subsection{Soundness}
 

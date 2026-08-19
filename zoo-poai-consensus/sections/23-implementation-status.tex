@@ -2,13 +2,12 @@
 \label{sec:impl-status}
 
 We state plainly what is built and tested versus what is designed, so the paper's claims
-can be checked against code. Relative to this paper's earlier draft the boundary has
-moved: the activation-trace commitment, the proof-bearing forward, the full-graph
-composition, the off-chain challenger, and the on-chain enforcement---all marked
-``designed, not built'' before---are now implemented and tested. What remains designed is
-the RepOps floating-point tier and emission of the architecture families the test suite
-does not yet exercise. The test counts below are the actual passing counts of the named
-suites at the time of writing; each was run for this section.
+can be checked against code. The repository contains executable reference implementations
+for the activation-trace commitment, proof-bearing forward, graph fixtures, challenger,
+and EVM enforcement. These surfaces test the construction; they are not the active A-Chain
+consensus path. A complete production model path, data availability, consensus admission
+and finality, metering, nullification, and P3Q settlement remain integration work. Test
+counts below are snapshots of named suites, not claims of live mining.
 
 \subsection{Built and tested: the Freivalds core}
 
@@ -123,9 +122,9 @@ experts (a different expert is a different sub-network). These are the routing a
 argmax tie-break and are what make the ``re-derive and compare'' premise actual rather than
 aspirational for the greedy and MoE-routing cases.
 
-\subsection{Built and tested: the canonical Go verifier the chain consumes}
+\subsection{Built and tested: the candidate canonical Go verifier}
 
-The verifier the chain consumes is a dependency-light Go package living beside the canonical
+The verifier intended for A-Chain integration is a dependency-light Go package living beside the canonical
 \texttt{Keccak256} (\texttt{luxfi/crypto/poi}): \texttt{Verify}/\texttt{VerifyMulti} over
 $\mathbb{F}_p$ ($p=2^{61}-1$) on the exact integer accumulator, the transcript and
 \texttt{VerifyOpening}, the wire codec, and keccak \texttt{DeriveChallenges}. The engine's
@@ -137,9 +136,9 @@ encode/decode round-trip, wire-fuzz, oversized-dims-rejected, griefer-cannot-fra
 pre-fit-challenge cases---the Go-side mirror of the Rust adversarial battery, plus a
 verification-throughput scaling test.
 
-\subsection{Built and tested: on-chain enforcement and the fail-closed mint gate}
+\subsection{Built and tested: reference EVM enforcement surfaces}
 
-The witness is verified in the EVM, not asserted by a watcher. The settlement contracts
+The reference witness is verified in the EVM, not asserted by a watcher. These contracts
 live in \texttt{luxfi/standard} (\texttt{contracts/ai/\{governance,mining,token,compute,relay,registry\}/}); the eight Proof-of-AI
 suites total \textbf{87 tests passing} (\texttt{forge test}), distributed as follows.
 
@@ -160,7 +159,7 @@ on-chain via \texttt{provesFraud} and, only on a verified discrepancy, marks the
 after an un-challenged window. The state machine is one-shot per \texttt{reportData} (a
 slashed liar cannot re-post), a zero bond is rejected (a liar always has skin in the game),
 and effects precede the single pull-of-funds (no reentrancy re-claim).
-\item \textbf{\texttt{AIMiner.sol} (12/12).} The mint gate, \emph{fail-closed}:
+\item \textbf{\texttt{AIMiner.sol} (12/12).} A reference mint gate, \emph{fail-closed}:
 \texttt{mine} requires receipt shape $+$ finality $+$ Merkle inclusion under an accepted
 root $+$ a \texttt{ComputeProof} binding the receipt's own measured model/prompt/output,
 and reverts (\texttt{ProofGateUnavailable}) if no verifier is wired---so a forged root alone
@@ -169,28 +168,28 @@ allowance, and is one-shot per intent.
 \item \textbf{\texttt{ComputeProofEnforcement.t.sol} (19/19).} The end-to-end enforcement
 that a proofless or mis-bound mint is rejected and a correctly-bound one succeeds, across
 the proof-type profiles.
-\item \textbf{\texttt{AICoin.sol} (11/11).} The capped, halving, fair-mined coin:
+\item \textbf{\texttt{AICoin.sol} (11/11).} A legacy capped/halving token fixture:
 $\texttt{MAX\_SUBSIDY}=10^9$ \textsc{ai}, $\texttt{HALVING\_PERIOD}=4\ \text{years}$, the
 slope halving each epoch and the cumulative mint structurally bounded by
-$\text{allowed}(t)\le\text{MAX}$. Multiple verified-cognition mint paths share \emph{one}
-halving schedule, so adding a mint path never inflates past the cap.
-\item \textbf{\texttt{AIComputeRegistry.t.sol} (6/6).} The global no-double-mint ledger: a
-chain-independent computation key claimed before minting, so the same
-$(\text{model},\text{prompt},\text{output})$ mints once across all \Lux{} chains.
+$\text{allowed}(t)\le\text{MAX}$. Its $10^9$ parameter is not the canonical \textsc{AI}
+monetary policy; production must use the approved $2$ trillion allocation and common
+A-Chain issuance schedule described in the Hanzo AI Chain specification.
+\item \textbf{\texttt{AIComputeRegistry.t.sol} (6/6).} A reference no-double-mint ledger.
+Production uses the A-Chain job/nullifier key; a tuple of model, prompt, and output is not a
+sufficient consensus identity by itself.
 \item \textbf{\texttt{MinerStakeRegistry.sol} (8/8).} A miner bonds capital in proportion to
 declared capacity; the fraud-proof verifier slashes on a proven discrepancy with a cooldown
 that is the fraud window.
-\item \textbf{\texttt{L3Registry.sol} (8/8).} The \Zoo{} L3 directory of
-Section~\ref{sec:l3-settlement}: permissionless register, one-record-per-\texttt{chainId},
-DAO-gated endorse/reassign, and squat recovery.
+\item \textbf{\texttt{L3Registry.sol} (8/8).} A Zoo application-directory fixture. It
+may discover receipt consumers, but has no work-admission, finalization, or mining authority.
 \end{itemize}
 
 The post-quantum cross-layer root relay \texttt{AChainRootOracle.sol} (an ML-DSA validator
 quorum replacing a trusted single relayer; Section~\ref{sec:l3-settlement}) and the
 leaderless operator-quorum governance (\texttt{AIGovernor},
 \texttt{AIParams}, with \texttt{AIExecute}/\texttt{AIApproval}) are likewise
-deployed in the same standard library and carry their own passing suites; we cite them for
-completeness as the operator-safe, post-quantum surface the settlement path composes with,
+implemented in the same standard library and carry their own passing suites; we cite them
+as candidate surfaces with which the settlement path composes,
 without re-tabulating their tests here.
 
 \subsection{Designed, not yet built}
@@ -199,6 +198,10 @@ The honest remaining work is now a named, smaller set; none of the following is 
 at the time of writing.
 
 \begin{enumerate}[leftmargin=1.6em]
+\item \textbf{Production consensus integration.} Normal serving-path transcript emission,
+artifact availability, full-graph coverage, economic metering, A-Chain job admission,
+finalized proof gating, nullifier consumption, and P3Q settlement are not yet one live path.
+Shadow/replay P3Q stages have no mint authority.
 \item \textbf{RepOps (pinned reduction tree).} The deterministic-floating-point mode for the
 fp16/bf16/fp8 tier (Section~\ref{sec:repops}) is designed and proven sound
 (\cite{poisoundness}); the quantized integer path is what is built and is what the \Zoo{}
@@ -220,14 +223,14 @@ of integration, not a missing technique: no third core verification method is re
 \end{enumerate}
 
 \begin{remark}[What the tested system does and does not establish]
-The $38$ Rust, $23$ Go, and $87$ Solidity tests jointly establish that the
+The cited Rust, Go, and Solidity tests establish that the
 \emph{mathematical heart}---``you cannot claim the matmul without doing it''---is
 implemented correctly over the exact integer accumulator, that it \emph{emits} from a real
 forward/graph and \emph{composes} across attention, MoE, and a training step, that the
 challenger and the on-chain witness re-check it byte-identically in two more languages, and
-that the mint gate fails closed so a proofless mint reverts. What they do \emph{not} yet
-establish is the floating-point tier (RepOps) and emission of the architecture families
-outside the tested set. We keep the boundary explicit, in keeping with the decomplecting
+that a reference mint gate can fail closed. What they do \emph{not} establish is a live
+A-Chain mining path, production data availability and metering, P3Q settlement, the
+floating-point tier (RepOps), or emission of architectures outside the tested set. We keep the boundary explicit, in keeping with the decomplecting
 discipline of the rest of the paper: the verifier is a value (a pure function of operands
 and a challenge), the emission supplies those operands from a real pass, and the on-chain
 gate consumes the result---three separable concerns, each now built where this paper's

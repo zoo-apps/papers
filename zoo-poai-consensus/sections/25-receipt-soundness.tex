@@ -51,7 +51,7 @@ Section~\ref{sec:binding}: a per-job-type envelope folds the type's extra
 fields into $\mathit{promptHash}$, $\mathit{outputHash}$, and
 $\mathit{runtimeMeasurement}$ \emph{before} the unchanged \texttt{ComputeProofLib}
 chain runs, so that for \textsc{inference} the binding reduces \emph{byte-for-byte}
-to the value the live miner already consumes, and every job type domain-separates so
+to the candidate consensus encoding, and every job type domain-separates so
 two receipts of different types can never collide:
 \[
 \mathit{reportData} \;=\; \keccak\!\big(\textsf{DOMAIN}\;\|\;\mathit{challenge}\;\|\;
@@ -215,13 +215,13 @@ on \texttt{AIProof} (I12).
 \begin{corollary}[Inference Soundness]
 A finalized inference receipt binds model, engine, input, output, and a verified
 proof; its $\mathit{reportData}$ equals \texttt{ComputeProofLib.expectedReportData}
-byte-for-byte, so it is indistinguishable from a value the live miner accepts.
+byte-for-byte, so it matches the candidate A-Chain verifier encoding.
 \end{corollary}
 
 \begin{corollary}[Training-Lineage Soundness]
 A finalized training (resp.\ fine-tune) receipt binds base model, dataset, recipe,
 transcript, and checkpoint (resp.\ adapter/delta): the $\textsc{train}$ fold commits
-the dataset and lineage roots, and the L3 transcript verifier re-derives a
+the dataset and lineage roots, and the A-Chain proof verifier re-derives a
 beacon-sampled SGD step over the int8 accumulator, so a fabricated checkpoint is
 caught except with the per-step Freivalds error.
 \end{corollary}
