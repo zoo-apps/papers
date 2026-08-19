@@ -58,29 +58,28 @@
 
 % Title and authors
 \title{\textbf{Proof of AI: A Consensus Mechanism for Verifiable Compute Contribution}\\
-\large The execution-proof substrate for decentralized AI research, and how a \Zoo{}
-Layer-3 settles it}
+\large CPU-verifiable useful work on Lux A-Chain with post-quantum omnichain settlement}
 \author{
 Antje Worring, Zach Kelling\thanks{zach@zoo.ngo}\\
 \textit{Hanzo AI \quad Lux Network \quad Zoo Labs Foundation}\\
 \texttt{research@zoo.ngo}
 }
 
-\date{June 2026}
+\date{August 2026}
 
 \begin{document}
 
 \zoocoverpage
 
 \begin{abstract}
-We introduce \textbf{Proof of AI} (\PoAI{}), a consensus mechanism for networks where
-participants contribute AI compute rather than hash power or stake. Bitcoin's hash is
-\emph{useless} work with $O(1)$ verification; \PoAI{} replaces it with \emph{useful}
-work---genuine AI execution---plus a proof that is a \emph{side effect} of that
-execution and cheaply checkable, requiring \emph{software only}: no trusted execution
-environment and no GPU attestation. The recomputable ``hash everyone can check''
-becomes an activation-trace commitment that cannot be produced without performing the
-genuine matrix multiplications. We give one primitive realizing four
+We introduce \textbf{Proof of AI} (\PoAI{}), the useful-work consensus of the Lux
+A-Chain. A demand-backed job is admitted before mining; a provider performs genuine AI
+execution and commits a proof artifact produced alongside it. The public proof-bearing
+profile requires software only---no trusted execution environment and no GPU attestor---so
+an ordinary CPU can validate challenged work without repeating the original GPU workload.
+The recomputable ``hash everyone can check'' becomes a canonical execution transcript
+whose activation commitments cannot be forged without answering for the genuine matrix
+multiplications. We give one primitive realizing four
 execution-level proofs over a workload tag---Proof-of-Embedding, Proof-of-Inference,
 Proof-of-Training, and a privacy-preserving Proof-of-Contribution---by committing the
 computation trace and spot-checking its matmuls with Freivalds' algorithm over the
@@ -93,53 +92,34 @@ Hamiltonian Market Maker \emph{prices} heterogeneous compute while the execution
 \emph{verifies} it, two orthogonal dials---and give a single profile gate mapping tiers
 (zkML, $M$-of-$N$ confidential compute, optimistic-Freivalds, redundancy) to required
 proof strength, designed so that once the gate is engaged ``no valid compute proof''
-means ``no mint.'' We motivate the
-construction with a concrete attack on a deployed settlement engine that today mints
-for a one-bit guess, because a signature proves authorship and a plurality proves
-agreement, but neither proves computation. We retain \TEE{} attestation, multi-party
-quality scoring, and BLS aggregation as the strong and pricing layers; the execution
-proofs are what bind reward to genuine work.
+means ``no mint.'' We motivate the construction with a concrete reference-engine attack
+in which a one-bit guess could satisfy a receipt path, because a signature proves
+authorship and a plurality proves agreement, but neither proves computation. Optional
+TEE attestation, multi-party scoring, and redundancy may supplement the public profile;
+the execution proof is what binds reward to genuine work, and Lux Quasar supplies the
+post-quantum consensus/finality layer.
 
-\textbf{Status, stated up front.} This paper proves a \emph{primitive}, builds the
-\emph{system} around it, and specifies the \emph{residual} that remains design-only; we
-mark which is which in the abstract rather than burying it, and
-Section~\ref{sec:status-summary} gives the per-component ledger before the construction
-begins. What is \emph{built and tested} is now the whole load-bearing path, not just the
-core: (i) the exact-integer Freivalds matmul verifier and its keccak-Merkle
-activation-trace transcript, a proof-bearing forward (\texttt{ProvableLinear}) whose
-returned value \emph{is} the committed exact-integer result, and a typed full-graph trace
-(\texttt{GraphTrace}) that binds attention, MoE, and---with one transpose op---a training
-step, all in the Rust engine (\texttt{hanzo-engine}: $27$ unit tests $+\,11$ adversarial
-red-team tests, $38/38$ passing); (ii) the canonical Go verifier
-(\texttt{luxfi/crypto/poi}, $23/23$) that the chain consumes, byte-identical to the
-prover under a pinned cross-language challenge vector; and (iii) the on-chain enforcement
-(\texttt{luxfi/standard} Proof-of-AI contracts: $87/87$ across the eight Proof-of-AI suites),
-where \texttt{ComputeWitnessLib} runs Freivalds and the Merkle fold in pure Solidity,
-\texttt{OptimisticEvidence} pays a bond to a challenger \emph{only} on a verified fraud,
-and the \texttt{AIMiner} mint gate \emph{fails closed}: with no compute-verifier wired
-it reverts (\texttt{ProofGateUnavailable}), so a forged receipt root alone no longer mints.
-Two honest properties survive the build: a fabricated matmul is caught except with
-probability $\le 2^{-122}$ at two challenge vectors because Freivalds runs over an exact
-integer accumulator, and an honest prover is \emph{never} slashable. What remains
-\emph{designed, not built} is the genuinely smaller residual: the RepOps pinned-reduction
-floating-point tier (the quantized integer tier is what ships), and emission coverage of
-architecture families beyond those exercised by the test suite (dense/SwiGLU, attention
-with a fixed-point integer softmax, an MoE block, a training step). The honest one-line
-summary: \emph{the soundness primitive is proven, the unfakeable-mining system it enables
-is built and tested end to end, and the named residual is a floating-point tier and wider
-architecture coverage}.
+\textbf{Status, stated up front.} This paper proves an arithmetic primitive and reports
+tested reference surfaces: an exact-integer Freivalds verifier, transcript and graph
+fixtures, matching encodings in Rust and Go, and fail-closed EVM prototypes. These results
+support the construction but do not constitute a live A-Chain mining path. A complete Zen
+model does not yet emit the production transcript on its normal serving path, and the
+A-Chain node does not yet admit the job, verify finalized evidence, enforce data
+availability and metering, consume the nullifier, and authorize issuance through this
+system. P3Q settlement is likewise audit- and activation-gated. Section~\ref{sec:status-summary}
+gives the ledger before the construction. The honest summary is: \emph{the primitive and
+reference fixtures are built and tested; production emission, availability, A-Chain
+consensus wiring, metering, and P3Q settlement remain integration work}.
 
-\textbf{The \Zoo{} reading.} \Zoo{} Labs Foundation is the Layer-3 application and research
-layer (decentralized AI and decentralized science, governed through \texttt{zips.zoo.ngo})
-that \emph{consumes} this stack. Section~\ref{sec:l3-settlement} shows how a
-\Zoo{} L3---\Beluga{} and its peers---registers in an on-chain directory
-(\texttt{L3Registry}) and settles PoAI-verified work down to the \Zoo{} L2 and the Lux L1,
-so that proven inference, embedding, and training become the reproducibility substrate for
-decentralized science: a result is not ``trust me, I ran the model'' but a transcript whose
-root anyone can open and re-check.
+\textbf{The \Zoo{} reading.} \Zoo{} Labs Foundation is an application and research layer
+for decentralized AI and decentralized science. It may submit jobs, fund work, and consume
+final receipts, but it is not a second Proof-of-AI chain. Section~\ref{sec:l3-settlement}
+shows the single-authority topology: A-Chain alone admits and finalizes useful work,
+Z-Chain settles finalized receipt transitions through P3Q, Lux Quasar supplies
+post-quantum finality, and Zoo applications consume the resulting receipts.
 
 \textbf{Keywords}: consensus, proof of useful work, AI compute verification, Freivalds'
-algorithm, optimistic verification, decentralized science, Layer-3 settlement,
+algorithm, optimistic verification, decentralized science, omnichain settlement,
 post-quantum cryptography, verifiable machine learning
 \end{abstract}
 

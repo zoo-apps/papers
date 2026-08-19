@@ -1,89 +1,54 @@
 \section{Introduction}
 
+Proof of AI asks a harder question than whether a provider signed a result: did the
+committed AI computation actually run, under the job and execution policy the network
+accepted? Useful work cannot secure a monetary system merely because it is expensive.
+The work must be demand-backed, objectively bound, cheaper to verify than to perform,
+available for challenge, finalized exactly once, and connected to a consequence authority
+that fails closed.
 
-Blockchain consensus mechanisms face a fundamental challenge: how to fairly allocate block production rights and rewards. Proof of Work (PoW) solves this by requiring computational effort, but the computation serves no purpose beyond securing the chain---an estimated 150 TWh annually for Bitcoin alone. Proof of Stake (PoS) reduces energy waste but creates plutocratic dynamics where the wealthy accumulate more wealth.
-
-The rise of AI compute networks presents an opportunity to align consensus with useful work. AI training and inference require substantial compute resources; if this compute could simultaneously secure a blockchain, we would achieve both useful work and decentralized consensus.
+The Lux architecture assigns those responsibilities to one canonical path. A requester
+submits a job to the A-Chain; a miner executes it under a versioned deterministic kernel
+profile and emits a canonical transcript; validators check the required execution,
+availability, graph, metering, and anti-replay obligations; A-Chain consensus alone
+finalizes the job, consumes its nullifier, and authorizes \textsc{AI}. The finalized
+transition is then settled through P3Q on Z-Chain and finalized by Lux Quasar. Other chains
+may receive a receipt and payout, but cannot replace the A-Chain as the mining authority.
 
 \subsection{Challenges}
 
-Designing \PoAI{} requires solving several challenges:
-
 \begin{enumerate}
-    \item \textbf{Verification}: How can validators confirm that claimed AI work was actually performed?
-
-    \item \textbf{Quality Assessment}: Not all AI compute is equally valuable---training a useful model differs from generating noise.
-
-    \item \textbf{Sybil Resistance}: Without proof of identity, adversaries could claim credit for others' work.
-
-    \item \textbf{Efficiency}: Verification must be cheaper than the original computation.
-
-    \item \textbf{Incentive Compatibility}: Rational nodes must be incentivized to perform high-quality work.
+  \item \textbf{Execution}: distinguish genuine computation from a signed guess or copied output.
+  \item \textbf{Determinism}: give heterogeneous miners and CPU validators one exact statement to check.
+  \item \textbf{Cost asymmetry}: keep verification materially cheaper than the original workload.
+  \item \textbf{Completeness}: bind the full accepted graph, inputs, outputs, artifacts, availability, and meter.
+  \item \textbf{Consensus}: ensure one authority admits, finalizes, nullifies, and authorizes each reward.
 \end{enumerate}
 
 \subsection{Contributions}
 
-This paper makes the following contributions:
+This paper contributes:
 
 \begin{enumerate}
-    \item \textbf{\PoAI{} Protocol}: A complete consensus mechanism combining \TEE{} attestation, quality scoring, and BLS aggregation (Section~\ref{sec:protocol})
-
-    \item \textbf{Compute Verification}: Novel techniques for verifying AI workloads without re-executing them (Section~\ref{sec:verification})
-
-    \item \textbf{Quality Scoring}: Multi-party evaluation protocol for assessing AI output value (Section~\ref{sec:quality})
-
-    \item \textbf{Security Analysis}: Proofs of Byzantine fault tolerance and incentive compatibility (Section~\ref{sec:security})
-
-    \item \textbf{Evaluation}: Experimental results demonstrating scalability and efficiency (Section~\ref{sec:evaluation})
-
-    \item \textbf{Execution-level proofs (software-only), built end to end}: We close the
-    gap that signature-plus-plurality leaves open---paying for a guess rather than for
-    computation (Section~\ref{sec:guess-to-mint})---with one primitive yielding four
-    proofs (Section~\ref{sec:four-proofs}), a software-only Freivalds verifier with a
-    soundness theorem (Section~\ref{sec:freivalds}), a domain-separated task binding
-    with anti-replay and anti-substitution lemmas (Section~\ref{sec:binding}), the
-    Bitcoin shared-difficulty correspondence (Section~\ref{sec:difficulty}), a
-    single-gate tier matrix (Section~\ref{sec:tiers}), and a user-sovereignty trust
-    spectrum (Section~\ref{sec:ownership}). The verifier no longer stands alone: a
-    \emph{running} forward pass emits a keccak-Merkle activation-trace transcript
-    (\texttt{poi\_transcript.rs}), a proof-bearing linear returns exactly its committed
-    exact-integer result (\texttt{poi\_forward.rs}), a typed graph binds the whole pass
-    including a training step (\texttt{poi\_graph.rs}), the Go verifier the chain consumes
-    is byte-identical (\texttt{luxfi/crypto/poi}), and the on-chain gate verifies the
-    witness in pure Solidity and slashes a bond only on proven fraud
-    (\texttt{ComputeWitnessLib}, \texttt{OptimisticEvidence}, \texttt{AIMiner}).
-
-    \item \textbf{Settlement to a \Zoo{} L3, and the DeSci substrate}: We show how a
-    \Zoo{} Layer-3 (\Beluga{} and its peers) consumes the execution proof: each L3
-    registers in an on-chain directory and settles PoAI-verified work down to the \Zoo{}
-    L2 and the \Lux{} L1, turning proven inference, embedding, and training into the
-    reproducibility substrate for decentralized science (Section~\ref{sec:l3-settlement}).
-    A scientific claim backed by a transcript root is re-checkable by anyone; ``I ran the
-    model'' becomes a proof, not an assertion.
-
-    \item \textbf{A coverage \emph{design} for modern LLMs, with a nonempty tested floor}:
-    We show that ``support every modern LLM'' is achieved by \emph{tiering} verification to
-    the arithmetic---never by a floating-point Freivalds, which is unsound (a tolerance
-    corridor) and unusable (cross-hardware false-reject) at once---and that floating-point
-    GEMMs become bit-exact by pinning the reduction order (Section~\ref{sec:fp-coverage}).
-    We map the \Zoo{} model zoo (dense, mixture-of-experts, linear-recurrent/state-space,
-    multimodal vision, audio, and diffusion) to proof obligations and prove that beyond
-    base matmul checking exactly \emph{two} new core techniques suffice---a routing proof
-    (\emph{built and tested}, \texttt{poi\_graph.rs}) and a sequential-chaining proof
-    (\emph{designed}, for SSM and diffusion latents)---Section~\ref{sec:families}. The
-    tested floor is nonempty: a SwiGLU FFN, the attention spine with a deterministic
-    integer softmax, an MoE block, and a training step all emit and verify today. We report
-    the build status honestly and up front (Section~\ref{sec:status-summary}, with the full
-    ledger in Section~\ref{sec:impl-status}): the verifier core, the transcript, the
-    proof-bearing forward, the graph composition, and the on-chain enforcement are
-    implemented and tested ($38$ Rust, $23$ Go, $87$ Solidity tests passing), while the
-    RepOps floating-point tier and emission of the long-tail architectures remain designed.
+  \item an exact-integer, software-only Freivalds construction for challenged matrix
+  products, with $1/p$ soundness per vector and CPU-verifiable $O(n^2)$ checks against the
+  miner's $O(n^3)$ dense multiplication;
+  \item a versioned deterministic kernel profile fixing arithmetic, layouts, accumulator
+  widths, overflow, reductions, fixed-point scales, rounding, tie-breaking, and encodings;
+  \item a canonical transcript binding the A-Chain job and policy, model/runtime/input
+  commitments, ordered graph operations, outputs, metering, provider, destination, and
+  nonce into the root challenged and later settled;
+  \item anti-replay, anti-substitution, graph-coverage, and receipt-soundness obligations
+  that prevent a correct local check from being mistaken for proof of the whole job;
+  \item a single-authority omnichain topology: A-Chain PoAI consensus, Z-Chain P3Q
+  settlement, Lux Quasar post-quantum finality, and receipt-only exactly-once payout to
+  Zoo or any other destination; and
+  \item an explicit implementation ledger separating proven primitives and reference
+  fixtures from the production model, availability, metering, A-Chain, and P3Q integration
+  still required before public mining activation.
 \end{enumerate}
 
-The reader is owed the built-vs-designed boundary before the construction, not after:
-Section~\ref{sec:status-summary} states it immediately, and each execution-level section
-below restates the status of its own claims. In one line: \emph{we prove a sound
-verification primitive, build and test the end-to-end emission and on-chain enforcement
-that make AI mining unfakeable, settle it to a \Zoo{} L3, and name the floating-point tier
-and wider architecture coverage as the remaining work}.
-
+The construction proves objective execution under committed artifacts. It does not prove
+that an output is true, aligned, or valuable. Demand, pricing, and governed quality remain
+market questions; consensus decides only whether the committed eligible work occurred and
+whether its one reward may issue.
