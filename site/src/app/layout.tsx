@@ -1,20 +1,12 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { ZenSans, ZenMono } from '@hanzo/font'
 import { ThemeProvider } from 'next-themes'
 import { siteConfig } from '@/config/papers'
 import './global.css'
 
-const geist = Geist({
-  subsets: ['latin'],
-  variable: '--font-geist',
-  display: 'swap',
-})
+const geist = ZenSans
 
-const geistMono = Geist_Mono({
-  subsets: ['latin'],
-  variable: '--font-geist-mono',
-  display: 'swap',
-})
+const geistMono = ZenMono
 
 export const metadata: Metadata = {
   title: `${siteConfig.name} Research Papers`,
