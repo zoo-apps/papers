@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
-import { ZenSans, ZenMono } from '@hanzo/font'
+import { Zen, ZenMono } from '@hanzo/font'
 import { ThemeProvider } from 'next-themes'
 import { siteConfig } from '@/config/papers'
 import './global.css'
 
-const geist = ZenSans
+const sans = Zen
 
-const geistMono = ZenMono
+const mono = ZenMono
 
 export const metadata: Metadata = {
   title: `${siteConfig.name} Research Papers`,
@@ -33,7 +33,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geist.variable} ${geistMono.variable}`}
+      className={`${sans.variable} ${mono.variable}`}
       suppressHydrationWarning
     >
       <head>
