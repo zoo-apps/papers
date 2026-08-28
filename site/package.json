@@ -10,7 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@hanzo/font": "^1.8.12",
+    "@hanzo/font": "^1.9.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.475.0",
     "next": "^16.0.0",
@@ -19,12 +19,12 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
     "@types/node": "^22.12.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
-    "typescript": "^5.8.0",
+    "postcss": "^8.5.0",
     "tailwindcss": "^4.1.0",
-    "@tailwindcss/postcss": "^4.1.0",
-    "postcss": "^8.5.0"
+    "typescript": "^5.8.0"
   }
 }
