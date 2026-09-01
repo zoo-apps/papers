@@ -48,7 +48,7 @@ export const siteConfig: SiteConfig = {
       latexUrl: 'https://github.com/zooai/papers/blob/main/zoo-poai-consensus/zoo-poai-consensus.tex',
       githubUrl: 'https://github.com/zooai/papers',
       date: '2026-08-18',
-      authors: ['Zach Kelling', 'Antje Worring', 'Zoo Labs Foundation'],
+      authors: ['Antje Worring', 'Zoo Labs Foundation'],
       tags: ['Proof of AI', 'A-Chain', 'P3Q', 'Verifiable Compute'],
       relatedLinks: [
         { label: 'ZIP-002 Specification', url: 'https://github.com/zooai/zips/blob/main/ZIP-002-poai.md' },
