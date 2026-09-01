@@ -34,9 +34,9 @@
 
 | Paper | Path | Authors |
 |-------|------|---------|
-| Zoo Whitepaper | `zoo-whitepaper/zoo-whitepaper.tex` | Antje Worring, Zach Kelling |
-| Zoo Foundation Mission | `zoo-foundation-mission/zoo-foundation-mission.tex` | Antje Worring, Zach Kelling |
-| Zoo Experience Ledger | `zoo-experience-ledger/zoo-experience-ledger.tex` | Antje Worring, Zach Kelling |
+| Zoo Whitepaper | `zoo-whitepaper/zoo-whitepaper.tex` | Antje Worring, Zoo Labs Foundation |
+| Zoo Foundation Mission | `zoo-foundation-mission/zoo-foundation-mission.tex` | Antje Worring, Zoo Labs Foundation |
+| Zoo Experience Ledger | `zoo-experience-ledger/zoo-experience-ledger.tex` | Antje Worring, Zoo Labs Foundation |
 | **Zoo 2021 Original Whitepaper** (gitbook reconstruction) | `zoo-2021-original-whitepaper/zoo-2021-original-whitepaper.tex` | Antje Worring |
 | -- Element 1: Open AI Protocol | `zoo-2021-original-whitepaper/elements/01-open-ai-protocol.tex` | Antje Worring |
 | -- Element 2: Endangered Species Conservation | `zoo-2021-original-whitepaper/elements/02-endangered-species-conservation.tex` | Antje Worring |
