@@ -60,7 +60,7 @@
 \title{\textbf{Token-Bound Accounts for Wildlife:\\Giving Animals Their Own Wallets}}
 
 \author{
-Zach Kelling\thanks{zach@zoo.ngo}\\
+Zoo Labs Foundation Research\thanks{research@zoo.ngo}\\
 \textit{Zoo Labs Foundation}\\
 \texttt{research@zoo.ngo}
 }
@@ -104,7 +104,6 @@ This is the ``piggybank'' concept from the Zoo AGI paper~\cite{zooagi2024}: each
     \item Security analysis of ownership confusion, circular ownership, and fund drain attacks (Section~\ref{sec:security}).
 \end{enumerate}
 
-
 \section{Background}
 
 \subsection{ERC-6551}
@@ -118,7 +117,6 @@ The Zoo AGI architecture~\cite{zooagi2024} proposes that each AI agent and digit
 \subsection{Conservation Fund Routing}
 
 The Zoo ecosystem routes conservation funds through verified addresses in the Zoo Contract Registry (ZIP-0100). A TBA's \texttt{withdrawToConservation} function restricts withdrawals to registered conservation projects, ensuring that donations to a specific animal actually reach conservation outcomes.
-
 
 \section{Registry Interface}
 \label{sec:interface}
@@ -159,7 +157,6 @@ The registry is a singleton deployed at a deterministic address on Zoo L2 (Chain
 \end{equation}
 
 where $\text{salt}' = \text{keccak256}(\text{salt} \| \text{chainId} \| \text{tokenContract} \| \text{tokenId})$.
-
 
 \section{Account Implementation}
 
@@ -242,7 +239,6 @@ interface IZooTBA is IERC165,
 }
 \end{lstlisting}
 
-
 \section{Automatic TBA Provisioning}
 
 ZRC-721 contracts conforming to ZIP-0701 automatically create a TBA at mint time:
@@ -269,7 +265,6 @@ function _afterTokenTransfer(
 \end{lstlisting}
 
 This ensures every wildlife NFT has a functional account from the moment of creation. Donors can send \ZOO{} to the computed TBA address even before the TBA contract is deployed; the funds will be accessible once the account is created.
-
 
 \section{Donation Flow}
 \label{sec:donation}
@@ -310,7 +305,6 @@ This ensures every wildlife NFT has a functional account from the moment of crea
 All \ZOO{} tokens held by a TBA are traceable to specific donors. The \texttt{donationFrom} mapping provides a complete accounting of all inflows, and the conservation history provides a complete accounting of all outflows.
 \end{theorem}
 
-
 \section{Conservation History}
 \label{sec:history}
 
@@ -341,7 +335,6 @@ Records are written by:
 \end{itemize}
 
 This on-chain history enables donors to verify that their contributions to Tiger \#42 resulted in actual conservation outcomes: veterinary care, anti-poaching patrols, habitat monitoring.
-
 
 \section{Governance Delegation}
 \label{sec:governance}
@@ -376,7 +369,6 @@ where $R_{\text{species}}$ is a multiplier based on IUCN threat status: CR = 2.0
 
 This weights governance influence toward more endangered species, aligning governance power with conservation urgency.
 
-
 \section{Cross-Chain TBA Synchronization}
 \label{sec:crosschain}
 
@@ -394,7 +386,6 @@ The freeze is enforced by incrementing the TBA's \texttt{state()} nonce on bridg
 \begin{theorem}[Cross-Chain Asset Safety]
 A TBA's assets cannot be double-spent across chains. The freeze mechanism ensures exactly one chain has an active TBA at any time. Asset access on the inactive chain requires a bridge transfer, which is mediated by the MPC signer set (ZIP-0800).
 \end{theorem}
-
 
 \section{Reference Implementation}
 
@@ -467,7 +458,6 @@ contract ZooTBA is IZooTBA, ERC165 {
 }
 \end{lstlisting}
 
-
 \section{Security Analysis}
 \label{sec:security}
 
@@ -500,7 +490,6 @@ The \texttt{withdrawToConservation} function verifies the destination against th
 
 Unbounded conservation history arrays could make \texttt{conservationHistory()} calls exceed gas limits. Implementations SHOULD paginate history queries and set a per-account record limit (e.g., 10,000 records).
 
-
 \section{Related Work}
 
 ERC-6551~\cite{erc6551} defines the token-bound account standard. Tokenbound~\cite{tokenbound2023} provides SDK and infrastructure for ERC-6551 accounts. Lens Protocol~\cite{lens2022} uses NFT-based profiles with associated data; TBAs generalize this to any NFT. Bored Ape Yacht Club's ``summoning'' mechanic~\cite{bayc2022} gives NFTs agent-like qualities; TBAs formalize the underlying account model.
@@ -508,7 +497,6 @@ ERC-6551~\cite{erc6551} defines the token-bound account standard. Tokenbound~\ci
 In conservation finance, the GiveDirectly~\cite{givedirectly2020} model of direct cash transfers to individuals shares conceptual DNA with TBA-based per-animal donations: both remove intermediaries between donors and beneficiaries.
 
 The zoo-agi paper~\cite{zooagi2024} introduced the piggybank concept for AI agents. This paper realizes the same concept for wildlife NFTs, extending it with conservation-specific features (verified fund withdrawals, action history, species-weighted governance).
-
 
 \section{Conclusion}
 

@@ -64,7 +64,7 @@ export const siteConfig: SiteConfig = {
       latexUrl: 'https://github.com/zooai/papers/blob/main/thinking-chains/thinking-chains.tex',
       githubUrl: 'https://github.com/zooai/papers',
       date: '2026-06-22',
-      authors: ['Zach Kelling', 'Antje Worring', 'Zoo Labs Foundation'],
+      authors: ['Zoo Labs Foundation Research', 'Antje Worring', 'Zoo Labs Foundation'],
       tags: ['Proof of AI', 'Thinking Chains', 'Conscious Blockchain', 'Proof-of-Thought', 'AI Mining'],
     },
     {
@@ -76,7 +76,7 @@ export const siteConfig: SiteConfig = {
       latexUrl: 'https://github.com/zooai/papers/blob/main/zoo-dao/zoo-dao.tex',
       githubUrl: 'https://github.com/zooai/papers',
       date: '2026-06-22',
-      authors: ['Zach Kelling', 'Zoo Labs Foundation'],
+      authors: ['Zoo Labs Foundation Research', 'Zoo Labs Foundation'],
       tags: ['Zoo DAO', 'Tokenomics', 'Model Zoo', 'Reputation', 'Self-Forking', 'AI Governance'],
     },
     {
@@ -88,7 +88,7 @@ export const siteConfig: SiteConfig = {
       latexUrl: 'https://github.com/zooai/papers/blob/main/beluga-l3-whitepaper/beluga-l3-whitepaper.tex',
       githubUrl: 'https://github.com/zooai/papers',
       date: '2026-04-26',
-      authors: ['Zach Kelling', 'Zoo Labs Foundation'],
+      authors: ['Zoo Labs Foundation Research', 'Zoo Labs Foundation'],
       tags: ['Beluga', 'L3', 'Conservation', 'AI Economics', 'Thinking Chains'],
     },
     {

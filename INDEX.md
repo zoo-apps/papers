@@ -247,7 +247,7 @@ The following five planks landed across the paper corpus on 2025-12-15:
 
 1. **Updated team** — see `zips/team.md` (canonical) and the `01-team` section
    of `zoo-2025-securities-and-dao`. Founder: Antje Worring. Chief Scientist:
-   Zach Kelling.
+   Zoo Labs Foundation Research.
 2. **$113 trillion digital-securities slide** — `zoo-2025-securities-and-dao` §2;
    per-LLM chains §11.1; original whitepaper §10 update.
 3. **Quantum-secure settlement** — `zoo-2025-securities-and-dao` §3;

@@ -59,7 +59,7 @@
 \title{\textbf{ZRC-20: Zoo Fungible Token Standard with Conservation Hooks}}
 
 \author{
-Zach Kelling\thanks{zach@zoo.ngo}\\
+Zoo Labs Foundation Research\thanks{research@zoo.ngo}\\
 \textit{Zoo Labs Foundation}\\
 \texttt{research@zoo.ngo}
 }
@@ -102,7 +102,6 @@ ZRC-20 solves this by adding conservation hooks that activate during standard \t
     \item Security analysis covering reentrancy, oracle manipulation, and governance capture (Section~\ref{sec:security}).
 \end{enumerate}
 
-
 \section{Background}
 
 \subsection{ERC-20}
@@ -116,7 +115,6 @@ Several tokens implement fee-on-transfer mechanisms (e.g., SafeMoon, REFLECT). T
 \subsection{Lux LRC-20}
 
 LRC-20 (LP-3020)~\cite{lrc20} is the Lux Network's extension of ERC-20 with a modular extension suite: burnable, mintable, capped, votes, permit, flash mint, and bridgeable. ZRC-20 inherits the full LRC-20 extension set and adds conservation-specific functionality on top.
-
 
 \section{Interface Specification}
 \label{sec:interface}
@@ -209,7 +207,6 @@ C_{\text{sender}} = a + \left\lfloor \frac{a \cdot d}{10000} \right\rfloor
 The sender must have balance $\geq C_{\text{sender}}$ for the transfer to succeed.
 \end{definition}
 
-
 \section{Reference Implementation}
 \label{sec:implementation}
 
@@ -293,7 +290,6 @@ interface IImpactOracle {
 \end{lstlisting}
 
 The oracle returns the number of conservation credits for a given token burn amount. The credit price is based on verified conservation project costs (e.g., cost per hectare of habitat protected, cost per animal tracked). The oracle is registered in the Zoo Contract Registry (ZIP-0100) and can be updated by governance.
-
 
 \section{Extension Interfaces}
 \label{sec:extensions}
@@ -401,7 +397,6 @@ interface IZRC20Bridgeable is IZRC20 {
 }
 \end{lstlisting}
 
-
 \section{Economic Analysis}
 \label{sec:economics}
 
@@ -447,7 +442,6 @@ If the donation rate $d \leq 500$ basis points, the maximum value extracted from
 
 In practice, most ZRC-20 tokens use $d = 50$ (0.5\%), making the three-hop cost $1 - 0.995^3 = 1.5\%$.
 
-
 \section{Token Registration}
 
 All ZRC-20 tokens deployed on Zoo L2 MUST register in the Zoo Contract Registry (ZIP-0100) with:
@@ -468,7 +462,6 @@ impactOracleAddress & address & Oracle for credit pricing \\
 \caption{ZRC-20 token registration metadata.}
 \label{tab:registration}
 \end{table}
-
 
 \section{Security Analysis}
 \label{sec:security}
@@ -499,13 +492,11 @@ Donation amount calculation rounds down: \texttt{(amount * bps) / 10000}. For sm
 
 \texttt{mintFromBridge} is callable only by the registered bridge contract. The source chain transaction hash is tracked to prevent replay.
 
-
 \section{Related Work}
 
 ERC-20~\cite{erc20} defines the base fungible token standard. EIP-2612~\cite{eip2612} adds gasless approvals via permit. EIP-3156~\cite{eip3156} standardizes flash loans. EIP-5805~\cite{eip5805} defines the voting interface. SafeMoon~\cite{safemoon2021} and similar tokens implement fee-on-transfer, but break DeFi composability by modifying the received amount. ZRC-20 avoids this by charging the sender, not reducing the recipient amount.
 
 Toucan Protocol~\cite{toucan2022} tokenizes carbon credits as ERC-20 tokens. ZRC-20 differs by integrating conservation impact at the token standard level rather than wrapping external credits. KlimaDAO~\cite{klima2021} uses token burns to retire carbon credits; ZRC-20's burn-for-conservation mechanism is analogous but targets biodiversity conservation rather than carbon.
-
 
 \section{Conclusion}
 
