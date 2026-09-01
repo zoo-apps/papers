@@ -61,7 +61,7 @@
 \title{\textbf{Zoo $\leftrightarrow$ Lux Bridge: Multi-Chain Asset Transfer via Warp Messaging}}
 
 \author{
-Zach Kelling\thanks{zach@zoo.ngo}\\
+Zoo Labs Foundation Research\thanks{research@zoo.ngo}\\
 \textit{Zoo Labs Foundation}\\
 \texttt{research@zoo.ngo}
 }
@@ -97,7 +97,6 @@ The bridge's distinguishing feature is conservation metadata preservation. When 
     \item Security analysis of MPC key compromise, replay, and censorship attacks (Section~\ref{sec:security}).
 \end{enumerate}
 
-
 \section{Architecture}
 
 \begin{figure}[t]
@@ -124,7 +123,6 @@ The bridge's distinguishing feature is conservation metadata preservation. When 
 \caption{Zoo $\leftrightarrow$ Lux bridge architecture.}
 \label{fig:architecture}
 \end{figure}
-
 
 \section{Bridge Gateway}
 \label{sec:gateway}
@@ -229,7 +227,6 @@ function bridgeInViaWarp(uint32 index) external {
 
 Warp messages are validated by the Lux primary network validators. No MPC signer set is needed for this path.
 
-
 \section{MPC Threshold Signatures}
 \label{sec:mpc}
 
@@ -288,7 +285,6 @@ MPC threshold ECDSA produces a single on-chain signature regardless of signer se
 With $n = 7$ signers and threshold $t = 5$, the bridge tolerates $f = 2$ Byzantine (compromised) signers. An attacker must compromise $t = 5$ signers to forge a bridge message. The economic cost of compromise is $5 \times 10{,}000 = 50{,}000$ LUX in slashable stake.
 \end{theorem}
 
-
 \section{Asset Bridging Mechanics}
 
 \subsection{Native Token (ZOO/LUX)}
@@ -318,7 +314,6 @@ Tokens locked on the source chain. A bridged representation is minted on the des
 
 Multiple token IDs and amounts can be bridged in a single message. Soulbound tokens MUST NOT be bridged; the gateway rejects any \texttt{bridgeOut} for non-transferable token IDs.
 
-
 \section{Metadata Serialization}
 \label{sec:metadata}
 
@@ -334,7 +329,6 @@ bytes memory metadata = abi.encode(
 \end{lstlisting}
 
 ABI encoding ensures deterministic serialization. The destination chain deserializes the metadata and reconstructs the on-chain state. The provenance CID provides a full history reference without including the entire provenance chain in the bridge message.
-
 
 \section{TBA Freeze/Mirror}
 \label{sec:tba}
@@ -360,7 +354,6 @@ The freeze and NFT lock are atomic within a single \texttt{bridgeOut} transactio
 A TBA's assets cannot be double-spent across chains. The freeze mechanism ensures exactly one chain has an active TBA at any time. Asset access on the inactive chain requires a bridge transfer, which is mediated by the MPC signer set.
 \end{theorem}
 
-
 \section{Fee Structure}
 
 \begin{table}[t]
@@ -378,7 +371,6 @@ ZRC-1155 batch & 5 ZOO per type & Conservation fund \\
 \caption{Bridge fee schedule.}
 \label{tab:fees}
 \end{table}
-
 
 \section{Liveness and Safety}
 \label{sec:liveness}
@@ -415,7 +407,6 @@ S_{\text{zoo\_l2}} + S_{\text{locked}} = S_{\text{initial}} + S_{\text{emissions
 An on-chain audit function verifies this invariant and pauses the bridge if violated.
 \end{theorem}
 
-
 \section{Security Analysis}
 \label{sec:security}
 
@@ -443,11 +434,9 @@ The TBA must be frozen before the bridge message is relayed. The \texttt{bridgeO
 
 During rotation, both old and new signer sets are valid for a 24-hour overlap period. Messages signed by either set are accepted during this window.
 
-
 \section{Related Work}
 
 Lux Teleport (LP-6332)~\cite{teleport2022} provides the transport layer; ZIP-0800 adds the application layer for conservation metadata. LayerZero~\cite{layerzero2022} provides generic cross-chain messaging but lacks conservation metadata support. Wormhole~\cite{wormhole2022} uses a guardian set similar to our MPC signer set. Axelar~\cite{axelar2022} provides general message passing with threshold signatures. Chainlink CCIP~\cite{ccip2023} offers cross-chain interoperability with oracle-based verification. The Cosmos IBC protocol~\cite{ibc2019} provides trustless interchain communication for Tendermint-based chains; Lux Warp messaging provides analogous guarantees within the Lux ecosystem.
-
 
 \section{Conclusion}
 

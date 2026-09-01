@@ -57,7 +57,7 @@
 \title{\textbf{Research DAO Governance: On-Chain Peer Review and Funding for Open Science}}
 
 \author{
-Zach Kelling\thanks{zach@zoo.ngo}\\
+Zoo Labs Foundation Research\thanks{research@zoo.ngo}\\
 \textit{Zoo Labs Foundation}\\
 \texttt{research@zoo.ngo}
 }
@@ -78,7 +78,6 @@ Scientific peer review is broken: reviewers work without compensation, turnaroun
 \newpage
 \tableofcontents
 \newpage
-
 
 % ======================================================================
 \section{Introduction}
@@ -101,7 +100,6 @@ Zoo's Research DAO replaces this structure with an on-chain system where: review
     \item A \textbf{reproducibility attestation} system for post-publication verification (Section~\ref{sec:reproducibility}).
     \item \textbf{Comparison} with OpenReview, arXiv, Sci-Hub, and Ocean Protocol DataDAO (Section~\ref{sec:comparison}).
 \end{enumerate}
-
 
 % ======================================================================
 \section{Related Work}
@@ -127,7 +125,6 @@ Ocean Protocol's DataDAO~\cite{ocean2023datadao} enables decentralized data mark
 \subsection{DeSci Protocols}
 
 VitaDAO~\cite{vitadao2022} funds longevity research through token voting. Molecule~\cite{molecule2022} creates IP-NFTs for drug discovery. LabDAO provides computational biology infrastructure. None implement on-chain peer review with ZK anonymity, reputation staking, or anti-collusion mechanisms.
-
 
 % ======================================================================
 \section{Research DAO Architecture}
@@ -339,7 +336,6 @@ contract ResearchDAO {
 }
 \end{lstlisting}
 
-
 % ======================================================================
 \section{On-Chain Peer Review}
 \label{sec:review}
@@ -519,7 +515,6 @@ Expert & 30 REP & 60-day dispute window \\
 
 Staked REP is locked and cannot be used for concurrent reviews, preventing overcommitment. Reviewers earn REP back plus bonuses for quality work; negligent reviewers face slashing.
 
-
 % ======================================================================
 \section{Review Quality Scoring}
 \label{sec:quality}
@@ -596,7 +591,6 @@ Quality score $<$ 3/10 & $-$10 \\
 \bottomrule
 \end{tabular}
 \end{table}
-
 
 % ======================================================================
 \section{Anti-Collusion Mechanisms}
@@ -694,7 +688,6 @@ contract ConflictDetector {
 }
 \end{lstlisting}
 
-
 % ======================================================================
 \section{Reproducibility Attestation}
 \label{sec:reproducibility}
@@ -717,7 +710,6 @@ The replication crisis in science~\cite{ioannidis2005most} undermines trust in r
 \subsection{Incentives}
 
 Reproducers earn 3 ZOO and +15 REP per successful reproduction attempt. This creates a market for verification labor that does not exist in traditional science.
-
 
 % ======================================================================
 \section{Comparison with Existing Systems}
@@ -743,7 +735,6 @@ Decentralized & Yes & No & No & No & Yes \\
 \bottomrule
 \end{tabular}
 \end{table}
-
 
 % ======================================================================
 \section{Empirical Results}
@@ -791,7 +782,6 @@ Reproducibility attestations & 31 \\
 \end{tabular}
 \end{table}
 
-
 % ======================================================================
 \section{Security Considerations}
 \label{sec:security}
@@ -807,14 +797,12 @@ Reproducibility attestations & 31 \\
 
 \paragraph{Quantum threat.} ZK proofs using elliptic curve cryptography are quantum-vulnerable. Migration to lattice-based proof systems is planned when Lux Network deploys post-quantum primitives.
 
-
 % ======================================================================
 \section{Conclusion}
 \label{sec:conclusion}
 % ======================================================================
 
 The Zoo Research DAO demonstrates that on-chain governance can deliver a complete research lifecycle---from proposal through peer review, funding, execution, and reproducibility verification---that is faster, fairer, and more accountable than traditional mechanisms. ZK-proof-based double-blind review provides cryptographic anonymity guarantees without trusted intermediaries. Reputation staking aligns reviewer incentives with quality output. Commit-reveal schemes and statistical collusion detection protect the integrity of the review process. Quadratic voting distributes funding according to community breadth rather than capital concentration. Across 287 proposals, the system achieves 8.4-day median review turnaround (11.5x faster than traditional), 94\% completion rate, and 38\% Global South funding share. The integrated reproducibility attestation system begins closing the replication gap by creating economic incentives for verification labor.
-
 
 % ======================================================================
 % References

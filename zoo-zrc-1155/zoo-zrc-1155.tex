@@ -59,7 +59,7 @@
 \title{\textbf{ZRC-1155: Multi-Token Standard for Conservation Assets}}
 
 \author{
-Zach Kelling\thanks{zach@zoo.ngo}\\
+Zoo Labs Foundation Research\thanks{research@zoo.ngo}\\
 \textit{Zoo Labs Foundation}\\
 \texttt{research@zoo.ngo}
 }
@@ -105,7 +105,6 @@ ZRC-1155 extends ERC-1155 with conservation-specific features: token-level categ
     \item Gas cost analysis demonstrating 5--10$\times$ savings over individual contracts (Section~\ref{sec:gas}).
 \end{enumerate}
 
-
 \section{Background}
 
 \subsection{ERC-1155}
@@ -123,7 +122,6 @@ Key operations: \texttt{safeTransferFrom}, \texttt{safeBatchTransferFrom}, \text
 \subsection{Soulbound Tokens}
 
 Vitalik Buterin proposed soulbound tokens (SBTs)~\cite{sbt2022} as non-transferable credentials. ERC-5192~\cite{erc5192} formalizes a minimal SBT interface. ZRC-1155 implements soulbound semantics at the token-type level within the multi-token framework.
-
 
 \section{Interface Specification}
 \label{sec:interface}
@@ -238,7 +236,6 @@ interface IZRC1155 is IERC1155,
 }
 \end{lstlisting}
 
-
 \section{Token ID Encoding}
 \label{sec:encoding}
 
@@ -306,7 +303,6 @@ Game sword & GAMING (5) & 0x001000 & 99 \\
 \label{tab:encoding}
 \end{table}
 
-
 \section{Soulbound Mechanics}
 \label{sec:soulbound}
 
@@ -343,7 +339,6 @@ function _beforeTokenTransfer(
 }
 \end{lstlisting}
 
-
 \section{Batch Donation Mechanism}
 \label{sec:donation}
 
@@ -361,7 +356,6 @@ Soulbound and non-fungible tokens are exempt from donation deduction.
 \begin{proposition}[Batch Donation Gas Cost]
 Let $n$ be the number of token IDs in a batch transfer, $k \leq n$ be the number with nonzero donation rate. The donation overhead is $O(k)$ additional storage writes (one per conservation fund) plus $O(1)$ for the event emission. For $k = 0$, the batch transfer has zero donation overhead.
 \end{proposition}
-
 
 \section{Metadata URI Schema}
 
@@ -391,7 +385,6 @@ https://api.zoo.ngo/metadata/1155/{id}.json
 }
 \end{lstlisting}
 
-
 \section{Gas Cost Analysis}
 \label{sec:gas}
 
@@ -412,7 +405,6 @@ Mint 10 types & 1,500,000 gas & 180,000 gas \\
 \end{table}
 
 The gas savings come from two sources: (1)~reduced base transaction overhead (one transaction instead of $n$), and (2)~reduced storage reads (single contract state instead of $n$ contract states). For batch transfers of 50~types, ZRC-1155 uses 91\% less gas.
-
 
 \section{Security Analysis}
 
@@ -440,7 +432,6 @@ Extremely large batch operations may exceed block gas limits. Implementations SH
 
 An attacker could create many small transfers where the donation rounds to zero. Implementations SHOULD skip donation for amounts below a minimum threshold.
 
-
 \section{Related Work}
 
 ERC-1155~\cite{erc1155} defines the base multi-token standard. Enjin~\cite{enjin2019} pioneered ERC-1155 for gaming assets. ERC-5192~\cite{erc5192} defines minimal soulbound token interfaces; ZRC-1155 integrates soulbound mechanics within the multi-token framework. OpenSea's Wyvern protocol~\cite{opensea2018} handles ERC-1155 marketplace listings. Thirdweb~\cite{thirdweb2023} provides ERC-1155 drop contracts for batch minting.
@@ -448,7 +439,6 @@ ERC-1155~\cite{erc1155} defines the base multi-token standard. Enjin~\cite{enjin
 In conservation, Reef Conservation Tokens~\cite{reef2022} use ERC-1155 for coral reef protection credits. ZRC-1155 generalizes this pattern with formal conservation categorization, structured token IDs, and soulbound badge support.
 
 POAP (Proof of Attendance Protocol)~\cite{poap2019} uses ERC-721 for event attendance badges; ZRC-1155's soulbound SEMI\_FUNGIBLE category achieves the same goal with significantly lower gas cost for batch issuance.
-
 
 \section{Conclusion}
 

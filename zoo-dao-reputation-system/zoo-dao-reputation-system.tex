@@ -58,7 +58,7 @@
 \title{\textbf{Ecosystem Reputation: A Non-Transferable Trust Primitive for Conservation Contributors}}
 
 \author{
-Zach Kelling\thanks{zach@zoo.ngo}\\
+Zoo Labs Foundation Research\thanks{research@zoo.ngo}\\
 \textit{Zoo Labs Foundation}\\
 \texttt{research@zoo.ngo}
 }
@@ -79,7 +79,6 @@ Token-weighted governance is plutocratic: those who buy the most tokens dominate
 \newpage
 \tableofcontents
 \newpage
-
 
 % ======================================================================
 \section{Introduction}
@@ -103,7 +102,6 @@ Zoo Network's Ecosystem Reputation System implements ZIP-0026 as a comprehensive
     \item \textbf{Empirical evaluation} of reputation effects on governance quality (Section~\ref{sec:evaluation}).
 \end{enumerate}
 
-
 % ======================================================================
 \section{Related Work}
 \label{sec:related}
@@ -124,7 +122,6 @@ Optimism's Citizen House uses badge-based governance for retroactive funding dec
 \subsection{Reputation Decay}
 
 PageRank~\cite{page1999pagerank} applies damping to prevent unbounded reputation accumulation. Stackelberg attention allocation models~\cite{jackson2008social} suggest that reputation should reflect recent rather than lifetime contributions. Zoo implements exponential decay with activity reset, following similar patterns in academic h-index variants~\cite{hirsch2005index}.
-
 
 % ======================================================================
 \section{Reputation Model}
@@ -199,7 +196,6 @@ The total reputation score for address $a$ at time $t$ is:
 \end{equation}
 
 where $\mathcal{C}$ is the set of categories, $n_{a,c}$ is the number of reputation-earning events for $a$ in category $c$, $p_{a,c,k}$ is the points for event $k$, and $D(\Delta t)$ is the decay function applied to events older than the grace period.
-
 
 % ======================================================================
 \section{SBTReputation Contract}
@@ -403,7 +399,6 @@ contract SBTReputation is ERC721 {
 }
 \end{lstlisting}
 
-
 % ======================================================================
 \section{Decay Model}
 \label{sec:decay}
@@ -455,7 +450,6 @@ Any qualifying activity resets the decay timer. The grace period restarts from t
 \end{equation}
 
 This means that a contributor who earns even 1 point per year maintains full reputation.
-
 
 % ======================================================================
 \section{Anti-Gaming Mechanisms}
@@ -511,7 +505,6 @@ Reputation can be reduced or fully revoked for misconduct:
     \item Security violations: Full revocation.
 \end{itemize}
 
-
 % ======================================================================
 \section{Governance Integration}
 \label{sec:governance}
@@ -545,7 +538,6 @@ Reputation tiers gate council eligibility:
     \item \textbf{Research Council}: Steward to nominate, Guardian ($\geq$500) to serve.
     \item \textbf{Emergency Council}: Elder ($\geq$1{,}000) required.
 \end{itemize}
-
 
 % ======================================================================
 \section{Empirical Evaluation}
@@ -593,7 +585,6 @@ Funded proposal impact score & 612 & 724 (+18\%) \\
 
 Reputation weighting increased participation by 34\%, reduced median voter token balance (indicating broader participation), lowered the Gini coefficient of voting power from 0.78 to 0.54, and improved mean funded proposal impact by 18\%.
 
-
 % ======================================================================
 \section{Security Considerations}
 \label{sec:security}
@@ -609,14 +600,12 @@ Reputation weighting increased participation by 34\%, reduced median voter token
 
 \paragraph{Centralization risk.} Initially, Foundation-appointed issuers dominate. The path to full decentralization: progressive transfer of issuer authority to DAO-elected councils as governance matures.
 
-
 % ======================================================================
 \section{Conclusion}
 \label{sec:conclusion}
 % ======================================================================
 
 The Zoo Ecosystem Reputation System introduces a meritocratic trust primitive that complements token-weighted governance. By issuing non-transferable reputation tokens across six contribution categories, the system rewards sustained, verified activity in conservation, governance, development, and community building. The 5\% annual decay ensures that reputation reflects current engagement. Governance weight multipliers (up to 2.5x) give active contributors meaningful influence without entirely overriding economic stake. Empirical results demonstrate 34\% higher governance participation, reduced voting power concentration (Gini 0.78 $\to$ 0.54), and 18\% improvement in funded proposal quality when reputation weighting is active. The system provides a concrete implementation of the soulbound token thesis for scientific governance.
-
 
 % ======================================================================
 % References

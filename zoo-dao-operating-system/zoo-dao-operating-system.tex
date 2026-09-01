@@ -57,7 +57,7 @@
 \title{\textbf{ZooGov: A Full-Stack DAO Operating System for Conservation Research}}
 
 \author{
-Zach Kelling\thanks{zach@zoo.ngo}\\
+Zoo Labs Foundation Research\thanks{research@zoo.ngo}\\
 \textit{Zoo Labs Foundation}\\
 \texttt{research@zoo.ngo}
 }
@@ -78,7 +78,6 @@ We present \textbf{ZooGov}, a full-stack decentralized autonomous organization o
 \newpage
 \tableofcontents
 \newpage
-
 
 % ======================================================================
 \section{Introduction}
@@ -101,7 +100,6 @@ ZooGov addresses these requirements as an integrated system rather than a collec
     \item \textbf{Safety and liveness proofs} for the governance state machine (Section~\ref{sec:analysis}).
     \item A \textbf{production deployment} analysis of the \texttt{zoogov-app} frontend and on-chain backend (Section~\ref{sec:deployment}).
 \end{enumerate}
-
 
 % ======================================================================
 \section{Related Work}
@@ -131,7 +129,6 @@ Tally~\cite{tally2023} provides a generic governance frontend for Governor-compa
 \subsection{Science DAOs}
 
 VitaDAO~\cite{vitadao2022}, LabDAO, and Molecule govern research funding but use standard Governor or Snapshot mechanics without research-specific proposal types, milestone gating, or 501(c)(3) compliance integration.
-
 
 % ======================================================================
 \section{Governance Architecture}
@@ -208,7 +205,6 @@ A proposal $p$ transitions through the state machine $\mathcal{S} = \{$\texttt{P
 \end{figure}
 
 Transitions are governed by block timestamps and voting tallies. The \texttt{Queued} $\to$ \texttt{Vetoed} transition is restricted to the board multi-sig and must include an on-chain justification string citing legal or mission grounds.
-
 
 % ======================================================================
 \section{Core Contracts}
@@ -343,7 +339,6 @@ No single address may accumulate more than 5\% of total delegated voting power:
 
 This prevents delegate capture by large token holders or professional delegation services.
 
-
 % ======================================================================
 \section{Delegation Model}
 \label{sec:delegation}
@@ -389,7 +384,6 @@ All delegation relationships are public on-chain. The \texttt{zoogov-app} fronte
     \item Delegate voting history and participation rate
     \item Delegate reputation tier and activity recency
 \end{itemize}
-
 
 % ======================================================================
 \section{Committee Framework}
@@ -471,7 +465,6 @@ contract ZooCommittee {
 }
 \end{lstlisting}
 
-
 % ======================================================================
 \section{Treasury Integration}
 \label{sec:treasury}
@@ -540,7 +533,6 @@ contract TreasuryGuard {
 }
 \end{lstlisting}
 
-
 % ======================================================================
 \section{On-Chain Execution}
 \label{sec:execution}
@@ -557,7 +549,6 @@ After the timelock delay, proposals have a 14-day execution window. Any address 
 \subsection{Emergency Bypass}
 
 Emergency proposals (type 4) bypass the timelock entirely. They require 1\% quorum and 80\% supermajority approval. Emergency proposals are limited to pre-registered actions (pause contracts, freeze addresses) and trigger mandatory post-emergency review within 7 days per ZIP-0027.
-
 
 % ======================================================================
 \section{Formal Analysis}
@@ -602,7 +593,6 @@ The 5\% delegation cap prevents any single delegate from unilaterally meeting qu
 The minimum quorum (Emergency, 1\%) is less than the 5\% cap, but Emergency proposals require 80\% supermajority of votes cast, requiring at minimum $0.01 / 0.8 = 0.0125 = 1.25\%$ of total supply in supporting votes. A single delegate at the 5\% cap could meet this threshold alone. However, Emergency proposals also require at least two distinct voting addresses (enforced by the contract), preventing single-delegate passage.
 \end{proof}
 
-
 % ======================================================================
 \section{Comparison with Existing Frameworks}
 \label{sec:comparison}
@@ -627,7 +617,6 @@ Emergency bypass & Yes & No & No & Yes & No \\
 \bottomrule
 \end{tabular}
 \end{table}
-
 
 % ======================================================================
 \section{Production Deployment}
@@ -677,7 +666,6 @@ Gas per vote (L2) & 47{,}000 gas \\
 \end{tabular}
 \end{table}
 
-
 % ======================================================================
 \section{Security Considerations}
 \label{sec:security}
@@ -695,7 +683,6 @@ Gas per vote (L2) & 47{,}000 gas \\
 
 \paragraph{Upgradeability risk.} UUPS proxies are controlled by the governance timelock. Upgrade proposals require Protocol Upgrade type (15\% quorum, 66\% approval, 7-day timelock).
 
-
 % ======================================================================
 \section{Future Work}
 \label{sec:future}
@@ -709,14 +696,12 @@ Gas per vote (L2) & 47{,}000 gas \\
     \item \textbf{MACI integration}: Minimal Anti-Collusion Infrastructure for private voting that resists vote buying.
 \end{enumerate}
 
-
 % ======================================================================
 \section{Conclusion}
 \label{sec:conclusion}
 % ======================================================================
 
 ZooGov implements a complete DAO operating system for conservation research governance. By differentiating proposal types with tiered quorum, approval, and timelock parameters, the system handles both routine parameter changes and high-stakes protocol upgrades with appropriate rigor. Reputation-weighted voting integrates meritocratic input from active researchers alongside economic stake. The narrow board veto preserves 501(c)(3) compliance without centralizing decision-making. Production deployment demonstrates viable governance at the scale of 1{,}247 unique voters processing 194 proposals in 12 months, with emergency response times under 4 hours. All governance parameters are self-amending through meta-governance proposals, ensuring the system evolves with the community it serves.
-
 
 % ======================================================================
 % References

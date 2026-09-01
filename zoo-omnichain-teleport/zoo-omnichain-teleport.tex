@@ -60,7 +60,7 @@
 \title{\textbf{Zoo Omnichain Teleport: Unified Liquidity and NFT Bridging across 18+ Chains}}
 
 \author{
-Vishnu Seesahai\thanks{vishnu@lux.network}, Zach Kelling\thanks{zach@zoo.ngo}\\
+Vishnu Seesahai\thanks{vishnu@lux.network}, Zoo Labs Foundation Research\thanks{research@zoo.ngo}\\
 \textit{Lux Industries Inc \quad Zoo Labs Foundation}\\
 \texttt{research@zoo.ngo}
 }
@@ -102,7 +102,6 @@ The Lux Teleport system, originally deployed by Seesahai and Kelling in 2022~\ci
     \item Security analysis of cross-chain message verification and yield oracle manipulation (Section~\ref{sec:security}).
 \end{enumerate}
 
-
 \section{Chain Support}
 
 \begin{table}[t]
@@ -123,7 +122,6 @@ Move & TeleportMoveModule & Aptos, Sui & LPS-018 \\
 \caption{Supported chain families and their Teleport adapters.}
 \label{tab:chains}
 \end{table}
-
 
 \section{Omnichain Gateway}
 \label{sec:gateway}
@@ -168,7 +166,6 @@ interface IZooOmnichainGateway
 
 The gateway inherits from \texttt{IZooBridgeGateway} (ZIP-0800). Existing Zoo-to-Lux transfers continue to use the base \texttt{bridgeOut} function. The omnichain extension is opt-in via \texttt{omnichainBridgeOut}.
 
-
 \section{Chain-Specific Adapters}
 \label{sec:adapters}
 
@@ -210,7 +207,6 @@ For Aptos and Sui, the Teleport Move adapter (LPS-018) deploys Move modules that
     \item Mint fungible assets (FA standard on Aptos, Coin on Sui) with conservation metadata in resource accounts.
     \item Support NFT bridging via the Aptos Digital Asset standard and Sui Kiosk framework.
 \end{itemize}
-
 
 \section{Yield-Bearing Bridge Tokens}
 \label{sec:yield}
@@ -259,7 +255,6 @@ Y_{\text{conservation}} = Y_{\text{total}} \cdot \frac{c}{10000}
 where $c = 2000$ (20\%). Negative yield (underlying strategy loss) is absorbed entirely by token holders; conservation yield is only generated on positive yield.
 \end{theorem}
 
-
 \section{MPC-Threshold Custody}
 \label{sec:custody}
 
@@ -276,7 +271,6 @@ The MPC key rotation (30-day cycle) propagates to all chain adapters simultaneou
 \begin{definition}[Unified Security]
 The security of any omnichain route reduces to the security of the MPC signer set. An attacker must compromise $t = \lceil 2n/3 \rceil$ signers to forge a message on any route, regardless of destination chain.
 \end{definition}
-
 
 \section{Fee Structure}
 
@@ -297,7 +291,6 @@ Yield-bearing mint & Flat 5 ZOO & Conservation \\
 \caption{Omnichain bridge fee schedule.}
 \label{tab:fees}
 \end{table}
-
 
 \section{Conservation Metadata Preservation}
 
@@ -322,7 +315,6 @@ Move & Resource account & speciesId, impactCredits struct \\
 
 This ensures that bridged Zoo conservation tokens are not opaque blobs on destination chains. Local ecosystem tools (Solana explorers, TON wallets, Cosmos dashboards) can read and display conservation metadata natively.
 
-
 \section{NFT Bridging across Heterogeneous Chains}
 
 ZRC-721 wildlife NFTs bridge to non-EVM chains with full metadata:
@@ -341,7 +333,6 @@ ZRC-721 wildlife NFTs bridge to non-EVM chains with full metadata:
     \item Conservation metadata stored in chain-native format.
     \item On return: destination NFT burned, Zoo NFT unlocked, TBA unfrozen.
 \end{enumerate}
-
 
 \section{Security Analysis}
 \label{sec:security}
@@ -370,7 +361,6 @@ Cosmos IBC transfers have a configurable timeout (default 10 minutes). Timed-out
 
 Each chain adapter is an independent contract/program. A vulnerability in the Solana adapter does not affect the TON or Cosmos adapters. The MPC signer set is the shared security assumption; individual adapter bugs are contained.
 
-
 \section{Related Work}
 
 LayerZero~\cite{layerzero2022} provides omnichain messaging via ultra-light nodes. Wormhole~\cite{wormhole2022} uses a guardian set for cross-chain attestation. Axelar~\cite{axelar2022} provides general message passing with proof-of-stake validator verification. Chainlink CCIP~\cite{ccip2023} offers cross-chain interoperability with oracle-based verification. deBridge~\cite{debridge2023} provides cross-chain asset transfers with validator attestation.
@@ -380,7 +370,6 @@ The Lux Teleport system~\cite{teleport2022}, first deployed by Seesahai and Kell
 Cosmos IBC~\cite{ibc2019} provides trustless interchain communication via light client verification. Our Cosmos adapter uses IBC as the final-mile transport while Teleport handles the Zoo-to-Lux segment.
 
 Wormhole's Portal~\cite{portal2022} supports NFT bridging across chains but stores metadata as opaque byte arrays. Our chain-specific adapters store conservation metadata in native formats, making it readable by local ecosystem tools.
-
 
 \section{Conclusion}
 

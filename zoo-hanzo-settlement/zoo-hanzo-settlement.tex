@@ -60,7 +60,7 @@
 \title{\textbf{Zoo $\leftrightarrow$ Hanzo Settlement Integration:\\AI Compute Payments from Zoo Applications}}
 
 \author{
-Zach Kelling\thanks{zach@zoo.ngo}\\
+Zoo Labs Foundation Research\thanks{research@zoo.ngo}\\
 \textit{Zoo Labs Foundation}\\
 \texttt{research@zoo.ngo}
 }
@@ -100,7 +100,6 @@ Zoo applications---avatar tutors for conservation education, habitat modeling wi
     \item Security analysis of oracle compromise, escrow drain, and price manipulation (Section~\ref{sec:security}).
 \end{enumerate}
 
-
 \section{Architecture}
 
 \begin{figure}[t]
@@ -125,7 +124,6 @@ Zoo applications---avatar tutors for conservation education, habitat modeling wi
 \caption{Zoo $\leftrightarrow$ Hanzo settlement architecture.}
 \label{fig:architecture}
 \end{figure}
-
 
 \section{Settlement Vault}
 \label{sec:vault}
@@ -195,7 +193,6 @@ interface ISettlementVault {
 }
 \end{lstlisting}
 
-
 \section{Settlement Ledger}
 \label{sec:ledger}
 
@@ -241,7 +238,6 @@ interface ISettlementLedger {
 }
 \end{lstlisting}
 
-
 \section{Compute Oracle}
 \label{sec:oracle}
 
@@ -276,7 +272,6 @@ interface IComputeOracle {
 \end{lstlisting}
 
 The oracle is the minimal trusted component: it attests to off-chain compute usage. Its operator is registered in the Zoo Contract Registry (ZIP-0100) and can be rotated by governance.
-
 
 \section{Settlement Flow}
 \label{sec:flow}
@@ -333,7 +328,6 @@ Content-Type: application/json
     \item Settlement Ledger records the final settlement with \texttt{usageProofHash}.
 \end{enumerate}
 
-
 \section{Pricing}
 
 \begin{table}[t]
@@ -353,7 +347,6 @@ Frontier (500B+) & 2,000 ZOO & 6,000 ZOO \\
 \end{table}
 
 Prices are updated daily based on the ZOO/USD TWAP from Lux DEX pools. The oracle publishes prices on-chain and signs each update.
-
 
 \section{DeFi Composability}
 \label{sec:defi}
@@ -392,7 +385,6 @@ LPs earn a share of settlement fees proportional to their contribution.
 
 Pre-purchase compute at today's prices for future use. Backed by \ZOO{} escrow in the Settlement Vault. The futures contract locks in the current \texttt{pricePerMillionTokens} for a specified duration.
 
-
 \section{Conservation Impact}
 
 Every compute session generates conservation impact:
@@ -411,7 +403,6 @@ F_{\text{conservation}} = V \cdot \frac{c}{10000}
 \end{equation}
 With $V = 10{,}000{,}000$ ZOO/year and $c = 200$ bps, $F_{\text{conservation}} = 200{,}000$ ZOO/year directed to conservation from AI inference alone.
 \end{theorem}
-
 
 \section{Security Analysis}
 \label{sec:security}
@@ -445,13 +436,11 @@ Each \texttt{UsageReport} includes a \texttt{sessionId} and \texttt{timestamp}. 
 
 A provider could accept payment and not deliver compute. Usage reports are signed by the Compute Oracle, not the provider. The oracle independently verifies compute execution before attesting.
 
-
 \section{Related Work}
 
 Superfluid~\cite{superfluid2021} provides streaming payment primitives; the Settlement Vault's STREAMING mode uses analogous constant-flow mechanics. Filecoin~\cite{filecoin2017} settles storage payments on-chain with proof-of-replication; our Compute Oracle provides analogous attestation for AI compute. Ritual~\cite{ritual2023} integrates AI inference with blockchain settlement; our three-phase architecture provides additional separation of concerns. Akash Network~\cite{akash2020} provides a decentralized compute marketplace; our protocol specifically integrates with the Hanzo centralized compute gateway while maintaining on-chain settlement for auditability.
 
 The conservation impact layer is unique to the Zoo ecosystem: no existing compute payment protocol directs a fraction of spending to ecological outcomes.
-
 
 \section{Conclusion}
 

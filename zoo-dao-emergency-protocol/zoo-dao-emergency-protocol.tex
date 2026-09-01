@@ -56,7 +56,7 @@
 \title{\textbf{Emergency Governance: Pause, Cancel, and Upgrade under Adversarial Conditions}}
 
 \author{
-Zach Kelling\thanks{zach@zoo.ngo}\\
+Zoo Labs Foundation Research\thanks{research@zoo.ngo}\\
 \textit{Zoo Labs Foundation}\\
 \texttt{research@zoo.ngo}
 }
@@ -77,7 +77,6 @@ Standard DAO governance requires days or weeks to reach decisions. When a bridge
 \newpage
 \tableofcontents
 \newpage
-
 
 % ======================================================================
 \section{Introduction}
@@ -110,7 +109,6 @@ Emergency governance must satisfy conflicting requirements:
     \item \textbf{Post-emergency review} and accountability mechanisms (Section~\ref{sec:review}).
     \item \textbf{Bounded damage proofs} showing worst-case loss limits (Section~\ref{sec:analysis}).
 \end{enumerate}
-
 
 % ======================================================================
 \section{Threat Model}
@@ -162,7 +160,6 @@ Regulatory action & External & Legal compliance & DEFCON 3 expedited vote \\
     \item Block timestamps are accurate within 15 seconds (Lux EVM L2 guarantee).
 \end{enumerate}
 
-
 % ======================================================================
 \section{DEFCON Tiered Response}
 \label{sec:defcon}
@@ -213,7 +210,6 @@ Fast-track DAO vote with modified parameters: 24-hour voting, 1\% quorum, 80\% a
 \subsection{DEFCON 4: Elevated Concern}
 
 Expedited DAO vote: 72-hour voting, 3\% quorum, 66\% approval, 24-hour timelock. Used for situations requiring faster-than-normal but non-urgent response.
-
 
 % ======================================================================
 \section{Emergency Council}
@@ -370,7 +366,6 @@ contract EmergencyCouncil {
 }
 \end{lstlisting}
 
-
 % ======================================================================
 \section{Pre-Approved Response Playbooks}
 \label{sec:playbooks}
@@ -464,7 +459,6 @@ contract PlaybookRegistry {
 }
 \end{lstlisting}
 
-
 % ======================================================================
 \section{Post-Emergency Review}
 \label{sec:review}
@@ -511,7 +505,6 @@ Emergency declarations must be communicated through multiple channels simultaneo
 \end{enumerate}
 
 Single-channel communication is insufficient because an attacker who compromises one channel could suppress notification.
-
 
 % ======================================================================
 \section{Formal Analysis}
@@ -560,7 +553,6 @@ If at least 3 of 5 council members are honest and available, the protocol can re
 DEFCON~1 requires 2 honest members (available from 3). DEFCON~2 requires 3 honest members (exactly 3 available). DEFCON~3/4 require DAO votes independent of council availability.
 \end{proof}
 
-
 % ======================================================================
 \section{Operational Experience}
 \label{sec:operations}
@@ -586,7 +578,6 @@ DEFCON~1 requires 2 honest members (available from 3). DEFCON~2 requires 3 hones
 
 All four activations passed post-emergency review with $>$70\% ratification. No false emergency declarations occurred. No council member faced removal proceedings.
 
-
 % ======================================================================
 \section{Security Considerations}
 \label{sec:security}
@@ -602,14 +593,12 @@ All four activations passed post-emergency review with $>$70\% ratification. No 
 
 \paragraph{Quantum threat.} Current multi-sig operations use ECDSA signatures. When Lux Network deploys post-quantum signature schemes, the EmergencyCouncil contract will be upgraded to require PQ-resistant signatures.
 
-
 % ======================================================================
 \section{Conclusion}
 \label{sec:conclusion}
 % ======================================================================
 
 The Emergency Governance Protocol resolves the tension between deliberative governance and rapid crisis response. The DEFCON tiered system matches authority to urgency: purely defensive pauses execute in minutes, conservation crisis funding deploys in hours, and expedited governance decisions complete in 1--3 days. Bounded damage guarantees (5\% treasury cap, 72-hour expiration) limit worst-case outcomes even under council corruption. Mandatory post-emergency review with reputation slashing and removal consequences ensures accountability. Four activations over 12 months demonstrate that the protocol works in practice---responding to real security incidents and conservation crises within specified time bounds while maintaining community trust through transparent review.
-
 
 % ======================================================================
 % References

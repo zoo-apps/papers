@@ -56,7 +56,7 @@
 \title{\textbf{The Zoo Community Grants Program: Retroactive and Prospective Conservation Funding}}
 
 \author{
-Zach Kelling\thanks{zach@zoo.ngo}\\
+Zoo Labs Foundation Research\thanks{research@zoo.ngo}\\
 \textit{Zoo Labs Foundation}\\
 \texttt{research@zoo.ngo}
 }
@@ -77,7 +77,6 @@ We present the Zoo Community Grants Program, an on-chain mechanism for funding c
 \newpage
 \tableofcontents
 \newpage
-
 
 % ======================================================================
 \section{Introduction}
@@ -100,7 +99,6 @@ The Zoo Community Grants Program adapts proven on-chain grant mechanisms for con
     \item \textbf{Peer review integration} linking grant proposals to the on-chain peer review system (Section~\ref{sec:review}).
 \end{enumerate}
 
-
 % ======================================================================
 \section{Related Work}
 \label{sec:related}
@@ -121,7 +119,6 @@ NSF, USAID, GEF, and private foundations (Moore, Packard, WWF) provide conservat
 \subsection{Milestone-Based Funding}
 
 The World Bank's Development Impact Bonds and results-based financing programs~\cite{worldbank2019rbf} disburse funds upon verified milestone completion. This approach aligns incentives but requires trustworthy verification. Zoo uses on-chain milestone evidence (IPFS-stored reports verified by review councils) to automate milestone approval.
-
 
 % ======================================================================
 \section{Grant Categories}
@@ -146,7 +143,6 @@ Emergency Conservation & 200{,}000 & 1 month & Fast-track (3) & 1 \\
 \end{table}
 
 Categories encode domain-specific review requirements. Conservation Research grants are reviewed by the Science Council (7 members, 3 Foundation-appointed + 4 DAO-elected); Open Source grants by the Technical Council; Citizen Science and Education by the Community Council.
-
 
 % ======================================================================
 \section{Grant Lifecycle Contracts}
@@ -401,7 +397,6 @@ Standard disbursement follows a 20/milestone.../10 pattern:
 
 The 20\% upfront is larger than typical DeFi grants (which often start at 0\%) because conservation field work requires advance equipment and logistics funding.
 
-
 % ======================================================================
 \section{Quadratic Funding}
 \label{sec:qf}
@@ -443,7 +438,6 @@ The matching formula is vulnerable to Sybil attacks (splitting one identity into
 \subsection{Matching Pool Sizing}
 
 The matching pool is funded from the Grants Fund (ZIP-0018) and replenished quarterly. Pool size is set by the Research Council based on treasury balance and grant demand, targeting 2--5x matching on the median grant.
-
 
 % ======================================================================
 \section{Retroactive Public Goods Funding}
@@ -493,7 +487,6 @@ Completed grants with Impact Oracle scores above thresholds receive automatic fo
 \bottomrule
 \end{tabular}
 \end{table}
-
 
 % ======================================================================
 \section{RFP Queueing}
@@ -590,7 +583,6 @@ contract RFPQueue {
 
 RFP responses enter the standard grant lifecycle (screening, review, voting, escrow) but receive priority scheduling and dedicated matching funds.
 
-
 % ======================================================================
 \section{Peer Review Integration}
 \label{sec:review}
@@ -607,7 +599,6 @@ Grant proposals of Standard and Major type undergo peer review before the voting
 \end{enumerate}
 
 Review scores are published alongside the grant proposal during the voting phase, enabling informed quadratic voting.
-
 
 % ======================================================================
 \section{Empirical Results}
@@ -665,7 +656,6 @@ Gini coefficient of matching & 0.31 \\
 \end{tabular}
 \end{table}
 
-
 % ======================================================================
 \section{Security Considerations}
 \label{sec:security}
@@ -681,14 +671,12 @@ Gini coefficient of matching & 0.31 \\
 
 \paragraph{Treasury drain.} Per-epoch spending limits and the 5\% emergency cap prevent catastrophic fund depletion.
 
-
 % ======================================================================
 \section{Conclusion}
 \label{sec:conclusion}
 % ======================================================================
 
 The Zoo Community Grants Program demonstrates that on-chain grant mechanisms can deliver faster, more transparent, and more globally accessible conservation funding than traditional channels. Milestone-based disbursement ensures accountability without bureaucratic overhead. Quadratic funding amplifies grassroots community support. Retroactive funding rewards demonstrated impact rather than proposal-writing skill. The 24-day application-to-first-disbursement timeline, 87\% completion rate, and 38\% Global South representation show that the model works in practice for conservation research.
-
 
 % ======================================================================
 % References
