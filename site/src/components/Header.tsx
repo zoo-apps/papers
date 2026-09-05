@@ -16,7 +16,7 @@ export function Header({ config }: HeaderProps) {
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Logo />
+            <img src={config.logo} alt={config.fullName} className="w-7 h-7" />
             <div>
               <h1 className="text-lg font-semibold tracking-tight">{config.name}</h1>
               <p className="text-xs text-muted-foreground">Research Papers</p>
@@ -60,17 +60,5 @@ export function Header({ config }: HeaderProps) {
         </div>
       </div>
     </header>
-  )
-}
-
-function Logo() {
-  return (
-    <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M4 5h16l-6 7 6 7H4l6-7-6-7z"
-        fill="currentColor"
-        className="text-foreground"
-      />
-    </svg>
   )
 }
