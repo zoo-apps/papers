@@ -14,6 +14,7 @@ export function PaperCard({ paper }: PaperCardProps) {
             {new Date(paper.date).toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'short',
+              timeZone: 'UTC',
             })}
           </time>
           <FileText className="h-4 w-4 text-muted-foreground/50" />
