@@ -17,3 +17,8 @@ out/
 .env
 .env.local
 .env.*.local
+
+# Local symlinks to LLM.md
+CLAUDE.md
+AGENTS.md
+GEMINI.md
