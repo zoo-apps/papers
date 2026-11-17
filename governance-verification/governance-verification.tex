@@ -1,0 +1,49 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{shared/zoocover}
+\usepackage{listings}
+\input{shared/lstlang}
+
+\title{Formal Verification of Constitutional Governance: Zoo Protocol Invariants}
+\author{Zoo Research Program}
+\date{\today}
+
+\begin{document}
+
+\zoocoverpage
+
+\section{Introduction}
+This paper specifies the formal safety and governance invariants for the Zoo ecosystem. As decentralized protocols scale, the risk of "governance attacks" and rule conflicts increases. We utilize Open Policy Agent (OPA) and Rego to provide machine-checked evidence of protocol safety.
+
+\section{Formal Specification}
+\subsection{Safety Invariants}
+The protocol defines the following core invariants:
+\begin{itemize}
+    \item \textbf{Quorum Integrity:} No state transition occurs without $Q$ verified signatures.
+    \item \textbf{Emergency Precedence:} Emergency suspension overrides all standard operational rules.
+    \item \textbf{Agent Limitation:} AI agents are restricted to non-authoritative roles (HIP-1352).
+\end{itemize}
+
+\section{Implementation}
+The implementation is provided in Rego. The policy engine evaluates the state of the DAO against the \texttt{governance.rego} policy.
+
+\section{Adversarial Rule-Conflict Testing}
+We implemented a test suite to simulate:
+\begin{enumerate}
+    \item Circular delegation loops.
+    \item AI-driven treasury hijacking attempts.
+    \item Execution attempts during high-velocity emergency shutdowns.
+\end{enumerate}
+
+\section{Unproven Claims}
+While the current suite verifies logic at the policy layer, it does not prove the absence of bugs in the underlying smart contract bytecode (e.g., EVM-level reentrancy). Formal verification of the compiled bytecode remains for future work.
+
+\bibliographystyle{plain}
+\section*{References}
+\begin{itemize}
+    \item Zoo Emergency-Governance Whitepaper.
+    \item Open Policy Agent Documentation.
+    \item HIP-1352: AI Agent Governance Constraints.
+\end{itemize}
+
+\end{document}
