@@ -1,0 +1,336 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zoo.ngo/schemas/qf-simulator.v1.schema.json",
+  "title": "Zoo DAO Quadratic Funding & Sybil-Resistance Simulator Artifact (v1)",
+  "description": "Deterministic integer-micro-unit benchmark artifact produced by qf-sim and independently verified by qf_verifier (HIP-1352, zoo-apps/papers#6).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "spec_version",
+    "seed",
+    "matching_pool_micro_zoo",
+    "corpus_hash",
+    "governance_hash",
+    "eval_merkle_root",
+    "audit_merkle_root",
+    "corpus_proposals",
+    "governance_checks",
+    "scenario_summaries",
+    "evaluations"
+  ],
+  "properties": {
+    "spec_version": {
+      "const": "qf-simulator.v1"
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "matching_pool_micro_zoo": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "corpus_hash": {
+      "$ref": "#/$defs/sha256Hex"
+    },
+    "governance_hash": {
+      "$ref": "#/$defs/sha256Hex"
+    },
+    "eval_merkle_root": {
+      "$ref": "#/$defs/sha256Hex"
+    },
+    "audit_merkle_root": {
+      "$ref": "#/$defs/sha256Hex"
+    },
+    "corpus_proposals": {
+      "type": "array",
+      "minItems": 12,
+      "items": {
+        "$ref": "#/$defs/grantProposal"
+      }
+    },
+    "governance_checks": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "$ref": "#/$defs/governanceCheck"
+      }
+    },
+    "scenario_summaries": {
+      "type": "array",
+      "minItems": 15,
+      "items": {
+        "$ref": "#/$defs/scenarioSummary"
+      }
+    },
+    "evaluations": {
+      "type": "array",
+      "minItems": 90,
+      "items": {
+        "$ref": "#/$defs/evaluationResult"
+      }
+    }
+  },
+  "$defs": {
+    "sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "mechanismID": {
+      "type": "string",
+      "enum": [
+        "linear_token_matching",
+        "standard_clr_qf",
+        "capped_voting_qf",
+        "pairwise_bounded_qf",
+        "reputation_weighted_qf",
+        "hybrid_cocm_reputation_capped_qf"
+      ]
+    },
+    "grantArchetype": {
+      "type": "string",
+      "enum": [
+        "broad_public_good",
+        "grassroots_minority",
+        "tightly_knit_lab",
+        "whale_niche",
+        "adversarial_shell"
+      ]
+    },
+    "grantProposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "paper_dir",
+        "tex_path",
+        "tex_sha256",
+        "category",
+        "archetype",
+        "merit_bps",
+        "is_attacker_target",
+        "is_newcomer_grant",
+        "is_lab_grant"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "paper_dir": { "type": "string", "minLength": 1 },
+        "tex_path": { "type": "string", "minLength": 1 },
+        "tex_sha256": { "$ref": "#/$defs/sha256Hex" },
+        "category": { "type": "string", "minLength": 1 },
+        "archetype": { "$ref": "#/$defs/grantArchetype" },
+        "merit_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "is_attacker_target": { "type": "boolean" },
+        "is_newcomer_grant": { "type": "boolean" },
+        "is_lab_grant": { "type": "boolean" }
+      }
+    },
+    "mechanismParams": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "donor_cap_bps",
+        "project_cap_bps",
+        "pairwise_m_micro_zoo",
+        "cocm_m_micro_zoo",
+        "cocm_lambda_bps",
+        "min_rep_gate",
+        "rep_min_fp"
+      ],
+      "properties": {
+        "donor_cap_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "project_cap_bps": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "pairwise_m_micro_zoo": { "type": "integer", "minimum": 1 },
+        "cocm_m_micro_zoo": { "type": "integer", "minimum": 1 },
+        "cocm_lambda_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "min_rep_gate": { "type": "integer", "minimum": 0 },
+        "rep_min_fp": { "type": "integer", "minimum": 0, "maximum": 1000000 }
+      }
+    },
+    "attackModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "family",
+        "description",
+        "attacker_count",
+        "sybil_multiplier",
+        "collusion_ring_size",
+        "direct_budget_micro_zoo",
+        "identity_cost_micro_zoo",
+        "rep_farm_cost_micro_zoo",
+        "bribe_overhead_micro_zoo",
+        "total_attack_cost_micro_zoo",
+        "obfuscated_clusters"
+      ],
+      "properties": {
+        "family": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "attacker_count": { "type": "integer", "minimum": 0 },
+        "sybil_multiplier": { "type": "integer", "minimum": 0 },
+        "collusion_ring_size": { "type": "integer", "minimum": 0 },
+        "direct_budget_micro_zoo": { "type": "integer", "minimum": 0 },
+        "identity_cost_micro_zoo": { "type": "integer", "minimum": 0 },
+        "rep_farm_cost_micro_zoo": { "type": "integer", "minimum": 0 },
+        "bribe_overhead_micro_zoo": { "type": "integer", "minimum": 0 },
+        "total_attack_cost_micro_zoo": { "type": "integer", "minimum": 0 },
+        "obfuscated_clusters": { "type": "boolean" }
+      }
+    },
+    "scenarioSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "attack_model",
+        "matching_pool_micro_zoo",
+        "params",
+        "proposal_count",
+        "donor_count",
+        "contribution_count"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "attack_model": { "$ref": "#/$defs/attackModel" },
+        "matching_pool_micro_zoo": { "type": "integer", "minimum": 1 },
+        "params": { "$ref": "#/$defs/mechanismParams" },
+        "proposal_count": { "type": "integer", "minimum": 1 },
+        "donor_count": { "type": "integer", "minimum": 1 },
+        "contribution_count": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "projectAllocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_id",
+        "direct_micro_zoo",
+        "match_micro_zoo",
+        "total_micro_zoo",
+        "unique_donors",
+        "match_share_bps"
+      ],
+      "properties": {
+        "project_id": { "type": "string", "minLength": 1 },
+        "direct_micro_zoo": { "type": "integer", "minimum": 0 },
+        "match_micro_zoo": { "type": "integer", "minimum": 0 },
+        "total_micro_zoo": { "type": "integer", "minimum": 0 },
+        "unique_donors": { "type": "integer", "minimum": 0 },
+        "match_share_bps": { "type": "integer", "minimum": 0, "maximum": 10000 }
+      }
+    },
+    "evaluationMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pool_conserved",
+        "total_matched_micro_zoo",
+        "unallocated_pool_micro_zoo",
+        "attacker_match_micro_zoo",
+        "pool_extraction_bps",
+        "direct_cost_roi_bps",
+        "net_attack_roi_bps",
+        "merit_welfare_bps",
+        "grassroots_share_bps",
+        "minority_share_bps",
+        "honest_gini_bps",
+        "lab_share_bps",
+        "newcomer_share_bps",
+        "whale_niche_share_bps"
+      ],
+      "properties": {
+        "pool_conserved": { "type": "boolean" },
+        "total_matched_micro_zoo": { "type": "integer", "minimum": 0 },
+        "unallocated_pool_micro_zoo": { "type": "integer", "minimum": 0 },
+        "attacker_match_micro_zoo": { "type": "integer", "minimum": 0 },
+        "pool_extraction_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "direct_cost_roi_bps": { "type": "integer", "minimum": 0 },
+        "net_attack_roi_bps": { "type": "integer", "minimum": 0 },
+        "merit_welfare_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "grassroots_share_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "minority_share_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "honest_gini_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "lab_share_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "newcomer_share_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "whale_niche_share_bps": { "type": "integer", "minimum": 0, "maximum": 10000 }
+      }
+    },
+    "governanceSignOffRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plan_status",
+        "required_human_quorum",
+        "treasury_committee_size",
+        "min_steward_zoo_rep",
+        "human_signatures_collected",
+        "ai_rule_mutation_blocked",
+        "ai_treasury_auth_blocked",
+        "ai_self_validation_blocked"
+      ],
+      "properties": {
+        "plan_status": { "const": "PROPOSED_REQUIRES_HUMAN_SIGN_OFF" },
+        "required_human_quorum": { "type": "integer", "const": 3 },
+        "treasury_committee_size": { "type": "integer", "const": 5 },
+        "min_steward_zoo_rep": { "type": "integer", "const": 200 },
+        "human_signatures_collected": { "type": "integer", "minimum": 0, "maximum": 5 },
+        "ai_rule_mutation_blocked": { "const": true },
+        "ai_treasury_auth_blocked": { "const": true },
+        "ai_self_validation_blocked": { "const": true }
+      }
+    },
+    "evaluationResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_id",
+        "mechanism_id",
+        "matching_pool_micro_zoo",
+        "allocations",
+        "metrics",
+        "governance_gate",
+        "leaf_hash"
+      ],
+      "properties": {
+        "scenario_id": { "type": "string", "minLength": 1 },
+        "mechanism_id": { "$ref": "#/$defs/mechanismID" },
+        "matching_pool_micro_zoo": { "type": "integer", "minimum": 1 },
+        "allocations": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/projectAllocation" }
+        },
+        "metrics": { "$ref": "#/$defs/evaluationMetrics" },
+        "governance_gate": { "$ref": "#/$defs/governanceSignOffRecord" },
+        "leaf_hash": { "$ref": "#/$defs/sha256Hex" }
+      }
+    },
+    "governanceCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check_id",
+        "actor_id",
+        "actor_role",
+        "actor_zoo_rep",
+        "action",
+        "allowed",
+        "reason_code",
+        "human_signers"
+      ],
+      "properties": {
+        "check_id": { "type": "string", "minLength": 1 },
+        "actor_id": { "type": "string", "minLength": 1 },
+        "actor_role": { "type": "string", "minLength": 1 },
+        "actor_zoo_rep": { "type": "integer", "minimum": 0 },
+        "action": { "type": "string", "minLength": 1 },
+        "allowed": { "type": "boolean" },
+        "reason_code": { "type": "string", "minLength": 1 },
+        "human_signers": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

@@ -1,0 +1,5 @@
+# Build artifacts and temporary test outputs
+go/qf-sim
+python/**/__pycache__/
+python/**/*.pyc
+*.tmp
