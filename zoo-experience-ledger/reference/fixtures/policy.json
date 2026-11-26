@@ -1,0 +1,49 @@
+{
+  "schema_version": "zoo-experience-ledger/v1",
+  "policy_id": "zoo-experience-ledger-corpus-policy-v1",
+  "principals": [
+    {
+      "principal_id": "did:key:researcher-alice",
+      "role": "human_researcher",
+      "public_key_hex": "9f890aa11081b3c609a5bc7d4e601491e8619764ba5d0c800a5f3fb6915bd9df",
+      "active": true
+    },
+    {
+      "principal_id": "did:key:researcher-bob",
+      "role": "human_researcher",
+      "public_key_hex": "309e6a3ce67b26dfae537cc00b3fdeba434f4944050de7408805ab683167bfd5",
+      "active": true
+    },
+    {
+      "principal_id": "did:key:agent-zen-01",
+      "role": "ai_agent",
+      "public_key_hex": "cc792f6cbaabf9a908c6a30273607c0f78b3ec657471b334e032045f42e4f0e4",
+      "active": true
+    },
+    {
+      "principal_id": "did:key:agent-zen-02",
+      "role": "ai_agent",
+      "public_key_hex": "c2e6535b7d93d574ae8db6ca5c592dc1233808f383ca7a445c5337e38ea37fdb",
+      "active": true
+    },
+    {
+      "principal_id": "did:key:steward-carol",
+      "role": "steward",
+      "public_key_hex": "08b7b29dfb617f5cb75f8c8f57f8360f2822a28e303956f77dbf70fd3389cbe0",
+      "active": true
+    },
+    {
+      "principal_id": "did:key:steward-dave",
+      "role": "steward",
+      "public_key_hex": "9d25bf6112245170b526616bf90b338aea82378fdf427d23715b48a0ce167f23",
+      "active": true
+    },
+    {
+      "principal_id": "did:key:retired-eve",
+      "role": "human_researcher",
+      "public_key_hex": "026ca4fa0eb2c7708f7a30a646e0190d679d548cd1dcf169fb0069e340ace35a",
+      "active": false
+    }
+  ],
+  "policy_sha256": "d55d5f937f6b5fbbdd71b5b9dd11a2906d2877dcbc1f37cdc37d1ae3fbbdb757"
+}

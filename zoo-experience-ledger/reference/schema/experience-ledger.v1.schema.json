@@ -1,0 +1,257 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zoo.ngo/schemas/experience-ledger.v1.schema.json",
+  "title": "Zoo Decentralized Experience Ledger v1",
+  "description": "Content-addressed immutable event ledger schema for zoo-experience-ledger/v1 (HIP-1352 / zoo-apps/papers#10). SPDX-License-Identifier: Apache-2.0",
+  "type": "object",
+  "$defs": {
+    "sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "optionalSha256Hex": {
+      "type": "string",
+      "pattern": "^(|[0-9a-f]{64})$"
+    },
+    "ed25519SigHex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{128}$"
+    },
+    "ed25519PubHex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "storageUri": {
+      "type": "string",
+      "pattern": "^(vfs://sha256/[0-9a-f]{64}|s3://[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]/sha256/[0-9a-f]{2}/[0-9a-f]{64})$"
+    },
+    "optionalStorageUri": {
+      "type": "string",
+      "pattern": "^(|vfs://sha256/[0-9a-f]{64}|s3://[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]/sha256/[0-9a-f]{2}/[0-9a-f]{64})$"
+    },
+    "domainPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9]+(\\.[a-z0-9_-]+)*$"
+    },
+    "claimKey": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "Principal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["principal_id", "role", "public_key_hex", "active"],
+      "properties": {
+        "principal_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "role": { "type": "string", "enum": ["human_researcher", "ai_agent", "steward"] },
+        "public_key_hex": { "$ref": "#/$defs/ed25519PubHex" },
+        "active": { "type": "boolean" }
+      }
+    },
+    "Policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "policy_id", "principals", "policy_sha256"],
+      "properties": {
+        "schema_version": { "const": "zoo-experience-ledger/v1" },
+        "policy_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "principals": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Principal" }
+        },
+        "policy_sha256": { "$ref": "#/$defs/sha256Hex" }
+      }
+    },
+    "ExperienceEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "event_type",
+        "contributor_id",
+        "domain",
+        "claim_key",
+        "claim_value_hash",
+        "summary",
+        "confidence_bps",
+        "artifact_sha256",
+        "artifact_uri",
+        "artifact_size_bytes",
+        "external_uris",
+        "parent_hashes",
+        "receipt_hash",
+        "created_at_unix",
+        "nonce",
+        "event_id",
+        "signature_hex"
+      ],
+      "properties": {
+        "schema_version": { "const": "zoo-experience-ledger/v1" },
+        "event_type": { "const": "experience_entry" },
+        "contributor_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "domain": { "$ref": "#/$defs/domainPath" },
+        "claim_key": { "$ref": "#/$defs/claimKey" },
+        "claim_value_hash": { "$ref": "#/$defs/sha256Hex" },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "confidence_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "artifact_sha256": { "$ref": "#/$defs/sha256Hex" },
+        "artifact_uri": { "$ref": "#/$defs/storageUri" },
+        "artifact_size_bytes": { "type": "integer", "minimum": 0 },
+        "external_uris": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^(ipfs://|ar://|https://).+" }
+        },
+        "parent_hashes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/sha256Hex" }
+        },
+        "receipt_hash": { "$ref": "#/$defs/optionalSha256Hex" },
+        "created_at_unix": { "type": "integer", "minimum": 0 },
+        "nonce": { "type": "string", "maxLength": 128 },
+        "event_id": { "$ref": "#/$defs/sha256Hex" },
+        "signature_hex": { "$ref": "#/$defs/ed25519SigHex" }
+      }
+    },
+    "RevocationRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "event_type",
+        "issuer_id",
+        "target_event_id",
+        "reason_code",
+        "reason",
+        "evidence_sha256",
+        "evidence_uri",
+        "created_at_unix",
+        "event_id",
+        "signature_hex"
+      ],
+      "properties": {
+        "schema_version": { "const": "zoo-experience-ledger/v1" },
+        "event_type": { "const": "revocation_record" },
+        "issuer_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "target_event_id": { "$ref": "#/$defs/sha256Hex" },
+        "reason_code": {
+          "type": "string",
+          "enum": [
+            "retracted_by_author",
+            "corrupted_artifact",
+            "falsified_claim",
+            "policy_violation",
+            "superseded"
+          ]
+        },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "evidence_sha256": { "$ref": "#/$defs/optionalSha256Hex" },
+        "evidence_uri": { "$ref": "#/$defs/optionalStorageUri" },
+        "created_at_unix": { "type": "integer", "minimum": 0 },
+        "event_id": { "$ref": "#/$defs/sha256Hex" },
+        "signature_hex": { "$ref": "#/$defs/ed25519SigHex" }
+      }
+    },
+    "ConflictFlag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "event_type",
+        "flagger_id",
+        "domain",
+        "claim_key",
+        "conflicting_event_ids",
+        "evidence_sha256",
+        "evidence_uri",
+        "rationale",
+        "created_at_unix",
+        "event_id",
+        "signature_hex"
+      ],
+      "properties": {
+        "schema_version": { "const": "zoo-experience-ledger/v1" },
+        "event_type": { "const": "conflict_flag" },
+        "flagger_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "domain": { "$ref": "#/$defs/domainPath" },
+        "claim_key": { "$ref": "#/$defs/claimKey" },
+        "conflicting_event_ids": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/sha256Hex" }
+        },
+        "evidence_sha256": { "$ref": "#/$defs/sha256Hex" },
+        "evidence_uri": { "$ref": "#/$defs/storageUri" },
+        "rationale": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "created_at_unix": { "type": "integer", "minimum": 0 },
+        "event_id": { "$ref": "#/$defs/sha256Hex" },
+        "signature_hex": { "$ref": "#/$defs/ed25519SigHex" }
+      }
+    },
+    "ResolutionDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "event_type",
+        "steward_id",
+        "domain",
+        "claim_key",
+        "reviewed_event_ids",
+        "outcome",
+        "winning_event_id",
+        "rationale_sha256",
+        "rationale_uri",
+        "governance_ref",
+        "created_at_unix",
+        "event_id",
+        "signature_hex"
+      ],
+      "properties": {
+        "schema_version": { "const": "zoo-experience-ledger/v1" },
+        "event_type": { "const": "resolution_decision" },
+        "steward_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "domain": { "$ref": "#/$defs/domainPath" },
+        "claim_key": { "$ref": "#/$defs/claimKey" },
+        "reviewed_event_ids": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/sha256Hex" }
+        },
+        "outcome": {
+          "type": "string",
+          "enum": ["select_canonical", "reject_all", "keep_both_scoped"]
+        },
+        "winning_event_id": { "$ref": "#/$defs/optionalSha256Hex" },
+        "rationale_sha256": { "$ref": "#/$defs/sha256Hex" },
+        "rationale_uri": { "$ref": "#/$defs/storageUri" },
+        "governance_ref": { "type": "string", "maxLength": 128 },
+        "created_at_unix": { "type": "integer", "minimum": 0 },
+        "event_id": { "$ref": "#/$defs/sha256Hex" },
+        "signature_hex": { "$ref": "#/$defs/ed25519SigHex" }
+      }
+    },
+    "LedgerEvent": {
+      "oneOf": [
+        { "$ref": "#/$defs/ExperienceEntry" },
+        { "$ref": "#/$defs/RevocationRecord" },
+        { "$ref": "#/$defs/ConflictFlag" },
+        { "$ref": "#/$defs/ResolutionDecision" }
+      ]
+    }
+  },
+  "required": ["schema_version", "policy", "events"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "zoo-experience-ledger/v1" },
+    "policy": { "$ref": "#/$defs/Policy" },
+    "events": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/LedgerEvent" }
+    }
+  }
+}

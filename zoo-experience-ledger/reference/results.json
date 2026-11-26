@@ -1,0 +1,148 @@
+{
+  "schema_version": "zoo-experience-ledger/v1",
+  "bounty": "zoo-apps/papers#10",
+  "hip": "HIP-1352",
+  "seed": 1352,
+  "cross_language_parity": {
+    "cross_language_parity": "PASS",
+    "failed_checks": [],
+    "go_state_root_hash": "d0c57594f7b2c04ea761241763ffeac211e180bc550c6c50029e9f5851c19357",
+    "python_state_root_hash": "d0c57594f7b2c04ea761241763ffeac211e180bc550c6c50029e9f5851c19357",
+    "active_merkle_root": "f9c142a2252f0d23a2f04d27d70254248adfe10c841a0040f1335b78e2a65e81",
+    "go_permutations_tested": 22,
+    "python_permutations_tested": 22,
+    "total_events_in_corpus": 95,
+    "active_entries": 63,
+    "total_entries": 75,
+    "conflicts": 5,
+    "rejected_events": 8
+  },
+  "benchmarks": {
+    "concurrent_writers": [
+      {
+        "events_per_sec_replay": 8602.73,
+        "events_total": 256,
+        "goroutines": 16,
+        "ingest_ms": 26.05,
+        "permutations_matched": 20,
+        "permutations_tested": 20,
+        "replay_ms": 29.76,
+        "state_root_hash": "37fbc10a5a2c2b694b7fa59b3465ceac21ca3c580bb8fb6448b9e78b3c535c7d",
+        "vfs_dedup_saved_pct": 83.94,
+        "vfs_logical_bytes": 998671,
+        "vfs_stored_bytes": 160361
+      },
+      {
+        "events_per_sec_replay": 8608.08,
+        "events_total": 512,
+        "goroutines": 32,
+        "ingest_ms": 19.97,
+        "permutations_matched": 20,
+        "permutations_tested": 20,
+        "replay_ms": 59.48,
+        "state_root_hash": "9dc4f2a30a735ad08c7f02d4089c4d10e0c0a3da69726bcd8bb691879eff5dd1",
+        "vfs_dedup_saved_pct": 92.02,
+        "vfs_logical_bytes": 2009298,
+        "vfs_stored_bytes": 160361
+      },
+      {
+        "events_per_sec_replay": 7789.68,
+        "events_total": 1024,
+        "goroutines": 64,
+        "ingest_ms": 48.46,
+        "permutations_matched": 20,
+        "permutations_tested": 20,
+        "replay_ms": 131.46,
+        "state_root_hash": "dc3c91510b1d33473fddf2141f54b8653328373ea99413b599f8188f54e853e5",
+        "vfs_dedup_saved_pct": 96.06,
+        "vfs_logical_bytes": 4073579,
+        "vfs_stored_bytes": 160361
+      }
+    ],
+    "go_version": "go1.24.3",
+    "goarch": "amd64",
+    "goos": "linux",
+    "negative_regime_a_linear_vs_checkpoint": [
+      {
+        "checkpoint_delta_ms": 37.77,
+        "delta_events": 50,
+        "linear_replay_ms": 123.62,
+        "prefix_events": 1000,
+        "root_hash_match": true,
+        "speedup_factor": 3.27,
+        "total_events": 1050
+      },
+      {
+        "checkpoint_delta_ms": 201.91,
+        "delta_events": 50,
+        "linear_replay_ms": 584.93,
+        "prefix_events": 5000,
+        "root_hash_match": true,
+        "speedup_factor": 2.9,
+        "total_events": 5050
+      },
+      {
+        "checkpoint_delta_ms": 397.4,
+        "delta_events": 50,
+        "linear_replay_ms": 1212.01,
+        "prefix_events": 10000,
+        "root_hash_match": true,
+        "speedup_factor": 3.05,
+        "total_events": 10050
+      },
+      {
+        "checkpoint_delta_ms": 862.87,
+        "delta_events": 50,
+        "linear_replay_ms": 3932.37,
+        "prefix_events": 20000,
+        "root_hash_match": true,
+        "speedup_factor": 4.56,
+        "total_events": 20050
+      }
+    ],
+    "negative_regime_b_inline_vs_vfs": {
+      "dedup_vfs_object_bytes": 160361,
+      "event_count": 1000,
+      "inline_blob_log_bytes": 5542626,
+      "inline_marshal_ms": 16,
+      "log_only_reduction_ratio": 20.38,
+      "logical_artifact_bytes": 4009025,
+      "pointer_log_bytes": 271926,
+      "pointer_marshal_ms": 2.78,
+      "storage_reduction_ratio": 12.82,
+      "unique_real_tex_blobs": 40,
+      "vfs_plus_log_bytes": 432287
+    },
+    "negative_regime_c_sybil_flooding": {
+      "note": "Admission rate-limiting drops 350/500 spam events and preserves 7/10 honest slots, but 50 distinct Sybil keys can still saturate 3 slots to 51-way conflict fanout without stake/identity admission gates (negative regime).",
+      "rate_limit_per_principal": 3,
+      "rate_limited_avg_conflict_fanout": 51,
+      "rate_limited_events_dropped": 350,
+      "rate_limited_honest_slots_preserved": 7,
+      "rate_limited_open_conflicts": 3,
+      "rate_limited_replay_ms": 22.64,
+      "sybil_accounts": 50,
+      "target_slots": 10,
+      "unmitigated_avg_conflict_fanout": 51,
+      "unmitigated_events": 510,
+      "unmitigated_honest_entries_blocked": 10,
+      "unmitigated_open_conflicts": 10,
+      "unmitigated_replay_ms": 57.27
+    },
+    "num_cpu": 2,
+    "real_tex_files_used": 40,
+    "sample_tex_files": [
+      "zoo-experience-ledger/sections/01-introduction.tex",
+      "zoo-experience-ledger/sections/02-background.tex",
+      "zoo-experience-ledger/sections/03-experience-format-specification.tex",
+      "zoo-experience-ledger/sections/04-merkle-dag-architecture.tex",
+      "zoo-experience-ledger/sections/05-retrieval-protocol.tex",
+      "zoo-experience-ledger/sections/06-storage-architecture.tex",
+      "zoo-experience-ledger/sections/07-experimental-evaluation.tex",
+      "zoo-experience-ledger/sections/08-security-analysis.tex",
+      "zoo-experience-ledger/sections/09-related-work.tex",
+      "zoo-experience-ledger/sections/10-conclusion.tex"
+    ],
+    "seed": 1352
+  }
+}
