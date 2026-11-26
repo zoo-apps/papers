@@ -1,0 +1,45 @@
+{
+  "schema_version": "poai-corpus-manifest.v1",
+  "issue": "zoo-apps/papers#13",
+  "hip": "HIP-1350",
+  "description": "Pinned SHA-256 digests of real zoo-apps/papers LaTeX sources used to deterministically derive quantized int8 transformer weight and activation tiles for reproducible Proof-of-AI benchmarks.",
+  "derivation_rule": "Each quantized int8 tile entry is derived via SHA-256 counter mode over (corpus_root_sha256 || seed_u64_le || label || block_u32_le), mapping bytes uniformly to signed int8 [-128, 127].",
+  "files": [
+    {
+      "path": "zoo-poai-consensus/sections/00-status-summary.tex",
+      "bytes": 3377,
+      "sha256": "d666041db1e0322ab66e9ce620bd61bd541d4091494ee37a4ff287c1afb55a9b",
+      "role": "implementation_boundary"
+    },
+    {
+      "path": "zoo-poai-consensus/sections/15-binding-scheme.tex",
+      "bytes": 9865,
+      "sha256": "b960277887535f8b534045f15e3e1e76f6d936cc698a4ebbb15b27c960e08e93",
+      "role": "receipt_binding"
+    },
+    {
+      "path": "zoo-poai-consensus/sections/17-freivalds-hash.tex",
+      "bytes": 19021,
+      "sha256": "13c22ffb5eedb77f877e95a4893a7610bbb61b390e73c2038029b8a9c0eaf0fe",
+      "role": "freivalds_execution_proof"
+    },
+    {
+      "path": "zoo-poai-consensus/sections/25-receipt-soundness.tex",
+      "bytes": 13027,
+      "sha256": "3c6f81f310e441feec44d93e31136329c2478327d0af2beb3a162d252f9ee4a5",
+      "role": "receipt_soundness_and_limits"
+    },
+    {
+      "path": "zoo-gym-compute-proof/zoo-gym-compute-proof.tex",
+      "bytes": 32499,
+      "sha256": "dfd4506a2f90161d854e28d7eebbb84e2ae1b45f59092e7601bead8a4c237953",
+      "role": "zoo_gym_compute_proof"
+    },
+    {
+      "path": "thinking-chains/thinking-chains.tex",
+      "bytes": 50006,
+      "sha256": "11098056fe62731abc05ca6917beb43158a96c6e5e3cd99598182912b1d4db25",
+      "role": "thinking_chains_law_of_cognition"
+    }
+  ]
+}

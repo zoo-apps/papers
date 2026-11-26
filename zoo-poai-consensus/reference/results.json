@@ -1,0 +1,1044 @@
+{
+  "schema_version": "poai-benchmark-report.v1",
+  "issue": "zoo-apps/papers#13",
+  "hip": "HIP-1350",
+  "seed": 1350,
+  "field_modulus": 2147483647,
+  "kernel_profile": "int8-whole-k-i32-fp2147483647.v1",
+  "corpus_manifest_sha256": "7057cb566812f8bdba7a05e834c9030bae33ae7ab87464f1b6e67d5717df27a4",
+  "corpus_root_sha256": "dc82a25a36179c5ae3e5c56f56227d5577cb641fedd1afd8681cef42db08674a",
+  "parity_suite_cases": 16,
+  "audit_merkle_root": "11b937ade480d14c0f1064ef33702d44863dfac4045f22dcafd13f9c195a0bbe",
+  "honest_baseline": [
+    {
+      "challenge_mode": "binary_01",
+      "rounds_k": 40,
+      "trials": 1000,
+      "verified": 1000,
+      "false_rejects": 0,
+      "frr_pct": 0
+    },
+    {
+      "challenge_mode": "field_fp",
+      "rounds_k": 2,
+      "trials": 1000,
+      "verified": 1000,
+      "false_rejects": 0,
+      "frr_pct": 0
+    }
+  ],
+  "speedup_matrix": [
+    {
+      "dim": 64,
+      "challenge_mode": "binary_01",
+      "rounds_k": 1,
+      "gemm_us": 302.84,
+      "verify_us": 12.97,
+      "speedup": 23.34,
+      "theoretical_false_accept_bound": "2^-1 (5.000000e-01)"
+    },
+    {
+      "dim": 64,
+      "challenge_mode": "binary_01",
+      "rounds_k": 2,
+      "gemm_us": 302.84,
+      "verify_us": 67.72,
+      "speedup": 4.47,
+      "theoretical_false_accept_bound": "2^-2 (2.500000e-01)"
+    },
+    {
+      "dim": 64,
+      "challenge_mode": "binary_01",
+      "rounds_k": 4,
+      "gemm_us": 302.84,
+      "verify_us": 159.15,
+      "speedup": 1.9,
+      "theoretical_false_accept_bound": "2^-4 (6.250000e-02)"
+    },
+    {
+      "dim": 64,
+      "challenge_mode": "binary_01",
+      "rounds_k": 8,
+      "gemm_us": 302.84,
+      "verify_us": 253.41,
+      "speedup": 1.2,
+      "theoretical_false_accept_bound": "2^-8 (3.906250e-03)"
+    },
+    {
+      "dim": 64,
+      "challenge_mode": "binary_01",
+      "rounds_k": 16,
+      "gemm_us": 302.84,
+      "verify_us": 706.56,
+      "speedup": 0.43,
+      "theoretical_false_accept_bound": "2^-16 (1.525879e-05)"
+    },
+    {
+      "dim": 64,
+      "challenge_mode": "binary_01",
+      "rounds_k": 40,
+      "gemm_us": 302.84,
+      "verify_us": 1394.73,
+      "speedup": 0.22,
+      "theoretical_false_accept_bound": "2^-40 (9.094947e-13)"
+    },
+    {
+      "dim": 64,
+      "challenge_mode": "field_fp",
+      "rounds_k": 1,
+      "gemm_us": 302.84,
+      "verify_us": 59.55,
+      "speedup": 5.09,
+      "theoretical_false_accept_bound": "(2^31-1)^-1 (4.656613e-10)"
+    },
+    {
+      "dim": 64,
+      "challenge_mode": "field_fp",
+      "rounds_k": 2,
+      "gemm_us": 302.84,
+      "verify_us": 145.52,
+      "speedup": 2.08,
+      "theoretical_false_accept_bound": "(2^31-1)^-2 (2.168404e-19)"
+    },
+    {
+      "dim": 64,
+      "challenge_mode": "field_fp",
+      "rounds_k": 4,
+      "gemm_us": 302.84,
+      "verify_us": 240.02,
+      "speedup": 1.26,
+      "theoretical_false_accept_bound": "(2^31-1)^-4 (4.701977e-38)"
+    },
+    {
+      "dim": 64,
+      "challenge_mode": "field_fp",
+      "rounds_k": 8,
+      "gemm_us": 302.84,
+      "verify_us": 480.04,
+      "speedup": 0.63,
+      "theoretical_false_accept_bound": "(2^31-1)^-8 (2.210859e-75)"
+    },
+    {
+      "dim": 64,
+      "challenge_mode": "field_fp",
+      "rounds_k": 16,
+      "gemm_us": 302.84,
+      "verify_us": 1189.44,
+      "speedup": 0.25,
+      "theoretical_false_accept_bound": "(2^31-1)^-16 (4.887898e-150)"
+    },
+    {
+      "dim": 64,
+      "challenge_mode": "field_fp",
+      "rounds_k": 40,
+      "gemm_us": 302.84,
+      "verify_us": 2589.23,
+      "speedup": 0.12,
+      "theoretical_false_accept_bound": "(2^31-1)^-40 (5.282085e-374)"
+    },
+    {
+      "dim": 128,
+      "challenge_mode": "binary_01",
+      "rounds_k": 1,
+      "gemm_us": 2518.37,
+      "verify_us": 165.59,
+      "speedup": 15.21,
+      "theoretical_false_accept_bound": "2^-1 (5.000000e-01)"
+    },
+    {
+      "dim": 128,
+      "challenge_mode": "binary_01",
+      "rounds_k": 2,
+      "gemm_us": 2518.37,
+      "verify_us": 389.31,
+      "speedup": 6.47,
+      "theoretical_false_accept_bound": "2^-2 (2.500000e-01)"
+    },
+    {
+      "dim": 128,
+      "challenge_mode": "binary_01",
+      "rounds_k": 4,
+      "gemm_us": 2518.37,
+      "verify_us": 551.19,
+      "speedup": 4.57,
+      "theoretical_false_accept_bound": "2^-4 (6.250000e-02)"
+    },
+    {
+      "dim": 128,
+      "challenge_mode": "binary_01",
+      "rounds_k": 8,
+      "gemm_us": 2518.37,
+      "verify_us": 1122.06,
+      "speedup": 2.24,
+      "theoretical_false_accept_bound": "2^-8 (3.906250e-03)"
+    },
+    {
+      "dim": 128,
+      "challenge_mode": "binary_01",
+      "rounds_k": 16,
+      "gemm_us": 2518.37,
+      "verify_us": 2197.05,
+      "speedup": 1.15,
+      "theoretical_false_accept_bound": "2^-16 (1.525879e-05)"
+    },
+    {
+      "dim": 128,
+      "challenge_mode": "binary_01",
+      "rounds_k": 40,
+      "gemm_us": 2518.37,
+      "verify_us": 5410.86,
+      "speedup": 0.47,
+      "theoretical_false_accept_bound": "2^-40 (9.094947e-13)"
+    },
+    {
+      "dim": 128,
+      "challenge_mode": "field_fp",
+      "rounds_k": 1,
+      "gemm_us": 2518.37,
+      "verify_us": 316.06,
+      "speedup": 7.97,
+      "theoretical_false_accept_bound": "(2^31-1)^-1 (4.656613e-10)"
+    },
+    {
+      "dim": 128,
+      "challenge_mode": "field_fp",
+      "rounds_k": 2,
+      "gemm_us": 2518.37,
+      "verify_us": 809.19,
+      "speedup": 3.11,
+      "theoretical_false_accept_bound": "(2^31-1)^-2 (2.168404e-19)"
+    },
+    {
+      "dim": 128,
+      "challenge_mode": "field_fp",
+      "rounds_k": 4,
+      "gemm_us": 2518.37,
+      "verify_us": 2006.61,
+      "speedup": 1.26,
+      "theoretical_false_accept_bound": "(2^31-1)^-4 (4.701977e-38)"
+    },
+    {
+      "dim": 128,
+      "challenge_mode": "field_fp",
+      "rounds_k": 8,
+      "gemm_us": 2518.37,
+      "verify_us": 2998.49,
+      "speedup": 0.84,
+      "theoretical_false_accept_bound": "(2^31-1)^-8 (2.210859e-75)"
+    },
+    {
+      "dim": 128,
+      "challenge_mode": "field_fp",
+      "rounds_k": 16,
+      "gemm_us": 2518.37,
+      "verify_us": 4570.48,
+      "speedup": 0.55,
+      "theoretical_false_accept_bound": "(2^31-1)^-16 (4.887898e-150)"
+    },
+    {
+      "dim": 128,
+      "challenge_mode": "field_fp",
+      "rounds_k": 40,
+      "gemm_us": 2518.37,
+      "verify_us": 10071.66,
+      "speedup": 0.25,
+      "theoretical_false_accept_bound": "(2^31-1)^-40 (5.282085e-374)"
+    },
+    {
+      "dim": 256,
+      "challenge_mode": "binary_01",
+      "rounds_k": 1,
+      "gemm_us": 24001.84,
+      "verify_us": 800.06,
+      "speedup": 30,
+      "theoretical_false_accept_bound": "2^-1 (5.000000e-01)"
+    },
+    {
+      "dim": 256,
+      "challenge_mode": "binary_01",
+      "rounds_k": 2,
+      "gemm_us": 24001.84,
+      "verify_us": 1016.44,
+      "speedup": 23.61,
+      "theoretical_false_accept_bound": "2^-2 (2.500000e-01)"
+    },
+    {
+      "dim": 256,
+      "challenge_mode": "binary_01",
+      "rounds_k": 4,
+      "gemm_us": 24001.84,
+      "verify_us": 2182.43,
+      "speedup": 11,
+      "theoretical_false_accept_bound": "2^-4 (6.250000e-02)"
+    },
+    {
+      "dim": 256,
+      "challenge_mode": "binary_01",
+      "rounds_k": 8,
+      "gemm_us": 24001.84,
+      "verify_us": 4226.95,
+      "speedup": 5.68,
+      "theoretical_false_accept_bound": "2^-8 (3.906250e-03)"
+    },
+    {
+      "dim": 256,
+      "challenge_mode": "binary_01",
+      "rounds_k": 16,
+      "gemm_us": 24001.84,
+      "verify_us": 8595.08,
+      "speedup": 2.79,
+      "theoretical_false_accept_bound": "2^-16 (1.525879e-05)"
+    },
+    {
+      "dim": 256,
+      "challenge_mode": "binary_01",
+      "rounds_k": 40,
+      "gemm_us": 24001.84,
+      "verify_us": 20377.81,
+      "speedup": 1.18,
+      "theoretical_false_accept_bound": "2^-40 (9.094947e-13)"
+    },
+    {
+      "dim": 256,
+      "challenge_mode": "field_fp",
+      "rounds_k": 1,
+      "gemm_us": 24001.84,
+      "verify_us": 803.43,
+      "speedup": 29.87,
+      "theoretical_false_accept_bound": "(2^31-1)^-1 (4.656613e-10)"
+    },
+    {
+      "dim": 256,
+      "challenge_mode": "field_fp",
+      "rounds_k": 2,
+      "gemm_us": 24001.84,
+      "verify_us": 1996.22,
+      "speedup": 12.02,
+      "theoretical_false_accept_bound": "(2^31-1)^-2 (2.168404e-19)"
+    },
+    {
+      "dim": 256,
+      "challenge_mode": "field_fp",
+      "rounds_k": 4,
+      "gemm_us": 24001.84,
+      "verify_us": 3667.57,
+      "speedup": 6.54,
+      "theoretical_false_accept_bound": "(2^31-1)^-4 (4.701977e-38)"
+    },
+    {
+      "dim": 256,
+      "challenge_mode": "field_fp",
+      "rounds_k": 8,
+      "gemm_us": 24001.84,
+      "verify_us": 7932.73,
+      "speedup": 3.03,
+      "theoretical_false_accept_bound": "(2^31-1)^-8 (2.210859e-75)"
+    },
+    {
+      "dim": 256,
+      "challenge_mode": "field_fp",
+      "rounds_k": 16,
+      "gemm_us": 24001.84,
+      "verify_us": 16001.23,
+      "speedup": 1.5,
+      "theoretical_false_accept_bound": "(2^31-1)^-16 (4.887898e-150)"
+    },
+    {
+      "dim": 256,
+      "challenge_mode": "field_fp",
+      "rounds_k": 40,
+      "gemm_us": 24001.84,
+      "verify_us": 38402.95,
+      "speedup": 0.63,
+      "theoretical_false_accept_bound": "(2^31-1)^-40 (5.282085e-374)"
+    },
+    {
+      "dim": 512,
+      "challenge_mode": "binary_01",
+      "rounds_k": 1,
+      "gemm_us": 119349.99,
+      "verify_us": 2304.23,
+      "speedup": 51.8,
+      "theoretical_false_accept_bound": "2^-1 (5.000000e-01)"
+    },
+    {
+      "dim": 512,
+      "challenge_mode": "binary_01",
+      "rounds_k": 2,
+      "gemm_us": 119349.99,
+      "verify_us": 4800.37,
+      "speedup": 24.86,
+      "theoretical_false_accept_bound": "2^-2 (2.500000e-01)"
+    },
+    {
+      "dim": 512,
+      "challenge_mode": "binary_01",
+      "rounds_k": 4,
+      "gemm_us": 119349.99,
+      "verify_us": 8000.61,
+      "speedup": 14.92,
+      "theoretical_false_accept_bound": "2^-4 (6.250000e-02)"
+    },
+    {
+      "dim": 512,
+      "challenge_mode": "binary_01",
+      "rounds_k": 8,
+      "gemm_us": 119349.99,
+      "verify_us": 16801.29,
+      "speedup": 7.1,
+      "theoretical_false_accept_bound": "2^-8 (3.906250e-03)"
+    },
+    {
+      "dim": 512,
+      "challenge_mode": "binary_01",
+      "rounds_k": 16,
+      "gemm_us": 119349.99,
+      "verify_us": 32646.68,
+      "speedup": 3.66,
+      "theoretical_false_accept_bound": "2^-16 (1.525879e-05)"
+    },
+    {
+      "dim": 512,
+      "challenge_mode": "binary_01",
+      "rounds_k": 40,
+      "gemm_us": 119349.99,
+      "verify_us": 83349.02,
+      "speedup": 1.43,
+      "theoretical_false_accept_bound": "2^-40 (9.094947e-13)"
+    },
+    {
+      "dim": 512,
+      "challenge_mode": "field_fp",
+      "rounds_k": 1,
+      "gemm_us": 119349.99,
+      "verify_us": 4000.31,
+      "speedup": 29.84,
+      "theoretical_false_accept_bound": "(2^31-1)^-1 (4.656613e-10)"
+    },
+    {
+      "dim": 512,
+      "challenge_mode": "field_fp",
+      "rounds_k": 2,
+      "gemm_us": 119349.99,
+      "verify_us": 8000.61,
+      "speedup": 14.92,
+      "theoretical_false_accept_bound": "(2^31-1)^-2 (2.168404e-19)"
+    },
+    {
+      "dim": 512,
+      "challenge_mode": "field_fp",
+      "rounds_k": 4,
+      "gemm_us": 119349.99,
+      "verify_us": 15335.34,
+      "speedup": 7.78,
+      "theoretical_false_accept_bound": "(2^31-1)^-4 (4.701977e-38)"
+    },
+    {
+      "dim": 512,
+      "challenge_mode": "field_fp",
+      "rounds_k": 8,
+      "gemm_us": 119349.99,
+      "verify_us": 30265.8,
+      "speedup": 3.94,
+      "theoretical_false_accept_bound": "(2^31-1)^-8 (2.210859e-75)"
+    },
+    {
+      "dim": 512,
+      "challenge_mode": "field_fp",
+      "rounds_k": 16,
+      "gemm_us": 119349.99,
+      "verify_us": 62867.18,
+      "speedup": 1.9,
+      "theoretical_false_accept_bound": "(2^31-1)^-16 (4.887898e-150)"
+    },
+    {
+      "dim": 512,
+      "challenge_mode": "field_fp",
+      "rounds_k": 40,
+      "gemm_us": 119349.99,
+      "verify_us": 155140.47,
+      "speedup": 0.77,
+      "theoretical_false_accept_bound": "(2^31-1)^-40 (5.282085e-374)"
+    }
+  ],
+  "soundness_matrix": [
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "single_element_bitflip",
+      "rounds_k": 1,
+      "trials": 1000,
+      "detected": 505,
+      "escaped": 495,
+      "empirical_detection_pct": 50.5,
+      "theory_min_detection_pct": 50,
+      "theory_max_escape_rate": 0.5
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "single_element_bitflip",
+      "rounds_k": 2,
+      "trials": 1000,
+      "detected": 746,
+      "escaped": 254,
+      "empirical_detection_pct": 74.6,
+      "theory_min_detection_pct": 75,
+      "theory_max_escape_rate": 0.25
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "single_element_bitflip",
+      "rounds_k": 4,
+      "trials": 1000,
+      "detected": 950,
+      "escaped": 50,
+      "empirical_detection_pct": 95,
+      "theory_min_detection_pct": 93.75,
+      "theory_max_escape_rate": 0.0625
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "single_element_bitflip",
+      "rounds_k": 8,
+      "trials": 1000,
+      "detected": 994,
+      "escaped": 6,
+      "empirical_detection_pct": 99.4,
+      "theory_min_detection_pct": 99.6094,
+      "theory_max_escape_rate": 0.00390625
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "single_element_bitflip",
+      "rounds_k": 16,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 99.9985,
+      "theory_max_escape_rate": 0.0000152587890625
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "single_element_bitflip",
+      "rounds_k": 40,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 100,
+      "theory_max_escape_rate": 9.094947017729282e-13
+    },
+    {
+      "challenge_mode": "field_fp",
+      "corruption_class": "single_element_bitflip",
+      "rounds_k": 1,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 100,
+      "theory_max_escape_rate": 4.656612875245797e-10
+    },
+    {
+      "challenge_mode": "field_fp",
+      "corruption_class": "single_element_bitflip",
+      "rounds_k": 2,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 100,
+      "theory_max_escape_rate": 2.168404346990493e-19
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "single_element_plus_one",
+      "rounds_k": 1,
+      "trials": 1000,
+      "detected": 473,
+      "escaped": 527,
+      "empirical_detection_pct": 47.3,
+      "theory_min_detection_pct": 50,
+      "theory_max_escape_rate": 0.5
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "single_element_plus_one",
+      "rounds_k": 2,
+      "trials": 1000,
+      "detected": 745,
+      "escaped": 255,
+      "empirical_detection_pct": 74.5,
+      "theory_min_detection_pct": 75,
+      "theory_max_escape_rate": 0.25
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "single_element_plus_one",
+      "rounds_k": 4,
+      "trials": 1000,
+      "detected": 936,
+      "escaped": 64,
+      "empirical_detection_pct": 93.6,
+      "theory_min_detection_pct": 93.75,
+      "theory_max_escape_rate": 0.0625
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "single_element_plus_one",
+      "rounds_k": 8,
+      "trials": 1000,
+      "detected": 996,
+      "escaped": 4,
+      "empirical_detection_pct": 99.6,
+      "theory_min_detection_pct": 99.6094,
+      "theory_max_escape_rate": 0.00390625
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "single_element_plus_one",
+      "rounds_k": 16,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 99.9985,
+      "theory_max_escape_rate": 0.0000152587890625
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "single_element_plus_one",
+      "rounds_k": 40,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 100,
+      "theory_max_escape_rate": 9.094947017729282e-13
+    },
+    {
+      "challenge_mode": "field_fp",
+      "corruption_class": "single_element_plus_one",
+      "rounds_k": 1,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 100,
+      "theory_max_escape_rate": 4.656612875245797e-10
+    },
+    {
+      "challenge_mode": "field_fp",
+      "corruption_class": "single_element_plus_one",
+      "rounds_k": 2,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 100,
+      "theory_max_escape_rate": 2.168404346990493e-19
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "row_swap",
+      "rounds_k": 1,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 50,
+      "theory_max_escape_rate": 0.5
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "row_swap",
+      "rounds_k": 2,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 75,
+      "theory_max_escape_rate": 0.25
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "row_swap",
+      "rounds_k": 4,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 93.75,
+      "theory_max_escape_rate": 0.0625
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "row_swap",
+      "rounds_k": 8,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 99.6094,
+      "theory_max_escape_rate": 0.00390625
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "row_swap",
+      "rounds_k": 16,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 99.9985,
+      "theory_max_escape_rate": 0.0000152587890625
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "row_swap",
+      "rounds_k": 40,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 100,
+      "theory_max_escape_rate": 9.094947017729282e-13
+    },
+    {
+      "challenge_mode": "field_fp",
+      "corruption_class": "row_swap",
+      "rounds_k": 1,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 100,
+      "theory_max_escape_rate": 4.656612875245797e-10
+    },
+    {
+      "challenge_mode": "field_fp",
+      "corruption_class": "row_swap",
+      "rounds_k": 2,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 100,
+      "theory_max_escape_rate": 2.168404346990493e-19
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "low_rank_perturbation",
+      "rounds_k": 1,
+      "trials": 1000,
+      "detected": 782,
+      "escaped": 218,
+      "empirical_detection_pct": 78.2,
+      "theory_min_detection_pct": 50,
+      "theory_max_escape_rate": 0.5
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "low_rank_perturbation",
+      "rounds_k": 2,
+      "trials": 1000,
+      "detected": 962,
+      "escaped": 38,
+      "empirical_detection_pct": 96.2,
+      "theory_min_detection_pct": 75,
+      "theory_max_escape_rate": 0.25
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "low_rank_perturbation",
+      "rounds_k": 4,
+      "trials": 1000,
+      "detected": 996,
+      "escaped": 4,
+      "empirical_detection_pct": 99.6,
+      "theory_min_detection_pct": 93.75,
+      "theory_max_escape_rate": 0.0625
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "low_rank_perturbation",
+      "rounds_k": 8,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 99.6094,
+      "theory_max_escape_rate": 0.00390625
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "low_rank_perturbation",
+      "rounds_k": 16,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 99.9985,
+      "theory_max_escape_rate": 0.0000152587890625
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "low_rank_perturbation",
+      "rounds_k": 40,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 100,
+      "theory_max_escape_rate": 9.094947017729282e-13
+    },
+    {
+      "challenge_mode": "field_fp",
+      "corruption_class": "low_rank_perturbation",
+      "rounds_k": 1,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 100,
+      "theory_max_escape_rate": 4.656612875245797e-10
+    },
+    {
+      "challenge_mode": "field_fp",
+      "corruption_class": "low_rank_perturbation",
+      "rounds_k": 2,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 100,
+      "theory_max_escape_rate": 2.168404346990493e-19
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "lazy_zero_output",
+      "rounds_k": 1,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 50,
+      "theory_max_escape_rate": 0.5
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "lazy_zero_output",
+      "rounds_k": 2,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 75,
+      "theory_max_escape_rate": 0.25
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "lazy_zero_output",
+      "rounds_k": 4,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 93.75,
+      "theory_max_escape_rate": 0.0625
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "lazy_zero_output",
+      "rounds_k": 8,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 99.6094,
+      "theory_max_escape_rate": 0.00390625
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "lazy_zero_output",
+      "rounds_k": 16,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 99.9985,
+      "theory_max_escape_rate": 0.0000152587890625
+    },
+    {
+      "challenge_mode": "binary_01",
+      "corruption_class": "lazy_zero_output",
+      "rounds_k": 40,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 100,
+      "theory_max_escape_rate": 9.094947017729282e-13
+    },
+    {
+      "challenge_mode": "field_fp",
+      "corruption_class": "lazy_zero_output",
+      "rounds_k": 1,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 100,
+      "theory_max_escape_rate": 4.656612875245797e-10
+    },
+    {
+      "challenge_mode": "field_fp",
+      "corruption_class": "lazy_zero_output",
+      "rounds_k": 2,
+      "trials": 1000,
+      "detected": 1000,
+      "escaped": 0,
+      "empirical_detection_pct": 100,
+      "theory_min_detection_pct": 100,
+      "theory_max_escape_rate": 2.168404346990493e-19
+    }
+  ],
+  "neg_fiat_shamir_grinding_low_k": {
+    "name": "neg_fiat_shamir_grinding_low_k",
+    "description": "With non-interactive Fiat-Shamir and prover-chosen salt at low k (1..4) in binary_01 mode, a dishonest prover brute-forces a passing challenge on a corrupted matrix C' in ~2^k attempts. Switching to an external verifier nonce (revealed post-commitment) or field_fp (k\u003e=2) eliminates grinding.",
+    "dim": 16,
+    "rows": [
+      {
+        "rounds_k": 1,
+        "expected_attempts": 2,
+        "actual_attempts_to_forge": 1,
+        "forged_salt_hex": "46050000000000000000000000000000",
+        "fiat_shamir_verdict": "COMPUTE_VERIFIED",
+        "grinding_risk_warning": true,
+        "external_nonce_verdict": "COMPUTE_CORRUPTED"
+      },
+      {
+        "rounds_k": 2,
+        "expected_attempts": 4,
+        "actual_attempts_to_forge": 7,
+        "forged_salt_hex": "46050000000000000600000000000000",
+        "fiat_shamir_verdict": "COMPUTE_VERIFIED",
+        "grinding_risk_warning": true,
+        "external_nonce_verdict": "COMPUTE_CORRUPTED"
+      },
+      {
+        "rounds_k": 3,
+        "expected_attempts": 8,
+        "actual_attempts_to_forge": 3,
+        "forged_salt_hex": "46050000000000000200000000000000",
+        "fiat_shamir_verdict": "COMPUTE_VERIFIED",
+        "grinding_risk_warning": true,
+        "external_nonce_verdict": "COMPUTE_CORRUPTED"
+      },
+      {
+        "rounds_k": 4,
+        "expected_attempts": 16,
+        "actual_attempts_to_forge": 17,
+        "forged_salt_hex": "46050000000000001000000000000000",
+        "fiat_shamir_verdict": "COMPUTE_VERIFIED",
+        "grinding_risk_warning": true,
+        "external_nonce_verdict": "COMPUTE_CORRUPTED"
+      }
+    ]
+  },
+  "neg_valid_matmul_untruthful_or_wrong_weights": {
+    "name": "neg_valid_matmul_untruthful_or_wrong_weights",
+    "description": "A 100% Freivalds-valid transcript (COMPUTE_VERIFIED) produced with substituted backdoor weights, omitted non-linear layers, and a factually false conclusion proves that Freivalds verifies ONLY C == A*B for the committed operands. The constitutional boundary locks proves_full_model_inference=false, proves_scientific_truth=false, proves_weight_provenance=false, and blocks forbidden governance actions with POLICY_REJECTED.",
+    "reference_weights_root": "369d31826974eb5b466bffc9610b712cdd287b80e74954de51a9c1b63f7b102d",
+    "substituted_weights_root": "9bf8c39395e800a2310ea93574cbb937f370c147a6512325a1dd6b2e248910a8",
+    "weights_match_reference": false,
+    "claimed_truth_statement": "2 + 2 = 5 and this unreviewed run proves global theorem convergence (non-linearities skipped)",
+    "freivalds_compute_verdict": "COMPUTE_VERIFIED",
+    "proves_matrix_product_only": true,
+    "proves_full_model_inference": false,
+    "proves_scientific_truth": false,
+    "proves_weight_provenance": false,
+    "governance_escalation_verdict": "POLICY_REJECTED",
+    "governance_escalation_error_codes": [
+      "ERR_FORBIDDEN_GOVERNANCE_ACTION"
+    ]
+  },
+  "neg_small_matrix_verification_overhead": {
+    "name": "neg_small_matrix_verification_overhead",
+    "description": "At small matrix dimensions (n=16, 32) with high round counts (k=16, 40), O(k*n^2) Freivalds verification (including SHA-256 PRG challenge generation and 3 matrix-vector products per round) is strictly SLOWER (\u003c 1.0x) than direct O(n^3) exact integer recomputation, establishing the practical n \u003e 3k crossover rule.",
+    "rows": [
+      {
+        "dim": 16,
+        "challenge_mode": "binary_01",
+        "rounds_k": 16,
+        "gemm_us": 6.64,
+        "verify_us": 65.04,
+        "speedup": 0.102,
+        "theoretical_false_accept_bound": "2^-16 (1.525879e-05)"
+      },
+      {
+        "dim": 16,
+        "challenge_mode": "binary_01",
+        "rounds_k": 40,
+        "gemm_us": 6.64,
+        "verify_us": 117.26,
+        "speedup": 0.057,
+        "theoretical_false_accept_bound": "2^-40 (9.094947e-13)"
+      },
+      {
+        "dim": 16,
+        "challenge_mode": "field_fp",
+        "rounds_k": 16,
+        "gemm_us": 6.64,
+        "verify_us": 78.69,
+        "speedup": 0.084,
+        "theoretical_false_accept_bound": "(2^31-1)^-16 (4.887898e-150)"
+      },
+      {
+        "dim": 16,
+        "challenge_mode": "field_fp",
+        "rounds_k": 40,
+        "gemm_us": 6.64,
+        "verify_us": 188.63,
+        "speedup": 0.035,
+        "theoretical_false_accept_bound": "(2^31-1)^-40 (5.282085e-374)"
+      },
+      {
+        "dim": 32,
+        "challenge_mode": "binary_01",
+        "rounds_k": 16,
+        "gemm_us": 42.74,
+        "verify_us": 140.49,
+        "speedup": 0.304,
+        "theoretical_false_accept_bound": "2^-16 (1.525879e-05)"
+      },
+      {
+        "dim": 32,
+        "challenge_mode": "binary_01",
+        "rounds_k": 40,
+        "gemm_us": 42.74,
+        "verify_us": 384.42,
+        "speedup": 0.111,
+        "theoretical_false_accept_bound": "2^-40 (9.094947e-13)"
+      },
+      {
+        "dim": 32,
+        "challenge_mode": "field_fp",
+        "rounds_k": 16,
+        "gemm_us": 42.74,
+        "verify_us": 267.51,
+        "speedup": 0.16,
+        "theoretical_false_accept_bound": "(2^31-1)^-16 (4.887898e-150)"
+      },
+      {
+        "dim": 32,
+        "challenge_mode": "field_fp",
+        "rounds_k": 40,
+        "gemm_us": 42.74,
+        "verify_us": 692.54,
+        "speedup": 0.062,
+        "theoretical_false_accept_bound": "(2^31-1)^-40 (5.282085e-374)"
+      }
+    ]
+  }
+}

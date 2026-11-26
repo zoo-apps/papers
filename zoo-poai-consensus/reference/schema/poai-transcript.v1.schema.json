@@ -1,0 +1,276 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zoo.ngo/schemas/poai-transcript.v1.schema.json",
+  "title": "Proof of AI Deterministic Matrix-Product Transcript (poai-transcript.v1)",
+  "description": "Versioned JSON Schema for deterministic integer matrix-product transcripts with Freivalds verification and explicit constitutional proof-boundary fields (zoo-apps/papers#13, HIP-1350).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "spec_version",
+    "transcript_id",
+    "header",
+    "signature",
+    "challenge_transcript",
+    "constitutional_boundary"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "poai-transcript.v1"
+    },
+    "spec_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "transcript_id": {
+      "$ref": "#/$defs/hex64"
+    },
+    "header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "job_id",
+        "policy_epoch",
+        "kernel_profile",
+        "model_id",
+        "layer_index",
+        "dims",
+        "field_modulus",
+        "challenge_mode",
+        "challenge_source",
+        "challenge_rounds_k",
+        "verifier_nonce_hex",
+        "prover_salt_hex",
+        "commitments",
+        "provider_pubkey_hex"
+      ],
+      "properties": {
+        "job_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "policy_epoch": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "kernel_profile": {
+          "type": "string",
+          "const": "int8-whole-k-i32-fp2147483647.v1"
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "layer_index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dims": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["m", "d", "n"],
+          "properties": {
+            "m": { "type": "integer", "minimum": 1, "maximum": 65536 },
+            "d": { "type": "integer", "minimum": 1, "maximum": 65536 },
+            "n": { "type": "integer", "minimum": 1, "maximum": 65536 }
+          }
+        },
+        "field_modulus": {
+          "type": "integer",
+          "const": 2147483647,
+          "description": "Mersenne prime p = 2^31 - 1; guarantees zero signed int64 multiplication overflow and exact representation of whole-K int8*int8 accumulations for d <= 65536."
+        },
+        "challenge_mode": {
+          "type": "string",
+          "enum": ["binary_01", "field_fp"]
+        },
+        "challenge_source": {
+          "type": "string",
+          "enum": ["external_verifier_nonce", "fiat_shamir"]
+        },
+        "challenge_rounds_k": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256
+        },
+        "verifier_nonce_hex": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{64})?$"
+        },
+        "prover_salt_hex": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{32})?$"
+        },
+        "commitments": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "matrix_a_root",
+            "matrix_b_root",
+            "matrix_c_root",
+            "matrix_a_sha256",
+            "matrix_b_sha256",
+            "matrix_c_sha256",
+            "activation_trace_root",
+            "corpus_manifest_sha256"
+          ],
+          "properties": {
+            "matrix_a_root": { "$ref": "#/$defs/hex64" },
+            "matrix_b_root": { "$ref": "#/$defs/hex64" },
+            "matrix_c_root": { "$ref": "#/$defs/hex64" },
+            "matrix_a_sha256": { "$ref": "#/$defs/hex64" },
+            "matrix_b_sha256": { "$ref": "#/$defs/hex64" },
+            "matrix_c_sha256": { "$ref": "#/$defs/hex64" },
+            "activation_trace_root": { "$ref": "#/$defs/hex64" },
+            "corpus_manifest_sha256": { "$ref": "#/$defs/hex64" }
+          }
+        },
+        "provider_pubkey_hex": {
+          "$ref": "#/$defs/hex64"
+        },
+        "semantic_metadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "claimed_model_purpose": { "type": "string", "maxLength": 256 },
+            "claimed_truth_statement": { "type": "string", "maxLength": 512 },
+            "weights_attested": { "type": "boolean" },
+            "nonlinearities_verified": { "type": "boolean" },
+            "requested_governance_action": {
+              "type": "string",
+              "enum": ["none", "recommend_only", "redefine_voting_rules", "authorize_treasury", "self_declare_valid"]
+            }
+          }
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "header_digest_hex", "signature_hex"],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "const": "Ed25519-RFC8032"
+        },
+        "header_digest_hex": { "$ref": "#/$defs/hex64" },
+        "signature_hex": { "$ref": "#/$defs/hex128" }
+      }
+    },
+    "challenge_transcript": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "challenge_seed_hex",
+        "theoretical_false_accept_bound",
+        "rounds_executed",
+        "first_failing_round",
+        "round_digests"
+      ],
+      "properties": {
+        "challenge_seed_hex": { "$ref": "#/$defs/hex64" },
+        "theoretical_false_accept_bound": { "type": "string", "minLength": 1 },
+        "rounds_executed": { "type": "integer", "minimum": 0 },
+        "first_failing_round": { "type": "integer", "minimum": -1 },
+        "round_digests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["round", "r_sha256", "abr_sha256", "cr_sha256", "matched"],
+            "properties": {
+              "round": { "type": "integer", "minimum": 0 },
+              "r_sha256": { "$ref": "#/$defs/hex64" },
+              "abr_sha256": { "$ref": "#/$defs/hex64" },
+              "cr_sha256": { "$ref": "#/$defs/hex64" },
+              "matched": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "constitutional_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Hard-enforced constitutional separation between mechanical matrix-product verification and semantic, full-model, or governance claims.",
+      "required": [
+        "compute_verdict",
+        "proves_matrix_product_only",
+        "proves_full_model_inference",
+        "proves_scientific_truth",
+        "proves_weight_provenance",
+        "grinding_risk_warning",
+        "error_codes"
+      ],
+      "properties": {
+        "compute_verdict": {
+          "type": "string",
+          "enum": [
+            "COMPUTE_VERIFIED",
+            "COMPUTE_CORRUPTED",
+            "INVALID_TRANSCRIPT",
+            "POLICY_REJECTED"
+          ]
+        },
+        "proves_matrix_product_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "proves_full_model_inference": {
+          "type": "boolean",
+          "const": false
+        },
+        "proves_scientific_truth": {
+          "type": "boolean",
+          "const": false
+        },
+        "proves_weight_provenance": {
+          "type": "boolean",
+          "const": false
+        },
+        "grinding_risk_warning": {
+          "type": "boolean"
+        },
+        "error_codes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "ERR_BAD_SCHEMA_VERSION",
+              "ERR_BAD_KERNEL_PROFILE",
+              "ERR_BAD_MODULUS",
+              "ERR_BAD_DIMENSIONS",
+              "ERR_BAD_CHALLENGE_MODE",
+              "ERR_BAD_CHALLENGE_SOURCE",
+              "ERR_COMMITMENT_MISMATCH_A",
+              "ERR_COMMITMENT_MISMATCH_B",
+              "ERR_COMMITMENT_MISMATCH_C",
+              "ERR_TRACE_ROOT_MISMATCH",
+              "ERR_HEADER_DIGEST_MISMATCH",
+              "ERR_TRANSCRIPT_ID_MISMATCH",
+              "ERR_INVALID_SIGNATURE",
+              "ERR_CHALLENGE_SEED_MISMATCH",
+              "ERR_FREIVALDS_MISMATCH",
+              "ERR_WEAK_FIAT_SHAMIR_GRINDING_RISK",
+              "ERR_FORBIDDEN_GOVERNANCE_ACTION",
+              "ERR_FORBIDDEN_SEMANTIC_CLAIM"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "hex64": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "hex128": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{128}$"
+    }
+  }
+}
