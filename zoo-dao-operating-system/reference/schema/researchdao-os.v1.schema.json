@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zoo.ngo/schemas/researchdao-os.v1.schema.json",
+  "title": "Open ResearchDAO Operating System v1 Wire & Persistence Schema",
+  "description": "Versioned JSON Schema for researchdao-os.v1 genesis configurations, RFC 8032 Ed25519 signed transition envelopes, WAL entries, and durable checkpoints.",
+  "$defs": {
+    "sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "ed25519PubKeyHex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "ed25519SigHex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{128}$"
+    },
+    "actorKind": {
+      "type": "string",
+      "enum": ["HUMAN", "AI_AGENT"]
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "RESEARCHER",
+        "PEER_REVIEWER",
+        "MILESTONE_COMMITTEE",
+        "TREASURY_STEWARD",
+        "INDEPENDENT_VERIFIER",
+        "BOARD_GUARDIAN",
+        "EMERGENCY_COUNCIL",
+        "META_GOVERNOR",
+        "AI_ADVISOR"
+      ]
+    },
+    "proposalCategory": {
+      "type": "string",
+      "enum": [
+        "CONSERVATION_RESEARCH",
+        "OPEN_SOURCE_DEV",
+        "CITIZEN_SCIENCE",
+        "EDUCATION",
+        "EMERGENCY_CONSERVATION"
+      ]
+    },
+    "proposalStatus": {
+      "type": "string",
+      "enum": [
+        "SUBMITTED",
+        "UNDER_REVIEW",
+        "PEER_REVIEWED",
+        "REVIEW_REJECTED",
+        "MILESTONE_APPROVED",
+        "FUNDING_QUEUED",
+        "FUNDING_AUTHORIZED",
+        "VETOED",
+        "ACCEPTED",
+        "ACCEPTANCE_FAILED"
+      ]
+    },
+    "eventType": {
+      "type": "string",
+      "enum": [
+        "ProposalSubmitted",
+        "AdvisoryRecorded",
+        "PeerReviewRecorded",
+        "MilestoneApproved",
+        "FundingQueued",
+        "FundingCosigned",
+        "FundingAuthorized",
+        "BoardVetoRecorded",
+        "IndependentAcceptanceRecorded",
+        "EmergencyPauseSigned",
+        "EmergencyPauseLifted",
+        "GovernanceRuleAmended",
+        "ActorRevoked"
+      ]
+    },
+    "governanceConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "min_peer_reviews",
+        "min_review_score_bps",
+        "milestone_quorum",
+        "treasury_quorum",
+        "emergency_pause_quorum",
+        "meta_governance_quorum",
+        "timelock_seconds",
+        "epoch_duration_seconds",
+        "epoch_spend_cap_bps",
+        "max_emergency_duration_sec",
+        "holdback_bps"
+      ],
+      "properties": {
+        "min_peer_reviews": { "type": "integer", "minimum": 1, "maximum": 21 },
+        "min_review_score_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "milestone_quorum": { "type": "integer", "minimum": 1, "maximum": 21 },
+        "treasury_quorum": { "type": "integer", "minimum": 1, "maximum": 21 },
+        "emergency_pause_quorum": { "type": "integer", "minimum": 1, "maximum": 21 },
+        "meta_governance_quorum": { "type": "integer", "minimum": 1, "maximum": 21 },
+        "timelock_seconds": { "type": "integer", "minimum": 0, "maximum": 2592000 },
+        "epoch_duration_seconds": { "type": "integer", "minimum": 1 },
+        "epoch_spend_cap_bps": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "max_emergency_duration_sec": { "type": "integer", "minimum": 1, "maximum": 259200 },
+        "holdback_bps": { "type": "integer", "minimum": 0, "maximum": 5000 }
+      }
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "pubkey_hex",
+        "kind",
+        "roles",
+        "affiliations",
+        "reputation",
+        "active",
+        "effective_until",
+        "revoked_at",
+        "last_nonce"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "pubkey_hex": { "$ref": "#/$defs/ed25519PubKeyHex" },
+        "kind": { "$ref": "#/$defs/actorKind" },
+        "roles": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/role" }
+        },
+        "affiliations": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "reputation": { "type": "integer" },
+        "active": { "type": "boolean" },
+        "effective_until": { "type": "integer", "minimum": 0 },
+        "revoked_at": { "type": "integer", "minimum": 0 },
+        "last_nonce": { "type": "integer", "minimum": 0 }
+      },
+      "if": {
+        "properties": { "kind": { "const": "AI_AGENT" } }
+      },
+      "then": {
+        "properties": {
+          "roles": {
+            "type": "array",
+            "items": { "const": "AI_ADVISOR" }
+          }
+        }
+      }
+    },
+    "genesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "spec_version",
+        "chain_id",
+        "created_at",
+        "initial_treasury_balance",
+        "config",
+        "actors"
+      ],
+      "properties": {
+        "spec_version": { "const": "researchdao-os.v1" },
+        "chain_id": { "type": "string", "minLength": 1 },
+        "created_at": { "type": "integer", "minimum": 0 },
+        "initial_treasury_balance": { "type": "integer", "minimum": 1 },
+        "config": { "$ref": "#/$defs/governanceConfig" },
+        "actors": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/actor" }
+        }
+      }
+    },
+    "envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "spec_version",
+        "seq",
+        "prev_event_hash",
+        "timestamp",
+        "actor_id",
+        "nonce",
+        "type",
+        "payload",
+        "signature_hex"
+      ],
+      "properties": {
+        "spec_version": { "const": "researchdao-os.v1" },
+        "seq": { "type": "integer", "minimum": 1 },
+        "prev_event_hash": { "$ref": "#/$defs/sha256Hex" },
+        "timestamp": { "type": "integer", "minimum": 0 },
+        "actor_id": { "type": "string", "minLength": 1 },
+        "nonce": { "type": "integer", "minimum": 1 },
+        "type": { "$ref": "#/$defs/eventType" },
+        "payload": { "type": "object" },
+        "signature_hex": { "$ref": "#/$defs/ed25519SigHex" }
+      }
+    },
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "spec_version",
+        "genesis_hash",
+        "seq",
+        "last_event_hash",
+        "state_root_hash",
+        "audit_merkle_root",
+        "event_hashes",
+        "state"
+      ],
+      "properties": {
+        "spec_version": { "const": "researchdao-os.v1" },
+        "genesis_hash": { "$ref": "#/$defs/sha256Hex" },
+        "seq": { "type": "integer", "minimum": 0 },
+        "last_event_hash": { "$ref": "#/$defs/sha256Hex" },
+        "state_root_hash": { "$ref": "#/$defs/sha256Hex" },
+        "audit_merkle_root": { "$ref": "#/$defs/sha256Hex" },
+        "event_hashes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/sha256Hex" }
+        },
+        "state": { "type": "object" }
+      }
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/genesis" },
+    { "$ref": "#/$defs/envelope" },
+    { "$ref": "#/$defs/checkpoint" }
+  ]
+}

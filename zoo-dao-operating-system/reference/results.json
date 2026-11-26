@@ -1,0 +1,403 @@
+{
+  "spec_version": "researchdao-os.v1",
+  "seed": 1352,
+  "papers_discovered": 88,
+  "proposals_executed": 100,
+  "accepted_proposals": 99,
+  "vetoed_proposals": 1,
+  "total_events": 1099,
+  "final_state_root_hash": "c8cc8887e27dd86f829839147c881db7c578d2f32a27687c1af3f9419e838c7a",
+  "final_audit_merkle_root": "df572fc45d8982e6267adf5dc8ddd6782f04277cbc41adac2563124eb46d12fd",
+  "lifecycle_wall_ms": 6806,
+  "throughput_events_per_sec": 161.47516896855714,
+  "cold_restarts": [
+    {
+      "at_proposal": 25,
+      "at_seq": 275,
+      "checkpoint_seq": 275,
+      "full_state_root": "3c08bfba0dba7a47ec61751f42928d82991d0443651823c4319ef4457a088187",
+      "delta_state_root": "3c08bfba0dba7a47ec61751f42928d82991d0443651823c4319ef4457a088187",
+      "full_audit_root": "aac9880ff339cd184f1fab7bcf9b0719ff364528eecda7c23768095a7fadfb7b",
+      "delta_audit_root": "aac9880ff339cd184f1fab7bcf9b0719ff364528eecda7c23768095a7fadfb7b",
+      "bit_identical": true,
+      "full_replay_micros": 86678,
+      "delta_replay_micros": 29884
+    },
+    {
+      "at_proposal": 50,
+      "at_seq": 550,
+      "checkpoint_seq": 550,
+      "full_state_root": "cd3cfa6ec869e2d506189b84cb57eb67c2315de713add8b32fb83c389c7c1dc5",
+      "delta_state_root": "cd3cfa6ec869e2d506189b84cb57eb67c2315de713add8b32fb83c389c7c1dc5",
+      "full_audit_root": "2239e8224da8606741fce5c7f24d83e26359b41566b7daf67c0696883229884c",
+      "delta_audit_root": "2239e8224da8606741fce5c7f24d83e26359b41566b7daf67c0696883229884c",
+      "bit_identical": true,
+      "full_replay_micros": 174576,
+      "delta_replay_micros": 50326
+    },
+    {
+      "at_proposal": 75,
+      "at_seq": 825,
+      "checkpoint_seq": 825,
+      "full_state_root": "7a303833dc0bd901e26d33f17e5ce93f22d21455fa1760a82d1bc77ea61b3fb9",
+      "delta_state_root": "7a303833dc0bd901e26d33f17e5ce93f22d21455fa1760a82d1bc77ea61b3fb9",
+      "full_audit_root": "c78ae4b4045a1932ea445efe453d8b47fd4e719835b1b85cb5f8e11d8838da40",
+      "delta_audit_root": "c78ae4b4045a1932ea445efe453d8b47fd4e719835b1b85cb5f8e11d8838da40",
+      "bit_identical": true,
+      "full_replay_micros": 210508,
+      "delta_replay_micros": 43059
+    }
+  ],
+  "adversarial_matrix": [
+    {
+      "name": "AI agent attempts FundingAuthorized",
+      "attack_category": "constitutional_ai",
+      "expected_error_code": "ERR_AI_TREASURY_FORBIDDEN",
+      "actual_error_code": "ERR_AI_TREASURY_FORBIDDEN",
+      "rejected": true,
+      "state_unchanged": true
+    },
+    {
+      "name": "AI agent attempts GovernanceRuleAmended",
+      "attack_category": "constitutional_ai",
+      "expected_error_code": "ERR_AI_RULE_CHANGE_FORBIDDEN",
+      "actual_error_code": "ERR_AI_RULE_CHANGE_FORBIDDEN",
+      "rejected": true,
+      "state_unchanged": true
+    },
+    {
+      "name": "AI agent attempts IndependentAcceptanceRecorded",
+      "attack_category": "constitutional_ai",
+      "expected_error_code": "ERR_AI_VALIDATION_FORBIDDEN",
+      "actual_error_code": "ERR_AI_VALIDATION_FORBIDDEN",
+      "rejected": true,
+      "state_unchanged": true
+    },
+    {
+      "name": "Researcher attempts FundingAuthorized without steward role",
+      "attack_category": "rbac",
+      "expected_error_code": "ERR_UNAUTHORIZED_ROLE",
+      "actual_error_code": "ERR_UNAUTHORIZED_ROLE",
+      "rejected": true,
+      "state_unchanged": true
+    },
+    {
+      "name": "Affiliation-conflicted reviewer attempts PeerReviewRecorded",
+      "attack_category": "coi",
+      "expected_error_code": "ERR_COI_CONFLICT",
+      "actual_error_code": "ERR_COI_CONFLICT",
+      "rejected": true,
+      "state_unchanged": true
+    },
+    {
+      "name": "Declared-COI reviewer attempts PeerReviewRecorded",
+      "attack_category": "coi",
+      "expected_error_code": "ERR_COI_CONFLICT",
+      "actual_error_code": "ERR_COI_CONFLICT",
+      "rejected": true,
+      "state_unchanged": true
+    },
+    {
+      "name": "Committee member submits plan_hash as milestone evidence",
+      "attack_category": "evidence_integrity",
+      "expected_error_code": "ERR_EVIDENCE_MISMATCH",
+      "actual_error_code": "ERR_EVIDENCE_MISMATCH",
+      "rejected": true,
+      "state_unchanged": true
+    },
+    {
+      "name": "Steward attempts funding exceeding proposal requested_amount",
+      "attack_category": "treasury_guard",
+      "expected_error_code": "ERR_BUDGET_CAP_EXCEEDED",
+      "actual_error_code": "ERR_BUDGET_CAP_EXCEEDED",
+      "rejected": true,
+      "state_unchanged": true
+    },
+    {
+      "name": "Single steward attempts FundingAuthorized below 2-of-5 quorum",
+      "attack_category": "multisig_quorum",
+      "expected_error_code": "ERR_QUORUM_NOT_MET",
+      "actual_error_code": "ERR_QUORUM_NOT_MET",
+      "rejected": true,
+      "state_unchanged": true
+    },
+    {
+      "name": "Steward attempts FundingAuthorized before 72h timelock",
+      "attack_category": "timelock",
+      "expected_error_code": "ERR_TIMELOCK_NOT_ELAPSED",
+      "actual_error_code": "ERR_TIMELOCK_NOT_ELAPSED",
+      "rejected": true,
+      "state_unchanged": true
+    },
+    {
+      "name": "Expired steward key attempts FundingCosigned",
+      "attack_category": "key_lifecycle",
+      "expected_error_code": "ERR_ACTOR_EXPIRED",
+      "actual_error_code": "ERR_ACTOR_EXPIRED",
+      "rejected": true,
+      "state_unchanged": true
+    },
+    {
+      "name": "Revoked steward key attempts FundingCosigned",
+      "attack_category": "key_lifecycle",
+      "expected_error_code": "ERR_ACTOR_REVOKED",
+      "actual_error_code": "ERR_ACTOR_REVOKED",
+      "rejected": true,
+      "state_unchanged": true
+    },
+    {
+      "name": "Steward attempts FundingAuthorized during active DEFCON-1 pause",
+      "attack_category": "emergency_breaker",
+      "expected_error_code": "ERR_SYSTEM_PAUSED",
+      "actual_error_code": "ERR_SYSTEM_PAUSED",
+      "rejected": true,
+      "state_unchanged": true
+    },
+    {
+      "name": "Steward attempts double-spend replay of FundingAuthorized tranche",
+      "attack_category": "double_spend",
+      "expected_error_code": "ERR_TRANCHE_ALREADY_DISBURSED",
+      "actual_error_code": "ERR_TRANCHE_ALREADY_DISBURSED",
+      "rejected": true,
+      "state_unchanged": true
+    },
+    {
+      "name": "Tampered envelope payload fails Ed25519 verification",
+      "attack_category": "cryptography",
+      "expected_error_code": "ERR_INVALID_SIGNATURE",
+      "actual_error_code": "ERR_INVALID_SIGNATURE",
+      "rejected": true,
+      "state_unchanged": true
+    },
+    {
+      "name": "Proposer with PEER_REVIEWER role attempts self-review",
+      "attack_category": "self_dealing",
+      "expected_error_code": "ERR_SELF_REVIEW_FORBIDDEN",
+      "actual_error_code": "ERR_SELF_REVIEW_FORBIDDEN",
+      "rejected": true,
+      "state_unchanged": true
+    }
+  ],
+  "adversarial_total": 16,
+  "adversarial_blocked": 16,
+  "negative_regimes": {
+    "wal_restart_scaling": [
+      {
+        "total_events": 1000,
+        "checkpoint_at_seq": 950,
+        "delta_events": 50,
+        "wal_bytes": 585783,
+        "checkpoint_bytes": 447027,
+        "full_replay_micros": 180478,
+        "checkpoint_delta_micros": 60408,
+        "speedup_factor": 2.99,
+        "roots_bit_identical": true
+      },
+      {
+        "total_events": 5000,
+        "checkpoint_at_seq": 4750,
+        "delta_events": 250,
+        "wal_bytes": 2937783,
+        "checkpoint_bytes": 2172181,
+        "full_replay_micros": 922648,
+        "checkpoint_delta_micros": 288811,
+        "speedup_factor": 3.19,
+        "roots_bit_identical": true
+      },
+      {
+        "total_events": 10000,
+        "checkpoint_at_seq": 9500,
+        "delta_events": 500,
+        "wal_bytes": 5877784,
+        "checkpoint_bytes": 4328682,
+        "full_replay_micros": 1734808,
+        "checkpoint_delta_micros": 574872,
+        "speedup_factor": 3.02,
+        "roots_bit_identical": true
+      }
+    ],
+    "quorum_deadlock": [
+      {
+        "quorum_m": 2,
+        "total_stewards_n": 3,
+        "steward_availability_pct": 95,
+        "trials": 500,
+        "authorized_count": 493,
+        "deadlocked_count": 7,
+        "deadlock_rate_pct": 1.4,
+        "mean_envelopes_to_fund": 3
+      },
+      {
+        "quorum_m": 2,
+        "total_stewards_n": 3,
+        "steward_availability_pct": 85,
+        "trials": 500,
+        "authorized_count": 471,
+        "deadlocked_count": 29,
+        "deadlock_rate_pct": 5.8,
+        "mean_envelopes_to_fund": 3
+      },
+      {
+        "quorum_m": 2,
+        "total_stewards_n": 3,
+        "steward_availability_pct": 70,
+        "trials": 500,
+        "authorized_count": 383,
+        "deadlocked_count": 117,
+        "deadlock_rate_pct": 23.4,
+        "mean_envelopes_to_fund": 3
+      },
+      {
+        "quorum_m": 3,
+        "total_stewards_n": 5,
+        "steward_availability_pct": 95,
+        "trials": 500,
+        "authorized_count": 499,
+        "deadlocked_count": 1,
+        "deadlock_rate_pct": 0.2,
+        "mean_envelopes_to_fund": 4
+      },
+      {
+        "quorum_m": 3,
+        "total_stewards_n": 5,
+        "steward_availability_pct": 85,
+        "trials": 500,
+        "authorized_count": 487,
+        "deadlocked_count": 13,
+        "deadlock_rate_pct": 2.6,
+        "mean_envelopes_to_fund": 4
+      },
+      {
+        "quorum_m": 3,
+        "total_stewards_n": 5,
+        "steward_availability_pct": 70,
+        "trials": 500,
+        "authorized_count": 425,
+        "deadlocked_count": 75,
+        "deadlock_rate_pct": 15,
+        "mean_envelopes_to_fund": 4
+      },
+      {
+        "quorum_m": 4,
+        "total_stewards_n": 5,
+        "steward_availability_pct": 95,
+        "trials": 500,
+        "authorized_count": 484,
+        "deadlocked_count": 16,
+        "deadlock_rate_pct": 3.2,
+        "mean_envelopes_to_fund": 5
+      },
+      {
+        "quorum_m": 4,
+        "total_stewards_n": 5,
+        "steward_availability_pct": 85,
+        "trials": 500,
+        "authorized_count": 435,
+        "deadlocked_count": 65,
+        "deadlock_rate_pct": 13,
+        "mean_envelopes_to_fund": 5
+      },
+      {
+        "quorum_m": 4,
+        "total_stewards_n": 5,
+        "steward_availability_pct": 70,
+        "trials": 500,
+        "authorized_count": 288,
+        "deadlocked_count": 212,
+        "deadlock_rate_pct": 42.4,
+        "mean_envelopes_to_fund": 5
+      },
+      {
+        "quorum_m": 5,
+        "total_stewards_n": 5,
+        "steward_availability_pct": 95,
+        "trials": 500,
+        "authorized_count": 394,
+        "deadlocked_count": 106,
+        "deadlock_rate_pct": 21.2,
+        "mean_envelopes_to_fund": 6
+      },
+      {
+        "quorum_m": 5,
+        "total_stewards_n": 5,
+        "steward_availability_pct": 85,
+        "trials": 500,
+        "authorized_count": 227,
+        "deadlocked_count": 273,
+        "deadlock_rate_pct": 54.6,
+        "mean_envelopes_to_fund": 6
+      },
+      {
+        "quorum_m": 5,
+        "total_stewards_n": 5,
+        "steward_availability_pct": 70,
+        "trials": 500,
+        "authorized_count": 80,
+        "deadlocked_count": 420,
+        "deadlock_rate_pct": 84,
+        "mean_envelopes_to_fund": 6
+      }
+    ],
+    "emergency_centralization_tradeoff": [
+      {
+        "policy_name": "ZIP-0027 DEFCON 1 (2-of-5 Pause)",
+        "threshold_k": 2,
+        "council_size_n": 5,
+        "minority_halt_fraction_pct": 40,
+        "liveness_at_2_offline_pct": 100,
+        "max_pause_hours": 72,
+        "spend_cap_zoo": 0
+      },
+      {
+        "policy_name": "ZIP-0027 DEFCON 2 (3-of-5 Crisis)",
+        "threshold_k": 3,
+        "council_size_n": 5,
+        "minority_halt_fraction_pct": 60,
+        "liveness_at_2_offline_pct": 100,
+        "max_pause_hours": 72,
+        "spend_cap_zoo": 500000
+      },
+      {
+        "policy_name": "Supermajority Pause (4-of-5)",
+        "threshold_k": 4,
+        "council_size_n": 5,
+        "minority_halt_fraction_pct": 80,
+        "liveness_at_2_offline_pct": 0,
+        "max_pause_hours": 72,
+        "spend_cap_zoo": 0
+      }
+    ]
+  },
+  "sample_papers": [
+    {
+      "rel_path": "beluga-l3-whitepaper/beluga-l3-whitepaper.tex",
+      "title": "BELUGA",
+      "sha256": "e601e8f5c49c6a53cf8e9480b2ef2915f668d6e15d141a423ccfc83689ec2de9",
+      "bytes": 4560
+    },
+    {
+      "rel_path": "embedding-7680/embedding-7680.tex",
+      "title": "High-Dimensional Embedding Spaces for Semantic Search: The Case for 7680 Dimensions",
+      "sha256": "36a256bff3cf8e7d340ef30e41f95219b229715c92a262b7d4fe1090eccae1d4",
+      "bytes": 3440
+    },
+    {
+      "rel_path": "experience-ledger-dso/experience-ledger-dso.tex",
+      "title": "Experience Ledger: Decentralized Semantic Optimization for Large Language Models",
+      "sha256": "efd1f0525d6692869bb79c218584699f74f7ea58103eb2b0d9e70a7d2c1af8ef",
+      "bytes": 3287
+    },
+    {
+      "rel_path": "gym-training-platform/gym-training-platform.tex",
+      "title": "Gym: Democratizing AI Model Training Through\\\\Comprehensive Open-Source Infrastructure",
+      "sha256": "49c0700051567a2a45d7a47a310a4d3718ba69208c937c60d3d858d01c2195fb",
+      "bytes": 2745
+    },
+    {
+      "rel_path": "hllm-training-free-grpo/hllm-training-free-grpo.tex",
+      "title": "HLLM: Hamiltonian Large Language Models with \\\\ Training-Free Group Relative Policy Optimization",
+      "sha256": "ec5b4c982e9b5ff931d7fb90c997c117d1a8fd7b25ccc32f146883b7652e6294",
+      "bytes": 3014
+    }
+  ]
+}
