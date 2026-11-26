@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zoo.ngo/schemas/dso-aggregation.v1.schema.json",
+  "title": "DSO Byzantine-Robust Aggregation & Participation Fairness Benchmark Schema (v1)",
+  "description": "Versioned schema for signed Decentralized Semantic Optimization (DSO) contributions, aggregation outputs, fairness metrics, negative regimes, and reproducible benchmark reports (HIP-1352 / zoo-apps/papers#9).",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "seed",
+    "num_nodes",
+    "num_rounds",
+    "feature_dim",
+    "corpus_paper_count",
+    "protocol_paper_count",
+    "conservation_paper_count",
+    "protocol_paragraph_count",
+    "conservation_paragraph_count",
+    "corpus_sha256",
+    "config",
+    "cells",
+    "negative_regimes",
+    "audit_merkle_root"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "dso-aggregation.v1"
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "num_nodes": {
+      "type": "integer",
+      "minimum": 4
+    },
+    "num_rounds": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "feature_dim": {
+      "type": "integer",
+      "const": 64
+    },
+    "corpus_paper_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "protocol_paper_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "conservation_paper_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "protocol_paragraph_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "conservation_paragraph_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "corpus_sha256": {
+      "$ref": "#/$defs/sha256Hex"
+    },
+    "config": {
+      "$ref": "#/$defs/AggregationConfig"
+    },
+    "cells": {
+      "type": "array",
+      "minItems": 120,
+      "maxItems": 120,
+      "items": {
+        "$ref": "#/$defs/CellMetrics"
+      }
+    },
+    "negative_regimes": {
+      "$ref": "#/$defs/NegativeRegimes"
+    },
+    "audit_merkle_root": {
+      "$ref": "#/$defs/sha256Hex"
+    }
+  },
+  "$defs": {
+    "sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "ed25519SigHex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{128}$"
+    },
+    "domain": {
+      "type": "string",
+      "enum": ["protocol_governance", "conservation_science"]
+    },
+    "scenario": {
+      "type": "string",
+      "enum": [
+        "adversarial_semantic",
+        "colluding_sybil_cartel",
+        "low_quality_noisy",
+        "honest_disagreement_noniid"
+      ]
+    },
+    "aggregator": {
+      "type": "string",
+      "enum": [
+        "mean_baseline",
+        "coord_median",
+        "trimmed_mean",
+        "multi_krum",
+        "dso_reputation_eval_gated"
+      ]
+    },
+    "ExperienceOp": {
+      "type": "object",
+      "required": [
+        "id",
+        "op",
+        "domain",
+        "text",
+        "confidence_micro",
+        "paper_path",
+        "paper_sha256"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^exp_sha256_[0-9a-f]{16}$" },
+        "op": { "type": "string", "enum": ["Add", "Modify", "Delete"] },
+        "domain": { "$ref": "#/$defs/domain" },
+        "text": { "type": "string", "minLength": 1 },
+        "confidence_micro": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+        "paper_path": { "type": "string", "minLength": 1 },
+        "paper_sha256": { "$ref": "#/$defs/sha256Hex" }
+      }
+    },
+    "ContributionBody": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "round",
+        "node_id",
+        "public_key_hex",
+        "domain",
+        "experience",
+        "delta_micro"
+      ],
+      "properties": {
+        "schema_version": { "const": "dso-aggregation.v1" },
+        "round": { "type": "integer", "minimum": 1 },
+        "node_id": { "type": "string", "pattern": "^node-[0-9]{2,}$" },
+        "public_key_hex": { "$ref": "#/$defs/sha256Hex" },
+        "domain": { "$ref": "#/$defs/domain" },
+        "experience": { "$ref": "#/$defs/ExperienceOp" },
+        "delta_micro": {
+          "type": "array",
+          "minItems": 64,
+          "maxItems": 64,
+          "items": { "type": "integer" }
+        }
+      }
+    },
+    "ContributionEnvelope": {
+      "type": "object",
+      "required": ["body", "signature_hex", "digest_sha256", "payload_bytes"],
+      "properties": {
+        "body": { "$ref": "#/$defs/ContributionBody" },
+        "signature_hex": { "$ref": "#/$defs/ed25519SigHex" },
+        "digest_sha256": { "$ref": "#/$defs/sha256Hex" },
+        "payload_bytes": { "type": "integer", "minimum": 1 },
+        "role": { "type": "string", "enum": ["honest_majority", "honest_minority", "adversary"] }
+      }
+    },
+    "AggregationConfig": {
+      "type": "object",
+      "required": [
+        "trim_beta",
+        "krum_assumed_byz",
+        "krum_select_m",
+        "dso_eval_step",
+        "dso_min_gain",
+        "dso_safety_tol",
+        "dso_cluster_cos",
+        "dso_max_delta_norm",
+        "dso_minority_floor",
+        "acceptance_weight_th"
+      ],
+      "properties": {
+        "trim_beta": { "type": "number", "minimum": 0, "maximum": 0.49 },
+        "krum_assumed_byz": { "type": "integer", "minimum": 0 },
+        "krum_select_m": { "type": "integer", "minimum": 1 },
+        "dso_eval_step": { "type": "number", "exclusiveMinimum": 0 },
+        "dso_min_gain": { "type": "number" },
+        "dso_safety_tol": { "type": "number", "minimum": 0 },
+        "dso_cluster_cos": { "type": "number", "minimum": 0, "maximum": 1 },
+        "dso_max_delta_norm": { "type": "number", "exclusiveMinimum": 0 },
+        "dso_minority_floor": { "type": "number", "minimum": 0, "maximum": 0.5 },
+        "acceptance_weight_th": { "type": "number", "minimum": 0 }
+      }
+    },
+    "CellMetrics": {
+      "type": "object",
+      "required": [
+        "scenario",
+        "adversary_fraction",
+        "aggregator",
+        "num_nodes",
+        "num_rounds",
+        "num_honest_majority",
+        "num_honest_minority",
+        "num_adversaries",
+        "global_test_accuracy",
+        "global_test_loss",
+        "majority_test_accuracy",
+        "minority_test_accuracy",
+        "clean_honest_ceiling_accuracy",
+        "attack_degradation_delta",
+        "adversarial_admission_rate",
+        "adversarial_weight_share",
+        "majority_honest_acceptance_rate",
+        "minority_honest_acceptance_rate",
+        "fairness_ratio",
+        "jains_fairness_index",
+        "attribution_gini",
+        "verification_ms_per_round",
+        "payload_bytes_per_round",
+        "final_weights_digest_sha256"
+      ],
+      "properties": {
+        "scenario": { "$ref": "#/$defs/scenario" },
+        "adversary_fraction": { "type": "number", "minimum": 0, "maximum": 1 },
+        "aggregator": { "$ref": "#/$defs/aggregator" },
+        "num_nodes": { "type": "integer", "minimum": 1 },
+        "num_rounds": { "type": "integer", "minimum": 1 },
+        "num_honest_majority": { "type": "integer", "minimum": 0 },
+        "num_honest_minority": { "type": "integer", "minimum": 0 },
+        "num_adversaries": { "type": "integer", "minimum": 0 },
+        "global_test_accuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+        "global_test_loss": { "type": "number", "minimum": 0 },
+        "majority_test_accuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+        "minority_test_accuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+        "clean_honest_ceiling_accuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+        "attack_degradation_delta": { "type": "number" },
+        "adversarial_admission_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "adversarial_weight_share": { "type": "number", "minimum": 0, "maximum": 1 },
+        "majority_honest_acceptance_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "minority_honest_acceptance_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "fairness_ratio": { "type": "number", "minimum": 0 },
+        "jains_fairness_index": { "type": "number", "minimum": 0, "maximum": 1 },
+        "attribution_gini": { "type": "number", "minimum": 0, "maximum": 1 },
+        "verification_ms_per_round": { "type": "number", "minimum": 0 },
+        "payload_bytes_per_round": { "type": "integer", "minimum": 0 },
+        "final_weights_digest_sha256": { "$ref": "#/$defs/sha256Hex" }
+      }
+    },
+    "NegativeRegimes": {
+      "type": "object",
+      "required": [
+        "regime_1_minority_erasure_at_zero_adv",
+        "regime_2_unmonitored_backdoor",
+        "regime_3_fifty_pct_and_committee"
+      ],
+      "properties": {
+        "regime_1_minority_erasure_at_zero_adv": { "type": "array", "minItems": 5 },
+        "regime_2_unmonitored_backdoor": { "type": "array", "minItems": 10 },
+        "regime_3_fifty_pct_and_committee": { "type": "array", "minItems": 6 }
+      }
+    }
+  }
+}
