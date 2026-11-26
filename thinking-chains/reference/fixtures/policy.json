@@ -1,0 +1,136 @@
+{
+  "authorized_profiles": {
+    "profile-tier1-det-int8": {
+      "allowed_evidence_modes": [
+        "deterministic_recomputation"
+      ],
+      "allowed_model_spec_hashes": [
+        "a3564135e1f7f2139638a243a95ab859485290d8b0b412f996cb5420389b44e5"
+      ],
+      "allowed_models": [
+        "zen-nano-int8"
+      ],
+      "allowed_tiers": [
+        "tier1_deterministic_int8"
+      ],
+      "allowed_tools": [
+        "int8_gemm_precompile",
+        "latex_theorem_parser",
+        "sha256_merkle_audit",
+        "unit_test_runner"
+      ],
+      "max_output_bytes": 65536,
+      "max_recursion_depth": 4,
+      "min_verifiers": 2
+    },
+    "profile-tier2-quorum-research": {
+      "allowed_evidence_modes": [
+        "quorum_signatures"
+      ],
+      "allowed_model_spec_hashes": [
+        "8fbad2389151c963a1708107a171fbe58a3c99e8603f11a10e2c8e96598c01a0",
+        "8f1a2494675058cef9e51504cff1ed136ffb294b7c5264e727204ff3573a8e5a"
+      ],
+      "allowed_models": [
+        "qwen3-32b-instruct",
+        "hanzo-research-70b"
+      ],
+      "allowed_tiers": [
+        "tier2_quorum"
+      ],
+      "allowed_tools": [
+        "corpus_retriever",
+        "latex_theorem_parser",
+        "go_test_sandbox",
+        "python_unittest_sandbox",
+        "benchmark_harness"
+      ],
+      "max_output_bytes": 262144,
+      "max_recursion_depth": 6,
+      "min_verifiers": 2
+    },
+    "profile-tier2-tee-cc": {
+      "allowed_evidence_modes": [
+        "tee_attestation"
+      ],
+      "allowed_model_spec_hashes": [
+        "8f1a2494675058cef9e51504cff1ed136ffb294b7c5264e727204ff3573a8e5a"
+      ],
+      "allowed_models": [
+        "hanzo-research-70b"
+      ],
+      "allowed_tiers": [
+        "tier2_attested_tee"
+      ],
+      "allowed_tools": [
+        "tee_quote_collector",
+        "corpus_retriever",
+        "benchmark_harness",
+        "sha256_merkle_audit"
+      ],
+      "max_output_bytes": 262144,
+      "max_recursion_depth": 5,
+      "min_verifiers": 2
+    },
+    "profile-tier2-zkml-proof": {
+      "allowed_evidence_modes": [
+        "zkml_proof"
+      ],
+      "allowed_model_spec_hashes": [
+        "a3564135e1f7f2139638a243a95ab859485290d8b0b412f996cb5420389b44e5"
+      ],
+      "allowed_models": [
+        "zen-nano-int8"
+      ],
+      "allowed_tiers": [
+        "tier2_zkml"
+      ],
+      "allowed_tools": [
+        "p3q_stark_prover",
+        "int8_gemm_precompile",
+        "sha256_merkle_audit"
+      ],
+      "max_output_bytes": 65536,
+      "max_recursion_depth": 3,
+      "min_verifiers": 2
+    }
+  },
+  "policy_version": "zoo.thinking-chains.policy.v1",
+  "trusted_verifiers": {
+    "verifier-alpha": {
+      "allowed_roles": [
+        "independent_verifier",
+        "quorum_validator"
+      ],
+      "public_key_hex": "b2b28b01d4028aae59bbe78383958ac9e7d7db5536dc239b812e12061fdec74d"
+    },
+    "verifier-beta": {
+      "allowed_roles": [
+        "independent_verifier",
+        "quorum_validator"
+      ],
+      "public_key_hex": "38fd894c312aa9d65bf2b189a226ac8b172d7e7e8a03deb1a31b07a6e738637b"
+    },
+    "verifier-gamma": {
+      "allowed_roles": [
+        "independent_verifier",
+        "quorum_validator"
+      ],
+      "public_key_hex": "3d8cfdfe51e89887e97873f3178c99e49502074721faf87abb7f04bcef93c295"
+    },
+    "verifier-human-council": {
+      "allowed_roles": [
+        "independent_verifier",
+        "human_reviewer"
+      ],
+      "public_key_hex": "968931fa85f0904b63e3442d70f20bd070e95733be8cc8e532a40a736d84b6d7"
+    },
+    "verifier-tee-hopper": {
+      "allowed_roles": [
+        "independent_verifier",
+        "hardware_tee_verifier"
+      ],
+      "public_key_hex": "6694c97e6d8c031cbf00f388921788dada12e8915aeb5f720cfac47a755e995f"
+    }
+  }
+}

@@ -1,0 +1,290 @@
+{
+  "benchmark_version": "zoo.thinking-chains.benchmark.v1",
+  "seed": 1352,
+  "environment": {
+    "os": "Linux-6.18.57-x86_64-with-glibc2.39",
+    "arch": "x86_64",
+    "cpu_count": 2,
+    "go_version": "go version go1.24.3 linux/amd64",
+    "python_version": "3.12.16"
+  },
+  "fixture_100_jobs": {
+    "go": {
+      "implementation": "go-stdlib",
+      "job_count": 100,
+      "iterations": 20,
+      "canonical_hash": {
+        "samples_us": [
+          9201.04,
+          12442.49,
+          9858.46,
+          6186.15,
+          8301.63,
+          7427.34,
+          8662.8,
+          6935.84,
+          5243.47,
+          4096.52,
+          7444.85,
+          11935.98,
+          3479.11,
+          12975.6,
+          12018.4,
+          3141.19,
+          11672.99,
+          7742.27,
+          12419.68,
+          8180.65
+        ],
+        "median_ms": 8.241,
+        "mean_ms": 8.468,
+        "p95_ms": 12.976,
+        "per_job_median_us": 82.41,
+        "jobs_per_sec": 12134.2
+      },
+      "provenance_reconstruct": {
+        "samples_us": [
+          5105.95,
+          4993.11,
+          2142.26,
+          6304.67,
+          6323.9,
+          4957.88,
+          4670.45,
+          6227.47,
+          9677.62,
+          9378.52,
+          4759.93,
+          4889.68,
+          10382.05,
+          5107.44,
+          6142.68,
+          10176.91,
+          4644.46,
+          4605.84,
+          4880.5,
+          5227.61
+        ],
+        "median_ms": 5.107,
+        "mean_ms": 6.03,
+        "p95_ms": 10.382,
+        "per_job_median_us": 51.07,
+        "jobs_per_sec": 19582.1
+      },
+      "full_verify": {
+        "samples_us": [
+          39916.56,
+          40565.63,
+          45852.61,
+          41980.53,
+          42957.09,
+          38564.49,
+          47142.7,
+          41525.62,
+          40986.26,
+          39916.68,
+          38612.21,
+          40524.98,
+          38307.99,
+          42536.31,
+          44854.68,
+          38033.33,
+          39348.35,
+          47037.68,
+          41951.23,
+          44462.31
+        ],
+        "median_ms": 41.256,
+        "mean_ms": 41.754,
+        "p95_ms": 47.143,
+        "per_job_median_us": 412.56,
+        "jobs_per_sec": 2423.9
+      }
+    },
+    "python": {
+      "implementation": "python-stdlib",
+      "job_count": 100,
+      "iterations": 5,
+      "canonical_hash": {
+        "samples_us": [
+          84485.42,
+          80316.85,
+          87437.11,
+          136462.3,
+          157525.97
+        ],
+        "median_ms": 87.437,
+        "mean_ms": 109.246,
+        "p95_ms": 157.526,
+        "per_job_median_us": 874.37,
+        "jobs_per_sec": 1143.7
+      },
+      "provenance_reconstruct": {
+        "samples_us": [
+          47564.15,
+          46451.51,
+          49787.94,
+          118646.21,
+          71977.01
+        ],
+        "median_ms": 49.788,
+        "mean_ms": 66.885,
+        "p95_ms": 118.646,
+        "per_job_median_us": 497.88,
+        "jobs_per_sec": 2008.5
+      },
+      "full_verify": {
+        "samples_us": [
+          1510516.87,
+          1585250.83,
+          1886182.17,
+          2780160.76,
+          2169875.76
+        ],
+        "median_ms": 1886.182,
+        "mean_ms": 1986.397,
+        "p95_ms": 2780.161,
+        "per_job_median_us": 18861.82,
+        "jobs_per_sec": 53.0
+      }
+    },
+    "go_speedup_full_verify_x": 45.72
+  },
+  "stress_1000_jobs": {
+    "go": {
+      "implementation": "go-stdlib",
+      "job_count": 1000,
+      "iterations": 5,
+      "canonical_hash": {
+        "samples_us": [
+          104898.56,
+          74129.6,
+          94023.27,
+          74049.41,
+          74481.13
+        ],
+        "median_ms": 74.481,
+        "mean_ms": 84.316,
+        "p95_ms": 104.899,
+        "per_job_median_us": 74.48,
+        "jobs_per_sec": 13426.2
+      },
+      "provenance_reconstruct": {
+        "samples_us": [
+          59058.42,
+          57771.86,
+          51916.05,
+          52740.96,
+          59093.07
+        ],
+        "median_ms": 57.772,
+        "mean_ms": 56.116,
+        "p95_ms": 59.093,
+        "per_job_median_us": 57.77,
+        "jobs_per_sec": 17309.5
+      },
+      "full_verify": {
+        "samples_us": [
+          445909.59,
+          442265.85,
+          435650.21,
+          421475.94,
+          438977.79
+        ],
+        "median_ms": 438.978,
+        "mean_ms": 436.856,
+        "p95_ms": 445.91,
+        "per_job_median_us": 438.98,
+        "jobs_per_sec": 2278.0
+      }
+    },
+    "python": {
+      "implementation": "python-stdlib",
+      "job_count": 1000,
+      "iterations": 1,
+      "canonical_hash": {
+        "samples_us": [
+          810901.62
+        ],
+        "median_ms": 810.902,
+        "mean_ms": 810.902,
+        "p95_ms": 810.902,
+        "per_job_median_us": 810.9,
+        "jobs_per_sec": 1233.2
+      },
+      "provenance_reconstruct": {
+        "samples_us": [
+          501238.72
+        ],
+        "median_ms": 501.239,
+        "mean_ms": 501.239,
+        "p95_ms": 501.239,
+        "per_job_median_us": 501.24,
+        "jobs_per_sec": 1995.1
+      },
+      "full_verify": {
+        "samples_us": [
+          17183025.77
+        ],
+        "median_ms": 17183.026,
+        "mean_ms": 17183.026,
+        "p95_ms": 17183.026,
+        "per_job_median_us": 17183.03,
+        "jobs_per_sec": 58.2
+      }
+    },
+    "go_speedup_full_verify_x": 39.14
+  },
+  "negative_regimes": {
+    "inline_payload_vs_content_addressed": {
+      "regime": "inline_256kib_payload_vs_content_addressed_hash",
+      "job_count": 100,
+      "inline_blob_bytes_per_job": 262144,
+      "content_addressed_total_bytes": 538376,
+      "inline_total_bytes": 26755376,
+      "wire_size_blowup_factor": 49.7,
+      "content_addressed_hash_ms": 107.753,
+      "inline_hash_ms": 5373.785,
+      "latency_slowdown_factor": 49.87
+    },
+    "linear_provenance_vs_merkle_inclusion": {
+      "regime": "naive_linear_recompute_vs_merkle_inclusion_proof",
+      "scales": [
+        {
+          "artifact_count": 16,
+          "merkle_proof_steps": 4,
+          "merkle_proof_bytes": 128,
+          "linear_payload_bytes": 1632,
+          "merkle_verify_us": 7.56,
+          "linear_recompute_us": 71.7,
+          "speedup_factor": 9.48
+        },
+        {
+          "artifact_count": 256,
+          "merkle_proof_steps": 8,
+          "merkle_proof_bytes": 256,
+          "linear_payload_bytes": 26112,
+          "merkle_verify_us": 14.42,
+          "linear_recompute_us": 1667.97,
+          "speedup_factor": 115.65
+        },
+        {
+          "artifact_count": 4096,
+          "merkle_proof_steps": 12,
+          "merkle_proof_bytes": 384,
+          "linear_payload_bytes": 417792,
+          "merkle_verify_us": 35.46,
+          "linear_recompute_us": 28528.36,
+          "speedup_factor": 804.53
+        }
+      ]
+    },
+    "pure_python_ed25519_vs_compiled_go": {
+      "go_100_full_verify_ms": 41.256,
+      "python_100_full_verify_ms": 1886.182,
+      "python_slowdown_factor": 45.72,
+      "go_1000_jobs_per_sec": 2278.0,
+      "python_1000_jobs_per_sec": 58.2
+    }
+  }
+}
