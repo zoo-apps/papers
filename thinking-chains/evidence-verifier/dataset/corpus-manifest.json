@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0.0",
+  "corpus_id": "zoo-apps-papers-evidence-corpus-v1",
+  "pinned_commit": "e12b0a1",
+  "documents": [
+    {
+      "doc_id": "DOC-TC-CORE",
+      "path": "thinking-chains/thinking-chains.tex",
+      "sha256": "11098056fe62731abc05ca6917beb43158a96c6e5e3cd99598182912b1d4db25",
+      "title": "Thinking Chains: Proof of AI — Trustless Money from Useful Intelligence"
+    },
+    {
+      "doc_id": "DOC-TC-CONST",
+      "path": "thinking-chains/sections/15-constitutional-rules.tex",
+      "sha256": "7aed8a39019d2551514b2e3fe0df5ac39cf4f4f7233f0ed681020312440caba0",
+      "title": "Thinking Chains Section 15: The Constitutional Layer"
+    },
+    {
+      "doc_id": "DOC-TC-FAIL",
+      "path": "thinking-chains/sections/19-failure-modes.tex",
+      "sha256": "974d1718ead8489be684129d046077a6f127d42710ef6ad40ad3ba788fc7f000",
+      "title": "Thinking Chains Section 19: Failure Modes and Mitigations"
+    },
+    {
+      "doc_id": "DOC-BITDELTA",
+      "path": "zoo-bitdelta-deltasoup/zoo-bitdelta-deltasoup.tex",
+      "sha256": "4d92cf43dfaa7b47261688bf46c1f86852ed4f380e9057e835ea637766ccf9c9",
+      "title": "BitDelta and DeltaSoup: Personalized and Community AI through Compact Model Updates"
+    },
+    {
+      "doc_id": "DOC-RDAO",
+      "path": "zoo-dao-research-governance/zoo-dao-research-governance.tex",
+      "sha256": "19c36e73021564dadd4c5f56396fb92d0081b9df93febad6b6277edd2ec64b15",
+      "title": "Research DAO Governance: On-Chain Peer Review and Funding for Open Science"
+    },
+    {
+      "doc_id": "DOC-QUASAR",
+      "path": "zoo-quasar-benchmarks/zoo-quasar-benchmarks.tex",
+      "sha256": "7246426d78991f8e41ae7d0da3e82b02ce60ceba80bd207beb8d89bda87fac03",
+      "title": "Zoo Network Consensus: Quasar + PoAI Dual-Layer Verification"
+    },
+    {
+      "doc_id": "DOC-EVM",
+      "path": "zoo-evm-benchmarks/zoo-evm-benchmarks.tex",
+      "sha256": "fc36619e55c28f4490681f6c60a8d3869443efbc905c6e6f8fc08dd2a289bc91",
+      "title": "Zoo EVM Performance: GPU-Accelerated Execution on a Conservation-First L2"
+    },
+    {
+      "doc_id": "DOC-EXPLEDGER",
+      "path": "experience-ledger-dso/experience-ledger-dso.tex",
+      "sha256": "efd1f0525d6692869bb79c218584699f74f7ea58103eb2b0d9e70a7d2c1af8ef",
+      "title": "Experience Ledger: Decentralized Semantic Optimization for Large Language Models"
+    }
+  ]
+}

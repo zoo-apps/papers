@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zoo.ngo/schemas/thinking-chains/evidence-claim.v1.schema.json",
+  "title": "Zoo Thinking Chains Open Evidence Claim Bundle (v1.0.0)",
+  "description": "Schema for verifiable public evidence claims, verification results, and benchmark datasets under zoo-apps/papers#8 (HIP-1352). Apache-2.0.",
+  "type": "object",
+  "required": ["schema_version", "bundle_id", "seed", "claims"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "bundle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "description": {
+      "type": "string"
+    },
+    "claims": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/EvidenceClaim"
+      }
+    }
+  },
+  "$defs": {
+    "Verdict": {
+      "type": "string",
+      "enum": [
+        "VERIFIED_REPRODUCIBLE",
+        "REFUTED_CONTRADICTION",
+        "UNSUPPORTED_INSUFFICIENT_EVIDENCE",
+        "INCONCLUSIVE_NEEDS_HUMAN_REVIEW"
+      ]
+    },
+    "ClaimClass": {
+      "type": "string",
+      "enum": [
+        "citation_check",
+        "calc_check",
+        "code_result_check",
+        "reasoning_chain_check"
+      ]
+    },
+    "GovernanceAction": {
+      "type": "string",
+      "enum": [
+        "",
+        "none",
+        "recommend",
+        "flag_conflict",
+        "estimate_value",
+        "prepare_plan",
+        "redefine_voting_rules",
+        "authorize_treasury",
+        "self_declare_valid"
+      ]
+    },
+    "ReviewScope": {
+      "type": "string",
+      "enum": ["", "mechanical", "external_domain", "subjective_judgment"]
+    },
+    "EvidenceClaim": {
+      "type": "object",
+      "required": ["schema_version", "claim_id", "claim_class", "statement", "author_id", "verifier_id"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "type": "string", "const": "1.0.0" },
+        "claim_id": { "type": "string", "pattern": "^[A-Z0-9_-]{3,64}$" },
+        "claim_class": { "$ref": "#/$defs/ClaimClass" },
+        "statement": { "type": "string", "minLength": 1 },
+        "author_id": { "type": "string", "minLength": 1 },
+        "verifier_id": { "type": "string", "minLength": 1 },
+        "governance_action": { "$ref": "#/$defs/GovernanceAction" },
+        "expected_verdict": { "$ref": "#/$defs/Verdict" },
+        "negative_regime": {
+          "type": "string",
+          "enum": [
+            "",
+            "none",
+            "semantic_paraphrase",
+            "stochastic_hardware_drift",
+            "cherry_picking_omitted_caveat",
+            "tolerance_boundary"
+          ]
+        },
+        "notes": { "type": "string" },
+        "citation": { "$ref": "#/$defs/CitationPayload" },
+        "calculation": { "$ref": "#/$defs/CalculationPayload" },
+        "code_result": { "$ref": "#/$defs/CodeResultPayload" },
+        "reasoning_chain": { "$ref": "#/$defs/ReasoningChainPayload" }
+      }
+    },
+    "CitationPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source_path": { "type": "string" },
+        "expected_sha256": { "type": "string" },
+        "section_hint": { "type": "string" },
+        "quoted_span": { "type": "string" },
+        "claimed_numbers": {
+          "type": "array",
+          "items": { "type": "number" }
+        },
+        "claimed_polarity": {
+          "type": "string",
+          "enum": ["", "positive", "negative", "neutral"]
+        },
+        "require_exact_span": { "type": "boolean" },
+        "review_scope": { "$ref": "#/$defs/ReviewScope" }
+      }
+    },
+    "CalculationPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expression": { "type": "string" },
+        "variables": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        },
+        "claimed_value": { "type": "number" },
+        "has_claimed_value": { "type": "boolean" },
+        "tolerance": { "type": "number", "minimum": 0 },
+        "tolerance_mode": { "type": "string", "enum": ["", "abs", "rel"] },
+        "expected_unit": { "type": "string" },
+        "claimed_unit": { "type": "string" },
+        "exact_rational": { "type": "boolean" },
+        "review_scope": { "$ref": "#/$defs/ReviewScope" }
+      }
+    },
+    "CodeProgram": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "type": "string",
+          "enum": [
+            "",
+            "sha256_canonical",
+            "merkle_root",
+            "bitdelta_scale",
+            "trimmed_mean",
+            "linear_reward",
+            "sortition_check",
+            "eval_expr"
+          ]
+        },
+        "inputs": { "type": "object" }
+      }
+    },
+    "CodeResultPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["", "deterministic_eval", "artifact_hash", "statistical_interval"]
+        },
+        "program": { "$ref": "#/$defs/CodeProgram" },
+        "expected_output": {},
+        "tolerance": { "type": "number", "minimum": 0 },
+        "artifact_payload": { "type": "string" },
+        "declared_sha256": { "type": "string" },
+        "samples": {
+          "type": "array",
+          "items": { "type": "number" }
+        },
+        "claimed_mean": { "type": "number" },
+        "has_claimed_mean": { "type": "boolean" },
+        "ci_halfwidth": { "type": "number", "minimum": 0 },
+        "stochastic": { "type": "boolean" },
+        "review_scope": { "$ref": "#/$defs/ReviewScope" }
+      }
+    },
+    "ReasoningStep": {
+      "type": "object",
+      "required": ["step_id", "kind"],
+      "additionalProperties": false,
+      "properties": {
+        "step_id": { "type": "string", "minLength": 1 },
+        "kind": {
+          "type": "string",
+          "enum": ["premise", "inference", "conclusion", "private_cot"]
+        },
+        "depends_on": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "evidence_ref": { "type": "string" },
+        "evidence_verdict": { "type": "string" },
+        "public_rationale": { "type": "string" },
+        "opaque_cot_blob": { "type": "boolean" }
+      }
+    },
+    "ReasoningChainPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "conclusion_step_id": { "type": "string" },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ReasoningStep" }
+        },
+        "review_scope": { "$ref": "#/$defs/ReviewScope" }
+      }
+    },
+    "VerificationResult": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "claim_id",
+        "claim_class",
+        "verdict",
+        "reason_code",
+        "detail",
+        "result_digest"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "type": "string", "const": "1.0.0" },
+        "claim_id": { "type": "string" },
+        "claim_class": { "$ref": "#/$defs/ClaimClass" },
+        "verdict": { "$ref": "#/$defs/Verdict" },
+        "reason_code": { "type": "string" },
+        "detail": { "type": "string" },
+        "computed_value": { "type": "string" },
+        "evidence_sha256": { "type": "string" },
+        "result_digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    }
+  }
+}
