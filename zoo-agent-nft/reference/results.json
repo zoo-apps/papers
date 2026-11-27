@@ -1,0 +1,575 @@
+{
+  "schema_version": "agent-identity-delegation.v1",
+  "spec_version": "1.0.0",
+  "seed": 1352,
+  "suite_summary": {
+    "schema_version": "agent-identity-delegation.v1",
+    "spec_version": "1.0.0",
+    "seed": 1352,
+    "total_stages": 5,
+    "passed_stages": 5,
+    "all_stages_valid": true,
+    "total_threat_cases": 25,
+    "attacks_total": 24,
+    "attacks_caught": 24,
+    "positive_controls": 1,
+    "positive_controls_ok": 1,
+    "all_threat_pass": true,
+    "stage_reports": [
+      {
+        "stage_id": "STAGE-01",
+        "name": "Portable did:zoo & did:key Verification + Agent NFT Lineage",
+        "valid": true,
+        "error_code": "",
+        "chain_depth": 1,
+        "delegation_chain_digest": "5029e1ff5e2f6538815e2fe3e3e3f7c33c9d166ebbf9deb304c1870c830a48b0",
+        "verified_rotations": 1,
+        "signature_checks": 12
+      },
+      {
+        "stage_id": "STAGE-02",
+        "name": "Offline Dual-Signed Key Rotation Proof Chain",
+        "valid": true,
+        "error_code": "",
+        "chain_depth": 3,
+        "delegation_chain_digest": "588a9d33e5f1c7275beaf502e295af3075637928599c5d95fd1c06fd21747cd2",
+        "verified_rotations": 1,
+        "signature_checks": 14
+      },
+      {
+        "stage_id": "STAGE-03",
+        "name": "4-Hop Monotonically Attenuated Delegation to Ephemeral did:key Session",
+        "valid": true,
+        "error_code": "",
+        "chain_depth": 4,
+        "delegation_chain_digest": "f18c68136e4a64788eb2afdbcd3d2fffde569ded7e5b5df45e8ffb1cbbe19214",
+        "verified_rotations": 1,
+        "signature_checks": 15
+      },
+      {
+        "stage_id": "STAGE-04",
+        "name": "Authorized Human Council Governance Action",
+        "valid": true,
+        "error_code": "",
+        "chain_depth": 0,
+        "delegation_chain_digest": "d027fe6c3fdce4cb886f53b8179b44e860033ed373bd24795b3311c2c0e72f14",
+        "verified_rotations": 1,
+        "signature_checks": 11
+      },
+      {
+        "stage_id": "STAGE-05",
+        "name": "Non-Binding AI Research Advisory Action",
+        "valid": true,
+        "error_code": "",
+        "chain_depth": 2,
+        "delegation_chain_digest": "f69422d372069450760c285d7658dab50b24e86091795e580552dae0289f2162",
+        "verified_rotations": 1,
+        "signature_checks": 13
+      }
+    ],
+    "threat_reports": [
+      {
+        "case_id": "ATK-01",
+        "category": "impersonation",
+        "name": "Bearer credential theft (missing HolderProof)",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_HOLDER_PROOF_MISSING",
+        "actual_error": "ERR_HOLDER_PROOF_MISSING",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-02",
+        "category": "impersonation",
+        "name": "Wrong holder DID impersonating leaf session",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_HOLDER_DID_MISMATCH",
+        "actual_error": "ERR_HOLDER_DID_MISMATCH",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-03",
+        "category": "impersonation",
+        "name": "Forged Ed25519 signature in HolderProof",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_HOLDER_SIGNATURE_INVALID",
+        "actual_error": "ERR_HOLDER_SIGNATURE_INVALID",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-04",
+        "category": "impersonation",
+        "name": "did:key public key substitution / DID spoofing",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_DID_KEY_BINDING_MISMATCH",
+        "actual_error": "ERR_DID_KEY_BINDING_MISMATCH",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-05",
+        "category": "impersonation",
+        "name": "Unauthorized DID key rotation without valid controller co-signature",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_KEY_ROTATION_INVALID",
+        "actual_error": "ERR_KEY_ROTATION_INVALID",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-06",
+        "category": "impersonation",
+        "name": "Cross-audience presentation replay",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_AUDIENCE_MISMATCH",
+        "actual_error": "ERR_AUDIENCE_MISMATCH",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-07",
+        "category": "impersonation",
+        "name": "Replayed action challenge nonce",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_NONCE_REPLAY",
+        "actual_error": "ERR_NONCE_REPLAY",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-08",
+        "category": "delegation",
+        "name": "Broken parent_vc_digest cryptographic chain link",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_PARENT_DIGEST_MISMATCH",
+        "actual_error": "ERR_PARENT_DIGEST_MISMATCH",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-09",
+        "category": "delegation",
+        "name": "Forged or tampered DelegationVC issuer signature",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_VC_SIGNATURE_INVALID",
+        "actual_error": "ERR_VC_SIGNATURE_INVALID",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-10",
+        "category": "delegation",
+        "name": "Delegation depth overflow beyond parent max_sub_depth=0",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_DEPTH_OVERFLOW",
+        "actual_error": "ERR_DEPTH_OVERFLOW",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-11",
+        "category": "delegation",
+        "name": "Scope escalation (child adds permission absent from parent)",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_SCOPE_ESCALATION",
+        "actual_error": "ERR_SCOPE_ESCALATION",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-12",
+        "category": "delegation",
+        "name": "Resource prefix escape outside parent allowed_resources",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_RESOURCE_ESCALATION",
+        "actual_error": "ERR_RESOURCE_ESCALATION",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-13",
+        "category": "delegation",
+        "name": "TTL extension beyond parent valid_until",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_TTL_EXTENSION",
+        "actual_error": "ERR_TTL_EXTENSION",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-14",
+        "category": "delegation",
+        "name": "Expired leaf delegation VC rejected at eval_time",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_VC_EXPIRED",
+        "actual_error": "ERR_VC_EXPIRED",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-15",
+        "category": "delegation",
+        "name": "Not-yet-valid delegation VC rejected before valid_from",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_VC_NOT_YET_VALID",
+        "actual_error": "ERR_VC_NOT_YET_VALID",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-16",
+        "category": "delegation",
+        "name": "Cyclic delegation graph (Lead -> Sub -> Lead)",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_CYCLIC_DELEGATION",
+        "actual_error": "ERR_CYCLIC_DELEGATION",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-17",
+        "category": "revocation",
+        "name": "Direct leaf VC revoked via W3C BitstringStatusList (index 103)",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_VC_REVOKED_BITSTRING",
+        "actual_error": "ERR_VC_REVOKED_BITSTRING",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-18",
+        "category": "revocation",
+        "name": "Transitive cascade revocation (intermediate LeadResearchAgent VC revoked)",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_CASCADE_PARENT_REVOKED",
+        "actual_error": "ERR_CASCADE_PARENT_REVOKED",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-19",
+        "category": "revocation",
+        "name": "Key compromise epoch cutoff (revoked_before invalidates earlier VC)",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_KEY_REVOKED_BEFORE_CUTOFF",
+        "actual_error": "ERR_KEY_REVOKED_BEFORE_CUTOFF",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-20",
+        "category": "revocation",
+        "name": "Stale pre-revocation BitstringStatusList replay rejected",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_STATUS_LIST_STALE",
+        "actual_error": "ERR_STATUS_LIST_STALE",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-21",
+        "category": "revocation",
+        "name": "Tampered BitstringStatusList payload rejected via Ed25519 signature",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_STATUS_LIST_SIGNATURE_INVALID",
+        "actual_error": "ERR_STATUS_LIST_SIGNATURE_INVALID",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-22",
+        "category": "constitutional",
+        "name": "AI agent attempting to hold/exercise governance:vote_rules",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_CONSTITUTIONAL_AI_GOVERNANCE_FORBIDDEN",
+        "actual_error": "ERR_CONSTITUTIONAL_AI_GOVERNANCE_FORBIDDEN",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-23",
+        "category": "constitutional",
+        "name": "AI agent attempting to hold/exercise treasury:authorize",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_CONSTITUTIONAL_AI_GOVERNANCE_FORBIDDEN",
+        "actual_error": "ERR_CONSTITUTIONAL_AI_GOVERNANCE_FORBIDDEN",
+        "pass": true
+      },
+      {
+        "case_id": "ATK-24",
+        "category": "constitutional",
+        "name": "AI agent attempting to self-certify experiment validity (experiment:certify)",
+        "expect_valid": false,
+        "actual_valid": false,
+        "expected_error": "ERR_CONSTITUTIONAL_AI_GOVERNANCE_FORBIDDEN",
+        "actual_error": "ERR_CONSTITUTIONAL_AI_GOVERNANCE_FORBIDDEN",
+        "pass": true
+      },
+      {
+        "case_id": "POS-25",
+        "category": "constitutional",
+        "name": "Positive control: AI agent submits non-binding value:estimate advisory",
+        "expect_valid": true,
+        "actual_valid": true,
+        "expected_error": "",
+        "actual_error": "",
+        "pass": true
+      }
+    ],
+    "audit_merkle_root": "cf1dcd70cbeca43542732d9d63d4831f93f1d9e2f8665ae6862cd8e3d6e7e747"
+  },
+  "go_depth_benchmarks": [
+    {
+      "depth": 1,
+      "iterations": 200,
+      "warm_mean_us": 432.81,
+      "warm_p50_us": 369.67,
+      "warm_p95_us": 1443.09,
+      "warm_ops_per_sec": 2310.46,
+      "cold_mean_us": 1112.88,
+      "cold_p50_us": 989.27,
+      "cold_p95_us": 2106.91,
+      "cold_ops_per_sec": 898.57,
+      "warm_sig_checks": 2,
+      "cold_sig_checks": 6,
+      "warm_scaling_vs_depth1": 1
+    },
+    {
+      "depth": 2,
+      "iterations": 200,
+      "warm_mean_us": 844.13,
+      "warm_p50_us": 706.4,
+      "warm_p95_us": 2197.11,
+      "warm_ops_per_sec": 1184.65,
+      "cold_mean_us": 1764.56,
+      "cold_p50_us": 1437.25,
+      "cold_p95_us": 4000.35,
+      "cold_ops_per_sec": 566.71,
+      "warm_sig_checks": 3,
+      "cold_sig_checks": 8,
+      "warm_scaling_vs_depth1": 1.95
+    },
+    {
+      "depth": 4,
+      "iterations": 200,
+      "warm_mean_us": 1436.2,
+      "warm_p50_us": 1262.46,
+      "warm_p95_us": 3168.37,
+      "warm_ops_per_sec": 696.28,
+      "cold_mean_us": 2563.5,
+      "cold_p50_us": 2276.8,
+      "cold_p95_us": 4555.48,
+      "cold_ops_per_sec": 390.09,
+      "warm_sig_checks": 5,
+      "cold_sig_checks": 12,
+      "warm_scaling_vs_depth1": 3.32
+    },
+    {
+      "depth": 8,
+      "iterations": 200,
+      "warm_mean_us": 2713.5,
+      "warm_p50_us": 2393.77,
+      "warm_p95_us": 7010.08,
+      "warm_ops_per_sec": 368.53,
+      "cold_mean_us": 4459.99,
+      "cold_p50_us": 4000.35,
+      "cold_p95_us": 8748.11,
+      "cold_ops_per_sec": 224.22,
+      "warm_sig_checks": 9,
+      "cold_sig_checks": 20,
+      "warm_scaling_vs_depth1": 6.27
+    },
+    {
+      "depth": 16,
+      "iterations": 200,
+      "warm_mean_us": 5373.85,
+      "warm_p50_us": 4815.45,
+      "warm_p95_us": 9441.82,
+      "warm_ops_per_sec": 186.09,
+      "cold_mean_us": 8181.82,
+      "cold_p50_us": 7678.75,
+      "cold_p95_us": 13006.45,
+      "cold_ops_per_sec": 122.22,
+      "warm_sig_checks": 17,
+      "cold_sig_checks": 36,
+      "warm_scaling_vs_depth1": 12.42
+    }
+  ],
+  "go_bitstring_benchmarks": [
+    {
+      "bit_length": 1024,
+      "raw_bytes": 128,
+      "density_label": "sparse_0.1pct",
+      "revoked_count": 1,
+      "gzip_base64_bytes": 40,
+      "raw_base64_bytes": 171,
+      "compression_ratio": 4.28,
+      "cold_verify_mean_us": 2409.89,
+      "warm_lookup_mean_us": 0.015
+    },
+    {
+      "bit_length": 1024,
+      "raw_bytes": 128,
+      "density_label": "dense_50pct",
+      "revoked_count": 512,
+      "gzip_base64_bytes": 208,
+      "raw_base64_bytes": 171,
+      "compression_ratio": 0.82,
+      "cold_verify_mean_us": 2522.62,
+      "warm_lookup_mean_us": 0.0121
+    },
+    {
+      "bit_length": 16384,
+      "raw_bytes": 2048,
+      "density_label": "sparse_0.1pct",
+      "revoked_count": 16,
+      "gzip_base64_bytes": 100,
+      "raw_base64_bytes": 2731,
+      "compression_ratio": 27.31,
+      "cold_verify_mean_us": 2601.54,
+      "warm_lookup_mean_us": 0.0121
+    },
+    {
+      "bit_length": 16384,
+      "raw_bytes": 2048,
+      "density_label": "dense_50pct",
+      "revoked_count": 8192,
+      "gzip_base64_bytes": 2768,
+      "raw_base64_bytes": 2731,
+      "compression_ratio": 0.99,
+      "cold_verify_mean_us": 2717.04,
+      "warm_lookup_mean_us": 0.0121
+    },
+    {
+      "bit_length": 131072,
+      "raw_bytes": 16384,
+      "density_label": "sparse_0.1pct",
+      "revoked_count": 131,
+      "gzip_base64_bytes": 430,
+      "raw_base64_bytes": 21846,
+      "compression_ratio": 50.8,
+      "cold_verify_mean_us": 2506.74,
+      "warm_lookup_mean_us": 0.0121
+    },
+    {
+      "bit_length": 131072,
+      "raw_bytes": 16384,
+      "density_label": "dense_50pct",
+      "revoked_count": 65536,
+      "gzip_base64_bytes": 21883,
+      "raw_base64_bytes": 21846,
+      "compression_ratio": 1,
+      "cold_verify_mean_us": 3515.32,
+      "warm_lookup_mean_us": 0.0149
+    }
+  ],
+  "staleness_tradeoff_analysis": [
+    {
+      "sync_interval_seconds": 60,
+      "max_staleness_seconds": 60,
+      "sparse_bandwidth_bytes_per_sec": 7.17,
+      "dense_bandwidth_bytes_per_sec": 364.72,
+      "daily_sync_count": 1440
+    },
+    {
+      "sync_interval_seconds": 300,
+      "max_staleness_seconds": 300,
+      "sparse_bandwidth_bytes_per_sec": 1.43,
+      "dense_bandwidth_bytes_per_sec": 72.94,
+      "daily_sync_count": 288
+    },
+    {
+      "sync_interval_seconds": 900,
+      "max_staleness_seconds": 900,
+      "sparse_bandwidth_bytes_per_sec": 0.48,
+      "dense_bandwidth_bytes_per_sec": 24.31,
+      "daily_sync_count": 96
+    },
+    {
+      "sync_interval_seconds": 3600,
+      "max_staleness_seconds": 3600,
+      "sparse_bandwidth_bytes_per_sec": 0.12,
+      "dense_bandwidth_bytes_per_sec": 6.08,
+      "daily_sync_count": 24
+    },
+    {
+      "sync_interval_seconds": 86400,
+      "max_staleness_seconds": 86400,
+      "sparse_bandwidth_bytes_per_sec": 0,
+      "dense_bandwidth_bytes_per_sec": 0.25,
+      "daily_sync_count": 1
+    }
+  ],
+  "python_depth_benchmarks": [
+    {
+      "depth": 1,
+      "iterations": 5,
+      "warm_mean_us": 15009.84,
+      "warm_p50_us": 15074.34,
+      "warm_p95_us": 15078.42,
+      "warm_ops_per_sec": 66.62,
+      "cold_mean_us": 45329.35,
+      "warm_sig_checks": 2
+    },
+    {
+      "depth": 2,
+      "iterations": 5,
+      "warm_mean_us": 23009.02,
+      "warm_p50_us": 22676.95,
+      "warm_p95_us": 22966.37,
+      "warm_ops_per_sec": 43.46,
+      "cold_mean_us": 60355.49,
+      "warm_sig_checks": 3
+    },
+    {
+      "depth": 4,
+      "iterations": 5,
+      "warm_mean_us": 37096.91,
+      "warm_p50_us": 37148.57,
+      "warm_p95_us": 37236.62,
+      "warm_ops_per_sec": 26.96,
+      "cold_mean_us": 92292.84,
+      "warm_sig_checks": 5
+    },
+    {
+      "depth": 8,
+      "iterations": 5,
+      "warm_mean_us": 67055.62,
+      "warm_p50_us": 66906.72,
+      "warm_p95_us": 67253.89,
+      "warm_ops_per_sec": 14.91,
+      "cold_mean_us": 148443.58,
+      "warm_sig_checks": 9
+    },
+    {
+      "depth": 16,
+      "iterations": 5,
+      "warm_mean_us": 127284.13,
+      "warm_p50_us": 127018.44,
+      "warm_p95_us": 127621.6,
+      "warm_ops_per_sec": 7.86,
+      "cold_mean_us": 273129.0,
+      "warm_sig_checks": 17
+    }
+  ],
+  "python_bitstring_benchmarks": [
+    {
+      "bit_length": 1024,
+      "decode_us": 171.37,
+      "warm_lookup_mean_us": 0.4157
+    },
+    {
+      "bit_length": 16384,
+      "decode_us": 99.18,
+      "warm_lookup_mean_us": 0.4721
+    },
+    {
+      "bit_length": 131072,
+      "decode_us": 124.06,
+      "warm_lookup_mean_us": 0.4767
+    }
+  ]
+}
