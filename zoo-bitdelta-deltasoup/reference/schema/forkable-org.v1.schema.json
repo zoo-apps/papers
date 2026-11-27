@@ -1,0 +1,694 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zoo.ngo/schemas/forkable-org.v1.schema.json",
+  "title": "Forkable Models and Autonomous Organizations Suite (forkable-org.v1)",
+  "description": "Canonical schema for organization snapshots, cryptographic fork boundaries with ACL redaction proofs, BitDelta/DeltaSoup model lineage, governance/AI boundaries, and verified cross-fork improvement exchange (HIP-1352, zoo-apps/papers#5).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "spec_version",
+    "seed",
+    "eval_dataset",
+    "org_a_snap_0",
+    "org_a_snap_1",
+    "org_b_fork_snap_1",
+    "org_a_diverged_snap_2",
+    "org_b_diverged_snap_2",
+    "bundle_b_to_a",
+    "bundle_a_to_b",
+    "org_a_adopted_snap_3",
+    "org_b_adopted_snap_3",
+    "adversarial_cases"
+  ],
+  "properties": {
+    "schema_version": { "const": "forkable-org.v1" },
+    "spec_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "seed": { "type": "integer" },
+    "eval_dataset": { "$ref": "#/$defs/EvalDataset" },
+    "org_a_snap_0": { "$ref": "#/$defs/OrgSnapshot" },
+    "org_a_snap_1": { "$ref": "#/$defs/OrgSnapshot" },
+    "org_b_fork_snap_1": { "$ref": "#/$defs/OrgSnapshot" },
+    "org_a_diverged_snap_2": { "$ref": "#/$defs/OrgSnapshot" },
+    "org_b_diverged_snap_2": { "$ref": "#/$defs/OrgSnapshot" },
+    "bundle_b_to_a": { "$ref": "#/$defs/ExchangeBundle" },
+    "bundle_a_to_b": { "$ref": "#/$defs/ExchangeBundle" },
+    "org_a_adopted_snap_3": { "$ref": "#/$defs/OrgSnapshot" },
+    "org_b_adopted_snap_3": { "$ref": "#/$defs/OrgSnapshot" },
+    "adversarial_cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/AdversarialCase" }
+    }
+  },
+  "$defs": {
+    "HexHash64": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "OptionalHexHash64": {
+      "type": "string",
+      "pattern": "^(|[0-9a-f]{64})$"
+    },
+    "HexSig128": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{128}$"
+    },
+    "ACLTier": {
+      "type": "string",
+      "enum": ["public", "org_internal", "restricted_pii_or_partner"]
+    },
+    "Role": {
+      "type": "string",
+      "enum": ["HUMAN_COUNCIL", "EVALUATOR", "TRAINER", "AI_AGENT"]
+    },
+    "Principal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "org_id", "role", "public_key_hex"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "org_id": { "type": "string", "minLength": 1 },
+        "role": { "$ref": "#/$defs/Role" },
+        "public_key_hex": { "$ref": "#/$defs/HexHash64" }
+      }
+    },
+    "SignerSignature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["signer_id", "signature_hex"],
+      "properties": {
+        "signer_id": { "type": "string", "minLength": 1 },
+        "signature_hex": { "$ref": "#/$defs/HexSig128" }
+      }
+    },
+    "AIAgentBoundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "forbid_voting_rule_mutation",
+        "forbid_treasury_authorization",
+        "forbid_self_certified_experiments",
+        "allow_advisory_proposals"
+      ],
+      "properties": {
+        "forbid_voting_rule_mutation": { "type": "boolean" },
+        "forbid_treasury_authorization": { "type": "boolean" },
+        "forbid_self_certified_experiments": { "type": "boolean" },
+        "allow_advisory_proposals": { "type": "boolean" }
+      }
+    },
+    "PolicyManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "org_id",
+        "policy_version",
+        "voting_quorum_bps",
+        "min_council_approvals",
+        "conservation_tithe_bps",
+        "treasury_spend_limit_micro",
+        "min_safety_bps",
+        "min_accuracy_gain_bps",
+        "allowed_licenses",
+        "ai_agent_boundaries",
+        "authorized_principals",
+        "policy_hash"
+      ],
+      "properties": {
+        "org_id": { "type": "string", "minLength": 1 },
+        "policy_version": { "type": "integer", "minimum": 1 },
+        "voting_quorum_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "min_council_approvals": { "type": "integer", "minimum": 1 },
+        "conservation_tithe_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "treasury_spend_limit_micro": { "type": "integer", "minimum": 0 },
+        "min_safety_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "min_accuracy_gain_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "allowed_licenses": { "type": "array", "items": { "type": "string" } },
+        "ai_agent_boundaries": { "$ref": "#/$defs/AIAgentBoundaries" },
+        "authorized_principals": { "type": "array", "items": { "$ref": "#/$defs/Principal" } },
+        "policy_hash": { "$ref": "#/$defs/HexHash64" }
+      }
+    },
+    "AccessGrant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grant_id",
+        "org_id",
+        "subject_id",
+        "resource_id",
+        "tier",
+        "inheritable_on_fork",
+        "org_scoped_token_hash"
+      ],
+      "properties": {
+        "grant_id": { "type": "string" },
+        "org_id": { "type": "string" },
+        "subject_id": { "type": "string" },
+        "resource_id": { "type": "string" },
+        "tier": { "$ref": "#/$defs/ACLTier" },
+        "inheritable_on_fork": { "type": "boolean" },
+        "org_scoped_token_hash": { "$ref": "#/$defs/HexHash64" }
+      }
+    },
+    "DelegationGrant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "delegation_id",
+        "from_org_id",
+        "to_org_id",
+        "resource_id",
+        "tier",
+        "revoked",
+        "signer_id",
+        "signature_hex"
+      ],
+      "properties": {
+        "delegation_id": { "type": "string" },
+        "from_org_id": { "type": "string" },
+        "to_org_id": { "type": "string" },
+        "resource_id": { "type": "string" },
+        "tier": { "$ref": "#/$defs/ACLTier" },
+        "revoked": { "type": "boolean" },
+        "signer_id": { "type": "string" },
+        "signature_hex": { "$ref": "#/$defs/HexSig128" }
+      }
+    },
+    "AccessControlPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "org_id",
+        "default_tier",
+        "strip_tiers_on_fork",
+        "require_key_rotation",
+        "grants",
+        "cross_org_delegations",
+        "acl_policy_hash"
+      ],
+      "properties": {
+        "org_id": { "type": "string" },
+        "default_tier": { "$ref": "#/$defs/ACLTier" },
+        "strip_tiers_on_fork": { "type": "array", "items": { "$ref": "#/$defs/ACLTier" } },
+        "require_key_rotation": { "type": "boolean" },
+        "grants": { "type": "array", "items": { "$ref": "#/$defs/AccessGrant" } },
+        "cross_org_delegations": { "type": "array", "items": { "$ref": "#/$defs/DelegationGrant" } },
+        "acl_policy_hash": { "$ref": "#/$defs/HexHash64" }
+      }
+    },
+    "RedactionTombstone": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slot_index",
+        "original_leaf_hash",
+        "redacted_tier",
+        "redaction_reason",
+        "commitment_salt_hash"
+      ],
+      "properties": {
+        "slot_index": { "type": "integer", "minimum": 0 },
+        "original_leaf_hash": { "$ref": "#/$defs/HexHash64" },
+        "redacted_tier": { "$ref": "#/$defs/ACLTier" },
+        "redaction_reason": { "type": "string" },
+        "commitment_salt_hash": { "$ref": "#/$defs/HexHash64" }
+      }
+    },
+    "ResearchRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_id",
+        "seq",
+        "parent_slot_index",
+        "org_id",
+        "prev_hash",
+        "kind",
+        "acl_tier",
+        "license_id",
+        "license_reviewed",
+        "payload_summary",
+        "payload_hash",
+        "author_id",
+        "signature_hex",
+        "record_hash"
+      ],
+      "properties": {
+        "record_id": { "type": "string" },
+        "seq": { "type": "integer", "minimum": 0 },
+        "parent_slot_index": { "type": "integer", "minimum": -1 },
+        "org_id": { "type": "string" },
+        "prev_hash": { "$ref": "#/$defs/OptionalHexHash64" },
+        "kind": { "type": "string" },
+        "acl_tier": { "$ref": "#/$defs/ACLTier" },
+        "license_id": { "type": "string" },
+        "license_reviewed": { "type": "boolean" },
+        "payload_summary": { "type": "string" },
+        "payload_hash": { "$ref": "#/$defs/HexHash64" },
+        "author_id": { "type": "string" },
+        "signature_hex": { "$ref": "#/$defs/HexSig128" },
+        "record_hash": { "$ref": "#/$defs/HexHash64" }
+      }
+    },
+    "ResearchHistory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "org_id",
+        "parent_total_slots",
+        "inherited_parent_root",
+        "records",
+        "redaction_tombstones",
+        "research_merkle_root"
+      ],
+      "properties": {
+        "org_id": { "type": "string" },
+        "parent_total_slots": { "type": "integer", "minimum": 0 },
+        "inherited_parent_root": { "$ref": "#/$defs/OptionalHexHash64" },
+        "records": { "type": "array", "items": { "$ref": "#/$defs/ResearchRecord" } },
+        "redaction_tombstones": { "type": "array", "items": { "$ref": "#/$defs/RedactionTombstone" } },
+        "research_merkle_root": { "$ref": "#/$defs/HexHash64" }
+      }
+    },
+    "BaseModelSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_id",
+        "dim",
+        "num_classes",
+        "num_features",
+        "weights_micro",
+        "license_id",
+        "license_reviewed",
+        "weights_hash"
+      ],
+      "properties": {
+        "model_id": { "type": "string" },
+        "dim": { "type": "integer", "minimum": 1 },
+        "num_classes": { "type": "integer", "minimum": 2 },
+        "num_features": { "type": "integer", "minimum": 1 },
+        "weights_micro": { "type": "array", "items": { "type": "integer" } },
+        "license_id": { "type": "string" },
+        "license_reviewed": { "type": "boolean" },
+        "weights_hash": { "$ref": "#/$defs/HexHash64" }
+      }
+    },
+    "BitDeltaArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "delta_id",
+        "org_id",
+        "base_model_id",
+        "parent_delta_id",
+        "base_checkpoint_hash",
+        "dim",
+        "sign_bits_hex",
+        "scale_micro",
+        "training_record_ids",
+        "acl_tier",
+        "license_id",
+        "license_reviewed",
+        "contributor_id",
+        "signature_hex",
+        "delta_hash"
+      ],
+      "properties": {
+        "delta_id": { "type": "string" },
+        "org_id": { "type": "string" },
+        "base_model_id": { "type": "string" },
+        "parent_delta_id": { "type": "string" },
+        "base_checkpoint_hash": { "$ref": "#/$defs/HexHash64" },
+        "dim": { "type": "integer", "minimum": 1 },
+        "sign_bits_hex": { "type": "string", "pattern": "^[0-9a-f]+$" },
+        "scale_micro": { "type": "integer", "minimum": 0 },
+        "training_record_ids": { "type": "array", "items": { "type": "string" } },
+        "acl_tier": { "$ref": "#/$defs/ACLTier" },
+        "license_id": { "type": "string" },
+        "license_reviewed": { "type": "boolean" },
+        "contributor_id": { "type": "string" },
+        "signature_hex": { "$ref": "#/$defs/HexSig128" },
+        "delta_hash": { "$ref": "#/$defs/HexHash64" }
+      }
+    },
+    "RoyaltyShare": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contributor_id", "delta_hash", "weight_bps"],
+      "properties": {
+        "contributor_id": { "type": "string" },
+        "delta_hash": { "$ref": "#/$defs/HexHash64" },
+        "weight_bps": { "type": "integer", "minimum": 0, "maximum": 10000 }
+      }
+    },
+    "DeltaSoupArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "soup_id",
+        "org_id",
+        "base_model_id",
+        "base_checkpoint_hash",
+        "trim_bps",
+        "step_bps",
+        "contributor_delta_ids",
+        "accepted_contributor_ids",
+        "royalty_shares",
+        "result_delta",
+        "soup_hash"
+      ],
+      "properties": {
+        "soup_id": { "type": "string" },
+        "org_id": { "type": "string" },
+        "base_model_id": { "type": "string" },
+        "base_checkpoint_hash": { "$ref": "#/$defs/HexHash64" },
+        "trim_bps": { "type": "integer", "minimum": 0, "maximum": 4999 },
+        "step_bps": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "contributor_delta_ids": { "type": "array", "items": { "type": "string" } },
+        "accepted_contributor_ids": { "type": "array", "items": { "type": "string" } },
+        "royalty_shares": { "type": "array", "items": { "$ref": "#/$defs/RoyaltyShare" } },
+        "result_delta": { "$ref": "#/$defs/BitDeltaArtifact" },
+        "soup_hash": { "$ref": "#/$defs/HexHash64" }
+      }
+    },
+    "ModelRegistry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "org_id",
+        "base_model",
+        "active_delta_id",
+        "deltas",
+        "soups",
+        "model_registry_root"
+      ],
+      "properties": {
+        "org_id": { "type": "string" },
+        "base_model": { "$ref": "#/$defs/BaseModelSpec" },
+        "active_delta_id": { "type": "string" },
+        "deltas": { "type": "array", "items": { "$ref": "#/$defs/BitDeltaArtifact" } },
+        "soups": { "type": "array", "items": { "$ref": "#/$defs/DeltaSoupArtifact" } },
+        "model_registry_root": { "$ref": "#/$defs/HexHash64" }
+      }
+    },
+    "GovernanceAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "org_id",
+        "action_type",
+        "proposer_id",
+        "payload_summary",
+        "payload_hash",
+        "amount_micro",
+        "epoch",
+        "signatures"
+      ],
+      "properties": {
+        "action_id": { "type": "string" },
+        "org_id": { "type": "string" },
+        "action_type": {
+          "type": "string",
+          "enum": [
+            "update_voting_rules",
+            "authorize_treasury_spend",
+            "approve_fork",
+            "approve_adoption",
+            "register_model"
+          ]
+        },
+        "proposer_id": { "type": "string" },
+        "payload_summary": { "type": "string" },
+        "payload_hash": { "$ref": "#/$defs/HexHash64" },
+        "amount_micro": { "type": "integer", "minimum": 0 },
+        "epoch": { "type": "integer", "minimum": 0 },
+        "signatures": { "type": "array", "items": { "$ref": "#/$defs/SignerSignature" } }
+      }
+    },
+    "AdvisoryProposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proposal_id",
+        "org_id",
+        "agent_id",
+        "kind",
+        "target_ref",
+        "estimated_gain_bps",
+        "conflict_flags",
+        "summary",
+        "binding",
+        "signature_hex"
+      ],
+      "properties": {
+        "proposal_id": { "type": "string" },
+        "org_id": { "type": "string" },
+        "agent_id": { "type": "string" },
+        "kind": {
+          "type": "string",
+          "enum": ["recommend_adoption", "flag_conflict", "estimate_value", "prepare_merge_plan"]
+        },
+        "target_ref": { "type": "string" },
+        "estimated_gain_bps": { "type": "integer" },
+        "conflict_flags": { "type": "array", "items": { "type": "string" } },
+        "summary": { "type": "string" },
+        "binding": { "type": "boolean" },
+        "signature_hex": { "$ref": "#/$defs/HexSig128" }
+      }
+    },
+    "EvaluationReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "org_id",
+        "model_ref_id",
+        "delta_hash",
+        "base_model_hash",
+        "eval_dataset_hash",
+        "accuracy_bps",
+        "mean_loss_micro",
+        "safety_bps",
+        "num_samples",
+        "evaluator_id",
+        "signature_hex"
+      ],
+      "properties": {
+        "receipt_id": { "type": "string" },
+        "org_id": { "type": "string" },
+        "model_ref_id": { "type": "string" },
+        "delta_hash": { "$ref": "#/$defs/HexHash64" },
+        "base_model_hash": { "$ref": "#/$defs/HexHash64" },
+        "eval_dataset_hash": { "$ref": "#/$defs/HexHash64" },
+        "accuracy_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "mean_loss_micro": { "type": "integer", "minimum": 0 },
+        "safety_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "num_samples": { "type": "integer", "minimum": 1 },
+        "evaluator_id": { "type": "string" },
+        "signature_hex": { "$ref": "#/$defs/HexSig128" }
+      }
+    },
+    "ForkAttestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "parent_org_id",
+        "child_org_id",
+        "parent_snapshot_id",
+        "parent_snapshot_hash",
+        "redacted_record_count",
+        "stripped_grant_count",
+        "keys_rotated",
+        "child_authority_pub_key",
+        "child_council_sigs"
+      ],
+      "properties": {
+        "parent_org_id": { "type": "string" },
+        "child_org_id": { "type": "string" },
+        "parent_snapshot_id": { "type": "string" },
+        "parent_snapshot_hash": { "$ref": "#/$defs/HexHash64" },
+        "redacted_record_count": { "type": "integer", "minimum": 0 },
+        "stripped_grant_count": { "type": "integer", "minimum": 0 },
+        "keys_rotated": { "type": "boolean" },
+        "child_authority_pub_key": { "$ref": "#/$defs/HexHash64" },
+        "child_council_sigs": { "type": "array", "items": { "$ref": "#/$defs/SignerSignature" } }
+      }
+    },
+    "OrgSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "snapshot_id",
+        "org_id",
+        "epoch",
+        "parent_snapshot_hash",
+        "fork_ancestor_snapshot_hash",
+        "model_registry",
+        "research_history",
+        "policy_manifest",
+        "acl_policy",
+        "governance_actions",
+        "advisory_proposals",
+        "fork_attestation",
+        "snapshot_hash",
+        "council_signatures"
+      ],
+      "properties": {
+        "snapshot_id": { "type": "string" },
+        "org_id": { "type": "string" },
+        "epoch": { "type": "integer", "minimum": 0 },
+        "parent_snapshot_hash": { "$ref": "#/$defs/OptionalHexHash64" },
+        "fork_ancestor_snapshot_hash": { "$ref": "#/$defs/OptionalHexHash64" },
+        "model_registry": { "$ref": "#/$defs/ModelRegistry" },
+        "research_history": { "$ref": "#/$defs/ResearchHistory" },
+        "policy_manifest": { "$ref": "#/$defs/PolicyManifest" },
+        "acl_policy": { "$ref": "#/$defs/AccessControlPolicy" },
+        "governance_actions": { "type": "array", "items": { "$ref": "#/$defs/GovernanceAction" } },
+        "advisory_proposals": { "type": "array", "items": { "$ref": "#/$defs/AdvisoryProposal" } },
+        "fork_attestation": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/ForkAttestation" }]
+        },
+        "snapshot_hash": { "$ref": "#/$defs/HexHash64" },
+        "council_signatures": { "type": "array", "items": { "$ref": "#/$defs/SignerSignature" } }
+      }
+    },
+    "LineageLink": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snapshot_id", "org_id", "epoch", "parent_snapshot_hash", "snapshot_hash"],
+      "properties": {
+        "snapshot_id": { "type": "string" },
+        "org_id": { "type": "string" },
+        "epoch": { "type": "integer", "minimum": 0 },
+        "parent_snapshot_hash": { "$ref": "#/$defs/OptionalHexHash64" },
+        "snapshot_hash": { "$ref": "#/$defs/HexHash64" }
+      }
+    },
+    "LicenseEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "artifact_kind", "license_id", "license_reviewed"],
+      "properties": {
+        "artifact_id": { "type": "string" },
+        "artifact_kind": { "type": "string" },
+        "license_id": { "type": "string" },
+        "license_reviewed": { "type": "boolean" }
+      }
+    },
+    "RedactionAttestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_org_id", "redacted_count", "restricted_taint_free", "stripped_tiers"],
+      "properties": {
+        "source_org_id": { "type": "string" },
+        "redacted_count": { "type": "integer", "minimum": 0 },
+        "restricted_taint_free": { "type": "boolean" },
+        "stripped_tiers": { "type": "array", "items": { "$ref": "#/$defs/ACLTier" } }
+      }
+    },
+    "ExchangeBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bundle_id",
+        "source_org_id",
+        "target_org_id",
+        "fork_ancestor_snapshot_hash",
+        "source_snapshot_hash",
+        "lineage_chain",
+        "exported_delta",
+        "supporting_research",
+        "redaction_attestation",
+        "license_manifest",
+        "evaluation_receipt",
+        "merge_step_bps",
+        "source_export_signatures",
+        "target_adoption_action",
+        "bundle_hash"
+      ],
+      "properties": {
+        "bundle_id": { "type": "string" },
+        "source_org_id": { "type": "string" },
+        "target_org_id": { "type": "string" },
+        "fork_ancestor_snapshot_hash": { "$ref": "#/$defs/HexHash64" },
+        "source_snapshot_hash": { "$ref": "#/$defs/HexHash64" },
+        "lineage_chain": { "type": "array", "items": { "$ref": "#/$defs/LineageLink" } },
+        "exported_delta": { "$ref": "#/$defs/BitDeltaArtifact" },
+        "supporting_research": { "type": "array", "items": { "$ref": "#/$defs/ResearchRecord" } },
+        "redaction_attestation": { "$ref": "#/$defs/RedactionAttestation" },
+        "license_manifest": { "type": "array", "items": { "$ref": "#/$defs/LicenseEntry" } },
+        "evaluation_receipt": { "$ref": "#/$defs/EvaluationReceipt" },
+        "merge_step_bps": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "source_export_signatures": { "type": "array", "items": { "$ref": "#/$defs/SignerSignature" } },
+        "target_adoption_action": { "$ref": "#/$defs/GovernanceAction" },
+        "bundle_hash": { "$ref": "#/$defs/HexHash64" }
+      }
+    },
+    "EvalSample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["features_micro", "label"],
+      "properties": {
+        "features_micro": { "type": "array", "items": { "type": "integer" } },
+        "label": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "EvalDataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset_id", "seed", "num_classes", "num_features", "samples", "safety_probes", "dataset_hash"],
+      "properties": {
+        "dataset_id": { "type": "string" },
+        "seed": { "type": "integer" },
+        "num_classes": { "type": "integer", "minimum": 2 },
+        "num_features": { "type": "integer", "minimum": 1 },
+        "samples": { "type": "array", "items": { "$ref": "#/$defs/EvalSample" } },
+        "safety_probes": { "type": "array", "items": { "$ref": "#/$defs/EvalSample" } },
+        "dataset_hash": { "$ref": "#/$defs/HexHash64" }
+      }
+    },
+    "AdversarialCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "name",
+        "category",
+        "target_check",
+        "expected_valid",
+        "expected_code",
+        "snapshot",
+        "parent_snapshot",
+        "exchange_bundle",
+        "source_snapshot",
+        "target_snapshot",
+        "governance_action",
+        "advisory_proposal",
+        "policy_context"
+      ],
+      "properties": {
+        "case_id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "target_check": {
+          "type": "string",
+          "enum": ["snapshot", "fork", "exchange", "governance", "advisory"]
+        },
+        "expected_valid": { "type": "boolean" },
+        "expected_code": { "type": "string" },
+        "snapshot": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/OrgSnapshot" }] },
+        "parent_snapshot": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/OrgSnapshot" }] },
+        "exchange_bundle": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/ExchangeBundle" }] },
+        "source_snapshot": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/OrgSnapshot" }] },
+        "target_snapshot": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/OrgSnapshot" }] },
+        "governance_action": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/GovernanceAction" }] },
+        "advisory_proposal": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/AdvisoryProposal" }] },
+        "policy_context": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/PolicyManifest" }] }
+      }
+    }
+  }
+}

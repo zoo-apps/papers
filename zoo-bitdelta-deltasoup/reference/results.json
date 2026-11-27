@@ -1,0 +1,456 @@
+{
+  "schema_version": "forkable-org.v1",
+  "spec_version": "1.0.0",
+  "seed": 1352,
+  "eval_dataset_hash": "de6bf37e0aff53df7f6b39d3c1e92971466a78d702755eb3ba9f3345e545b897",
+  "verification": {
+    "schema_version": "forkable-org.v1",
+    "spec_version": "1.0.0",
+    "seed": 1352,
+    "eval_dataset_hash": "de6bf37e0aff53df7f6b39d3c1e92971466a78d702755eb3ba9f3345e545b897",
+    "all_workflow_passed": true,
+    "all_adversarial_matched": true,
+    "workflow_checks": [
+      {
+        "stage": "1_org_a_base_snap_0",
+        "valid": true,
+        "code": "OK",
+        "accuracy_bps": 6900,
+        "mean_loss_micro": 1302118,
+        "safety_bps": 10000,
+        "delta_gain_bps": 0
+      },
+      {
+        "stage": "2_org_a_pre_fork_snap_1",
+        "valid": true,
+        "code": "OK",
+        "accuracy_bps": 6900,
+        "mean_loss_micro": 1302118,
+        "safety_bps": 10000,
+        "delta_gain_bps": 0
+      },
+      {
+        "stage": "3_org_b_fork_boundary_snap_1",
+        "valid": true,
+        "code": "OK",
+        "accuracy_bps": 6900,
+        "mean_loss_micro": 1302118,
+        "safety_bps": 10000,
+        "delta_gain_bps": 0
+      },
+      {
+        "stage": "4_org_a_diverged_snap_2",
+        "valid": true,
+        "code": "OK",
+        "accuracy_bps": 7550,
+        "mean_loss_micro": 870974,
+        "safety_bps": 10000,
+        "delta_gain_bps": 650
+      },
+      {
+        "stage": "5_org_b_diverged_deltasoup_snap_2",
+        "valid": true,
+        "code": "OK",
+        "accuracy_bps": 7550,
+        "mean_loss_micro": 984009,
+        "safety_bps": 10000,
+        "delta_gain_bps": 650
+      },
+      {
+        "stage": "6_exchange_verify_org_b_to_org_a",
+        "valid": true,
+        "code": "OK",
+        "accuracy_bps": 7700,
+        "mean_loss_micro": 840014,
+        "safety_bps": 10000,
+        "delta_gain_bps": 150
+      },
+      {
+        "stage": "7_org_a_adopted_snap_3",
+        "valid": true,
+        "code": "OK",
+        "accuracy_bps": 7700,
+        "mean_loss_micro": 840014,
+        "safety_bps": 10000,
+        "delta_gain_bps": 150
+      },
+      {
+        "stage": "8_exchange_verify_org_a_to_org_b",
+        "valid": true,
+        "code": "OK",
+        "accuracy_bps": 7700,
+        "mean_loss_micro": 840014,
+        "safety_bps": 10000,
+        "delta_gain_bps": 150
+      },
+      {
+        "stage": "9_org_b_adopted_snap_3",
+        "valid": true,
+        "code": "OK",
+        "accuracy_bps": 7700,
+        "mean_loss_micro": 840014,
+        "safety_bps": 10000,
+        "delta_gain_bps": 150
+      }
+    ],
+    "adversarial_outcomes": [
+      {
+        "case_id": "ATK-01",
+        "category": "provenance",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_LINEAGE_BROKEN",
+        "actual_code": "ERR_LINEAGE_BROKEN",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-02",
+        "category": "integrity",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_DELTA_HASH_MISMATCH",
+        "actual_code": "ERR_DELTA_HASH_MISMATCH",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-03",
+        "category": "provenance",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_HISTORY_CHAIN_BROKEN",
+        "actual_code": "ERR_HISTORY_CHAIN_BROKEN",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-04",
+        "category": "integrity",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_MERKLE_ROOT_MISMATCH",
+        "actual_code": "ERR_MERKLE_ROOT_MISMATCH",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-05",
+        "category": "acl_isolation",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_ACL_LEAK_RESTRICTED",
+        "actual_code": "ERR_ACL_LEAK_RESTRICTED",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-06",
+        "category": "acl_isolation",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_ACL_LEAK_GRANT",
+        "actual_code": "ERR_ACL_LEAK_GRANT",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-07",
+        "category": "acl_isolation",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_ACL_TAINT_RESTRICTED",
+        "actual_code": "ERR_ACL_TAINT_RESTRICTED",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-08",
+        "category": "key_isolation",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_KEY_ROTATION_REQUIRED",
+        "actual_code": "ERR_KEY_ROTATION_REQUIRED",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-09",
+        "category": "replay_defense",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_CROSS_ORG_REPLAY",
+        "actual_code": "ERR_CROSS_ORG_REPLAY",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-10",
+        "category": "authority",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_UNAUTHORIZED_SIGNER",
+        "actual_code": "ERR_UNAUTHORIZED_SIGNER",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-11",
+        "category": "cryptography",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_INVALID_SIGNATURE",
+        "actual_code": "ERR_INVALID_SIGNATURE",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-12",
+        "category": "ai_governance_boundary",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_AI_VOTING_RULE_FORBIDDEN",
+        "actual_code": "ERR_AI_VOTING_RULE_FORBIDDEN",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-13",
+        "category": "ai_governance_boundary",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_AI_TREASURY_FORBIDDEN",
+        "actual_code": "ERR_AI_TREASURY_FORBIDDEN",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-14",
+        "category": "ai_governance_boundary",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_AI_SELF_CERTIFY_FORBIDDEN",
+        "actual_code": "ERR_AI_SELF_CERTIFY_FORBIDDEN",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-15",
+        "category": "scientific_verification",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_EVAL_REPLAY_MISMATCH",
+        "actual_code": "ERR_EVAL_REPLAY_MISMATCH",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-16",
+        "category": "scientific_verification",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_QUALITY_REGRESSION",
+        "actual_code": "ERR_QUALITY_REGRESSION",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-17",
+        "category": "safety_verification",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_SAFETY_FLOOR_VIOLATION",
+        "actual_code": "ERR_SAFETY_FLOOR_VIOLATION",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-18",
+        "category": "licensing",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_LICENSE_INCOMPATIBLE",
+        "actual_code": "ERR_LICENSE_INCOMPATIBLE",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-19",
+        "category": "acl_isolation",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_REDACTION_PROOF_INVALID",
+        "actual_code": "ERR_REDACTION_PROOF_INVALID",
+        "matched": true
+      },
+      {
+        "case_id": "POS-20",
+        "category": "ai_governance_boundary",
+        "expected_valid": true,
+        "actual_valid": true,
+        "expected_code": "OK",
+        "actual_code": "OK",
+        "matched": true
+      }
+    ],
+    "adversarial_total": 19,
+    "adversarial_caught": 19,
+    "audit_merkle_root": "d70dbc7886797d35e46004eab55ba99f5005f0032df6c12c6c7e0419eeb93e71"
+  },
+  "compression_scaling": [
+    {
+      "dim": 64,
+      "full_fp32_bytes": 256,
+      "full_fp16_bytes": 128,
+      "bitdelta_bytes": 12,
+      "ratio_vs_fp32_bps": 213333,
+      "ratio_vs_fp16_bps": 106666,
+      "bits_per_param_milli": 1500
+    },
+    {
+      "dim": 256,
+      "full_fp32_bytes": 1024,
+      "full_fp16_bytes": 512,
+      "bitdelta_bytes": 36,
+      "ratio_vs_fp32_bps": 284444,
+      "ratio_vs_fp16_bps": 142222,
+      "bits_per_param_milli": 1125
+    },
+    {
+      "dim": 1024,
+      "full_fp32_bytes": 4096,
+      "full_fp16_bytes": 2048,
+      "bitdelta_bytes": 132,
+      "ratio_vs_fp32_bps": 310303,
+      "ratio_vs_fp16_bps": 155151,
+      "bits_per_param_milli": 1031
+    },
+    {
+      "dim": 4096,
+      "full_fp32_bytes": 16384,
+      "full_fp16_bytes": 8192,
+      "bitdelta_bytes": 516,
+      "ratio_vs_fp32_bps": 317519,
+      "ratio_vs_fp16_bps": 158759,
+      "bits_per_param_milli": 1007
+    },
+    {
+      "dim": 65536,
+      "full_fp32_bytes": 262144,
+      "full_fp16_bytes": 131072,
+      "bitdelta_bytes": 8196,
+      "ratio_vs_fp32_bps": 319843,
+      "ratio_vs_fp16_bps": 159921,
+      "bits_per_param_milli": 1000
+    }
+  ],
+  "byzantine_resilience": [
+    {
+      "num_contributors": 10,
+      "byzantine_count": 0,
+      "byzantine_pct": 0,
+      "trim_bps": 3000,
+      "naive_mean_acc_bps": 7700,
+      "naive_mean_loss_micro": 803415,
+      "naive_mean_safety_bps": 10000,
+      "trimmed_acc_bps": 7750,
+      "trimmed_loss_micro": 826349,
+      "trimmed_safety_bps": 10000,
+      "regime": "robust_within_bound"
+    },
+    {
+      "num_contributors": 10,
+      "byzantine_count": 1,
+      "byzantine_pct": 10,
+      "trim_bps": 3000,
+      "naive_mean_acc_bps": 7700,
+      "naive_mean_loss_micro": 1075649,
+      "naive_mean_safety_bps": 10000,
+      "trimmed_acc_bps": 7700,
+      "trimmed_loss_micro": 855721,
+      "trimmed_safety_bps": 10000,
+      "regime": "robust_within_bound"
+    },
+    {
+      "num_contributors": 10,
+      "byzantine_count": 2,
+      "byzantine_pct": 20,
+      "trim_bps": 3000,
+      "naive_mean_acc_bps": 4650,
+      "naive_mean_loss_micro": 2007206,
+      "naive_mean_safety_bps": 9750,
+      "trimmed_acc_bps": 7700,
+      "trimmed_loss_micro": 905107,
+      "trimmed_safety_bps": 10000,
+      "regime": "robust_within_bound"
+    },
+    {
+      "num_contributors": 10,
+      "byzantine_count": 3,
+      "byzantine_pct": 30,
+      "trim_bps": 3000,
+      "naive_mean_acc_bps": 3350,
+      "naive_mean_loss_micro": 2736631,
+      "naive_mean_safety_bps": 2750,
+      "trimmed_acc_bps": 7750,
+      "trimmed_loss_micro": 887580,
+      "trimmed_safety_bps": 10000,
+      "regime": "robust_within_bound"
+    },
+    {
+      "num_contributors": 10,
+      "byzantine_count": 4,
+      "byzantine_pct": 40,
+      "trim_bps": 3000,
+      "naive_mean_acc_bps": 1550,
+      "naive_mean_loss_micro": 4144550,
+      "naive_mean_safety_bps": 0,
+      "trimmed_acc_bps": 2200,
+      "trimmed_loss_micro": 3193129,
+      "trimmed_safety_bps": 1750,
+      "regime": "honest_negative_breakdown_above_trim_bound"
+    },
+    {
+      "num_contributors": 10,
+      "byzantine_count": 5,
+      "byzantine_pct": 50,
+      "trim_bps": 3000,
+      "naive_mean_acc_bps": 1150,
+      "naive_mean_loss_micro": 5161319,
+      "naive_mean_safety_bps": 0,
+      "trimmed_acc_bps": 950,
+      "trimmed_loss_micro": 5790692,
+      "trimmed_safety_bps": 0,
+      "regime": "honest_negative_breakdown_above_trim_bound"
+    }
+  ],
+  "org_b_royalty_shares": [
+    {
+      "contributor_id": "did:zoo:org_b:contrib-01",
+      "delta_hash": "df5b1986492c1d39ffbcf4ed0976371d4495d1c8498f7d31faa7b790822b9fe7",
+      "weight_bps": 1445
+    },
+    {
+      "contributor_id": "did:zoo:org_b:contrib-02",
+      "delta_hash": "e1d3fd9c079b3497141b13b98030819ffc0c5abf39e6d236ba96a27bc180c575",
+      "weight_bps": 1662
+    },
+    {
+      "contributor_id": "did:zoo:org_b:contrib-03",
+      "delta_hash": "8ace334ff7302d5662337e51a892d9f869850312ea7e93d0d255cb55caf3688c",
+      "weight_bps": 1517
+    },
+    {
+      "contributor_id": "did:zoo:org_b:contrib-04",
+      "delta_hash": "b458aa9c46bbc870cb06ec5ea081d738d3a76d8d39f7713758e4465ddf9df0f5",
+      "weight_bps": 1318
+    },
+    {
+      "contributor_id": "did:zoo:org_b:contrib-05",
+      "delta_hash": "fc1cc89d67e21e62791be9c7b74b632a05c9d52a558c444cdcf99e0292eae4b1",
+      "weight_bps": 1331
+    },
+    {
+      "contributor_id": "did:zoo:org_b:contrib-06",
+      "delta_hash": "7bbcf116adcfad3ef8f7fb2efd9da4999e471ddbf83eb0e49b7604fdc317d255",
+      "weight_bps": 1327
+    },
+    {
+      "contributor_id": "did:zoo:org_b:contrib-07",
+      "delta_hash": "876e87db8c0a8bb464fdef2f109b83ab87fbc4c0d8f06a798347ca6a70e550b5",
+      "weight_bps": 1400
+    }
+  ],
+  "fork_redaction_summary": {
+    "parent_total_records": 4,
+    "child_kept_records": 2,
+    "redacted_records": 2,
+    "parent_total_grants": 3,
+    "child_kept_grants": 1,
+    "stripped_grants": 2,
+    "keys_rotated": true,
+    "acl_leaks_detected": 0
+  }
+}
