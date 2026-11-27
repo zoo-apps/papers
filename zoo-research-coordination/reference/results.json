@@ -1,0 +1,333 @@
+{
+  "schema_version": "federated-a2a.v1",
+  "spec_version": "1.0.0",
+  "seed": 1352,
+  "audit_merkle_root": "b89d26031a589c29aaca4822c2e6155e3f780f4af8b5c3b5ac8cd8e115c4a3d8",
+  "wire_transcript_root": "2e239c787ac5c41ebc13f3ef9840ba685736df867b8fe92783b45a8704001115",
+  "total_wire_frames": 8,
+  "total_wire_bytes": 21650,
+  "credential_leak_bytes": 0,
+  "private_memory_leak_bytes": 0,
+  "raw_trace_leak_bytes": 0,
+  "live_stages_passed": 7,
+  "live_stages_total": 7,
+  "attacks_detected": 18,
+  "attacks_total": 18,
+  "positive_cases_pass": 1,
+  "live_sse_events_count": 4,
+  "egress_blocks_count": 1,
+  "live_http_benchmarks": [
+    {
+      "payload_samples": 16,
+      "payload_bytes": 1541,
+      "iterations": 60,
+      "passthrough_median_us": 267,
+      "passthrough_p95_us": 4870,
+      "passthrough_tasks_per_sec": 3331,
+      "full_boundary_median_us": 1164,
+      "full_boundary_p95_us": 5979,
+      "full_boundary_tasks_per_sec": 654,
+      "overhead_bps": 43595,
+      "regime": "bounded_security_overhead"
+    },
+    {
+      "payload_samples": 128,
+      "payload_bytes": 3338,
+      "iterations": 60,
+      "passthrough_median_us": 197,
+      "passthrough_p95_us": 421,
+      "passthrough_tasks_per_sec": 3212,
+      "full_boundary_median_us": 1934,
+      "full_boundary_p95_us": 6506,
+      "full_boundary_tasks_per_sec": 457,
+      "overhead_bps": 98172,
+      "regime": "bounded_security_overhead"
+    },
+    {
+      "payload_samples": 512,
+      "payload_bytes": 9482,
+      "iterations": 60,
+      "passthrough_median_us": 497,
+      "passthrough_p95_us": 5159,
+      "passthrough_tasks_per_sec": 1527,
+      "full_boundary_median_us": 5120,
+      "full_boundary_p95_us": 11403,
+      "full_boundary_tasks_per_sec": 184,
+      "overhead_bps": 103018,
+      "regime": "honest_negative_linear_dlp_and_canonical_overhead"
+    }
+  ],
+  "verification_report": {
+    "schema_version": "federated-a2a.v1",
+    "spec_version": "1.0.0",
+    "seed": 1352,
+    "all_stages_valid": true,
+    "all_adversarial_pass": true,
+    "attacks_detected": 18,
+    "attacks_total": 18,
+    "positive_cases_pass": 1,
+    "wire_audit": {
+      "total_frames": 8,
+      "total_wire_bytes": 21650,
+      "credential_leak_bytes": 0,
+      "private_memory_leak_bytes": 0,
+      "raw_trace_leak_bytes": 0,
+      "wire_transcript_root": "2e239c787ac5c41ebc13f3ef9840ba685736df867b8fe92783b45a8704001115",
+      "all_frame_hashes_valid": true,
+      "zero_boundary_leakage": true
+    },
+    "stage_outcomes": [
+      {
+        "stage": "1_discover_agent_cards",
+        "valid": true,
+        "code": "OK",
+        "task_state": "discovered",
+        "wire_frames_checked": 2,
+        "credential_leak_bytes": 0,
+        "private_memory_leak_bytes": 0,
+        "raw_trace_leak_bytes": 0,
+        "recompute_verified": false
+      },
+      {
+        "stage": "2_alpha_to_beta_compare_task",
+        "valid": true,
+        "code": "OK",
+        "task_state": "completed",
+        "wire_frames_checked": 1,
+        "credential_leak_bytes": 0,
+        "private_memory_leak_bytes": 0,
+        "raw_trace_leak_bytes": 0,
+        "recompute_verified": true
+      },
+      {
+        "stage": "3_alpha_polls_and_verifies_result",
+        "valid": true,
+        "code": "OK",
+        "task_state": "completed",
+        "wire_frames_checked": 1,
+        "credential_leak_bytes": 0,
+        "private_memory_leak_bytes": 0,
+        "raw_trace_leak_bytes": 0,
+        "recompute_verified": true
+      },
+      {
+        "stage": "4_beta_to_alpha_correlate_sse",
+        "valid": true,
+        "code": "OK",
+        "task_state": "completed",
+        "wire_frames_checked": 1,
+        "credential_leak_bytes": 0,
+        "private_memory_leak_bytes": 0,
+        "raw_trace_leak_bytes": 0,
+        "recompute_verified": true
+      },
+      {
+        "stage": "5_live_prompt_injection_egress_block",
+        "valid": true,
+        "code": "OK",
+        "task_state": "rejected",
+        "wire_frames_checked": 1,
+        "credential_leak_bytes": 0,
+        "private_memory_leak_bytes": 0,
+        "raw_trace_leak_bytes": 0,
+        "recompute_verified": false
+      },
+      {
+        "stage": "6_live_task_cancel_lifecycle",
+        "valid": true,
+        "code": "OK",
+        "task_state": "canceled",
+        "wire_frames_checked": 2,
+        "credential_leak_bytes": 0,
+        "private_memory_leak_bytes": 0,
+        "raw_trace_leak_bytes": 0,
+        "recompute_verified": false
+      },
+      {
+        "stage": "7_wire_transcript_boundary_audit",
+        "valid": true,
+        "code": "OK",
+        "task_state": "audited",
+        "wire_frames_checked": 8,
+        "credential_leak_bytes": 0,
+        "private_memory_leak_bytes": 0,
+        "raw_trace_leak_bytes": 0,
+        "recompute_verified": false
+      }
+    ],
+    "adversarial_results": [
+      {
+        "case_id": "ATK-01",
+        "category": "egress_credential_leak",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_CREDENTIAL_LEAK_DETECTED",
+        "actual_code": "ERR_CREDENTIAL_LEAK_DETECTED",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-02",
+        "category": "egress_memory_leak",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_PRIVATE_MEMORY_LEAK",
+        "actual_code": "ERR_PRIVATE_MEMORY_LEAK",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-03",
+        "category": "egress_raw_trace_leak",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_RAW_TRACE_LEAK",
+        "actual_code": "ERR_RAW_TRACE_LEAK",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-04",
+        "category": "ingress_memory_smuggling",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_PRIVATE_MEMORY_REF_FORBIDDEN",
+        "actual_code": "ERR_PRIVATE_MEMORY_REF_FORBIDDEN",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-05",
+        "category": "encoded_exfiltration",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_ENCODED_SECRET_LEAK",
+        "actual_code": "ERR_ENCODED_SECRET_LEAK",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-06",
+        "category": "agent_card_forgery",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_AGENT_CARD_SIG_INVALID",
+        "actual_code": "ERR_AGENT_CARD_SIG_INVALID",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-07",
+        "category": "agent_card_cred_leak",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_AGENT_CARD_CRED_LEAK",
+        "actual_code": "ERR_AGENT_CARD_CRED_LEAK",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-08",
+        "category": "envelope_sig_tampered",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_ENVELOPE_SIG_INVALID",
+        "actual_code": "ERR_ENVELOPE_SIG_INVALID",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-09",
+        "category": "spoofed_org_identity",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_SPOOFED_ORG_IDENTITY",
+        "actual_code": "ERR_SPOOFED_ORG_IDENTITY",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-10",
+        "category": "cross_org_audience_replay",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_AUDIENCE_MISMATCH",
+        "actual_code": "ERR_AUDIENCE_MISMATCH",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-11",
+        "category": "expired_envelope",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_ENVELOPE_EXPIRED",
+        "actual_code": "ERR_ENVELOPE_EXPIRED",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-12",
+        "category": "nonce_replay",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_NONCE_REPLAY",
+        "actual_code": "ERR_NONCE_REPLAY",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-13",
+        "category": "scope_escalation",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_SCOPE_ESCALATION",
+        "actual_code": "ERR_SCOPE_ESCALATION",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-14",
+        "category": "ai_governance_boundary",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_AI_VOTING_RULE_FORBIDDEN",
+        "actual_code": "ERR_AI_VOTING_RULE_FORBIDDEN",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-15",
+        "category": "ai_governance_boundary",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_AI_TREASURY_FORBIDDEN",
+        "actual_code": "ERR_AI_TREASURY_FORBIDDEN",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-16",
+        "category": "ai_governance_boundary",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_AI_SELF_CERTIFY_FORBIDDEN",
+        "actual_code": "ERR_AI_SELF_CERTIFY_FORBIDDEN",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-17",
+        "category": "scientific_verification",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_RESULT_RECOMPUTE_MISMATCH",
+        "actual_code": "ERR_RESULT_RECOMPUTE_MISMATCH",
+        "matched": true
+      },
+      {
+        "case_id": "ATK-18",
+        "category": "licensing",
+        "expected_valid": false,
+        "actual_valid": false,
+        "expected_code": "ERR_LICENSE_UNREVIEWED",
+        "actual_code": "ERR_LICENSE_UNREVIEWED",
+        "matched": true
+      },
+      {
+        "case_id": "POS-19",
+        "category": "ai_governance_boundary",
+        "expected_valid": true,
+        "actual_valid": true,
+        "expected_code": "OK",
+        "actual_code": "OK",
+        "matched": true
+      }
+    ],
+    "audit_merkle_root": "b89d26031a589c29aaca4822c2e6155e3f780f4af8b5c3b5ac8cd8e115c4a3d8"
+  }
+}

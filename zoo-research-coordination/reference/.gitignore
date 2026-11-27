@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+*.test
+*.out
+go/a2a-verify
+go/a2a-bench

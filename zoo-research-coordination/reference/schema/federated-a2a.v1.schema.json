@@ -1,0 +1,580 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zoo.ngo/schemas/federated-a2a.v1.schema.json",
+  "title": "Federated Agent Organizations (A2A) Exchange Suite (federated-a2a.v1)",
+  "description": "JSON Schema Draft 2020-12 for cross-organizational Apache-2.0 A2A research exchange transcripts, AgentCards, signed envelopes, deterministic ZHL receipts, and boundary isolation audits (zoo-apps/papers#4, HIP-1352).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "spec_version",
+    "seed",
+    "generated_from",
+    "org_policies",
+    "agent_cards",
+    "boundary_probes",
+    "wire_transcript",
+    "live_stages",
+    "adversarial_cases"
+  ],
+  "properties": {
+    "schema_version": { "const": "federated-a2a.v1" },
+    "spec_version": { "const": "1.0.0" },
+    "seed": { "type": "integer" },
+    "generated_from": { "type": "string", "minLength": 1 },
+    "org_policies": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/$defs/OrgGovernancePolicy" }
+    },
+    "agent_cards": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/$defs/AgentCard" }
+    },
+    "boundary_probes": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/$defs/BoundaryProbeSpec" }
+    },
+    "wire_transcript": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/WireFrame" }
+    },
+    "live_stages": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/LiveExchangeStage" }
+    },
+    "adversarial_cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/AdversarialCase" }
+    }
+  },
+  "$defs": {
+    "Hex64": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "Hex128": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{128}$"
+    },
+    "Principal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "org_id", "role", "public_key_hex"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "org_id": { "type": "string", "minLength": 1 },
+        "role": { "enum": ["ORG_GATEWAY", "HUMAN_REVIEWER", "COUNCIL_MEMBER", "AI_AGENT"] },
+        "public_key_hex": { "$ref": "#/$defs/Hex64" }
+      }
+    },
+    "A2ASkill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "description", "allowed_tiers", "deterministic", "max_payload_bytes"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "allowed_tiers": { "type": "array", "items": { "type": "string" } },
+        "deterministic": { "type": "boolean" },
+        "max_payload_bytes": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "A2ACapabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["streaming", "push_notifications", "state_transition_history"],
+      "properties": {
+        "streaming": { "type": "boolean" },
+        "push_notifications": { "type": "boolean" },
+        "state_transition_history": { "type": "boolean" }
+      }
+    },
+    "OrgGovernancePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "org_id",
+        "policy_version",
+        "allowed_skills",
+        "allowed_licenses",
+        "allowed_exchange_tiers",
+        "denied_scopes",
+        "ai_agent_can_redefine_voting",
+        "ai_agent_can_authorize_spend",
+        "ai_agent_can_self_certify",
+        "principals",
+        "policy_hash"
+      ],
+      "properties": {
+        "org_id": { "type": "string", "minLength": 1 },
+        "policy_version": { "type": "string", "minLength": 1 },
+        "allowed_skills": { "type": "array", "items": { "type": "string" } },
+        "allowed_licenses": { "type": "array", "items": { "type": "string" } },
+        "allowed_exchange_tiers": { "type": "array", "items": { "type": "string" } },
+        "denied_scopes": { "type": "array", "items": { "type": "string" } },
+        "ai_agent_can_redefine_voting": { "const": false },
+        "ai_agent_can_authorize_spend": { "const": false },
+        "ai_agent_can_self_certify": { "const": false },
+        "principals": { "type": "array", "items": { "$ref": "#/$defs/Principal" } },
+        "policy_hash": { "$ref": "#/$defs/Hex64" }
+      }
+    },
+    "BoundaryCommitment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "org_id",
+        "credential_count",
+        "credential_vault_root",
+        "private_memory_count",
+        "private_memory_vault_root",
+        "raw_trace_count",
+        "raw_trace_vault_root",
+        "egress_firewall_enforced"
+      ],
+      "properties": {
+        "org_id": { "type": "string", "minLength": 1 },
+        "credential_count": { "type": "integer", "minimum": 0 },
+        "credential_vault_root": { "$ref": "#/$defs/Hex64" },
+        "private_memory_count": { "type": "integer", "minimum": 0 },
+        "private_memory_vault_root": { "$ref": "#/$defs/Hex64" },
+        "raw_trace_count": { "type": "integer", "minimum": 0 },
+        "raw_trace_vault_root": { "$ref": "#/$defs/Hex64" },
+        "egress_firewall_enforced": { "type": "boolean" }
+      }
+    },
+    "AgentCard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "protocol_version",
+        "org_id",
+        "name",
+        "description",
+        "logical_url",
+        "gateway_principal",
+        "capabilities",
+        "skills",
+        "policy_digest",
+        "boundary_commitment",
+        "card_hash",
+        "org_signature_hex"
+      ],
+      "properties": {
+        "schema_version": { "const": "federated-a2a.v1" },
+        "protocol_version": { "type": "string", "minLength": 1 },
+        "org_id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "logical_url": { "type": "string", "format": "uri" },
+        "gateway_principal": { "$ref": "#/$defs/Principal" },
+        "capabilities": { "$ref": "#/$defs/A2ACapabilities" },
+        "skills": { "type": "array", "items": { "$ref": "#/$defs/A2ASkill" } },
+        "policy_digest": { "$ref": "#/$defs/Hex64" },
+        "boundary_commitment": { "$ref": "#/$defs/BoundaryCommitment" },
+        "card_hash": { "$ref": "#/$defs/Hex64" },
+        "org_signature_hex": { "$ref": "#/$defs/Hex128" }
+      }
+    },
+    "LicenseAttachment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "artifact_kind", "license_id", "license_reviewed", "reviewer_id"],
+      "properties": {
+        "artifact_id": { "type": "string" },
+        "artifact_kind": { "type": "string" },
+        "license_id": { "type": "string" },
+        "license_reviewed": { "type": "boolean" },
+        "reviewer_id": { "type": "string" }
+      }
+    },
+    "ExperimentCommitment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commitment_id",
+        "zhl_template",
+        "hypothesis",
+        "alpha_bps",
+        "min_effect_micro",
+        "input_tier",
+        "input_record_refs",
+        "group_a_micro",
+        "group_b_micro",
+        "commitment_hash"
+      ],
+      "properties": {
+        "commitment_id": { "type": "string" },
+        "zhl_template": { "enum": ["COMPARE", "CORRELATE"] },
+        "hypothesis": { "type": "string" },
+        "alpha_bps": { "type": "integer" },
+        "min_effect_micro": { "type": "integer" },
+        "input_tier": { "type": "string" },
+        "input_record_refs": { "type": "array", "items": { "type": "string" } },
+        "group_a_micro": { "type": "array", "items": { "type": "integer" } },
+        "group_b_micro": { "type": "array", "items": { "type": "integer" } },
+        "commitment_hash": { "$ref": "#/$defs/Hex64" }
+      }
+    },
+    "TaskPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "skill_id",
+        "prompt_note",
+        "actor_id",
+        "actor_role",
+        "self_certified",
+        "defer_completion",
+        "commitment",
+        "licenses"
+      ],
+      "properties": {
+        "task_id": { "type": "string" },
+        "skill_id": { "type": "string" },
+        "prompt_note": { "type": "string" },
+        "actor_id": { "type": "string" },
+        "actor_role": { "type": "string" },
+        "self_certified": { "type": "boolean" },
+        "defer_completion": { "type": "boolean" },
+        "commitment": { "$ref": "#/$defs/ExperimentCommitment" },
+        "licenses": { "type": "array", "items": { "$ref": "#/$defs/LicenseAttachment" } }
+      }
+    },
+    "SignedA2AEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "envelope_id",
+        "method",
+        "sender_org_id",
+        "audience_org_id",
+        "signer_id",
+        "scope",
+        "task_nonce",
+        "issued_at",
+        "expires_at",
+        "payload",
+        "envelope_hash",
+        "org_sig_hex"
+      ],
+      "properties": {
+        "envelope_id": { "type": "string" },
+        "method": { "enum": ["tasks/send", "tasks/sendSubscribe", "tasks/get", "tasks/cancel"] },
+        "sender_org_id": { "type": "string" },
+        "audience_org_id": { "type": "string" },
+        "signer_id": { "type": "string" },
+        "scope": { "type": "string" },
+        "task_nonce": { "type": "string" },
+        "issued_at": { "type": "integer" },
+        "expires_at": { "type": "integer" },
+        "payload": { "$ref": "#/$defs/TaskPayload" },
+        "envelope_hash": { "$ref": "#/$defs/Hex64" },
+        "org_sig_hex": { "$ref": "#/$defs/Hex128" }
+      }
+    },
+    "ScientificResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "commitment_hash",
+        "zhl_template",
+        "sample_count",
+        "mean_a_micro",
+        "mean_b_micro",
+        "var_a_micro",
+        "var_b_micro",
+        "effect_size_micro",
+        "stat_micro",
+        "significant",
+        "output_tier",
+        "summary_note",
+        "result_hash"
+      ],
+      "properties": {
+        "task_id": { "type": "string" },
+        "commitment_hash": { "$ref": "#/$defs/Hex64" },
+        "zhl_template": { "enum": ["COMPARE", "CORRELATE"] },
+        "sample_count": { "type": "integer" },
+        "mean_a_micro": { "type": "integer" },
+        "mean_b_micro": { "type": "integer" },
+        "var_a_micro": { "type": "integer" },
+        "var_b_micro": { "type": "integer" },
+        "effect_size_micro": { "type": "integer" },
+        "stat_micro": { "type": "integer" },
+        "significant": { "type": "boolean" },
+        "output_tier": { "type": "string" },
+        "summary_note": { "type": "string" },
+        "result_hash": { "$ref": "#/$defs/Hex64" }
+      }
+    },
+    "StateTransition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "timestamp", "note"],
+      "properties": {
+        "state": { "enum": ["submitted", "working", "completed", "failed", "rejected", "canceled"] },
+        "timestamp": { "type": "integer" },
+        "note": { "type": "string" }
+      }
+    },
+    "EgressBlockEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "org_id",
+        "task_id",
+        "timestamp",
+        "reason_code",
+        "blocked_class",
+        "blocked_digest",
+        "bytes_blocked",
+        "wire_bytes_sent",
+        "event_sig_hex"
+      ],
+      "properties": {
+        "event_id": { "type": "string" },
+        "org_id": { "type": "string" },
+        "task_id": { "type": "string" },
+        "timestamp": { "type": "integer" },
+        "reason_code": { "type": "string" },
+        "blocked_class": { "type": "string" },
+        "blocked_digest": { "$ref": "#/$defs/Hex64" },
+        "bytes_blocked": { "type": "integer", "minimum": 1 },
+        "wire_bytes_sent": { "type": "integer", "minimum": 0 },
+        "event_sig_hex": { "$ref": "#/$defs/Hex128" }
+      }
+    },
+    "TaskResultReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "task_id",
+        "executor_org_id",
+        "requester_org_id",
+        "signer_id",
+        "state",
+        "error_code",
+        "completed_at",
+        "transitions",
+        "egress_audit_passed",
+        "receipt_hash",
+        "executor_sig_hex"
+      ],
+      "properties": {
+        "receipt_id": { "type": "string" },
+        "task_id": { "type": "string" },
+        "executor_org_id": { "type": "string" },
+        "requester_org_id": { "type": "string" },
+        "signer_id": { "type": "string" },
+        "state": { "enum": ["submitted", "working", "completed", "failed", "rejected", "canceled"] },
+        "error_code": { "type": "string" },
+        "completed_at": { "type": "integer" },
+        "transitions": { "type": "array", "items": { "$ref": "#/$defs/StateTransition" } },
+        "result": { "$ref": "#/$defs/ScientificResult" },
+        "egress_block": { "$ref": "#/$defs/EgressBlockEvent" },
+        "egress_audit_passed": { "type": "boolean" },
+        "receipt_hash": { "$ref": "#/$defs/Hex64" },
+        "executor_sig_hex": { "$ref": "#/$defs/Hex128" }
+      }
+    },
+    "AdvisoryAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "advisory_id",
+        "org_id",
+        "agent_id",
+        "task_id",
+        "binding",
+        "recommendation",
+        "estimated_value_bps",
+        "conflict_flags",
+        "signature_hex"
+      ],
+      "properties": {
+        "advisory_id": { "type": "string" },
+        "org_id": { "type": "string" },
+        "agent_id": { "type": "string" },
+        "task_id": { "type": "string" },
+        "binding": { "type": "boolean" },
+        "recommendation": { "type": "string" },
+        "estimated_value_bps": { "type": "integer" },
+        "conflict_flags": { "type": "array", "items": { "type": "string" } },
+        "signature_hex": { "$ref": "#/$defs/Hex128" }
+      }
+    },
+    "ExperimentAcceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "acceptance_id",
+        "org_id",
+        "task_id",
+        "receipt_hash",
+        "recomputed_hash",
+        "reviewer_id",
+        "reviewer_role",
+        "accepted_at",
+        "advisory_ref_id",
+        "acceptance_sig_hex"
+      ],
+      "properties": {
+        "acceptance_id": { "type": "string" },
+        "org_id": { "type": "string" },
+        "task_id": { "type": "string" },
+        "receipt_hash": { "$ref": "#/$defs/Hex64" },
+        "recomputed_hash": { "$ref": "#/$defs/Hex64" },
+        "reviewer_id": { "type": "string" },
+        "reviewer_role": { "type": "string" },
+        "accepted_at": { "type": "integer" },
+        "advisory_ref_id": { "type": "string" },
+        "acceptance_sig_hex": { "$ref": "#/$defs/Hex128" }
+      }
+    },
+    "GovernanceAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "org_id",
+        "action_type",
+        "proposer_id",
+        "proposer_role",
+        "amount_micro",
+        "summary",
+        "signature_hex"
+      ],
+      "properties": {
+        "action_id": { "type": "string" },
+        "org_id": { "type": "string" },
+        "action_type": { "type": "string" },
+        "proposer_id": { "type": "string" },
+        "proposer_role": { "type": "string" },
+        "amount_micro": { "type": "integer" },
+        "summary": { "type": "string" },
+        "signature_hex": { "$ref": "#/$defs/Hex128" }
+      }
+    },
+    "WireFrame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frame_id",
+        "stage",
+        "from_org_id",
+        "to_org_id",
+        "http_method",
+        "path",
+        "content_type",
+        "http_status",
+        "request_body",
+        "response_body",
+        "request_sha256",
+        "response_sha256",
+        "request_bytes",
+        "response_bytes"
+      ],
+      "properties": {
+        "frame_id": { "type": "string" },
+        "stage": { "type": "string" },
+        "from_org_id": { "type": "string" },
+        "to_org_id": { "type": "string" },
+        "http_method": { "enum": ["GET", "POST"] },
+        "path": { "type": "string" },
+        "content_type": { "type": "string" },
+        "http_status": { "type": "integer" },
+        "request_body": { "type": "string" },
+        "response_body": { "type": "string" },
+        "request_sha256": { "$ref": "#/$defs/Hex64" },
+        "response_sha256": { "$ref": "#/$defs/Hex64" },
+        "request_bytes": { "type": "integer", "minimum": 0 },
+        "response_bytes": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "BoundaryProbeSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "org_id",
+        "credential_probes",
+        "private_memory_probes",
+        "private_memory_ref_ids",
+        "raw_trace_probes"
+      ],
+      "properties": {
+        "org_id": { "type": "string" },
+        "credential_probes": { "type": "array", "items": { "type": "string" } },
+        "private_memory_probes": { "type": "array", "items": { "type": "string" } },
+        "private_memory_ref_ids": { "type": "array", "items": { "type": "string" } },
+        "raw_trace_probes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "LiveExchangeStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage",
+        "description",
+        "verified_at",
+        "expected_state",
+        "expected_error_code",
+        "wire_frame_ids"
+      ],
+      "properties": {
+        "stage": { "type": "string" },
+        "description": { "type": "string" },
+        "verified_at": { "type": "integer" },
+        "envelope": { "$ref": "#/$defs/SignedA2AEnvelope" },
+        "receipt": { "$ref": "#/$defs/TaskResultReceipt" },
+        "advisory": { "$ref": "#/$defs/AdvisoryAssessment" },
+        "acceptance": { "$ref": "#/$defs/ExperimentAcceptance" },
+        "expected_state": { "type": "string" },
+        "expected_error_code": { "type": "string" },
+        "wire_frame_ids": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "AdversarialCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "category",
+        "target",
+        "description",
+        "verified_at",
+        "expected_valid",
+        "expected_code"
+      ],
+      "properties": {
+        "case_id": { "type": "string" },
+        "category": { "type": "string" },
+        "target": { "enum": ["agent_card", "envelope", "receipt", "governance", "advisory"] },
+        "description": { "type": "string" },
+        "verified_at": { "type": "integer" },
+        "expected_valid": { "type": "boolean" },
+        "expected_code": { "type": "string" },
+        "receiver_org_id": { "type": "string" },
+        "prior_nonces": { "type": "array", "items": { "type": "string" } },
+        "agent_card": { "$ref": "#/$defs/AgentCard" },
+        "envelope": { "$ref": "#/$defs/SignedA2AEnvelope" },
+        "receipt": { "$ref": "#/$defs/TaskResultReceipt" },
+        "acceptance": { "$ref": "#/$defs/ExperimentAcceptance" },
+        "governance_action": { "$ref": "#/$defs/GovernanceAction" },
+        "advisory": { "$ref": "#/$defs/AdvisoryAssessment" }
+      }
+    }
+  }
+}
