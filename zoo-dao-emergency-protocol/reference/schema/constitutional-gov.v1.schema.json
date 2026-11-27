@@ -1,0 +1,403 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zoo.ngo/schemas/constitutional-gov.v1.schema.json",
+  "title": "Constitutional Governance & Formal Protocol Verification Bundle (constitutional-gov.v1)",
+  "description": "Versioned JSON Schema (Draft 2020-12) for constitutional-gov.v1 governance states, signed transitions, rule-conflict witnesses, bounded model-checking reports, and reproducible benchmark results.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "spec_version",
+    "seed",
+    "constants",
+    "adversarial_suite",
+    "model_checker",
+    "mutation_audit",
+    "negative_regimes",
+    "rego_bundle",
+    "audit_merkle_root"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "constitutional-gov.v1"
+    },
+    "spec_version": {
+      "const": "1.0.0"
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "constants": {
+      "type": "object",
+      "required": [
+        "max_delegation_depth",
+        "max_emergency_duration_sec",
+        "renewal_cooldown_sec",
+        "appeal_window_sec",
+        "min_timelock_treasury_sec",
+        "min_timelock_rule_amend_sec",
+        "quorum_standard_bps",
+        "quorum_meta_gov_bps",
+        "quorum_floor_bps",
+        "supermajority_emergency_bps",
+        "supermajority_meta_gov_bps",
+        "treasury_emergency_cap_bps"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "max_delegation_depth": { "type": "integer", "minimum": 1, "maximum": 3 },
+        "max_emergency_duration_sec": { "type": "integer", "const": 259200 },
+        "renewal_cooldown_sec": { "type": "integer", "minimum": 1 },
+        "appeal_window_sec": { "type": "integer", "minimum": 1 },
+        "min_timelock_treasury_sec": { "type": "integer", "minimum": 1 },
+        "min_timelock_rule_amend_sec": { "type": "integer", "minimum": 1 },
+        "quorum_standard_bps": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "quorum_meta_gov_bps": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "quorum_floor_bps": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "supermajority_emergency_bps": { "type": "integer", "minimum": 6700, "maximum": 10000 },
+        "supermajority_meta_gov_bps": { "type": "integer", "minimum": 7500, "maximum": 10000 },
+        "treasury_emergency_cap_bps": { "type": "integer", "minimum": 0, "maximum": 500 }
+      }
+    },
+    "adversarial_suite": {
+      "type": "object",
+      "required": ["total_cases", "adversarial_deny_cases", "positive_allow_cases", "passed", "failed", "cases"],
+      "additionalProperties": false,
+      "properties": {
+        "total_cases": { "type": "integer", "minimum": 40 },
+        "adversarial_deny_cases": { "type": "integer", "minimum": 30 },
+        "positive_allow_cases": { "type": "integer", "minimum": 1 },
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AdversarialCase" }
+        }
+      }
+    },
+    "model_checker": {
+      "type": "object",
+      "required": [
+        "bfs_max_depth",
+        "bfs_states_explored",
+        "bfs_transitions_checked",
+        "fuzz_traces",
+        "fuzz_steps_checked",
+        "total_states_and_transitions",
+        "invariant_violations",
+        "invariants_checked"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "bfs_max_depth": { "type": "integer", "minimum": 1 },
+        "bfs_states_explored": { "type": "integer", "minimum": 1 },
+        "bfs_transitions_checked": { "type": "integer", "minimum": 1 },
+        "fuzz_traces": { "type": "integer", "minimum": 1 },
+        "fuzz_steps_checked": { "type": "integer", "minimum": 1 },
+        "total_states_and_transitions": { "type": "integer", "minimum": 50000 },
+        "invariant_violations": { "type": "integer", "minimum": 0 },
+        "invariants_checked": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^INV-(0[1-9]|10)$" },
+          "minItems": 10,
+          "maxItems": 10
+        }
+      }
+    },
+    "mutation_audit": {
+      "type": "object",
+      "required": ["total_mutants", "mutants_killed", "kill_rate_bps", "mutants"],
+      "additionalProperties": false,
+      "properties": {
+        "total_mutants": { "type": "integer", "minimum": 10 },
+        "mutants_killed": { "type": "integer", "minimum": 0 },
+        "kill_rate_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "mutants": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/MutationResult" }
+        }
+      }
+    },
+    "negative_regimes": {
+      "type": "object",
+      "required": [
+        "neg_first_match_masks_rule_conflict",
+        "neg_fail_closed_liveness_deadlock",
+        "neg_bounded_mc_depth_horizon"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "neg_first_match_masks_rule_conflict": {
+          "type": "object",
+          "required": [
+            "trials",
+            "naive_first_match_unsafe_allows",
+            "naive_unsafe_allow_bps",
+            "fail_closed_blocked",
+            "fail_closed_block_bps",
+            "conflict_witnesses_emitted"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "trials": { "type": "integer", "minimum": 1 },
+            "naive_first_match_unsafe_allows": { "type": "integer", "minimum": 0 },
+            "naive_unsafe_allow_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+            "fail_closed_blocked": { "type": "integer", "minimum": 0 },
+            "fail_closed_block_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+            "conflict_witnesses_emitted": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "neg_fail_closed_liveness_deadlock": {
+          "type": "object",
+          "required": [
+            "urgent_valid_ops",
+            "executed_under_charter_conflict",
+            "executed_under_defcon1_pause",
+            "liveness_under_conflict_bps",
+            "liveness_under_pause_bps",
+            "safety_violations",
+            "auto_sunset_recovery_sec"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "urgent_valid_ops": { "type": "integer", "minimum": 1 },
+            "executed_under_charter_conflict": { "type": "integer", "minimum": 0 },
+            "executed_under_defcon1_pause": { "type": "integer", "minimum": 0 },
+            "liveness_under_conflict_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+            "liveness_under_pause_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+            "safety_violations": { "type": "integer", "const": 0 },
+            "auto_sunset_recovery_sec": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "neg_bounded_mc_depth_horizon": {
+          "type": "object",
+          "required": ["planted_bug_min_depth", "depth_probes", "unbounded_proof_required"],
+          "additionalProperties": false,
+          "properties": {
+            "planted_bug_min_depth": { "type": "integer", "minimum": 8 },
+            "unbounded_proof_required": { "type": "boolean", "const": true },
+            "depth_probes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["max_depth", "states_explored", "bug_detected", "counterexample_len"],
+                "additionalProperties": false,
+                "properties": {
+                  "max_depth": { "type": "integer", "minimum": 1 },
+                  "states_explored": { "type": "integer", "minimum": 1 },
+                  "bug_detected": { "type": "boolean" },
+                  "counterexample_len": { "type": "integer", "minimum": 0 }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "rego_bundle": {
+      "type": "object",
+      "required": ["rego_version", "files", "opa_cli_available", "bundle_sha256"],
+      "additionalProperties": false,
+      "properties": {
+        "rego_version": { "const": "v1" },
+        "files": { "type": "array", "items": { "type": "string" } },
+        "opa_cli_available": { "type": "boolean" },
+        "bundle_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "audit_merkle_root": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "ActorRole": {
+      "type": "string",
+      "enum": ["HUMAN_MEMBER", "COUNCIL_MEMBER", "APPEAL_JUDGE", "AI_AGENT"]
+    },
+    "ActorStatus": {
+      "type": "string",
+      "enum": ["ACTIVE", "SUSPENDED", "REVOKED"]
+    },
+    "RuleTier": {
+      "type": "string",
+      "enum": ["CONSTITUTIONAL", "EMERGENCY_SAFETY", "CHARTER_STATUTE", "ADVISORY_POLICY"]
+    },
+    "RuleEffect": {
+      "type": "string",
+      "enum": ["ALLOW", "DENY"]
+    },
+    "Verdict": {
+      "type": "string",
+      "enum": ["ALLOW", "DENY"]
+    },
+    "Actor": {
+      "type": "object",
+      "required": ["id", "role", "pubkey_hex", "voting_weight", "status", "revoked_at", "last_nonce", "base_scopes"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "role": { "$ref": "#/$defs/ActorRole" },
+        "pubkey_hex": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "voting_weight": { "type": "integer", "minimum": 0 },
+        "status": { "$ref": "#/$defs/ActorStatus" },
+        "revoked_at": { "type": "integer", "minimum": 0 },
+        "last_nonce": { "type": "integer", "minimum": 0 },
+        "base_scopes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "Delegation": {
+      "type": "object",
+      "required": ["id", "from", "to", "scopes", "created_at", "expires_at", "revoked", "revoked_at"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "from": { "type": "string", "minLength": 1 },
+        "to": { "type": "string", "minLength": 1 },
+        "scopes": { "type": "array", "items": { "type": "string" } },
+        "created_at": { "type": "integer", "minimum": 0 },
+        "expires_at": { "type": "integer", "minimum": 0 },
+        "revoked": { "type": "boolean" },
+        "revoked_at": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "PolicyRule": {
+      "type": "object",
+      "required": ["id", "tier", "action_type", "target", "effect", "condition", "rationale"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "tier": { "$ref": "#/$defs/RuleTier" },
+        "action_type": { "type": "string", "minLength": 1 },
+        "target": { "type": "string", "minLength": 1 },
+        "effect": { "$ref": "#/$defs/RuleEffect" },
+        "condition": { "type": "string", "minLength": 1 },
+        "rationale": { "type": "string" }
+      }
+    },
+    "ConflictWitness": {
+      "type": "object",
+      "required": ["tier", "allow_rule_ids", "deny_rule_ids", "action_id", "action_type", "target", "epoch", "resolution"],
+      "additionalProperties": false,
+      "properties": {
+        "tier": { "$ref": "#/$defs/RuleTier" },
+        "allow_rule_ids": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "deny_rule_ids": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "action_id": { "type": "string" },
+        "action_type": { "type": "string" },
+        "target": { "type": "string" },
+        "epoch": { "type": "integer", "minimum": 0 },
+        "resolution": { "const": "DENY_RULE_CONFLICT" }
+      }
+    },
+    "SignerSig": {
+      "type": "object",
+      "required": ["actor_id", "nonce", "signature_hex"],
+      "additionalProperties": false,
+      "properties": {
+        "actor_id": { "type": "string", "minLength": 1 },
+        "nonce": { "type": "integer", "minimum": 1 },
+        "signature_hex": { "type": "string", "pattern": "^[0-9a-f]{128}$" }
+      }
+    },
+    "GovernanceAction": {
+      "type": "object",
+      "required": ["id", "type", "actor_id", "target", "epoch", "signers"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "minLength": 1 },
+        "actor_id": { "type": "string", "minLength": 1 },
+        "target": { "type": "string" },
+        "epoch": { "type": "integer", "minimum": 0 },
+        "amount": { "type": "integer", "minimum": 0 },
+        "duration_sec": { "type": "integer", "minimum": 0 },
+        "scopes": { "type": "array", "items": { "type": "string" } },
+        "delegation_id": { "type": "string" },
+        "proposal_id": { "type": "string" },
+        "contested_id": { "type": "string" },
+        "experiment_author_id": { "type": "string" },
+        "appeal_outcome": { "type": "string" },
+        "emergency_bypass": { "type": "boolean" },
+        "new_rule": { "$ref": "#/$defs/PolicyRule" },
+        "signers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SignerSig" }
+        }
+      }
+    },
+    "StateSnapshot": {
+      "type": "object",
+      "required": [
+        "epoch",
+        "treasury_balance",
+        "genesis_active_weight",
+        "actors",
+        "delegations",
+        "rules",
+        "queued_actions",
+        "contested_actions",
+        "emergency",
+        "used_nonces"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "epoch": { "type": "integer", "minimum": 0 },
+        "treasury_balance": { "type": "integer", "minimum": 0 },
+        "genesis_active_weight": { "type": "integer", "minimum": 0 },
+        "actors": { "type": "array", "items": { "$ref": "#/$defs/Actor" } },
+        "delegations": { "type": "array", "items": { "$ref": "#/$defs/Delegation" } },
+        "rules": { "type": "array", "items": { "$ref": "#/$defs/PolicyRule" } },
+        "queued_actions": { "type": "array", "items": { "type": "object" } },
+        "contested_actions": { "type": "array", "items": { "type": "object" } },
+        "emergency": { "type": "object" },
+        "used_nonces": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "AdversarialCase": {
+      "type": "object",
+      "required": [
+        "case_id",
+        "invariant_id",
+        "description",
+        "initial_state",
+        "actions",
+        "expected_verdict",
+        "expected_error_code",
+        "actual_verdict",
+        "actual_error_code",
+        "passed",
+        "case_digest"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "case_id": { "type": "string" },
+        "invariant_id": { "type": "string", "pattern": "^INV-(0[1-9]|10)$" },
+        "description": { "type": "string" },
+        "initial_state": { "$ref": "#/$defs/StateSnapshot" },
+        "actions": { "type": "array", "items": { "$ref": "#/$defs/GovernanceAction" }, "minItems": 1 },
+        "expected_verdict": { "$ref": "#/$defs/Verdict" },
+        "expected_error_code": { "type": "string" },
+        "actual_verdict": { "$ref": "#/$defs/Verdict" },
+        "actual_error_code": { "type": "string" },
+        "conflict_witness": { "$ref": "#/$defs/ConflictWitness" },
+        "passed": { "type": "boolean" },
+        "case_digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "MutationResult": {
+      "type": "object",
+      "required": ["mutant_id", "target_invariant", "description", "killed", "counterexample_depth", "counterexample_steps", "violated_invariant"],
+      "additionalProperties": false,
+      "properties": {
+        "mutant_id": { "type": "string" },
+        "target_invariant": { "type": "string", "pattern": "^INV-(0[1-9]|10)$" },
+        "description": { "type": "string" },
+        "killed": { "type": "boolean" },
+        "counterexample_depth": { "type": "integer", "minimum": 0 },
+        "counterexample_steps": { "type": "array", "items": { "type": "string" } },
+        "violated_invariant": { "type": "string" }
+      }
+    }
+  }
+}

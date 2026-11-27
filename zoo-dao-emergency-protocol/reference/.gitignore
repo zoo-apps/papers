@@ -1,0 +1,11 @@
+# Build outputs and test caches
+__pycache__/
+*.pyc
+.pytest_cache/
+*.exe
+*.test
+*.out
+/govcheck-bench
+/govcheck-verify
+/go/govcheck-bench
+/go/govcheck-verify
