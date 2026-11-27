@@ -1,0 +1,436 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zoo.ngo/schemas/settlement-receipt.v1.schema.json",
+  "title": "Useful-Work Receipt and Contribution Settlement Trace (settlement-receipt.v1)",
+  "description": "Versioned JSON Schema (v1.0.0) for zoo-apps/papers#15 (HIP-1350): 3-layer useful-work admission, EAS-compatible attestation, nullifier receipt settlement, and finality-gated treasury reward authorization.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "protocol",
+    "eas_schema_uid",
+    "seed",
+    "policy",
+    "principals",
+    "epoch_commitments",
+    "cases",
+    "expected_balance_sheet",
+    "expected_audit_merkle_root"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "protocol": {
+      "type": "string",
+      "const": "settlement-receipt.v1"
+    },
+    "eas_schema_uid": {
+      "$ref": "#/$defs/sha256Hex"
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "policy": {
+      "$ref": "#/$defs/NetworkPolicy"
+    },
+    "principals": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "$ref": "#/$defs/Principal"
+      }
+    },
+    "epoch_commitments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/EpochCommitment"
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/TraceCase"
+      }
+    },
+    "expected_balance_sheet": {
+      "$ref": "#/$defs/BalanceSheet"
+    },
+    "expected_audit_merkle_root": {
+      "$ref": "#/$defs/sha256Hex"
+    }
+  },
+  "$defs": {
+    "sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "ed25519SigHex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{128}$"
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.:-]+$"
+    },
+    "Role": {
+      "type": "string",
+      "enum": [
+        "PAYER",
+        "PROVIDER",
+        "VALIDATOR",
+        "SETTLEMENT_NODE",
+        "GOVERNANCE_TREASURY",
+        "APPLICATION",
+        "AI_AGENT"
+      ]
+    },
+    "ErrorCode": {
+      "type": "string",
+      "enum": [
+        "",
+        "ERR_INVALID_SCHEMA",
+        "ERR_BUDGET_OVERFLOW",
+        "ERR_SELF_VERIFICATION_FORBIDDEN",
+        "ERR_UNAUTHORIZED_VALIDATOR",
+        "ERR_INVALID_ATTESTATION_UID",
+        "ERR_INVALID_SIGNATURE",
+        "ERR_DUPLICATE_VALIDATOR",
+        "ERR_INSUFFICIENT_QUORUM",
+        "ERR_ATTESTATION_MISMATCH",
+        "ERR_DOUBLE_CLAIM",
+        "ERR_INVALID_RECEIPT_ID",
+        "ERR_INVALID_NULLIFIER",
+        "ERR_ACCOUNTING_MISMATCH",
+        "ERR_INVALID_MERKLE_PROOF",
+        "ERR_UNFINALIZED_EPOCH",
+        "ERR_EPOCH_EXPIRED",
+        "ERR_APP_ISSUANCE_FORBIDDEN",
+        "ERR_AI_ISSUANCE_FORBIDDEN",
+        "ERR_AI_POLICY_MUTATION_FORBIDDEN",
+        "ERR_UNAUTHORIZED_TREASURY",
+        "ERR_TREASURY_CAP_EXCEEDED",
+        "ERR_KEY_ROLE_CONFLICT"
+      ]
+    },
+    "Principal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "public_key_hex"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "role": { "$ref": "#/$defs/Role" },
+        "public_key_hex": { "$ref": "#/$defs/sha256Hex" }
+      }
+    },
+    "NetworkPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_quorum",
+        "validator_committee_size",
+        "finality_delay_epochs",
+        "claim_window_epochs",
+        "conservation_bps",
+        "protocol_bps",
+        "epoch_treasury_cap_micro_zoo"
+      ],
+      "properties": {
+        "validator_quorum": { "type": "integer", "minimum": 1 },
+        "validator_committee_size": { "type": "integer", "minimum": 1 },
+        "finality_delay_epochs": { "type": "integer", "minimum": 0 },
+        "claim_window_epochs": { "type": "integer", "minimum": 1 },
+        "conservation_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "protocol_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "epoch_treasury_cap_micro_zoo": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "AdmittedJob": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "job_id",
+        "payer_id",
+        "provider_id",
+        "epoch",
+        "model_tier",
+        "corpus_paper_id",
+        "corpus_paper_sha256",
+        "work_spec_hash",
+        "max_budget_micro_zoo",
+        "conservation_bps",
+        "protocol_bps"
+      ],
+      "properties": {
+        "job_id": { "$ref": "#/$defs/identifier" },
+        "payer_id": { "$ref": "#/$defs/identifier" },
+        "provider_id": { "$ref": "#/$defs/identifier" },
+        "epoch": { "type": "integer", "minimum": 1 },
+        "model_tier": {
+          "type": "string",
+          "enum": ["small", "medium", "large", "frontier"]
+        },
+        "corpus_paper_id": { "$ref": "#/$defs/identifier" },
+        "corpus_paper_sha256": { "$ref": "#/$defs/sha256Hex" },
+        "work_spec_hash": { "$ref": "#/$defs/sha256Hex" },
+        "max_budget_micro_zoo": { "type": "integer", "minimum": 1 },
+        "conservation_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "protocol_bps": { "type": "integer", "minimum": 0, "maximum": 10000 }
+      }
+    },
+    "WorkResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "job_id",
+        "provider_id",
+        "output_digest",
+        "tokens_processed",
+        "compute_units",
+        "consumed_micro_zoo",
+        "work_hash"
+      ],
+      "properties": {
+        "job_id": { "$ref": "#/$defs/identifier" },
+        "provider_id": { "$ref": "#/$defs/identifier" },
+        "output_digest": { "$ref": "#/$defs/sha256Hex" },
+        "tokens_processed": { "type": "integer", "minimum": 1 },
+        "compute_units": { "type": "integer", "minimum": 1 },
+        "consumed_micro_zoo": { "type": "integer", "minimum": 0 },
+        "work_hash": { "$ref": "#/$defs/sha256Hex" }
+      }
+    },
+    "EASAttestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attestation_uid",
+        "schema_uid",
+        "ref_uid",
+        "job_id",
+        "recipient",
+        "attester",
+        "work_hash",
+        "epoch",
+        "nonce",
+        "tokens_processed",
+        "compute_units",
+        "consumed_micro_zoo",
+        "signature_hex"
+      ],
+      "properties": {
+        "attestation_uid": { "$ref": "#/$defs/sha256Hex" },
+        "schema_uid": { "$ref": "#/$defs/sha256Hex" },
+        "ref_uid": { "$ref": "#/$defs/sha256Hex" },
+        "job_id": { "$ref": "#/$defs/identifier" },
+        "recipient": { "$ref": "#/$defs/identifier" },
+        "attester": { "$ref": "#/$defs/identifier" },
+        "work_hash": { "$ref": "#/$defs/sha256Hex" },
+        "epoch": { "type": "integer", "minimum": 1 },
+        "nonce": { "type": "integer", "minimum": 0 },
+        "tokens_processed": { "type": "integer", "minimum": 1 },
+        "compute_units": { "type": "integer", "minimum": 1 },
+        "consumed_micro_zoo": { "type": "integer", "minimum": 0 },
+        "signature_hex": { "$ref": "#/$defs/ed25519SigHex" }
+      }
+    },
+    "UsefulWorkReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "nullifier",
+        "job_id",
+        "payer_id",
+        "provider_id",
+        "issuer_id",
+        "issuer_role",
+        "work_hash",
+        "epoch",
+        "max_budget_micro_zoo",
+        "consumed_micro_zoo",
+        "provider_share_micro_zoo",
+        "conservation_share_micro_zoo",
+        "protocol_fee_micro_zoo",
+        "refund_micro_zoo",
+        "conservation_bps",
+        "protocol_bps",
+        "attestation_uids"
+      ],
+      "properties": {
+        "receipt_id": { "$ref": "#/$defs/sha256Hex" },
+        "nullifier": { "$ref": "#/$defs/sha256Hex" },
+        "job_id": { "$ref": "#/$defs/identifier" },
+        "payer_id": { "$ref": "#/$defs/identifier" },
+        "provider_id": { "$ref": "#/$defs/identifier" },
+        "issuer_id": { "$ref": "#/$defs/identifier" },
+        "issuer_role": { "$ref": "#/$defs/Role" },
+        "work_hash": { "$ref": "#/$defs/sha256Hex" },
+        "epoch": { "type": "integer", "minimum": 1 },
+        "max_budget_micro_zoo": { "type": "integer", "minimum": 1 },
+        "consumed_micro_zoo": { "type": "integer", "minimum": 0 },
+        "provider_share_micro_zoo": { "type": "integer", "minimum": 0 },
+        "conservation_share_micro_zoo": { "type": "integer", "minimum": 0 },
+        "protocol_fee_micro_zoo": { "type": "integer", "minimum": 0 },
+        "refund_micro_zoo": { "type": "integer", "minimum": 0 },
+        "conservation_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "protocol_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "attestation_uids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/sha256Hex" }
+        }
+      }
+    },
+    "MerkleProofStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sibling_hex", "position"],
+      "properties": {
+        "sibling_hex": { "$ref": "#/$defs/sha256Hex" },
+        "position": { "type": "string", "enum": ["left", "right"] }
+      }
+    },
+    "EpochCommitment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["epoch", "receipt_count", "receipts_merkle_root"],
+      "properties": {
+        "epoch": { "type": "integer", "minimum": 1 },
+        "receipt_count": { "type": "integer", "minimum": 0 },
+        "receipts_merkle_root": { "$ref": "#/$defs/sha256Hex" }
+      }
+    },
+    "RewardAuthorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "auth_id",
+        "receipt_id",
+        "nullifier",
+        "job_id",
+        "provider_id",
+        "authority_id",
+        "authority_role",
+        "receipt_epoch",
+        "finalized_epoch",
+        "epoch_merkle_root",
+        "merkle_proof",
+        "provider_share_micro_zoo",
+        "conservation_share_micro_zoo",
+        "protocol_fee_micro_zoo",
+        "refund_micro_zoo",
+        "treasury_sig_hex"
+      ],
+      "properties": {
+        "auth_id": { "$ref": "#/$defs/sha256Hex" },
+        "receipt_id": { "$ref": "#/$defs/sha256Hex" },
+        "nullifier": { "$ref": "#/$defs/sha256Hex" },
+        "job_id": { "$ref": "#/$defs/identifier" },
+        "provider_id": { "$ref": "#/$defs/identifier" },
+        "authority_id": { "$ref": "#/$defs/identifier" },
+        "authority_role": { "$ref": "#/$defs/Role" },
+        "receipt_epoch": { "type": "integer", "minimum": 1 },
+        "finalized_epoch": { "type": "integer", "minimum": 1 },
+        "epoch_merkle_root": { "$ref": "#/$defs/sha256Hex" },
+        "merkle_proof": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/MerkleProofStep" }
+        },
+        "provider_share_micro_zoo": { "type": "integer", "minimum": 0 },
+        "conservation_share_micro_zoo": { "type": "integer", "minimum": 0 },
+        "protocol_fee_micro_zoo": { "type": "integer", "minimum": 0 },
+        "refund_micro_zoo": { "type": "integer", "minimum": 0 },
+        "treasury_sig_hex": { "$ref": "#/$defs/ed25519SigHex" }
+      }
+    },
+    "PolicyMutationAttempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actor_id", "actor_role", "field", "proposed_value"],
+      "properties": {
+        "actor_id": { "$ref": "#/$defs/identifier" },
+        "actor_role": { "$ref": "#/$defs/Role" },
+        "field": { "type": "string", "minLength": 1 },
+        "proposed_value": { "type": "integer" }
+      }
+    },
+    "TraceCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "category",
+        "stage",
+        "expected_verdict",
+        "expected_error"
+      ],
+      "properties": {
+        "case_id": { "$ref": "#/$defs/identifier" },
+        "category": {
+          "type": "string",
+          "enum": ["lifecycle", "adversarial", "key_separation"]
+        },
+        "stage": {
+          "type": "string",
+          "enum": ["VERIFY", "ISSUE_RECEIPT", "AUTHORIZE_REWARD", "POLICY_MUTATION", "KEY_AUDIT"]
+        },
+        "description": { "type": "string" },
+        "job": { "$ref": "#/$defs/AdmittedJob" },
+        "work_result": { "$ref": "#/$defs/WorkResult" },
+        "attestations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EASAttestation" }
+        },
+        "receipt": { "$ref": "#/$defs/UsefulWorkReceipt" },
+        "authorization": { "$ref": "#/$defs/RewardAuthorization" },
+        "policy_mutation": { "$ref": "#/$defs/PolicyMutationAttempt" },
+        "override_principals": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Principal" }
+        },
+        "override_epoch_treasury_cap_micro_zoo": { "type": "integer", "minimum": 1 },
+        "expected_verdict": { "type": "string", "enum": ["ACCEPT", "REJECT"] },
+        "expected_error": { "$ref": "#/$defs/ErrorCode" }
+      }
+    },
+    "BalanceSheet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total_finalized_escrow_micro_zoo",
+        "total_authorized_payout_micro_zoo",
+        "total_provider_payout_micro_zoo",
+        "conservation_fund_micro_zoo",
+        "protocol_fee_pool_micro_zoo",
+        "total_payer_refunds_micro_zoo",
+        "authorized_receipt_count",
+        "provider_balances_micro_zoo",
+        "epoch_authorized_micro_zoo",
+        "conservation_exact"
+      ],
+      "properties": {
+        "total_finalized_escrow_micro_zoo": { "type": "integer", "minimum": 0 },
+        "total_authorized_payout_micro_zoo": { "type": "integer", "minimum": 0 },
+        "total_provider_payout_micro_zoo": { "type": "integer", "minimum": 0 },
+        "conservation_fund_micro_zoo": { "type": "integer", "minimum": 0 },
+        "protocol_fee_pool_micro_zoo": { "type": "integer", "minimum": 0 },
+        "total_payer_refunds_micro_zoo": { "type": "integer", "minimum": 0 },
+        "authorized_receipt_count": { "type": "integer", "minimum": 0 },
+        "provider_balances_micro_zoo": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "epoch_authorized_micro_zoo": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "conservation_exact": { "type": "boolean" }
+      }
+    }
+  }
+}

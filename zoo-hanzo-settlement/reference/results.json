@@ -1,0 +1,425 @@
+{
+  "schema_version": "1.0.0",
+  "protocol": "settlement-receipt.v1",
+  "issue": "zoo-apps/papers#15",
+  "hip": "HIP-1350",
+  "seed": 1350,
+  "corpus_papers_verified": 8,
+  "corpus_manifest_sha256": "2611893d456ae091fb593798ff5ab6524ede0550a3a0ae1014dfe15b9792db99",
+  "topology": {
+    "advisory_ai_agents": 1,
+    "claim_window_epochs": 6,
+    "conservation_bps": 200,
+    "epochs": 10,
+    "finality_delay_epochs": 2,
+    "governance_authorities": 2,
+    "jobs_per_epoch": 20,
+    "protocol_bps": 100,
+    "providers": 12,
+    "readonly_applications": 2,
+    "transport": "loopback-http-json-rpc-3-nodes",
+    "validator_quorum": 3,
+    "validators": 5
+  },
+  "lifecycle_jobs": 200,
+  "total_trace_cases": 224,
+  "end_to_end_elapsed_ms": 3374.81,
+  "throughput_receipts_per_sec": 59.26,
+  "stage_latencies": {
+    "Admit": {
+      "count": 200,
+      "mean_us": 257.99,
+      "p50_us": 115.8,
+      "p95_us": 664.16,
+      "p99_us": 3825.67,
+      "max_us": 7886.91
+    },
+    "AuthorizeReward": {
+      "count": 200,
+      "mean_us": 7647.02,
+      "p50_us": 7540.79,
+      "p95_us": 12203.38,
+      "p99_us": 15643.79,
+      "max_us": 18017.51
+    },
+    "IssueReceipt": {
+      "count": 200,
+      "mean_us": 7710.53,
+      "p50_us": 7390.03,
+      "p95_us": 13237.95,
+      "p99_us": 15424.53,
+      "max_us": 17432.94
+    },
+    "Perform": {
+      "count": 200,
+      "mean_us": 29.59,
+      "p50_us": 10.71,
+      "p95_us": 23.05,
+      "p99_us": 56.73,
+      "max_us": 3674.23
+    },
+    "Verify": {
+      "count": 200,
+      "mean_us": 514.4,
+      "p50_us": 414.61,
+      "p95_us": 855.19,
+      "p99_us": 2579.7,
+      "max_us": 10356.1
+    }
+  },
+  "balance_sheet": {
+    "total_finalized_escrow_micro_zoo": 2151837161,
+    "total_authorized_payout_micro_zoo": 1679566800,
+    "total_provider_payout_micro_zoo": 1629179796,
+    "conservation_fund_micro_zoo": 33591336,
+    "protocol_fee_pool_micro_zoo": 16795668,
+    "total_payer_refunds_micro_zoo": 472270361,
+    "authorized_receipt_count": 200,
+    "provider_balances_micro_zoo": {
+      "provider-01": 145729987,
+      "provider-02": 152920597,
+      "provider-03": 118051813,
+      "provider-04": 93355710,
+      "provider-05": 169280132,
+      "provider-06": 209469172,
+      "provider-07": 69228997,
+      "provider-08": 99854322,
+      "provider-09": 197235338,
+      "provider-10": 203552851,
+      "provider-11": 58137726,
+      "provider-12": 112363151
+    },
+    "epoch_authorized_micro_zoo": {
+      "1": 208925600,
+      "10": 139435900,
+      "2": 125439300,
+      "3": 174511500,
+      "4": 148205800,
+      "5": 198224200,
+      "6": 205363000,
+      "7": 184011800,
+      "8": 178804200,
+      "9": 116645500
+    },
+    "conservation_exact": true
+  },
+  "audit_merkle_root": "0cac816fdf6e2333a04b02f373a59a2ca5f2fffba623f7f44deb7a50ecf5aa0b",
+  "double_claim_stress": {
+    "sequential_replay_attempts": 200,
+    "sequential_replay_accepted": 0,
+    "sequential_replay_rejected": 200,
+    "concurrent_goroutines": 64,
+    "concurrent_l2_accepted": 1,
+    "concurrent_l2_rejected": 63,
+    "concurrent_l3_accepted": 1,
+    "concurrent_l3_rejected": 63,
+    "zero_double_claims_preserved": true
+  },
+  "determinism_audit": {
+    "wal_entries_replayed": 420,
+    "cold_restart_state_identical": true,
+    "cold_restart_replay_blocked": true,
+    "permutations_tested": 5,
+    "permutation_balance_exact": true,
+    "conservation_drift_micro_zoo": 0
+  },
+  "adversarial_suite": {
+    "total_attacks": 24,
+    "blocked_attacks": 24,
+    "block_rate_pct": 100,
+    "case_outcomes": [
+      {
+        "case_id": "adv_01_direct_double_claim",
+        "stage": "AUTHORIZE_REWARD",
+        "expected_error": "ERR_DOUBLE_CLAIM",
+        "observed_error": "ERR_DOUBLE_CLAIM",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_02_cross_epoch_replay",
+        "stage": "AUTHORIZE_REWARD",
+        "expected_error": "ERR_DOUBLE_CLAIM",
+        "observed_error": "ERR_DOUBLE_CLAIM",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_03_job_reattestation_different_nonce",
+        "stage": "ISSUE_RECEIPT",
+        "expected_error": "ERR_DOUBLE_CLAIM",
+        "observed_error": "ERR_DOUBLE_CLAIM",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_04_app_reward_issuance",
+        "stage": "AUTHORIZE_REWARD",
+        "expected_error": "ERR_APP_ISSUANCE_FORBIDDEN",
+        "observed_error": "ERR_APP_ISSUANCE_FORBIDDEN",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_05_app_receipt_issuance",
+        "stage": "ISSUE_RECEIPT",
+        "expected_error": "ERR_APP_ISSUANCE_FORBIDDEN",
+        "observed_error": "ERR_APP_ISSUANCE_FORBIDDEN",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_06_ai_agent_treasury_auth",
+        "stage": "AUTHORIZE_REWARD",
+        "expected_error": "ERR_AI_ISSUANCE_FORBIDDEN",
+        "observed_error": "ERR_AI_ISSUANCE_FORBIDDEN",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_07_ai_agent_cap_mutation",
+        "stage": "POLICY_MUTATION",
+        "expected_error": "ERR_AI_POLICY_MUTATION_FORBIDDEN",
+        "observed_error": "ERR_AI_POLICY_MUTATION_FORBIDDEN",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_08_ai_agent_quorum_downgrade",
+        "stage": "POLICY_MUTATION",
+        "expected_error": "ERR_AI_POLICY_MUTATION_FORBIDDEN",
+        "observed_error": "ERR_AI_POLICY_MUTATION_FORBIDDEN",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_09_provider_self_verification",
+        "stage": "VERIFY",
+        "expected_error": "ERR_SELF_VERIFICATION_FORBIDDEN",
+        "observed_error": "ERR_SELF_VERIFICATION_FORBIDDEN",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_10_validator_mint_attempt",
+        "stage": "AUTHORIZE_REWARD",
+        "expected_error": "ERR_UNAUTHORIZED_TREASURY",
+        "observed_error": "ERR_UNAUTHORIZED_TREASURY",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_11_settlement_node_mint_attempt",
+        "stage": "AUTHORIZE_REWARD",
+        "expected_error": "ERR_UNAUTHORIZED_TREASURY",
+        "observed_error": "ERR_UNAUTHORIZED_TREASURY",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_12_forged_validator_signature",
+        "stage": "VERIFY",
+        "expected_error": "ERR_INVALID_SIGNATURE",
+        "observed_error": "ERR_INVALID_SIGNATURE",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_13_forged_treasury_signature",
+        "stage": "AUTHORIZE_REWARD",
+        "expected_error": "ERR_INVALID_SIGNATURE",
+        "observed_error": "ERR_INVALID_SIGNATURE",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_14_unregistered_validator",
+        "stage": "VERIFY",
+        "expected_error": "ERR_UNAUTHORIZED_VALIDATOR",
+        "observed_error": "ERR_UNAUTHORIZED_VALIDATOR",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_15_duplicate_validator_in_quorum",
+        "stage": "VERIFY",
+        "expected_error": "ERR_DUPLICATE_VALIDATOR",
+        "observed_error": "ERR_DUPLICATE_VALIDATOR",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_16_insufficient_validator_quorum",
+        "stage": "VERIFY",
+        "expected_error": "ERR_INSUFFICIENT_QUORUM",
+        "observed_error": "ERR_INSUFFICIENT_QUORUM",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_17_budget_cap_overflow",
+        "stage": "VERIFY",
+        "expected_error": "ERR_BUDGET_OVERFLOW",
+        "observed_error": "ERR_BUDGET_OVERFLOW",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_18_epoch_treasury_cap_exceeded",
+        "stage": "AUTHORIZE_REWARD",
+        "expected_error": "ERR_TREASURY_CAP_EXCEEDED",
+        "observed_error": "ERR_TREASURY_CAP_EXCEEDED",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_19_tampered_merkle_proof",
+        "stage": "AUTHORIZE_REWARD",
+        "expected_error": "ERR_INVALID_MERKLE_PROOF",
+        "observed_error": "ERR_INVALID_MERKLE_PROOF",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_20_unfinalized_epoch_claim",
+        "stage": "AUTHORIZE_REWARD",
+        "expected_error": "ERR_UNFINALIZED_EPOCH",
+        "observed_error": "ERR_UNFINALIZED_EPOCH",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_21_expired_epoch_claim",
+        "stage": "AUTHORIZE_REWARD",
+        "expected_error": "ERR_EPOCH_EXPIRED",
+        "observed_error": "ERR_EPOCH_EXPIRED",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_22_tampered_micro_zoo_split",
+        "stage": "ISSUE_RECEIPT",
+        "expected_error": "ERR_ACCOUNTING_MISMATCH",
+        "observed_error": "ERR_ACCOUNTING_MISMATCH",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_23_tampered_attestation_uid",
+        "stage": "VERIFY",
+        "expected_error": "ERR_INVALID_ATTESTATION_UID",
+        "observed_error": "ERR_INVALID_ATTESTATION_UID",
+        "blocked": true
+      },
+      {
+        "case_id": "adv_24_validator_treasury_key_reuse",
+        "stage": "KEY_AUDIT",
+        "expected_error": "ERR_KEY_ROLE_CONFLICT",
+        "observed_error": "ERR_KEY_ROLE_CONFLICT",
+        "blocked": true
+      }
+    ]
+  },
+  "negative_regimes": {
+    "neg_collapsed_layer_self_issuance": {
+      "regime_id": "neg_collapsed_layer_self_issuance",
+      "epoch_budget_micro_zoo": 100000000,
+      "phantom_attack_count": 20,
+      "collapsed_baseline_drained_micro_zoo": 100000000,
+      "collapsed_drain_pct": 100,
+      "three_layer_drained_micro_zoo": 0,
+      "three_layer_blocked_count": 20,
+      "three_layer_blocked_pct": 100,
+      "blocked_by_app_issuance_lock": 10,
+      "blocked_by_self_verify_lock": 10
+    },
+    "neg_finality_epoch_latency_tax": {
+      "regime_id": "neg_finality_epoch_latency_tax",
+      "jobs_per_epoch": 10,
+      "total_epochs": 8,
+      "modeled_epoch_duration_sec": 12,
+      "sweep": [
+        {
+          "finality_delay_epochs": 0,
+          "modeled_epoch_duration_sec": 12,
+          "l2_receipt_mean_latency_us": 1396.3,
+          "l3_authorize_compute_latency_us": 1180.56,
+          "finality_wait_delay_sec": 0,
+          "early_window_spendable_pct": 100,
+          "early_claim_rejected_count": 0
+        },
+        {
+          "finality_delay_epochs": 1,
+          "modeled_epoch_duration_sec": 12,
+          "l2_receipt_mean_latency_us": 1102.27,
+          "l3_authorize_compute_latency_us": 1404.23,
+          "finality_wait_delay_sec": 12,
+          "early_window_spendable_pct": 87.5,
+          "early_claim_rejected_count": 80
+        },
+        {
+          "finality_delay_epochs": 2,
+          "modeled_epoch_duration_sec": 12,
+          "l2_receipt_mean_latency_us": 1033.82,
+          "l3_authorize_compute_latency_us": 1363.2,
+          "finality_wait_delay_sec": 24,
+          "early_window_spendable_pct": 75,
+          "early_claim_rejected_count": 80
+        },
+        {
+          "finality_delay_epochs": 4,
+          "modeled_epoch_duration_sec": 12,
+          "l2_receipt_mean_latency_us": 1028.92,
+          "l3_authorize_compute_latency_us": 1082.72,
+          "finality_wait_delay_sec": 48,
+          "early_window_spendable_pct": 50,
+          "early_claim_rejected_count": 80
+        },
+        {
+          "finality_delay_epochs": 8,
+          "modeled_epoch_duration_sec": 12,
+          "l2_receipt_mean_latency_us": 861.06,
+          "l3_authorize_compute_latency_us": 890.98,
+          "finality_wait_delay_sec": 96,
+          "early_window_spendable_pct": 0,
+          "early_claim_rejected_count": 80
+        }
+      ]
+    },
+    "neg_validator_quorum_liveness_stall": {
+      "regime_id": "neg_validator_quorum_liveness_stall",
+      "committee_size": 5,
+      "quorum_required": 3,
+      "sweep": [
+        {
+          "offline_validators": 0,
+          "online_validators": 5,
+          "quorum_required": 3,
+          "jobs_submitted": 20,
+          "rewards_authorized": 20,
+          "liveness_pct": 100,
+          "unauthorized_issuances": 0,
+          "stalled_fail_closed_count": 0
+        },
+        {
+          "offline_validators": 1,
+          "online_validators": 4,
+          "quorum_required": 3,
+          "jobs_submitted": 20,
+          "rewards_authorized": 20,
+          "liveness_pct": 100,
+          "unauthorized_issuances": 0,
+          "stalled_fail_closed_count": 0
+        },
+        {
+          "offline_validators": 2,
+          "online_validators": 3,
+          "quorum_required": 3,
+          "jobs_submitted": 20,
+          "rewards_authorized": 20,
+          "liveness_pct": 100,
+          "unauthorized_issuances": 0,
+          "stalled_fail_closed_count": 0
+        },
+        {
+          "offline_validators": 3,
+          "online_validators": 2,
+          "quorum_required": 3,
+          "jobs_submitted": 20,
+          "rewards_authorized": 0,
+          "liveness_pct": 0,
+          "unauthorized_issuances": 0,
+          "stalled_fail_closed_count": 20
+        },
+        {
+          "offline_validators": 4,
+          "online_validators": 1,
+          "quorum_required": 3,
+          "jobs_submitted": 20,
+          "rewards_authorized": 0,
+          "liveness_pct": 0,
+          "unauthorized_issuances": 0,
+          "stalled_fail_closed_count": 20
+        }
+      ]
+    }
+  }
+}

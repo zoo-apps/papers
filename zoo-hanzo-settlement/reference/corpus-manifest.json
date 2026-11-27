@@ -1,0 +1,57 @@
+{
+  "manifest_version": "1.0.0",
+  "protocol": "settlement-receipt.v1",
+  "issue": "zoo-apps/papers#15",
+  "hip": "HIP-1350",
+  "description": "Pinned real .tex papers from zoo-apps/papers used to ground deterministic useful-work settlement jobs and verifiable compute digests.",
+  "papers": [
+    {
+      "paper_id": "zoo-hanzo-settlement",
+      "path": "zoo-hanzo-settlement/zoo-hanzo-settlement.tex",
+      "bytes": 19226,
+      "sha256": "ea09c4bd97e245bc5c3df96f86ff7ca12d61735aad0bf3fa0a07c20fdf97d984"
+    },
+    {
+      "paper_id": "zoo-poai-consensus",
+      "path": "zoo-poai-consensus/zoo-poai-consensus.tex",
+      "bytes": 7168,
+      "sha256": "67827960ee82529cb7be2ed354c96239b80f775ffa1278a9700dfd6ddd22e10f"
+    },
+    {
+      "paper_id": "zoo-gym-compute-proof",
+      "path": "zoo-gym-compute-proof/zoo-gym-compute-proof.tex",
+      "bytes": 32499,
+      "sha256": "dfd4506a2f90161d854e28d7eebbb84e2ae1b45f59092e7601bead8a4c237953"
+    },
+    {
+      "paper_id": "zoo-fund-validator-rewards",
+      "path": "zoo-fund-validator-rewards/zoo-fund-validator-rewards.tex",
+      "bytes": 29017,
+      "sha256": "8c871f126f9aaae6b85ba06e9c451884e6e3d75b7f1fc2cac7a503bb882fe902"
+    },
+    {
+      "paper_id": "zoo-tokenomics",
+      "path": "zoo-tokenomics/zoo-tokenomics.tex",
+      "bytes": 4035,
+      "sha256": "b0f154dda1ee31d35d06d36162c5fccda3c9860719c579c5f40a7dad5c1ccb26"
+    },
+    {
+      "paper_id": "zoo-lux-bridge-protocol",
+      "path": "zoo-lux-bridge-protocol/zoo-lux-bridge-protocol.tex",
+      "bytes": 19960,
+      "sha256": "5142438752f7243ea738e7c4c6e93640917c944554bf1e4dc1c205ad593f39b1"
+    },
+    {
+      "paper_id": "zoo-experience-ledger",
+      "path": "zoo-experience-ledger/zoo-experience-ledger.tex",
+      "bytes": 3488,
+      "sha256": "016f002ea693197afdad4bcd8ce79dcd33f055a8f312219ac064dd7690b6465e"
+    },
+    {
+      "paper_id": "zoo-dao-governance",
+      "path": "zoo-dao-governance/zoo-dao-governance.tex",
+      "bytes": 4797,
+      "sha256": "ee6f006d0927b5fa22e48296025acb3147847da86cd4b326d66775c3b63d07ea"
+    }
+  ]
+}
