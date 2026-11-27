@@ -1,0 +1,57 @@
+{
+  "schema_version": "infnet-corpus-manifest.v1",
+  "issue": "zoo-apps/papers#12",
+  "hip": "HIP-1350",
+  "description": "Pinned SHA-256 digests of 8 real zoo-apps/papers LaTeX sources used to deterministically generate grounded inference prompts, shared KV-cache prefixes, and workload token lengths for reproducible decentralized inference network benchmarks.",
+  "derivation_rule": "Prompts are deterministically sliced from the pinned LaTeX documents using a SHA-256 counter-mode PRNG keyed by (corpus_root_sha256 || seed_u64_be || request_index_u32_be). Shared document prefixes produce authentic KV-cache prefix locality.",
+  "files": [
+    {
+      "path": "zoo-network-architecture/sections/03-layered-architecture.tex",
+      "bytes": 3404,
+      "sha256": "d4552e99b9282bd6e52dcfed9da1bf7efc468ad9c60ac77b376b77019fc0a353",
+      "role": "layered_network_architecture"
+    },
+    {
+      "path": "zoo-network-architecture/sections/08-inference-router.tex",
+      "bytes": 2840,
+      "sha256": "d76df622a3c63ec030ed326c3f6d12d2e79b100bc0df1be4cac24f213e69cfda",
+      "role": "inference_router_contract"
+    },
+    {
+      "path": "zoo-network-architecture/sections/09-gpu-compute-nodes.tex",
+      "bytes": 1861,
+      "sha256": "57ce1385621af16008daad261044f9913552ae43c281e62dfd27723f0372c678",
+      "role": "heterogeneous_gpu_compute_nodes"
+    },
+    {
+      "path": "zoo-network-architecture/sections/11-security-and-byzantine-robustness.tex",
+      "bytes": 2140,
+      "sha256": "14fa748568a62124179ad445007f3e1bd496d7d2642a103ce585a6b517ff7d92",
+      "role": "security_and_byzantine_robustness"
+    },
+    {
+      "path": "zoo-network-architecture/sections/12-comparison-with-centralized-platforms.tex",
+      "bytes": 1972,
+      "sha256": "477f65eef81c9a022d6372bbccc5f0a3676d2a3857c9e26cfc4ba64bc9ee850a",
+      "role": "centralized_platform_comparison"
+    },
+    {
+      "path": "zoo-mobile-inference/sections/05-condition-aware-inference.tex",
+      "bytes": 2869,
+      "sha256": "9a5d2db44227e0393812463b787a2737a1c378e45634bf163ed64bc2fad3d685",
+      "role": "edge_condition_aware_inference"
+    },
+    {
+      "path": "zoo-fhe-ai/zoo-fhe-ai.tex",
+      "bytes": 3256,
+      "sha256": "0bb3e94a2106f95e5dcd5de65061ba679f6a7264e54506a08522f0fe2cd22dc0",
+      "role": "confidential_privacy_inference"
+    },
+    {
+      "path": "zoo-gym-orchestrator/zoo-gym-orchestrator.tex",
+      "bytes": 29951,
+      "sha256": "2eda6da54d1e0f9c22986de058590b26f60132b328f55330b7109e0699207388",
+      "role": "distributed_compute_orchestrator"
+    }
+  ]
+}

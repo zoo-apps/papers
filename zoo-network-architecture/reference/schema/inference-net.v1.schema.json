@@ -1,0 +1,303 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zoo.ngo/schemas/inference-net.v1.schema.json",
+  "title": "Zoo Open Decentralized Inference Network Protocol Schema (inference-net.v1)",
+  "description": "Versioned JSON Schema (v1.0.0) for zoo-apps/papers#12 (HIP-1350): permissionless heterogeneous worker advertisements, strict capacity conservation ledgers, privacy-bounded routing, and cryptographically signed delivery receipts with constitutional locks.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "spec_version",
+    "corpus_root_sha256",
+    "seed",
+    "cases",
+    "audit_merkle_root"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "inference-net.v1"
+    },
+    "spec_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "corpus_root_sha256": {
+      "$ref": "#/$defs/Hex64"
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/ParityCase"
+      }
+    },
+    "audit_merkle_root": {
+      "$ref": "#/$defs/Hex64"
+    }
+  },
+  "$defs": {
+    "Hex64": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "Hex128": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{128}$"
+    },
+    "HardwareProfile": {
+      "type": "string",
+      "enum": [
+        "H100-80GB",
+        "RTX-4090-24GB",
+        "Mac-M4-Max-64GB",
+        "Consumer-12GB"
+      ]
+    },
+    "ExecutionRole": {
+      "type": "string",
+      "enum": [
+        "WHOLE_MODEL",
+        "PREFILL",
+        "DECODE",
+        "PIPELINE_STAGE"
+      ]
+    },
+    "PrivacyTier": {
+      "type": "string",
+      "enum": [
+        "TEE_ATTESTED",
+        "LOCAL_PRIVATE",
+        "PUBLIC_RELAY"
+      ]
+    },
+    "PrivacyRequirement": {
+      "type": "string",
+      "enum": [
+        "PUBLIC_OK",
+        "PRIVACY_STRICT"
+      ]
+    },
+    "TopologyMode": {
+      "type": "string",
+      "enum": [
+        "centralized_datacenter_baseline",
+        "decentralized_replica_dynamo",
+        "decentralized_pipeline_petals",
+        "decentralized_privacy_strict_tee"
+      ]
+    },
+    "DeliveryStatus": {
+      "type": "string",
+      "enum": [
+        "COMPLETED",
+        "COMPLETED_WITH_FAILOVER",
+        "REJECTED_PRIVACY",
+        "FAILED_EXHAUSTED"
+      ]
+    },
+    "NodeAdvertisement": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "node_id",
+        "public_key_hex",
+        "hardware_profile",
+        "model_id",
+        "execution_role",
+        "layer_start",
+        "layer_end",
+        "total_layers",
+        "vram_total_mib",
+        "vram_reserved_base_mib",
+        "kv_slots_total",
+        "prefill_tps",
+        "decode_tps",
+        "wan_rtt_us",
+        "bandwidth_kbps",
+        "privacy_tier",
+        "tee_attestation_sha256",
+        "heartbeat_epoch",
+        "timestamp_unix_s",
+        "signature_hex"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "type": "string", "const": "inference-net.v1" },
+        "node_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "public_key_hex": { "$ref": "#/$defs/Hex64" },
+        "hardware_profile": { "$ref": "#/$defs/HardwareProfile" },
+        "model_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "execution_role": { "$ref": "#/$defs/ExecutionRole" },
+        "layer_start": { "type": "integer", "minimum": 0 },
+        "layer_end": { "type": "integer", "minimum": 1 },
+        "total_layers": { "type": "integer", "minimum": 1 },
+        "vram_total_mib": { "type": "integer", "minimum": 1 },
+        "vram_reserved_base_mib": { "type": "integer", "minimum": 0 },
+        "kv_slots_total": { "type": "integer", "minimum": 1 },
+        "prefill_tps": { "type": "integer", "minimum": 1 },
+        "decode_tps": { "type": "integer", "minimum": 1 },
+        "wan_rtt_us": { "type": "integer", "minimum": 0 },
+        "bandwidth_kbps": { "type": "integer", "minimum": 1 },
+        "privacy_tier": { "$ref": "#/$defs/PrivacyTier" },
+        "tee_attestation_sha256": { "type": "string", "pattern": "^([0-9a-f]{64})?$" },
+        "heartbeat_epoch": { "type": "integer", "minimum": 1 },
+        "timestamp_unix_s": { "type": "integer", "minimum": 0 },
+        "signature_hex": { "$ref": "#/$defs/Hex128" }
+      }
+    },
+    "CapacityEvent": {
+      "type": "object",
+      "required": [
+        "seq",
+        "action",
+        "reservation_id",
+        "node_id",
+        "request_id",
+        "vram_mib",
+        "kv_slots",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "seq": { "type": "integer", "minimum": 1 },
+        "action": { "type": "string", "enum": ["RESERVE", "RELEASE"] },
+        "reservation_id": { "type": "string", "minLength": 1 },
+        "node_id": { "type": "string", "minLength": 1 },
+        "request_id": { "type": "string", "minLength": 1 },
+        "vram_mib": { "type": "integer", "minimum": 0 },
+        "kv_slots": { "type": "integer", "minimum": 0 },
+        "reason": { "type": "string" }
+      }
+    },
+    "DeliveryReceipt": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "receipt_id",
+        "request_id",
+        "topology_mode",
+        "model_id",
+        "prompt_sha256",
+        "prompt_prefix_sha256",
+        "prompt_tokens",
+        "output_tokens",
+        "output_merkle_root",
+        "privacy_requirement",
+        "effective_privacy_tier",
+        "route_node_ids",
+        "primary_provider_id",
+        "provider_public_key_hex",
+        "prefill_node_id",
+        "decode_node_ids",
+        "kv_slots_reserved",
+        "vram_reserved_mib",
+        "network_bytes_transferred",
+        "ttft_us",
+        "tpot_us",
+        "total_latency_us",
+        "recovery_latency_us",
+        "failover_attempts",
+        "failed_node_ids",
+        "batch_size_effective",
+        "batch_utilization_bps",
+        "status",
+        "proves_scientific_truth",
+        "authorizes_treasury_spend",
+        "signature_hex"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "type": "string", "const": "inference-net.v1" },
+        "receipt_id": { "type": "string", "minLength": 1 },
+        "request_id": { "type": "string", "minLength": 1 },
+        "topology_mode": { "$ref": "#/$defs/TopologyMode" },
+        "model_id": { "type": "string", "minLength": 1 },
+        "prompt_sha256": { "$ref": "#/$defs/Hex64" },
+        "prompt_prefix_sha256": { "$ref": "#/$defs/Hex64" },
+        "prompt_tokens": { "type": "integer", "minimum": 1 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "output_merkle_root": { "$ref": "#/$defs/Hex64" },
+        "privacy_requirement": { "$ref": "#/$defs/PrivacyRequirement" },
+        "effective_privacy_tier": { "$ref": "#/$defs/PrivacyTier" },
+        "route_node_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "primary_provider_id": { "type": "string", "minLength": 1 },
+        "provider_public_key_hex": { "$ref": "#/$defs/Hex64" },
+        "prefill_node_id": { "type": "string" },
+        "decode_node_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "kv_slots_reserved": { "type": "integer", "minimum": 0 },
+        "vram_reserved_mib": { "type": "integer", "minimum": 0 },
+        "network_bytes_transferred": { "type": "integer", "minimum": 0 },
+        "ttft_us": { "type": "integer", "minimum": 0 },
+        "tpot_us": { "type": "integer", "minimum": 0 },
+        "total_latency_us": { "type": "integer", "minimum": 0 },
+        "recovery_latency_us": { "type": "integer", "minimum": 0 },
+        "failover_attempts": { "type": "integer", "minimum": 0 },
+        "failed_node_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "batch_size_effective": { "type": "integer", "minimum": 0 },
+        "batch_utilization_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "status": { "$ref": "#/$defs/DeliveryStatus" },
+        "proves_scientific_truth": {
+          "type": "boolean",
+          "const": false,
+          "description": "Constitutional lock: an inference delivery receipt verifies transport/execution accounting only and NEVER declares scientific truth."
+        },
+        "authorizes_treasury_spend": {
+          "type": "boolean",
+          "const": false,
+          "description": "Constitutional lock: an inference delivery receipt NEVER autonomously authorizes DAO treasury disbursement."
+        },
+        "signature_hex": { "$ref": "#/$defs/Hex128" }
+      }
+    },
+    "ParityCase": {
+      "type": "object",
+      "required": [
+        "case_id",
+        "description",
+        "nodes",
+        "receipt",
+        "output_chunks",
+        "capacity_ledger",
+        "expected_valid",
+        "expected_error_code",
+        "expected_verdict_digest"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "case_id": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/NodeAdvertisement" }
+        },
+        "receipt": { "$ref": "#/$defs/DeliveryReceipt" },
+        "output_chunks": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "capacity_ledger": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CapacityEvent" }
+        },
+        "expected_valid": { "type": "boolean" },
+        "expected_error_code": { "type": "string" },
+        "expected_verdict_digest": { "$ref": "#/$defs/Hex64" }
+      }
+    }
+  }
+}
