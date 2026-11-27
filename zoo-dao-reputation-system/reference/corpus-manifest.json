@@ -1,0 +1,129 @@
+{
+  "schema_version": "attribution-rep.v1",
+  "spec_version": "1.0.0",
+  "seed": 1352,
+  "paper_count": 12,
+  "manifest_sha256": "1f06f3b074c8036afd8b15cae246a949faa25c35662d6be89c07762935d12963",
+  "papers": [
+    {
+      "rel_path": "zoo-dao-reputation-system/zoo-dao-reputation-system.tex",
+      "title": "Ecosystem Reputation: A Non-Transferable Trust Primitive for Conservation Contributors",
+      "category": "governance",
+      "bytes": 30120,
+      "sha256": "566cbe1d6500abf9cfbf75329fbb07d8ef94b10acba09575aa696ecd307722d3",
+      "normalized_tokens": 2935,
+      "canonical_digest": "fe93a8178eda4af1d1c1f082e2a56de9b1a4b4ed22ae6e0b46a53c3dba59d5dd",
+      "fingerprint_digest": "fa40ba2e501068ec10027b552ff36a0f272d45cd9f2f0771231a78f72e16fa96"
+    },
+    {
+      "rel_path": "zoo-dao-research-governance/zoo-dao-research-governance.tex",
+      "title": "Zoo DAO Research Governance",
+      "category": "governance",
+      "bytes": 35561,
+      "sha256": "19c36e73021564dadd4c5f56396fb92d0081b9df93febad6b6277edd2ec64b15",
+      "normalized_tokens": 3431,
+      "canonical_digest": "c7e99abaf216953ba0d2a20485581f885922e3ae959154d6dcfdc2f8a460eeac",
+      "fingerprint_digest": "b2ac4b7052ff3d2629513b1fb97788bd211eb385784d435c27418e19354d38d7"
+    },
+    {
+      "rel_path": "zoo-desci-platform/zoo-desci-platform.tex",
+      "title": "Zoo DeSci Platform",
+      "category": "research",
+      "bytes": 4323,
+      "sha256": "3d0b0539b4cfa8068fcb1d17cd5eaec476499006bc9e4208804d91b57bbab923",
+      "normalized_tokens": 357,
+      "canonical_digest": "9197de442e05b31abbd86351ec02faf679e8e86795cb4dd8c59029c003c7693a",
+      "fingerprint_digest": "b9fc09beb925ffe0e779ba9b6727a5539db0a8f5139192b277eb641b066e9676"
+    },
+    {
+      "rel_path": "zoo-data-commons/zoo-data-commons.tex",
+      "title": "Zoo Data Commons",
+      "category": "research",
+      "bytes": 3957,
+      "sha256": "2c017a9068c0b93ddf32ac911b832f077e6ced9fb10d066d7fd190a7b5a53b79",
+      "normalized_tokens": 329,
+      "canonical_digest": "465cb1d8bc7285e5eb9c957ec5193c11fb1187cd13539e06f88b99345eecca10",
+      "fingerprint_digest": "275995e71b958f1b9195b5a20d1479d4821410b0ca1ae52bf86f8043aeea35f4"
+    },
+    {
+      "rel_path": "zoo-research-coordination/zoo-research-coordination.tex",
+      "title": "Zoo Research Coordination",
+      "category": "grants",
+      "bytes": 4167,
+      "sha256": "542ce14dc94d98c41fb862fb38b08364a4e986e3ac5090d065c7716f28c882c8",
+      "normalized_tokens": 331,
+      "canonical_digest": "18439213ce53fe17391a354aa1e5fda49af3a28ceb96907cf37e8f146d2c2f32",
+      "fingerprint_digest": "1c3d1e14ba637ef6be78ab36e24f46139fa2cbb795b0cfc64f4fc8e6858b25f7"
+    },
+    {
+      "rel_path": "zoo-citizen-science/zoo-citizen-science.tex",
+      "title": "Zoo Citizen Science",
+      "category": "field_work",
+      "bytes": 4803,
+      "sha256": "aa030934cad2d7d71eb8805e1a6cca685cc4b94ad44423a8cf80961d737de6a2",
+      "normalized_tokens": 319,
+      "canonical_digest": "4b13e2e9ede9e07bd367a82eb0ca282f4d4e082359b871d2a225c14b68478b2b",
+      "fingerprint_digest": "ceb608a5fd9fe532871e5fa2e148d9bf3c03ad7a3199b5ef133f64991d7e808f"
+    },
+    {
+      "rel_path": "zoo-conservation-ai/zoo-conservation-ai.tex",
+      "title": "Zoo Conservation AI",
+      "category": "code",
+      "bytes": 3363,
+      "sha256": "9e459189e49d93babaeb040369880ed15c331cf2a5dcd95bb24750001601a6c1",
+      "normalized_tokens": 304,
+      "canonical_digest": "bf7356defe0e0cf6d38333e1860375ad58a13d093e76304d83341c0cebd1bdef",
+      "fingerprint_digest": "aed7429921f98ad27bca43004943452c23ec99bfb67d1a8a7cb867dc16e107bb"
+    },
+    {
+      "rel_path": "zoo-federated-wildlife/zoo-federated-wildlife.tex",
+      "title": "Zoo Federated Wildlife",
+      "category": "code",
+      "bytes": 4439,
+      "sha256": "f193683ba6a3cb6f763cc1531f19d99c44e0407ab92f86ad772690b3d957e420",
+      "normalized_tokens": 386,
+      "canonical_digest": "de32a4004a8b25d0046355cf46e1fd135c19f2d772ae7325aa96a421f3b5c2f1",
+      "fingerprint_digest": "acce35719f562ae2899f4e5dc44d62dc126e895b521043ee42eee155c611bc23"
+    },
+    {
+      "rel_path": "zoo-habitat-modeling/zoo-habitat-modeling.tex",
+      "title": "Zoo Habitat Modeling",
+      "category": "field_work",
+      "bytes": 4949,
+      "sha256": "1c0186fb773b111eaf5cde8056e2a183ac99722f4354c443786a730def890016",
+      "normalized_tokens": 316,
+      "canonical_digest": "e66b28efa69446f905a12fe9bb50e856c462879ed2dc9e8833d458312c160304",
+      "fingerprint_digest": "ef73c170356b916454ff5e7c2a041f19d24bab0f1d4aeb11fd6cff4999970620"
+    },
+    {
+      "rel_path": "zoo-satellite-ecology/zoo-satellite-ecology.tex",
+      "title": "Zoo Satellite Ecology",
+      "category": "field_work",
+      "bytes": 4194,
+      "sha256": "e9aa74902d07f5bc5188c25d62eebeca83d79f24df5a24047f57ef5ac67048e6",
+      "normalized_tokens": 369,
+      "canonical_digest": "b0a702d58f35961a160b5ec605f5c2f3746240eaf2a7854f280a4bbf2c19cb41",
+      "fingerprint_digest": "5e4d0192f10f7868625754126ab39713c9905fefc744d141d15bbe4d87e7a845"
+    },
+    {
+      "rel_path": "zoo-species-classification/zoo-species-classification.tex",
+      "title": "Zoo Species Classification",
+      "category": "research",
+      "bytes": 4856,
+      "sha256": "96474a61b0b66bc0c8e114daf2ea160607b39edc49c5982ed9ec0e719ff1d3c6",
+      "normalized_tokens": 331,
+      "canonical_digest": "95b3742658557b09fdfae4670dee9286d4ad9436aaa41b0048965f6d82550008",
+      "fingerprint_digest": "39be1e3f00bc1dc205930b3d88cd13a0109e203418114c93c2fc652c65d57d16"
+    },
+    {
+      "rel_path": "zoo-wildlife-tracking/zoo-wildlife-tracking.tex",
+      "title": "Zoo Wildlife Tracking",
+      "category": "field_work",
+      "bytes": 3545,
+      "sha256": "03294c0faa84daa9d1cc0aa9708ba38f27037e8046c9549f5c947fe8ca671d48",
+      "normalized_tokens": 327,
+      "canonical_digest": "2e24ceefed6e975cee415782740b669f760e35dd9a045fc64aca9f37062f27f7",
+      "fingerprint_digest": "7ff71b404acfe7b513b548b21785ea2b31c4f7f1e19869cea71a6c1e1540d33e"
+    }
+  ]
+}

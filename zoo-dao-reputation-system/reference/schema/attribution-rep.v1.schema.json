@@ -1,0 +1,261 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zoo.ngo/schemas/attribution-rep.v1.schema.json",
+  "title": "Zoo Scientific Contribution Attribution and Reputation Suite (attribution-rep.v1)",
+  "description": "Versioned v1.0.0 schema for HIP-1352 (zoo-apps/papers#11): content-addressed scientific contribution DAGs, Winnowing near-duplicate fingerprints, EAS-compatible signed attestations, and Sybil-resistant seeded reputation bundles.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "spec_version",
+    "suite_name",
+    "seed",
+    "eval_time",
+    "policy",
+    "identities",
+    "contributions",
+    "attestations"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "attribution-rep.v1"
+    },
+    "spec_version": {
+      "const": "1.0.0"
+    },
+    "suite_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "eval_time": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "corpus_manifest_sha256": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{64})?$"
+    },
+    "policy": {
+      "$ref": "#/$defs/Policy"
+    },
+    "identities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/Identity"
+      }
+    },
+    "revoked_uids": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PrefixedHex32"
+      }
+    },
+    "contributions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Contribution"
+      }
+    },
+    "attestations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Attestation"
+      }
+    },
+    "adversarial_expectations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/AdversarialExpectation"
+      }
+    }
+  },
+  "$defs": {
+    "Hex32": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "PrefixedHex32": {
+      "type": "string",
+      "pattern": "^0x[0-9a-f]{64}$"
+    },
+    "Hex64": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{128}$"
+    },
+    "Hex8": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{16}$"
+    },
+    "Policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "near_duplicate_reject_bps",
+        "undeclared_copy_reject_bps",
+        "novelty_overclaim_gap_bps",
+        "upstream_flow_bps",
+        "max_clock_skew_sec",
+        "eigentrust_damping_bps",
+        "eigentrust_iterations",
+        "reciprocal_discount_bps",
+        "ring_discount_bps",
+        "cluster_sim_threshold_bps",
+        "cluster_penalty_bps",
+        "trust_full_gate_micro",
+        "trust_rep_multiplier",
+        "attr_rep_multiplier",
+        "max_attestations_per_epoch"
+      ],
+      "properties": {
+        "near_duplicate_reject_bps": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "undeclared_copy_reject_bps": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "novelty_overclaim_gap_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "upstream_flow_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "max_clock_skew_sec": { "type": "integer", "minimum": 0 },
+        "eigentrust_damping_bps": { "type": "integer", "minimum": 1, "maximum": 9999 },
+        "eigentrust_iterations": { "type": "integer", "minimum": 1, "maximum": 1000 },
+        "reciprocal_discount_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "ring_discount_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "cluster_sim_threshold_bps": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "cluster_penalty_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "trust_full_gate_micro": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+        "trust_rep_multiplier": { "type": "integer", "minimum": 0 },
+        "attr_rep_multiplier": { "type": "integer", "minimum": 0 },
+        "max_attestations_per_epoch": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "Identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "public_key"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "role": {
+          "type": "string",
+          "enum": ["RESEARCHER", "SEED_STEWARD", "AI_AGENT"]
+        },
+        "public_key": { "$ref": "#/$defs/Hex32" },
+        "label": { "type": "string" }
+      }
+    },
+    "Contribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contribution_id",
+        "ledger_seq",
+        "epoch",
+        "timestamp",
+        "author_id",
+        "category",
+        "content",
+        "raw_sha256",
+        "canonical_digest",
+        "winnow_fingerprint",
+        "fingerprint_digest",
+        "parents",
+        "claimed_novelty_bps",
+        "base_value_micro",
+        "signature_hex"
+      ],
+      "properties": {
+        "contribution_id": { "type": "string", "minLength": 1 },
+        "ledger_seq": { "type": "integer", "minimum": 1 },
+        "epoch": { "type": "integer", "minimum": 1 },
+        "timestamp": { "type": "integer", "minimum": 0 },
+        "author_id": { "type": "string", "minLength": 1 },
+        "category": {
+          "type": "string",
+          "enum": ["research", "review", "grants", "code", "field_work", "governance", "community"]
+        },
+        "corpus_source": { "type": "string" },
+        "content": { "type": "string" },
+        "raw_sha256": { "$ref": "#/$defs/Hex32" },
+        "canonical_digest": { "$ref": "#/$defs/Hex32" },
+        "winnow_fingerprint": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Hex8" }
+        },
+        "fingerprint_digest": { "$ref": "#/$defs/Hex32" },
+        "parents": {
+          "type": ["array", "null"],
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "claimed_novelty_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "base_value_micro": { "type": "integer", "minimum": 0 },
+        "signature_hex": { "$ref": "#/$defs/Hex64" },
+        "scenario_tag": { "type": "string" }
+      }
+    },
+    "Attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "uid",
+        "schema_uid",
+        "attester",
+        "recipient",
+        "ref_uid",
+        "epoch",
+        "time",
+        "expiration_time",
+        "revocable",
+        "revoked",
+        "nonce",
+        "weight_bps",
+        "data_digest",
+        "signature_hex"
+      ],
+      "properties": {
+        "uid": { "$ref": "#/$defs/PrefixedHex32" },
+        "schema_uid": { "$ref": "#/$defs/PrefixedHex32" },
+        "attester": { "type": "string", "minLength": 1 },
+        "recipient": { "type": "string", "minLength": 1 },
+        "ref_uid": { "type": "string" },
+        "epoch": { "type": "integer", "minimum": 1 },
+        "time": { "type": "integer", "minimum": 0 },
+        "expiration_time": { "type": "integer", "minimum": 0 },
+        "revocable": { "type": "boolean" },
+        "revoked": { "type": "boolean" },
+        "nonce": { "type": "integer", "minimum": 1 },
+        "weight_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "data_digest": { "$ref": "#/$defs/Hex32" },
+        "signature_hex": { "$ref": "#/$defs/Hex64" },
+        "scenario_tag": { "type": "string" }
+      }
+    },
+    "AdversarialExpectation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attack_id",
+        "category",
+        "target_type",
+        "target_id",
+        "expected_status",
+        "expected_error_code",
+        "description"
+      ],
+      "properties": {
+        "attack_id": { "type": "string", "minLength": 1 },
+        "category": {
+          "type": "string",
+          "enum": ["copy", "collusion", "causality", "crypto", "ai_guard"]
+        },
+        "target_type": {
+          "type": "string",
+          "enum": ["contribution", "attestation", "cluster"]
+        },
+        "target_id": { "type": "string", "minLength": 1 },
+        "expected_status": { "type": "string", "minLength": 1 },
+        "expected_error_code": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    }
+  }
+}
