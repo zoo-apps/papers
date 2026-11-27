@@ -1,0 +1,393 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zoo.ngo/schemas/inference-verify.v1.schema.json",
+  "title": "Inference Verification Suite & Trace Schema (inference-verify.v1)",
+  "description": "Versioned v1.0.0 schema for comparing signed worker attestations (in-toto DSSE v1 + Sigstore Cosign/Rekor-style transparency log proofs), independent re-execution, random challenge verification, and hybrid attested+challenged verification (HIP-1350, zoo-apps/papers#14).",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "spec_version",
+    "issue",
+    "hip",
+    "seed",
+    "corpus_root_sha256",
+    "model_id",
+    "model_digest",
+    "trust_root",
+    "policy",
+    "cases"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "inference-verify.v1"
+    },
+    "spec_version": {
+      "const": "1.0.0"
+    },
+    "issue": {
+      "type": "string"
+    },
+    "hip": {
+      "type": "string"
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "corpus_root_sha256": {
+      "$ref": "#/$defs/sha256Hex"
+    },
+    "model_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model_digest": {
+      "$ref": "#/$defs/sha256Hex"
+    },
+    "trust_root": {
+      "$ref": "#/$defs/TrustRoot"
+    },
+    "policy": {
+      "$ref": "#/$defs/VerificationPolicy"
+    },
+    "expected_audit_merkle_root": {
+      "$ref": "#/$defs/sha256Hex"
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/VerificationCase"
+      }
+    }
+  },
+  "$defs": {
+    "sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "ed25519PubHex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "Regime": {
+      "type": "string",
+      "enum": [
+        "signed_attestation_only",
+        "independent_reexecution",
+        "random_challenge_verification",
+        "hybrid_attested_plus_challenged"
+      ]
+    },
+    "Verdict": {
+      "type": "string",
+      "enum": [
+        "VERIFIED",
+        "FRAUD_DETECTED",
+        "INVALID_ATTESTATION",
+        "POLICY_REJECTED"
+      ]
+    },
+    "ActorRole": {
+      "type": "string",
+      "enum": [
+        "WORKER",
+        "VERIFIER",
+        "CHALLENGER",
+        "AI_AGENT",
+        "GOVERNANCE_COUNCIL"
+      ]
+    },
+    "GovernanceAction": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "RECOMMEND_CHALLENGE_RATE",
+        "FLAG_SUSPICIOUS_WORKER",
+        "APPROVE_SLASHING",
+        "MUTATE_POLICY_PARAMS",
+        "SELF_CERTIFY_INFERENCE"
+      ]
+    },
+    "KeyEntry": {
+      "type": "object",
+      "required": [
+        "actor_id",
+        "actor_role",
+        "operator_group",
+        "pubkey_hex",
+        "valid_from_epoch",
+        "valid_until_epoch",
+        "revoked"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "actor_id": { "type": "string", "minLength": 1 },
+        "actor_role": { "$ref": "#/$defs/ActorRole" },
+        "operator_group": { "type": "string", "minLength": 1 },
+        "pubkey_hex": { "$ref": "#/$defs/ed25519PubHex" },
+        "valid_from_epoch": { "type": "integer", "minimum": 0 },
+        "valid_until_epoch": { "type": "integer", "minimum": 0 },
+        "revoked": { "type": "boolean" }
+      }
+    },
+    "TrustRoot": {
+      "type": "object",
+      "required": [
+        "tlog_id",
+        "tlog_pubkey_hex",
+        "keys"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "tlog_id": { "$ref": "#/$defs/sha256Hex" },
+        "tlog_pubkey_hex": { "$ref": "#/$defs/ed25519PubHex" },
+        "keys": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/KeyEntry" }
+        }
+      }
+    },
+    "VerificationPolicy": {
+      "type": "object",
+      "required": [
+        "reexec_quorum_k",
+        "challenge_base_bps",
+        "challenge_escalated_bps",
+        "min_challenge_bps",
+        "max_challenge_bps",
+        "reputation_threshold",
+        "probation_jobs",
+        "job_fee_units",
+        "honest_cost_units",
+        "cheat_cost_units",
+        "worker_bond_units",
+        "slash_penalty_units",
+        "challenger_reward_units"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "reexec_quorum_k": { "type": "integer", "minimum": 2 },
+        "challenge_base_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "challenge_escalated_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "min_challenge_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "max_challenge_bps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "reputation_threshold": { "type": "integer", "minimum": 0, "maximum": 1000 },
+        "probation_jobs": { "type": "integer", "minimum": 0 },
+        "job_fee_units": { "type": "integer", "minimum": 1 },
+        "honest_cost_units": { "type": "integer", "minimum": 1 },
+        "cheat_cost_units": { "type": "integer", "minimum": 0 },
+        "worker_bond_units": { "type": "integer", "minimum": 0 },
+        "slash_penalty_units": { "type": "integer", "minimum": 0 },
+        "challenger_reward_units": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "DSSESignature": {
+      "type": "object",
+      "required": ["keyid", "sig"],
+      "additionalProperties": false,
+      "properties": {
+        "keyid": { "type": "string", "minLength": 1 },
+        "sig": { "type": "string", "minLength": 1 }
+      }
+    },
+    "DSSEEnvelope": {
+      "type": "object",
+      "required": ["payloadType", "payload", "signatures"],
+      "additionalProperties": false,
+      "properties": {
+        "payloadType": { "type": "string" },
+        "payload": { "type": "string" },
+        "signatures": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/DSSESignature" }
+        }
+      }
+    },
+    "TransparencyLogBundle": {
+      "type": "object",
+      "required": [
+        "log_id",
+        "log_pubkey_hex",
+        "log_index",
+        "tree_size",
+        "root_hash",
+        "checkpoint_epoch",
+        "checkpoint_sig_b64",
+        "leaf_entry_digest",
+        "hashes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "log_id": { "$ref": "#/$defs/sha256Hex" },
+        "log_pubkey_hex": { "$ref": "#/$defs/ed25519PubHex" },
+        "log_index": { "type": "integer", "minimum": 0 },
+        "tree_size": { "type": "integer", "minimum": 1 },
+        "root_hash": { "$ref": "#/$defs/sha256Hex" },
+        "checkpoint_epoch": { "type": "integer", "minimum": 0 },
+        "checkpoint_sig_b64": { "type": "string", "minLength": 1 },
+        "leaf_entry_digest": { "$ref": "#/$defs/sha256Hex" },
+        "hashes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/sha256Hex" }
+        }
+      }
+    },
+    "InTotoSubject": {
+      "type": "object",
+      "required": ["name", "digest"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "digest": {
+          "type": "object",
+          "required": ["sha256"],
+          "additionalProperties": false,
+          "properties": {
+            "sha256": { "$ref": "#/$defs/sha256Hex" }
+          }
+        }
+      }
+    },
+    "InferencePredicate": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "job_id",
+        "epoch",
+        "regime",
+        "model_id",
+        "model_digest",
+        "decode_steps",
+        "input_digest",
+        "output_digest",
+        "logits_digest",
+        "top_token",
+        "worker_id",
+        "worker_operator_group",
+        "worker_pubkey_hex",
+        "actor_role",
+        "governance_action",
+        "attests_signed_provenance_only",
+        "proves_hardware_tee_uncompromised",
+        "proves_scientific_truth"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "const": "inference-verify.v1" },
+        "job_id": { "type": "string", "minLength": 1 },
+        "epoch": { "type": "integer", "minimum": 0 },
+        "regime": { "$ref": "#/$defs/Regime" },
+        "model_id": { "type": "string", "minLength": 1 },
+        "model_digest": { "$ref": "#/$defs/sha256Hex" },
+        "decode_steps": { "type": "integer", "minimum": 1 },
+        "input_digest": { "$ref": "#/$defs/sha256Hex" },
+        "output_digest": { "$ref": "#/$defs/sha256Hex" },
+        "logits_digest": { "$ref": "#/$defs/sha256Hex" },
+        "top_token": { "type": "integer", "minimum": 0 },
+        "worker_id": { "type": "string", "minLength": 1 },
+        "worker_operator_group": { "type": "string", "minLength": 1 },
+        "worker_pubkey_hex": { "$ref": "#/$defs/ed25519PubHex" },
+        "actor_role": { "$ref": "#/$defs/ActorRole" },
+        "governance_action": { "$ref": "#/$defs/GovernanceAction" },
+        "attests_signed_provenance_only": { "type": "boolean" },
+        "proves_hardware_tee_uncompromised": { "const": false },
+        "proves_scientific_truth": { "const": false }
+      }
+    },
+    "ReexecReceipt": {
+      "type": "object",
+      "required": ["verifier_id", "envelope"],
+      "additionalProperties": false,
+      "properties": {
+        "verifier_id": { "type": "string", "minLength": 1 },
+        "envelope": { "$ref": "#/$defs/DSSEEnvelope" }
+      }
+    },
+    "ChallengeTranscript": {
+      "type": "object",
+      "required": ["challenger_id", "envelope"],
+      "additionalProperties": false,
+      "properties": {
+        "challenger_id": { "type": "string", "minLength": 1 },
+        "envelope": { "$ref": "#/$defs/DSSEEnvelope" }
+      }
+    },
+    "WorkerRiskContext": {
+      "type": "object",
+      "required": [
+        "reputation_score",
+        "jobs_completed",
+        "ai_advisory_flagged"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "reputation_score": { "type": "integer", "minimum": 0, "maximum": 1000 },
+        "jobs_completed": { "type": "integer", "minimum": 0 },
+        "ai_advisory_flagged": { "type": "boolean" }
+      }
+    },
+    "VerificationCase": {
+      "type": "object",
+      "required": [
+        "case_id",
+        "category",
+        "description",
+        "regime",
+        "expected_epoch",
+        "epoch_beacon_hex",
+        "input_tokens",
+        "decode_steps",
+        "worker_risk",
+        "worker_envelope",
+        "tlog_bundle",
+        "worker_cheated_ground_truth",
+        "expected_verdict",
+        "expected_error_code"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "case_id": { "type": "string", "minLength": 1 },
+        "category": { "type": "string", "enum": ["golden", "adversarial"] },
+        "description": { "type": "string" },
+        "regime": { "$ref": "#/$defs/Regime" },
+        "expected_epoch": { "type": "integer", "minimum": 0 },
+        "epoch_beacon_hex": { "$ref": "#/$defs/sha256Hex" },
+        "challenge_rate_bps_override": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "input_tokens": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "integer", "minimum": 0 }
+        },
+        "decode_steps": { "type": "integer", "minimum": 1 },
+        "worker_risk": { "$ref": "#/$defs/WorkerRiskContext" },
+        "worker_envelope": { "$ref": "#/$defs/DSSEEnvelope" },
+        "tlog_bundle": {
+          "oneOf": [
+            { "$ref": "#/$defs/TransparencyLogBundle" },
+            { "type": "null" }
+          ]
+        },
+        "reexec_receipts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ReexecReceipt" }
+        },
+        "challenge_transcript": {
+          "oneOf": [
+            { "$ref": "#/$defs/ChallengeTranscript" },
+            { "type": "null" }
+          ]
+        },
+        "seen_job_outputs": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/sha256Hex" }
+        },
+        "worker_cheated_ground_truth": { "type": "boolean" },
+        "expected_verdict": { "$ref": "#/$defs/Verdict" },
+        "expected_error_code": { "type": "string" },
+        "expected_fraud_escaped": { "type": "boolean" }
+      }
+    }
+  }
+}

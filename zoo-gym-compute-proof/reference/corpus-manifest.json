@@ -1,0 +1,52 @@
+{
+  "schema_version": "inference-verify-corpus-manifest.v1",
+  "issue": "zoo-apps/papers#14",
+  "hip": "HIP-1350",
+  "license": "Apache-2.0",
+  "description": "Pinned SHA-256 digests of real zoo-apps/papers LaTeX sources used to extract grounded prompt tokens and deterministically derive quantized integer MLP weights for attested vs challenged inference verification benchmarks.",
+  "derivation_rule": "Corpus root SHA-256 is SHA-256 over the concatenation of '<path>:<sha256>\\n' for each file in listed order. Prompt token sequences are extracted deterministically from ASCII lowercase alphanumeric tokens (length >= 3) across the pinned sources, and quantized int8 model parameters are derived via SHA-256 counter mode over (corpus_root_sha256 || model_id || tensor_name || block_u32_le).",
+  "files": [
+    {
+      "path": "zoo-gym-compute-proof/zoo-gym-compute-proof.tex",
+      "bytes": 32499,
+      "sha256": "dfd4506a2f90161d854e28d7eebbb84e2ae1b45f59092e7601bead8a4c237953",
+      "role": "proof_of_compute_spot_verify_and_slashing"
+    },
+    {
+      "path": "zoo-poai-consensus/sections/00-status-summary.tex",
+      "bytes": 3377,
+      "sha256": "d666041db1e0322ab66e9ce620bd61bd541d4091494ee37a4ff287c1afb55a9b",
+      "role": "poai_implementation_boundary"
+    },
+    {
+      "path": "zoo-poai-consensus/sections/15-binding-scheme.tex",
+      "bytes": 9865,
+      "sha256": "b960277887535f8b534045f15e3e1e76f6d936cc698a4ebbb15b27c960e08e93",
+      "role": "receipt_binding_scheme"
+    },
+    {
+      "path": "zoo-poai-consensus/sections/17-freivalds-hash.tex",
+      "bytes": 19021,
+      "sha256": "13c22ffb5eedb77f877e95a4893a7610bbb61b390e73c2038029b8a9c0eaf0fe",
+      "role": "execution_proof_baseline"
+    },
+    {
+      "path": "zoo-poai-consensus/sections/25-receipt-soundness.tex",
+      "bytes": 13027,
+      "sha256": "3c6f81f310e441feec44d93e31136329c2478327d0af2beb3a162d252f9ee4a5",
+      "role": "receipt_soundness_and_honest_boundary"
+    },
+    {
+      "path": "zoo-network-architecture/zoo-network-architecture.tex",
+      "bytes": 2782,
+      "sha256": "7c247acc6790e2ec85ce4a481e516cf2bc7f41bb2636654a818cd89273c202e2",
+      "role": "decentralized_inference_network"
+    },
+    {
+      "path": "thinking-chains/thinking-chains.tex",
+      "bytes": 50006,
+      "sha256": "11098056fe62731abc05ca6917beb43158a96c6e5e3cd99598182912b1d4db25",
+      "role": "constitutional_law_of_cognition"
+    }
+  ]
+}
